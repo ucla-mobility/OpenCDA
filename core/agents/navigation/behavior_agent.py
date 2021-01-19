@@ -11,13 +11,14 @@ traffic signs, and has different possible configurations. """
 import random
 import numpy as np
 import carla
-from agents.navigation.agent import Agent
-from agents.navigation.local_planner_behavior import LocalPlanner, RoadOption
-from agents.navigation.global_route_planner import GlobalRoutePlanner
-from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
-from agents.navigation.types_behavior import Cautious, Aggressive, Normal
+from core.agents.navigation.agent import Agent
+from core.agents.navigation.local_planner_behavior import LocalPlanner, RoadOption
+from core.agents.navigation.global_route_planner import GlobalRoutePlanner
+from core.agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
+from core.agents.navigation.types_behavior import Cautious, Aggressive, Normal
 
-from agents.tools.misc import get_speed, positive
+from core.agents.tools.misc import get_speed, positive
+
 
 class BehaviorAgent(Agent):
     """
@@ -33,7 +34,7 @@ class BehaviorAgent(Agent):
     to a more aggressive ones.
     """
 
-    def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal'):
+    def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal', sampling_resolution=4.5):
         """
         Constructor method.
 
@@ -62,7 +63,7 @@ class BehaviorAgent(Agent):
         self.light_id_to_ignore = -1
         self.min_speed = 5
         self.behavior = None
-        self._sampling_resolution = 4.5
+        self._sampling_resolution = sampling_resolution
 
         # Parameters for agent behavior
         if behavior == 'cautious':
@@ -199,7 +200,7 @@ class BehaviorAgent(Agent):
         right_wpt = waypoint.get_right_lane()
 
         if (left_turn == carla.LaneChange.Left or left_turn ==
-                carla.LaneChange.Both) and waypoint.lane_id * left_wpt.lane_id > 0 and left_wpt.lane_type == carla.LaneType.Driving:
+            carla.LaneChange.Both) and waypoint.lane_id * left_wpt.lane_id > 0 and left_wpt.lane_type == carla.LaneType.Driving:
             new_vehicle_state, _, _ = self._bh_is_vehicle_hazard(waypoint, location, vehicle_list, max(
                 self.behavior.min_proximity_threshold, self.speed_limit / 3), up_angle_th=180, lane_offset=-1)
             if not new_vehicle_state:
@@ -235,7 +236,7 @@ class BehaviorAgent(Agent):
             self.behavior.min_proximity_threshold, self.speed_limit / 2), up_angle_th=180, low_angle_th=160)
         if behind_vehicle_state and self.speed < get_speed(behind_vehicle):
             if (right_turn == carla.LaneChange.Right or right_turn ==
-                    carla.LaneChange.Both) and waypoint.lane_id * right_wpt.lane_id > 0 and right_wpt.lane_type == carla.LaneType.Driving:
+                carla.LaneChange.Both) and waypoint.lane_id * right_wpt.lane_id > 0 and right_wpt.lane_type == carla.LaneType.Driving:
                 new_vehicle_state, _, _ = self._bh_is_vehicle_hazard(waypoint, location, vehicle_list, max(
                     self.behavior.min_proximity_threshold, self.speed_limit / 2), up_angle_th=180, lane_offset=1)
                 if not new_vehicle_state:
@@ -265,7 +266,10 @@ class BehaviorAgent(Agent):
         """
 
         vehicle_list = self._world.get_actors().filter("*vehicle*")
-        def dist(v): return v.get_location().distance(waypoint.transform.location)
+
+        def dist(v):
+            return v.get_location().distance(waypoint.transform.location)
+
         vehicle_list = [v for v in vehicle_list if dist(v) < 45 and v.id != self.vehicle.id]
 
         if self.direction == RoadOption.CHANGELANELEFT:
@@ -310,7 +314,10 @@ class BehaviorAgent(Agent):
         """
 
         walker_list = self._world.get_actors().filter("*walker.pedestrian*")
-        def dist(w): return w.get_location().distance(waypoint.transform.location)
+
+        def dist(w):
+            return w.get_location().distance(waypoint.transform.location)
+
         walker_list = [w for w in walker_list if dist(w) < 10]
 
         if self.direction == RoadOption.CHANGELANELEFT:
@@ -344,16 +351,18 @@ class BehaviorAgent(Agent):
         if self.behavior.safety_time > ttc > 0.0:
             control = self._local_planner.run_step(
                 target_speed=min(positive(vehicle_speed - self.behavior.speed_decrease),
-                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)), debug=debug)
+                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)),
+                debug=debug)
         # Actual safety distance area, try to follow the speed of the vehicle in front.
         elif 2 * self.behavior.safety_time > ttc >= self.behavior.safety_time:
             control = self._local_planner.run_step(
                 target_speed=min(max(self.min_speed, vehicle_speed),
-                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)), debug=debug)
+                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)),
+                debug=debug)
         # Normal behavior.
         else:
             control = self._local_planner.run_step(
-                target_speed= min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist), debug=debug)
+                target_speed=min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist), debug=debug)
 
         return control
 
@@ -388,7 +397,7 @@ class BehaviorAgent(Agent):
             # we use bounding boxes to calculate the actual distance
             distance = w_distance - max(
                 walker.bounding_box.extent.y, walker.bounding_box.extent.x) - max(
-                    self.vehicle.bounding_box.extent.y, self.vehicle.bounding_box.extent.x)
+                self.vehicle.bounding_box.extent.y, self.vehicle.bounding_box.extent.x)
 
             # Emergency brake if the car is very close.
             if distance < self.behavior.braking_distance:
@@ -403,7 +412,7 @@ class BehaviorAgent(Agent):
             # we use bounding boxes to calculate the actual distance
             distance = distance - max(
                 vehicle.bounding_box.extent.y, vehicle.bounding_box.extent.x) - max(
-                    self.vehicle.bounding_box.extent.y, self.vehicle.bounding_box.extent.x)
+                self.vehicle.bounding_box.extent.y, self.vehicle.bounding_box.extent.x)
 
             # Emergency brake if the car is very close.
             if distance < self.behavior.braking_distance:
@@ -414,7 +423,8 @@ class BehaviorAgent(Agent):
         # 4: Intersection behavior
 
         # Checking if there's a junction nearby to slow down
-        elif self.incoming_waypoint.is_junction and (self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
+        elif self.incoming_waypoint.is_junction and (
+                self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
             control = self._local_planner.run_step(
                 target_speed=min(self.behavior.max_speed, self.speed_limit - 5), debug=debug)
 
@@ -423,6 +433,6 @@ class BehaviorAgent(Agent):
         # Calculate controller based on no turn, traffic light or vehicle in front
         else:
             control = self._local_planner.run_step(
-                target_speed= min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist), debug=debug)
+                target_speed=min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist), debug=debug)
 
         return control

@@ -13,7 +13,7 @@ import math
 from enum import Enum
 
 import carla
-from agents.tools.misc import is_within_distance_ahead, is_within_distance, compute_distance
+from core.agents.tools.misc import is_within_distance_ahead, is_within_distance, compute_distance
 
 
 class AgentState(Enum):
