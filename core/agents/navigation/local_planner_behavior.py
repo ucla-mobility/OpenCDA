@@ -49,10 +49,10 @@ class LocalPlanner(object):
     # FPS used for dt
     FPS = 20
 
-    def __init__(self, agent):
+    def __init__(self, agent, buffer_size=5):
         """
         :param agent: agent that regulates the vehicle
-        :param vehicle: actor to apply to local planner logic onto
+        :param buffer_size: the buffer size for waypoint
         """
         self._vehicle = agent.vehicle
         self._map = agent.vehicle.get_world().get_map()
@@ -68,7 +68,7 @@ class LocalPlanner(object):
         self._global_plan = None
         self._pid_controller = None
         self.waypoints_queue = deque(maxlen=20000)  # queue with tuples of (waypoint, RoadOption)
-        self._buffer_size = 5
+        self._buffer_size = buffer_size
         self._waypoint_buffer = deque(maxlen=self._buffer_size)
 
         self._init_controller()  # initializing controller
