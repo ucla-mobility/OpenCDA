@@ -13,8 +13,9 @@ from collections import deque
 from enum import Enum
 
 import carla
-from core.agents.navigation.controller import VehiclePIDController
+
 from core.agents.tools.misc import distance_vehicle, draw_waypoints
+from customize.controller import compute_pid, CustomizedVehiclePIDController
 
 
 class RoadOption(Enum):
@@ -49,29 +50,41 @@ class LocalPlanner(object):
     # FPS used for dt
     FPS = 20
 
-    def __init__(self, agent, buffer_size=5):
+    def __init__(self, agent, buffer_size=5, dynamic_pid=False):
         """
         :param agent: agent that regulates the vehicle
         :param buffer_size: the buffer size for waypoint
+        :param dynamic_pid: all pid parameters are dynamic based on surroundings,
+        which will require customized function supplied to compute
         """
+        # ego _vehicle
         self._vehicle = agent.vehicle
+        # leading vehicle
+        self._frontal_vehicle = agent.frontal_vehicle
         self._map = agent.vehicle.get_world().get_map()
 
-        self._target_speed = None
         self.sampling_radius = None
+        self.target_waypoint = None
+        self.target_road_option = None
+
         self._min_distance = None
         self._current_waypoint = None
-        self.target_road_option = None
+        self._target_speed = None
         self._next_waypoints = None
-        self.target_waypoint = None
         self._vehicle_controller = None
         self._global_plan = None
         self._pid_controller = None
-        self.waypoints_queue = deque(maxlen=20000)  # queue with tuples of (waypoint, RoadOption)
-        self._buffer_size = buffer_size
-        self._waypoint_buffer = deque(maxlen=self._buffer_size)
 
-        self._init_controller()  # initializing controller
+        # global route
+        self.waypoints_queue = deque(maxlen=20000)
+        self._buffer_size = buffer_size
+        # local route
+        self._waypoint_buffer = deque(maxlen=self._buffer_size)
+        # trajectory point buffer
+        self._trajectory_buffer = deque(maxlen=self._buffer_size)
+
+        self._init_controller()
+        self.dynamic_pid = dynamic_pid
 
     def reset_vehicle(self):
         """Reset the ego-vehicle"""
@@ -139,6 +152,7 @@ class LocalPlanner(object):
         """
         Sets new global plan.
 
+            :param clean:
             :param current_plan: list of waypoints in the actual plan
         """
         for elem in current_plan:
@@ -198,7 +212,7 @@ class LocalPlanner(object):
             control.manual_gear_shift = False
             return control
 
-        # Buffering the waypoints
+        # Buffering the waypoints TODO: use leading vehicles'
         if not self._waypoint_buffer:
             for i in range(self._buffer_size):
                 if self.waypoints_queue:
@@ -213,16 +227,20 @@ class LocalPlanner(object):
         # Target waypoint
         self.target_waypoint, self.target_road_option = self._waypoint_buffer[0]
 
-        if target_speed > 50:
+        if self.dynamic_pid:
+            args_lat, args_long = compute_pid(self)
+
+        elif target_speed > 50:
             args_lat = self.args_lat_hw_dict
             args_long = self.args_long_hw_dict
+
         else:
             args_lat = self.args_lat_city_dict
             args_long = self.args_long_city_dict
 
-        self._pid_controller = VehiclePIDController(self._vehicle,
-                                                    args_lateral=args_lat,
-                                                    args_longitudinal=args_long)
+        self._pid_controller = CustomizedVehiclePIDController(self._vehicle,
+                                                              args_lateral=args_lat,
+                                                              args_longitudinal=args_long)
 
         control = self._pid_controller.run_step(self._target_speed, self.target_waypoint)
 

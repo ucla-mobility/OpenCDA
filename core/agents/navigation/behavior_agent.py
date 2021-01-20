@@ -22,45 +22,48 @@ from core.agents.tools.misc import get_speed, positive
 
 class BehaviorAgent(Agent):
     """
-    BehaviorAgent implements an agent that navigates scenes to reach a given
-    target destination, by computing the shortest possible path to it.
-    This agent can correctly follow traffic signs, speed limitations,
-    traffic lights, while also taking into account nearby vehicles. Lane changing
-    decisions can be taken by analyzing the surrounding environment,
-    such as overtaking or tailgating avoidance. Adding to these are possible
-    behaviors, the agent can also keep safety distance from a car in front of it
-    by tracking the instantaneous time to collision and keeping it in a certain range.
-    Finally, different sets of behaviors are encoded in the agent, from cautious
-    to a more aggressive ones.
+    A modulized version of BehaviorAgent
     """
 
-    def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal', sampling_resolution=4.5):
+    def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal',
+                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False):
         """
-        Constructor method.
-
-            :param vehicle: actor to apply to local planner logic onto
-            :param ignore_traffic_light: boolean to ignore any traffic light
-            :param behavior: type of agent to apply
+        Construct class
+        :param vehicle: actor
+        :param ignore_traffic_light: whether to ignore certain traffic light
+        :param behavior: driving style
+        :param sampling_resolution: the minimum distance between each waypoint
+        :param buffer_size: buffer size for local route
+        :param dynamic_pid; whether to use dynamic pid params generation. Set to true will require users
+        provide customized function under customize/controller
         """
 
         super(BehaviorAgent, self).__init__(vehicle)
+
         self.vehicle = vehicle
+        # the frontal vehicle in the platooning
+        self.frontal_vehicle = None
+
         self.ignore_traffic_light = ignore_traffic_light
-        self._local_planner = LocalPlanner(self)
-        self._grp = None
         self.look_ahead_steps = 0
+
+        self._local_planner = LocalPlanner(self, buffer_size=buffer_size, dynamic_pid=dynamic_pid)
+        self._global_planner = None
 
         # Vehicle information
         self.speed = 0
         self.speed_limit = 0
         self.direction = None
+
         self.incoming_direction = None
         self.incoming_waypoint = None
         self.start_waypoint = None
         self.end_waypoint = None
+
         self.is_at_traffic_light = 0
         self.light_state = "Green"
         self.light_id_to_ignore = -1
+
         self.min_speed = 5
         self.behavior = None
         self._sampling_resolution = sampling_resolution
@@ -114,6 +117,7 @@ class BehaviorAgent(Agent):
         """
         if clean:
             self._local_planner.waypoints_queue.clear()
+
         self.start_waypoint = self._map.get_waypoint(start_location)
         self.end_waypoint = self._map.get_waypoint(end_location)
 
@@ -146,16 +150,16 @@ class BehaviorAgent(Agent):
             :param end_waypoint: final position
         """
         # Setting up global router
-        if self._grp is None:
+        if self._global_planner is None:
             wld = self.vehicle.get_world()
             dao = GlobalRoutePlannerDAO(
                 wld.get_map(), sampling_resolution=self._sampling_resolution)
             grp = GlobalRoutePlanner(dao)
             grp.setup()
-            self._grp = grp
+            self._global_planner = grp
 
         # Obtain route plan
-        route = self._grp.trace_route(
+        route = self._global_planner.trace_route(
             start_waypoint.transform.location,
             end_waypoint.transform.location)
 
@@ -236,7 +240,8 @@ class BehaviorAgent(Agent):
             self.behavior.min_proximity_threshold, self.speed_limit / 2), up_angle_th=180, low_angle_th=160)
         if behind_vehicle_state and self.speed < get_speed(behind_vehicle):
             if (right_turn == carla.LaneChange.Right or right_turn ==
-                carla.LaneChange.Both) and waypoint.lane_id * right_wpt.lane_id > 0 and right_wpt.lane_type == carla.LaneType.Driving:
+                carla.LaneChange.Both) and waypoint.lane_id * right_wpt.lane_id > 0 \
+                    and right_wpt.lane_type == carla.LaneType.Driving:
                 new_vehicle_state, _, _ = self._bh_is_vehicle_hazard(waypoint, location, vehicle_list, max(
                     self.behavior.min_proximity_threshold, self.speed_limit / 2), up_angle_th=180, lane_offset=1)
                 if not new_vehicle_state:

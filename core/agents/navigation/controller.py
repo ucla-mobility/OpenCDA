@@ -12,13 +12,12 @@ import carla
 from core.agents.tools.misc import get_speed
 
 
-class VehiclePIDController():
+class VehiclePIDController:
     """
     VehiclePIDController is the combination of two PID controllers
     (lateral and longitudinal) to perform the
     low level control a vehicle from client side
     """
-
 
     def __init__(self, vehicle, args_lateral, args_longitudinal, max_throttle=0.75, max_brake=0.3, max_steering=0.8):
         """
@@ -88,11 +87,10 @@ class VehiclePIDController():
         return control
 
 
-class PIDLongitudinalController():
+class PIDLongitudinalController:
     """
     PIDLongitudinalController implements longitudinal control using a PID.
     """
-
 
     def __init__(self, vehicle, K_P=1.0, K_D=0.0, K_I=0.0, dt=0.03):
         """
@@ -147,7 +145,8 @@ class PIDLongitudinalController():
 
         return np.clip((self._k_p * error) + (self._k_d * _de) + (self._k_i * _ie), -1.0, 1.0)
 
-class PIDLateralController():
+
+class PIDLateralController:
     """
     PIDLateralController implements lateral control using a PID.
     """
