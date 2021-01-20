@@ -37,7 +37,7 @@ class VehiclePIDController:
         """
 
         self.max_brake = max_brake
-        self.max_throt = max_throttle
+        self.max_throttle = max_throttle
         self.max_steer = max_steering
 
         self._vehicle = vehicle
@@ -61,7 +61,7 @@ class VehiclePIDController:
         current_steering = self._lat_controller.run_step(waypoint)
         control = carla.VehicleControl()
         if acceleration >= 0.0:
-            control.throttle = min(acceleration, self.max_throt)
+            control.throttle = min(acceleration, self.max_throttle)
             control.brake = 0.0
         else:
             control.throttle = 0.0

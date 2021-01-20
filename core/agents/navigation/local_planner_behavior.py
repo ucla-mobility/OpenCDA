@@ -80,8 +80,6 @@ class LocalPlanner(object):
         self._buffer_size = buffer_size
         # local route
         self._waypoint_buffer = deque(maxlen=self._buffer_size)
-        # trajectory point buffer
-        self._trajectory_buffer = deque(maxlen=self._buffer_size)
 
         self._init_controller()
         self.dynamic_pid = dynamic_pid

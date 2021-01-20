@@ -11,13 +11,14 @@ traffic signs, and has different possible configurations. """
 import random
 import numpy as np
 import carla
+
 from core.agents.navigation.agent import Agent
-from core.agents.navigation.local_planner_behavior import LocalPlanner, RoadOption
+from core.agents.navigation.local_planner_behavior import RoadOption
 from core.agents.navigation.global_route_planner import GlobalRoutePlanner
 from core.agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
 from core.agents.navigation.types_behavior import Cautious, Aggressive, Normal
-
 from core.agents.tools.misc import get_speed, positive
+from customize.local_planner_behavior import CustomizedLocalPlanner
 
 
 class BehaviorAgent(Agent):
@@ -47,7 +48,7 @@ class BehaviorAgent(Agent):
         self.ignore_traffic_light = ignore_traffic_light
         self.look_ahead_steps = 0
 
-        self._local_planner = LocalPlanner(self, buffer_size=buffer_size, dynamic_pid=dynamic_pid)
+        self._local_planner = CustomizedLocalPlanner(self, buffer_size=buffer_size, dynamic_pid=dynamic_pid)
         self._global_planner = None
 
         # Vehicle information
