@@ -2,12 +2,13 @@
 
 """A class manager to embed different plugins with vehicle
 """
-# Author: Yue Zhao <zhaoy@cmu.edu>
+# Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
 import carla
 
 from core.agents.navigation.behavior_agent import BehaviorAgent
+from core.communication.vehicle_communication_manager import VehicleCommunicationManager
 
 
 class VehicleManager(object):
@@ -27,4 +28,7 @@ class VehicleManager(object):
         :param cda_enabled:  whether the vehicle equipped with cda feature
         """
         self._vehicle = vehicle
-        self._agent = BehaviorAgent(vehicle, behavior=behavior, sampling_resolution=sample_resolution)
+        self._agent = BehaviorAgent(vehicle, behavior=behavior,
+                                    buffer_size=buffer_size, sampling_resolution=sample_resolution)
+
+        self._communication_manager = VehicleCommunicationManager(communication_range)
