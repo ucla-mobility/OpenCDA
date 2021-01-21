@@ -42,7 +42,7 @@ class BehaviorAgent(Agent):
         super(BehaviorAgent, self).__init__(vehicle)
 
         self.vehicle = vehicle
-        # the frontal vehicle in the platooning
+        # the frontal vehicle manager in the platooning
         self.frontal_vehicle = None
 
         self.ignore_traffic_light = ignore_traffic_light
@@ -79,11 +79,12 @@ class BehaviorAgent(Agent):
         elif behavior == 'aggressive':
             self.behavior = Aggressive()
 
-    def update_information(self, world):
+    def update_information(self, world, frontal_vehicle=None):
         """
         This method updates the information regarding the ego
         vehicle based on the surrounding world.
 
+            :param frontal_vehicle: the vehicle manager in front in the platooning
             :param world: carla.world object
         """
         self.speed = get_speed(self.vehicle)
@@ -93,7 +94,8 @@ class BehaviorAgent(Agent):
         if self.direction is None:
             self.direction = RoadOption.LANEFOLLOW
 
-        self.look_ahead_steps = int((self.speed_limit) / 10)
+        self.frontal_vehicle = frontal_vehicle
+        self.look_ahead_steps = int(self.speed_limit / 10)
 
         self.incoming_waypoint, self.incoming_direction = self._local_planner.get_incoming_waypoint_and_direction(
             steps=self.look_ahead_steps)
@@ -379,7 +381,6 @@ class BehaviorAgent(Agent):
             :param debug: boolean for debugging
             :return control: carla.VehicleControl
         """
-        control = None
         if self.behavior.tailgate_counter > 0:
             self.behavior.tailgate_counter -= 1
         if self.behavior.overtake_counter > 0:

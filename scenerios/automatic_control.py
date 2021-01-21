@@ -30,7 +30,7 @@ from pygame.locals import KMOD_CTRL
 from pygame.locals import K_ESCAPE
 from pygame.locals import K_q
 
-from core.agents.navigation.behavior_agent import BehaviorAgent
+from core.agents.navigation.platoon_behavior_agent import PlatooningBehaviorAgent
 
 # ==============================================================================
 # -- Global functions ----------------------------------------------------------
@@ -656,7 +656,7 @@ def game_loop(args):
         world = World(client.get_world(), hud, args)
         controller = KeyboardControl(world)
 
-        agent = BehaviorAgent(world.player, behavior=args.behavior)
+        agent = PlatooningBehaviorAgent(world.player, behavior=args.behavior)
 
         spawn_points = world.map.get_spawn_points()
         random.shuffle(spawn_points)

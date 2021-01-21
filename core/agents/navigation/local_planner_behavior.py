@@ -135,7 +135,7 @@ class LocalPlanner(object):
 
         self._target_speed = self._vehicle.get_speed_limit()
 
-        self._min_distance = 3
+        self._min_distance = 2
 
     def set_speed(self, speed):
         """
@@ -185,12 +185,15 @@ class LocalPlanner(object):
                 return None, RoadOption.VOID
         return None, RoadOption.VOID
 
-    def run_step(self, target_speed=None, debug=False):
+    def run_step(self, target_speed=None, debug=False,
+                 target_waypoint=None, target_road_option=None):
         """
         Execute one step of local planning which involves
         running the longitudinal and lateral PID controllers to
         follow the waypoints trajectory.
 
+            :param target_road_option:
+            :param target_waypoint:
             :param target_speed: desired speed
             :param debug: boolean flag to activate waypoints debugging
             :return: control
@@ -210,7 +213,7 @@ class LocalPlanner(object):
             control.manual_gear_shift = False
             return control
 
-        # Buffering the waypoints TODO: use leading vehicles'
+        # Buffering the waypoints. Always keep the waypoint buffer alive in case of dissolving
         if not self._waypoint_buffer:
             for i in range(self._buffer_size):
                 if self.waypoints_queue:
@@ -223,7 +226,10 @@ class LocalPlanner(object):
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
 
         # Target waypoint
-        self.target_waypoint, self.target_road_option = self._waypoint_buffer[0]
+        if not target_waypoint or not target_road_option:
+            self.target_waypoint, self.target_road_option = self._waypoint_buffer[0]
+        else:
+            self.target_waypoint, self.target_road_option = target_waypoint, target_road_option
 
         if self.dynamic_pid:
             args_lat, args_long = compute_pid(self)
@@ -240,7 +246,7 @@ class LocalPlanner(object):
                                                               args_lateral=args_lat,
                                                               args_longitudinal=args_long)
 
-        control = self._pid_controller.run_step(self._target_speed, self.target_waypoint)
+        control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform)
 
         # Purge the queue of obsolete waypoints
         vehicle_transform = self._vehicle.get_transform()

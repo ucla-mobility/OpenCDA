@@ -145,7 +145,8 @@ def compute_distance(location_1, location_2):
     """
     Euclidean distance between 3D points
 
-        :param location_1, location_2: 3D points
+        :param location_1: 3D points
+        :param location_2: 3D points
     """
     x = location_2.x - location_1.x
     y = location_2.y - location_1.y

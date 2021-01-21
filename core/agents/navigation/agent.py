@@ -183,9 +183,9 @@ class Agent(object):
             if is_within_distance(target_vehicle_loc, ego_loc,
                                   self._vehicle.get_transform().rotation.yaw,
                                   proximity_th, up_angle_th, low_angle_th):
-                return (True, target_vehicle, compute_distance(target_vehicle_loc, ego_loc))
+                return True, target_vehicle, compute_distance(target_vehicle_loc, ego_loc)
 
-        return (False, None, -1)
+        return False, None, -1
 
     def _is_vehicle_hazard(self, vehicle_list):
         """
