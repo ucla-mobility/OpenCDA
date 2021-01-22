@@ -80,7 +80,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # too close to the frontal vehicle, slow down
         if self.behavior.inter_gap > ttc > 0.0:
-            print("too close!")
+            # print("too close!")
             control = self._local_planner.run_step(
                 target_speed=positive(vehicle_speed - self.behavior.speed_decrease),
                 target_waypoint=vehicle_loc,
@@ -92,7 +92,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                                    target_waypoint=vehicle_loc,
                                                    target_road_option=vehicle_target_road_option,
                                                    debug=debug)
-            print("keep distance!!!!!!!!!, speed: %d" % (max(self.min_speed, vehicle_speed)))
+        #  print("keep distance!!!!!!!!!, speed: %d" % (max(self.min_speed, vehicle_speed)))
         # too far, tailgating
         else:
 
@@ -100,5 +100,5 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                                    target_waypoint=vehicle_loc,
                                                    target_road_option=vehicle_target_road_option,
                                                    debug=debug)
-            print("tailgating!!!!!!!!!!!, ttc: %f, speed: %d" % (ttc, self.behavior.tailgate_speed))
+        # print("tailgating!!!!!!!!!!!, ttc: %f, speed: %d" % (ttc, self.behavior.tailgate_speed))
         return control

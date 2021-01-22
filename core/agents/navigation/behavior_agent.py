@@ -292,21 +292,6 @@ class BehaviorAgent(Agent):
             vehicle_state, vehicle, distance = self._bh_is_vehicle_hazard(
                 waypoint, location, vehicle_list, max(
                     self.behavior.min_proximity_threshold, self.speed_limit / 3), up_angle_th=30)
-
-            # Check for overtaking
-
-            if vehicle_state and self.direction == RoadOption.LANEFOLLOW and \
-                    not waypoint.is_junction and self.speed > 10 \
-                    and self.behavior.overtake_counter == 0 and self.speed > get_speed(vehicle):
-                self._overtake(location, waypoint, vehicle_list)
-
-            # Check for tailgating
-
-            elif not vehicle_state and self.direction == RoadOption.LANEFOLLOW \
-                    and not waypoint.is_junction and self.speed > 10 \
-                    and self.behavior.tailgate_counter == 0:
-                self._tailgating(location, waypoint, vehicle_list)
-
         return vehicle_state, vehicle, distance
 
     def pedestrian_avoid_manager(self, location, waypoint):
@@ -374,7 +359,7 @@ class BehaviorAgent(Agent):
 
         return control
 
-    def run_step(self, debug=False):
+    def run_step(self, debug=True):
         """
         Execute one step of navigation.
 
@@ -390,12 +375,9 @@ class BehaviorAgent(Agent):
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
 
         # 1: Red lights and stops behavior
-
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             return self.emergency_stop()
-
         # 2.1: Pedestrian avoidancd behaviors
-
         walker_state, walker, w_distance = self.pedestrian_avoid_manager(
             ego_vehicle_loc, ego_vehicle_wp)
 

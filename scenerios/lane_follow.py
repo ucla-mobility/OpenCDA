@@ -29,8 +29,12 @@ def main():
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
         transform_3 = carla.Transform(carla.Location(x=49.36635742, y=-193.63253906, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
-        transform_destination = carla.Transform(carla.Location(x=189.74082031, y=-11.02694824, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
+        transform_4 = carla.Transform(carla.Location(x=39.36635742, y=-193.63253906, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
+        transform_5 = carla.Transform(carla.Location(x=29.36635742, y=-193.63253906, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
+        transform_destination = carla.Transform(carla.Location(x=58.14643066, y=194.85673828, z=0.3),
+                                                carla.Rotation(pitch=0.000000, yaw=-179.712173, roll=0.000000))
 
         # create the leading vehicle
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
@@ -44,10 +48,18 @@ def main():
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
 
+        ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+        vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
+
+        ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+        vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
+
         # setup managers
         vehicle_manager_1 = VehicleManager(vehicle_1)
         vehicle_manager_2 = VehicleManager(vehicle_2)
         vehicle_manager_3 = VehicleManager(vehicle_3)
+        vehicle_manager_4 = VehicleManager(vehicle_4)
+        vehicle_manager_5 = VehicleManager(vehicle_5)
         platooning_manager = PlatooningManager()
 
         # set leader
@@ -55,6 +67,8 @@ def main():
         # add member
         platooning_manager.add_member(vehicle_manager_2)
         platooning_manager.add_member(vehicle_manager_3)
+        platooning_manager.add_member(vehicle_manager_4)
+        platooning_manager.add_member(vehicle_manager_5)
 
         # set destination TODO: the spawn point may have conflict
         destination = transform_destination.location
@@ -65,7 +79,7 @@ def main():
             if not world.wait_for_tick(10.0):
                 continue
             spectator = world.get_spectator()
-            transform = vehicle_1.get_transform()
+            transform = vehicle_3.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
 
