@@ -32,6 +32,7 @@ from pygame.locals import K_q
 
 from core.agents.navigation.platoon_behavior_agent import PlatooningBehaviorAgent
 
+
 # ==============================================================================
 # -- Global functions ----------------------------------------------------------
 # ==============================================================================
@@ -40,7 +41,9 @@ from core.agents.navigation.platoon_behavior_agent import PlatooningBehaviorAgen
 def find_weather_presets():
     """Method to find weather presets"""
     rgx = re.compile('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)')
+
     def name(x): return ' '.join(m.group(0) for m in rgx.finditer(x))
+
     presets = [x for x in dir(carla.WeatherParameters) if re.match('[A-Z].+', x)]
     return [(getattr(carla.WeatherParameters, x), name(x)) for x in presets]
 
@@ -184,6 +187,7 @@ class KeyboardControl(object):
         """Shortcut for quitting"""
         return (key == K_ESCAPE) or (key == K_q and pygame.key.get_mods() & KMOD_CTRL)
 
+
 # ==============================================================================
 # -- HUD -----------------------------------------------------------------------
 # ==============================================================================
@@ -244,7 +248,7 @@ class HUD(object):
             'Map:     % 20s' % world.map.name,
             'Simulation time: % 12s' % datetime.timedelta(seconds=int(self.simulation_time)),
             '',
-            'Speed:   % 15.0f km/h' % (3.6 * math.sqrt(vel.x**2 + vel.y**2 + vel.z**2)),
+            'Speed:   % 15.0f km/h' % (3.6 * math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)),
             u'Heading:% 16.0f\N{DEGREE SIGN} % 2s' % (transform.rotation.yaw, heading),
             'Location:% 20s' % ('(% 5.1f, % 5.1f)' % (transform.location.x, transform.location.y)),
             'GNSS:% 24s' % ('(% 2.6f, % 3.6f)' % (world.gnss_sensor.lat, world.gnss_sensor.lon)),
@@ -274,8 +278,9 @@ class HUD(object):
             self._info_text += ['Nearby vehicles:']
 
         def dist(l):
-            return math.sqrt((l.x - transform.location.x)**2 + (l.y - transform.location.y)
-                             ** 2 + (l.z - transform.location.z)**2)
+            return math.sqrt((l.x - transform.location.x) ** 2 + (l.y - transform.location.y)
+                             ** 2 + (l.z - transform.location.z) ** 2)
+
         vehicles = [(dist(x.get_location()), x) for x in vehicles if x.id != world.player.id]
 
         for dist, vehicle in sorted(vehicles):
@@ -336,6 +341,7 @@ class HUD(object):
         self._notifications.render(display)
         self.help.render(display)
 
+
 # ==============================================================================
 # -- FadingText ----------------------------------------------------------------
 # ==============================================================================
@@ -370,6 +376,7 @@ class FadingText(object):
         """Render fading text method"""
         display.blit(self.surface, self.pos)
 
+
 # ==============================================================================
 # -- HelpText ------------------------------------------------------------------
 # ==============================================================================
@@ -401,6 +408,7 @@ class HelpText(object):
         """Render help text method"""
         if self._render:
             display.blit(self.surface, self.pos)
+
 
 # ==============================================================================
 # -- CollisionSensor -----------------------------------------------------------
@@ -445,6 +453,7 @@ class CollisionSensor(object):
         if len(self.history) > 4000:
             self.history.pop(0)
 
+
 # ==============================================================================
 # -- LaneInvasionSensor --------------------------------------------------------
 # ==============================================================================
@@ -475,6 +484,7 @@ class LaneInvasionSensor(object):
         lane_types = set(x.type for x in event.crossed_lane_markings)
         text = ['%r' % str(x).split()[-1] for x in lane_types]
         self.hud.notification('Crossed line %s' % ' and '.join(text))
+
 
 # ==============================================================================
 # -- GnssSensor --------------------------------------------------------
@@ -507,6 +517,7 @@ class GnssSensor(object):
             return
         self.lat = event.latitude
         self.lon = event.longitude
+
 
 # ==============================================================================
 # -- CameraManager -------------------------------------------------------------
@@ -569,7 +580,7 @@ class CameraManager(object):
         """Set a sensor"""
         index = index % len(self.sensors)
         needs_respawn = True if self.index is None else (
-            force_respawn or (self.sensors[index][0] != self.sensors[self.index][0]))
+                force_respawn or (self.sensors[index][0] != self.sensors[self.index][0]))
         if needs_respawn:
             if self.sensor is not None:
                 self.sensor.destroy()
@@ -630,6 +641,7 @@ class CameraManager(object):
         if self.recording:
             image.save_to_disk('_out/%08d' % image.frame)
 
+
 # ==============================================================================
 # -- Game Loop ---------------------------------------------------------
 # ==============================================================================
@@ -679,42 +691,28 @@ def game_loop(args):
             if not world.world.wait_for_tick(10.0):
                 continue
 
-            if args.agent == "Roaming" or args.agent == "Basic":
-                if controller.parse_events():
-                    return
+            agent.update_information(world)
 
-                # as soon as the server is ready continue!
-                world.world.wait_for_tick(10.0)
+            world.tick(clock)
+            world.render(display)
+            pygame.display.flip()
 
-                world.tick(clock)
-                world.render(display)
-                pygame.display.flip()
-                control = agent.run_step()
-                control.manual_gear_shift = False
-                world.player.apply_control(control)
-            else:
-                agent.update_information(world)
+            # Set new destination when target has been reached
+            if len(agent.get_local_planner().waypoints_queue) < num_min_waypoints and args.loop:
+                agent.reroute(spawn_points)
+                tot_target_reached += 1
+                world.hud.notification("The target has been reached " +
+                                       str(tot_target_reached) + " times.", seconds=4.0)
 
-                world.tick(clock)
-                world.render(display)
-                pygame.display.flip()
+            elif len(agent.get_local_planner().waypoints_queue) == 0 and not args.loop:
+                print("Target reached, mission accomplished...")
+                break
 
-                # Set new destination when target has been reached
-                if len(agent.get_local_planner().waypoints_queue) < num_min_waypoints and args.loop:
-                    agent.reroute(spawn_points)
-                    tot_target_reached += 1
-                    world.hud.notification("The target has been reached " +
-                                           str(tot_target_reached) + " times.", seconds=4.0)
+            speed_limit = world.player.get_speed_limit()
+            agent.get_local_planner().set_speed(speed_limit)
 
-                elif len(agent.get_local_planner().waypoints_queue) == 0 and not args.loop:
-                    print("Target reached, mission accomplished...")
-                    break
-
-                speed_limit = world.player.get_speed_limit()
-                agent.get_local_planner().set_speed(speed_limit)
-
-                control = agent.run_step()
-                world.player.apply_control(control)
+            control = agent.run_step()
+            world.player.apply_control(control)
 
     finally:
         if world is not None:

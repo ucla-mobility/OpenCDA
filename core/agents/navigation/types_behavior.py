@@ -6,8 +6,8 @@
 
 class Cautious(object):
     """Class for Cautious agent."""
-    max_speed = 40
-    tailgate_speed = 45
+    max_speed = 30
+    tailgate_speed = 35
     speed_lim_dist = 6
     speed_decrease = 12
     inter_gap = 1.3
@@ -20,22 +20,22 @@ class Cautious(object):
 
 class Normal(object):
     """Class for Normal agent."""
-    max_speed = 50
-    tailgate_speed = 55
+    max_speed = 40
+    tailgate_speed = 45
     speed_lim_dist = 3
     speed_decrease = 10
-    inter_gap = 1
+    inter_gap = 2
     safety_time = 3
     min_proximity_threshold = 10
-    braking_distance = 5
+    braking_distance = 2
     overtake_counter = 0
     tailgate_counter = 0
 
 
 class Aggressive(object):
     """Class for Aggressive agent."""
-    max_speed = 70
-    tailgate_speed = 75
+    max_speed = 60
+    tailgate_speed = 65
     speed_lim_dist = 1
     speed_decrease = 8
     inter_gap = 0.7

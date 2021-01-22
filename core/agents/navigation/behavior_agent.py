@@ -88,7 +88,7 @@ class BehaviorAgent(Agent):
             :param world: carla.world object
         """
         self.speed = get_speed(self.vehicle)
-        self.speed_limit = world.player.get_speed_limit()
+        self.speed_limit = self.vehicle.get_speed_limit()
         self._local_planner.set_speed(self.speed_limit)
         self.direction = self._local_planner.target_road_option
         if self.direction is None:
@@ -102,7 +102,7 @@ class BehaviorAgent(Agent):
         if self.incoming_direction is None:
             self.incoming_direction = RoadOption.LANEFOLLOW
 
-        self.is_at_traffic_light = world.player.is_at_traffic_light()
+        self.is_at_traffic_light = self.vehicle.is_at_traffic_light()
         if self.ignore_traffic_light:
             self.light_state = "Green"
         else:
@@ -370,7 +370,7 @@ class BehaviorAgent(Agent):
         # Normal behavior.
         else:
             control = self._local_planner.run_step(
-                target_speed=min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist), debug=debug)
+                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist, debug=debug)
 
         return control
 
@@ -433,13 +433,14 @@ class BehaviorAgent(Agent):
         elif self.incoming_waypoint.is_junction and (
                 self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
             control = self._local_planner.run_step(
-                target_speed=min(self.behavior.max_speed, self.speed_limit - 5), debug=debug)
+                target_speed=min(self.behavior.max_speed, self.behavior.max_speed - 12), debug=debug)
 
         # 5: Normal behavior
 
         # Calculate controller based on no turn, traffic light or vehicle in front
         else:
             control = self._local_planner.run_step(
-                target_speed=min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist), debug=debug)
+                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist,
+                debug=debug)
 
         return control

@@ -80,6 +80,8 @@ class LocalPlanner(object):
         self._buffer_size = buffer_size
         # local route
         self._waypoint_buffer = deque(maxlen=self._buffer_size)
+        # platooning following route
+        self._following_buffer = deque(maxlen=1000)
 
         self._init_controller()
         self.dynamic_pid = dynamic_pid
@@ -135,7 +137,7 @@ class LocalPlanner(object):
 
         self._target_speed = self._vehicle.get_speed_limit()
 
-        self._min_distance = 2
+        self._min_distance = 3
 
     def set_speed(self, speed):
         """
@@ -185,6 +187,31 @@ class LocalPlanner(object):
                 return None, RoadOption.VOID
         return None, RoadOption.VOID
 
+    def pop_buffer(self, vehicle_transform):
+        """
+        Remove waypoints achieved
+        :return:
+        """
+        max_index = -1
+
+        for i, (waypoint, _) in enumerate(self._waypoint_buffer):
+            if distance_vehicle(
+                    waypoint, vehicle_transform) < self._min_distance:
+                max_index = i
+        if max_index >= 0:
+            for i in range(max_index + 1):
+                self._waypoint_buffer.popleft()
+
+        if self._following_buffer:
+            max_index = -1
+            for i, (waypoint, _) in enumerate(self._following_buffer):
+                if distance_vehicle(
+                        waypoint, vehicle_transform) < self._min_distance:
+                    max_index = i
+            if max_index >= 0:
+                for i in range(max_index + 1):
+                    self._following_buffer.popleft()
+
     def run_step(self, target_speed=None, debug=False,
                  target_waypoint=None, target_road_option=None):
         """
@@ -229,7 +256,8 @@ class LocalPlanner(object):
         if not target_waypoint or not target_road_option:
             self.target_waypoint, self.target_road_option = self._waypoint_buffer[0]
         else:
-            self.target_waypoint, self.target_road_option = target_waypoint, target_road_option
+            self._following_buffer.append((target_waypoint, target_road_option))
+            self.target_waypoint, self.target_road_option = self._following_buffer[0]
 
         if self.dynamic_pid:
             args_lat, args_long = compute_pid(self)
@@ -246,19 +274,13 @@ class LocalPlanner(object):
                                                               args_lateral=args_lat,
                                                               args_longitudinal=args_long)
 
-        control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform)
+        control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform.location
+                                                if hasattr(self.target_waypoint, 'transform')
+                                                else self.target_waypoint)
 
         # Purge the queue of obsolete waypoints
         vehicle_transform = self._vehicle.get_transform()
-        max_index = -1
-
-        for i, (waypoint, _) in enumerate(self._waypoint_buffer):
-            if distance_vehicle(
-                    waypoint, vehicle_transform) < self._min_distance:
-                max_index = i
-        if max_index >= 0:
-            for i in range(max_index + 1):
-                self._waypoint_buffer.popleft()
+        self.pop_buffer(vehicle_transform)
 
         if debug:
             draw_waypoints(self._vehicle.get_world(),
