@@ -275,8 +275,8 @@ class LocalPlanner(object):
                                                               args_longitudinal=args_long)
 
         control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform.location
-                                                if hasattr(self.target_waypoint, 'transform')
-                                                else self.target_waypoint)
+        if hasattr(self.target_waypoint, 'is_junction')
+        else self.target_waypoint.location)
 
         # Purge the queue of obsolete waypoints
         vehicle_transform = self._vehicle.get_transform()

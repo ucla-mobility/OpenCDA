@@ -121,12 +121,12 @@ def distance_vehicle(waypoint, vehicle_transform):
         :param vehicle_transform: transform of the target vehicle
     """
     loc = vehicle_transform.location
-    if hasattr(waypoint, 'transform'):
+    if hasattr(waypoint, 'is_junction'):
         x = waypoint.transform.location.x - loc.x
         y = waypoint.transform.location.y - loc.y
     else:
-        x = waypoint.x - loc.x
-        y = waypoint.y - loc.y
+        x = waypoint.location.x - loc.x
+        y = waypoint.location.y - loc.y
 
     return math.sqrt(x * x + y * y)
 

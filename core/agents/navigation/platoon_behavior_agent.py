@@ -59,7 +59,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return self.emergency_stop()
 
         control = self.platooning_following_manager(frontal_vehicle, distance,
-                                                    frontal_vehicle_loc, frontal_agent_target_road_option)
+                                                    frontal_vehicle.get_transform(), frontal_agent_target_road_option)
 
         return control
 
