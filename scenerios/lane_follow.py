@@ -33,7 +33,7 @@ def main():
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
         transform_5 = carla.Transform(carla.Location(x=29.36635742, y=-193.63253906, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
-        transform_destination = carla.Transform(carla.Location(x=58.14643066, y=194.85673828, z=0.3),
+        transform_destination = carla.Transform(carla.Location(x=58.18258789, y=187.85683594, z=0.3),
                                                 carla.Rotation(pitch=0.000000, yaw=-179.712173, roll=0.000000))
 
         # create the leading vehicle
