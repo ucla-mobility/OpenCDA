@@ -668,7 +668,7 @@ def game_loop(args):
         world = World(client.get_world(), hud, args)
         controller = KeyboardControl(world)
 
-        agent = PlatooningBehaviorAgent(world.player, behavior=args.behavior, sampling_resolution=5.0)
+        agent = PlatooningBehaviorAgent(world.player, behavior=args.behavior, sampling_resolution=8.0)
 
         spawn_points = world.map.get_spawn_points()
         random.shuffle(spawn_points)

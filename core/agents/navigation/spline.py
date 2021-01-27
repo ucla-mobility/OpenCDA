@@ -194,7 +194,7 @@ def main():  # pragma: no cover
     print("Spline 2D test")
     import matplotlib.pyplot as plt
     x = [-135, -131, -131, -131]
-    y = [6.43, 8.83, 27.38, 27.48]
+    y = [6.43, 8.83, 27.38, 31]
     ds = 0.1  # [m] distance of each intepolated points
 
     sp = Spline2D(x, y)

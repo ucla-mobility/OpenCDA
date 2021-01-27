@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from collections import deque
 from customize.controller import compute_pid, CustomizedVehiclePIDController
-from core.agents.tools.misc import compute_distance, distance_vehicle, get_speed
+from core.agents.tools.misc import compute_distance, distance_vehicle, get_speed, draw_trajetory_points
 from core.agents.navigation.local_planner_behavior import LocalPlanner
 from core.agents.navigation.spline import Spline2D
 
@@ -30,10 +30,11 @@ class CustomizedLocalPlanner(LocalPlanner):
         """
         super(CustomizedLocalPlanner, self).__init__(agent, buffer_size, dynamic_pid)
         # trajectory point buffer
+        self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=10)
         self._velocity_buffer = deque(maxlen=10)
 
-    def generate_trajectory(self):
+    def generate_trajectory(self, debug=True):
         """
         Generate a smooth trajectory using spline fitting
         :return:
@@ -52,13 +53,13 @@ class CustomizedLocalPlanner(LocalPlanner):
         y.append(current_location.y)
 
         # used to filter the duplicate points
-        prev_x = -10000
-        prev_y = -10000
+        prev_x = x[0]
+        prev_y = y[0]
         # more waypoints will lead to a more optimized planning path
         for i in range(len(self._waypoint_buffer) - 1):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
-            if abs(prev_x - cur_x) < 0.1 and abs(prev_y - cur_y) < 0.1:
+            if abs(prev_x - cur_x) < 0.5 and abs(prev_y - cur_y) < 0.5:
                 continue
             prev_x = cur_x
             prev_y = cur_y
@@ -74,10 +75,19 @@ class CustomizedLocalPlanner(LocalPlanner):
         # we only need the interpolation points until next waypoint
         for i_s in s:
             ix, iy = sp.calc_position(i_s)
-            if abs(ix - x[1]) and abs(iy - y[1]) <= ds:
+            if abs(ix - x[0]) <= ds and abs(iy - y[0]) <= ds:
+                continue
+            if abs(ix - x[1]) <= ds and abs(iy - y[1]) <= ds:
                 break
             rx.append(ix)
             ry.append(iy)
+
+        # debug purpose
+        if debug:
+            self._long_plan_debug = []
+            for i_s in s:
+                ix, iy = sp.calc_position(i_s)
+                self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # sample the trajectory by 0.1 second
         sample_resolution = (current_speed + target_speed) / 2 * 0.1
@@ -91,15 +101,19 @@ class CustomizedLocalPlanner(LocalPlanner):
                                             self._waypoint_buffer[0][1],
                                             target_speed))
         else:
-            print('trajectory buffer!')
             for i in range(1, int(sample_num) + 1):
-                sample_x = rx[int(i * sample_resolution // ds - 1)]
-                sample_y = ry[int(i * sample_resolution // ds - 1)]
+                if int(i * sample_resolution // ds - 1) >= len(rx):
+                    sample_x = rx[-1]
+                    sample_y = ry[-1]
+                else:
+                    sample_x = rx[int(i * sample_resolution // ds - 1)]
+                    sample_y = ry[int(i * sample_resolution // ds - 1)]
                 sample_speed = current_speed + (target_speed - current_speed) * i / sample_num
 
                 self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
                                                 self._waypoint_buffer[0][1],
                                                 sample_speed))
+            print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
     def pop_buffer(self, vehicle_transform):
         """
@@ -136,13 +150,14 @@ class CustomizedLocalPlanner(LocalPlanner):
                 for i in range(max_index + 1):
                     self._trajectory_buffer.popleft()
 
-    def run_step(self, target_speed=None, debug=False,
+    def run_step(self, target_speed=None, debug=True, debug_long=True,
                  target_waypoint=None, target_road_option=None):
         """
         Execute one step of local planning which involves
         running the longitudinal and lateral PID controllers to
         follow the smooth waypoints trajectory.
 
+            :param debug_long: boolean flag to debug long path trajecotry
             :param target_road_option:
             :param target_waypoint:
             :param target_speed: desired speed
@@ -175,7 +190,7 @@ class CustomizedLocalPlanner(LocalPlanner):
 
         # trajectory generation
         if not self._trajectory_buffer:
-            self.generate_trajectory()
+            self.generate_trajectory(debug_long)
 
         # Current vehicle waypoint
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
@@ -209,5 +224,15 @@ class CustomizedLocalPlanner(LocalPlanner):
         # Purge the queue of obsolete waypoints
         vehicle_transform = self._vehicle.get_transform()
         self.pop_buffer(vehicle_transform)
+
+        if debug_long:
+            draw_trajetory_points(self._vehicle.get_world(),
+                                  self._long_plan_debug,
+                                  color=carla.Color(0, 255, 0),
+                                  size=0.05,
+                                  lt=0.2)
+        if debug:
+            draw_trajetory_points(self._vehicle.get_world(),
+                                  [self.target_waypoint], z=0.1)
 
         return control

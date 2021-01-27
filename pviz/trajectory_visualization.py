@@ -34,7 +34,28 @@ def draw_trajecotry(x_coords, y_coords, yaw):
     plt.show()
 
 
+def tmp_function(origin, target):
+    delta_x = target[0] - origin[0]
+    delta_y = target[1] - origin[1]
+    heading = np.arctan2(delta_y, delta_x)
+
+    goal_state_local_x = delta_x
+    goal_state_local_y = delta_y
+    theta = - origin[2]
+
+    goal_x = math.cos(theta) * goal_state_local_x - math.sin(theta) * goal_state_local_y
+    goal_y = math.sin(theta) * goal_state_local_x - math.cos(theta) * goal_state_local_y
+
+    goal_t = heading - origin[2]
+
+    return [goal_x, goal_y, goal_t]
+
+
 if __name__ == '__main__':
     path_otimizer = PathOptimizer()
-    interpolation_points = path_otimizer.optimize_spiral(10, 10, 0)
+    origin = [-140, -0.60, math.pi / 180]
+    target = [-159, -41, math.pi / 180]
+    transfromed_target = tmp_function(origin, target)
+
+    interpolation_points = path_otimizer.optimize_spiral(transfromed_target[0], transfromed_target[1], transfromed_target[2])
     draw_trajecotry(interpolation_points[0], interpolation_points[1], interpolation_points[2])

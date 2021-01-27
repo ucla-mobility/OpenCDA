@@ -12,6 +12,27 @@ import math
 import numpy as np
 import carla
 
+
+def draw_trajetory_points(world, waypoints, z=0.25,  color=carla.Color(255, 0, 0), lt=5, size=0.1):
+    """
+    Draw a list of trajetory points
+    :param size:
+    :param lt:
+    :param color:
+    :param world:
+    :param waypoints:
+    :param z:
+    :return:
+    """
+    for wpt in waypoints:
+        if hasattr(wpt, 'is_junction'):
+            wpt_t = wpt.transform
+        else:
+            wpt_t = wpt
+
+        world.debug.draw_point(wpt_t.location + carla.Location(z), size, color, lt, False)
+
+
 def draw_waypoints(world, waypoints, z=0.5):
     """
     Draw a list of waypoints at a certain height given in z.
@@ -39,6 +60,7 @@ def get_speed(vehicle):
 
     return 3.6 * math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
 
+
 def is_within_distance_ahead(target_transform, current_transform, max_distance):
     """
     Check if a target object is within a certain distance in front of a reference object.
@@ -49,7 +71,8 @@ def is_within_distance_ahead(target_transform, current_transform, max_distance):
     :param max_distance: maximum allowed distance
     :return: True if target object is within max_distance ahead of the reference object
     """
-    target_vector = np.array([target_transform.location.x - current_transform.location.x, target_transform.location.y - current_transform.location.y])
+    target_vector = np.array([target_transform.location.x - current_transform.location.x,
+                              target_transform.location.y - current_transform.location.y])
     norm_target = np.linalg.norm(target_vector)
 
     # If the vector is too short, we can simply stop here
@@ -64,6 +87,7 @@ def is_within_distance_ahead(target_transform, current_transform, max_distance):
     d_angle = math.degrees(math.acos(np.clip(np.dot(forward_vector, target_vector) / norm_target, -1., 1.)))
 
     return d_angle < 90.0
+
 
 def is_within_distance(target_location, current_location, orientation, max_distance, d_angle_th_up, d_angle_th_low=0):
     """

@@ -17,7 +17,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     The behavior agent for platooning
     """
 
-    def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal',
+    def __init__(self, vehicle, ignore_traffic_light=True, behavior='normal',
                  sampling_resolution=4.5, buffer_size=5, dynamic_pid=False):
         """
         Construct class
