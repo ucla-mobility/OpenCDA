@@ -21,7 +21,7 @@ class CustomizedLocalPlanner(LocalPlanner):
     Customized Local Planner to implement trajectory method
     """
 
-    def __init__(self, agent, buffer_size=5, dynamic_pid=False):
+    def __init__(self, agent, buffer_size=5, dynamic_pid=False, debug=False, debug_trajectory=False):
         """
         :param agent: agent that regulates the vehicle
         :param buffer_size: the buffer size for waypoint
@@ -33,6 +33,9 @@ class CustomizedLocalPlanner(LocalPlanner):
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=10)
         self._velocity_buffer = deque(maxlen=10)
+        # debug option
+        self.debug = debug
+        self.debug_trajectory = debug_trajectory
 
     def generate_trajectory(self, debug=True):
         """
@@ -150,18 +153,15 @@ class CustomizedLocalPlanner(LocalPlanner):
                 for i in range(max_index + 1):
                     self._trajectory_buffer.popleft()
 
-    def run_step(self, target_speed=None, debug=True, debug_long=True,
-                 target_waypoint=None, target_road_option=None):
+    def run_step(self, target_speed=None, target_waypoint=None, target_road_option=None):
         """
         Execute one step of local planning which involves
         running the longitudinal and lateral PID controllers to
         follow the smooth waypoints trajectory.
 
-            :param debug_long: boolean flag to debug long path trajecotry
             :param target_road_option:
             :param target_waypoint:
             :param target_speed: desired speed
-            :param debug: boolean flag to activate waypoints debugging
             :return: control
         """
 
@@ -190,7 +190,7 @@ class CustomizedLocalPlanner(LocalPlanner):
 
         # trajectory generation
         if not self._trajectory_buffer:
-            self.generate_trajectory(debug_long)
+            self.generate_trajectory(self.debug_trajectory)
 
         # Current vehicle waypoint
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
@@ -225,14 +225,21 @@ class CustomizedLocalPlanner(LocalPlanner):
         vehicle_transform = self._vehicle.get_transform()
         self.pop_buffer(vehicle_transform)
 
-        if debug_long:
+        if self.debug_trajectory:
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._long_plan_debug,
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
                                   lt=0.2)
-        if debug:
             draw_trajetory_points(self._vehicle.get_world(),
-                                  [self.target_waypoint], z=0.1)
+                                  self._trajectory_buffer, z=0.1)
+
+        if self.debug:
+            draw_trajetory_points(self._vehicle.get_world(),
+                                  self._waypoint_buffer,
+                                  z=0.1,
+                                  size=0.1,
+                                  color=carla.Color(0, 0, 255),
+                                  lt=1)
 
         return control

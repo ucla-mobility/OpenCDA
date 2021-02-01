@@ -6,8 +6,6 @@
 # License: MIT
 
 import carla
-import os
-import random
 
 from core.platooning.platooning_manager import PlatooningManager
 from core.vehicle.vehicle_manager import VehicleManager
@@ -25,10 +23,8 @@ def main():
         # setup spawn points
         transform_1 = carla.Transform(carla.Location(x=79.40094727, y=-193.74714844, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
-
         # transform_1 = carla.Transform(carla.Location(x=-63.55532227, y=94.9939, z=0.3),
         #                               carla.Rotation(pitch=0.000000, yaw=0.065, roll=0.000000))
-
         transform_2 = carla.Transform(carla.Location(x=69.36635742, y=-193.63253906, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
         transform_3 = carla.Transform(carla.Location(x=49.36635742, y=-193.63253906, z=0.3),
@@ -62,7 +58,8 @@ def main():
         vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
 
         # setup managers
-        vehicle_manager_1 = VehicleManager(vehicle_1, sample_resolution=6.0)
+        vehicle_manager_1 = VehicleManager(vehicle_1, sample_resolution=6.0,
+                                           debug_trajectory=True, debug=True)
         vehicle_manager_2 = VehicleManager(vehicle_2)
         vehicle_manager_3 = VehicleManager(vehicle_3)
         vehicle_manager_4 = VehicleManager(vehicle_4)

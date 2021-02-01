@@ -27,7 +27,7 @@ class Normal(object):
     inter_gap = 2
     safety_time = 3
     min_proximity_threshold = 10
-    braking_distance = 2
+    braking_distance = 5
     overtake_counter = 0
     tailgate_counter = 0
 

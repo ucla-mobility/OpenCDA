@@ -5,7 +5,6 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import carla
 import numpy as np
 
 from core.agents.navigation.behavior_agent import BehaviorAgent
@@ -17,8 +16,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     The behavior agent for platooning
     """
 
-    def __init__(self, vehicle, ignore_traffic_light=True, behavior='normal',
-                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False):
+    def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal',
+                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False,
+                 debug_trajectory=False, debug=False):
         """
         Construct class
         :param vehicle: actor
@@ -31,7 +31,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
 
         super(PlatooningBehaviorAgent, self).__init__(vehicle, ignore_traffic_light, behavior, sampling_resolution,
-                                                      buffer_size, dynamic_pid)
+                                                      buffer_size, dynamic_pid, debug_trajectory, debug)
 
     def run_step_following(self):
         """
@@ -80,7 +80,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # too close to the frontal vehicle, slow down
         if self.behavior.inter_gap > ttc > 0.0:
-            # print("too close!")
+            print("too close!")
             control = self._local_planner.run_step(
                 target_speed=positive(vehicle_speed - self.behavior.speed_decrease),
                 target_waypoint=vehicle_loc,
@@ -92,7 +92,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                                    target_waypoint=vehicle_loc,
                                                    target_road_option=vehicle_target_road_option,
                                                    debug=debug)
-        #  print("keep distance!!!!!!!!!, speed: %d" % (max(self.min_speed, vehicle_speed)))
+            print("keep distance!!!!!!!!!, speed: %d" % (max(self.min_speed, vehicle_speed)))
         # too far, tailgating
         else:
 
@@ -100,5 +100,5 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                                    target_waypoint=vehicle_loc,
                                                    target_road_option=vehicle_target_road_option,
                                                    debug=debug)
-        # print("tailgating!!!!!!!!!!!, ttc: %f, speed: %d" % (ttc, self.behavior.tailgate_speed))
+            print("tailgating!!!!!!!!!!!, ttc: %f, speed: %d" % (ttc, self.behavior.tailgate_speed))
         return control
