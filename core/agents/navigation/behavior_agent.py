@@ -416,15 +416,15 @@ class BehaviorAgent(Agent):
         # Checking if there's a junction nearby to slow down
         elif self.incoming_waypoint.is_junction and (
                 self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
+            print('turnning')
             control = self._local_planner.run_step(
-                target_speed=min(self.behavior.max_speed, self.behavior.max_speed - 12), debug=debug)
+                target_speed=min(self.behavior.max_speed, self.behavior.max_speed - 12))
 
         # 5: Normal behavior
 
         # Calculate controller based on no turn, traffic light or vehicle in front
         else:
             control = self._local_planner.run_step(
-                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist,
-                debug=debug)
+                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist)
 
         return control

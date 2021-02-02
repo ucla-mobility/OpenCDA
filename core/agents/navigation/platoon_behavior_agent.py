@@ -84,21 +84,18 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             control = self._local_planner.run_step(
                 target_speed=positive(vehicle_speed - self.behavior.speed_decrease),
                 target_waypoint=vehicle_loc,
-                target_road_option=vehicle_target_road_option,
-                debug=debug)
+                target_road_option=vehicle_target_road_option)
         # in the safe following area
         elif 3 * self.behavior.inter_gap > ttc > self.behavior.inter_gap:
             control = self._local_planner.run_step(target_speed=max(self.min_speed, vehicle_speed),
                                                    target_waypoint=vehicle_loc,
-                                                   target_road_option=vehicle_target_road_option,
-                                                   debug=debug)
+                                                   target_road_option=vehicle_target_road_option)
             print("keep distance!!!!!!!!!, speed: %d" % (max(self.min_speed, vehicle_speed)))
         # too far, tailgating
         else:
 
             control = self._local_planner.run_step(target_speed=self.behavior.tailgate_speed,
                                                    target_waypoint=vehicle_loc,
-                                                   target_road_option=vehicle_target_road_option,
-                                                   debug=debug)
+                                                   target_road_option=vehicle_target_road_option)
             print("tailgating!!!!!!!!!!!, ttc: %f, speed: %d" % (ttc, self.behavior.tailgate_speed))
         return control

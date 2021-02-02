@@ -59,7 +59,7 @@ class CustomizedLocalPlanner(LocalPlanner):
         prev_x = x[0]
         prev_y = y[0]
         # more waypoints will lead to a more optimized planning path
-        for i in range(len(self._waypoint_buffer) - 1):
+        for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
             if abs(prev_x - cur_x) < 0.5 and abs(prev_y - cur_y) < 0.5:
@@ -80,8 +80,8 @@ class CustomizedLocalPlanner(LocalPlanner):
             ix, iy = sp.calc_position(i_s)
             if abs(ix - x[0]) <= ds and abs(iy - y[0]) <= ds:
                 continue
-            if abs(ix - x[1]) <= ds and abs(iy - y[1]) <= ds:
-                break
+            # if abs(ix - x[1]) <= ds and abs(iy - y[1]) <= ds:
+            #     break
             rx.append(ix)
             ry.append(iy)
 
@@ -94,7 +94,9 @@ class CustomizedLocalPlanner(LocalPlanner):
 
         # sample the trajectory by 0.1 second
         sample_resolution = (current_speed + target_speed) / 2 * 0.1
-        distance = compute_distance(self._waypoint_buffer[0][0].transform.location,
+        distance = compute_distance(self._waypoint_buffer[-1][0].transform.location
+                                    if len(self._waypoint_buffer) < 4 else self._waypoint_buffer[3][
+            0].transform.location,
                                     current_location)
         sample_num = distance // sample_resolution
 
@@ -180,7 +182,7 @@ class CustomizedLocalPlanner(LocalPlanner):
             return control
 
         # Buffering the waypoints. Always keep the waypoint buffer alive in case of dissolving
-        if len(self._waypoint_buffer) < 2:
+        if len(self._waypoint_buffer) < 4:
             for i in range(self._buffer_size):
                 if self.waypoints_queue:
                     self._waypoint_buffer.append(
