@@ -69,10 +69,10 @@ class VehiclePIDController:
 
         # Steering regulation: changes cannot happen abruptly, can't steer too much.
 
-        if current_steering > self.past_steering + 0.1:
-            current_steering = self.past_steering + 0.1
-        elif current_steering < self.past_steering - 0.1:
-            current_steering = self.past_steering - 0.1
+        if current_steering > self.past_steering + 0.2:
+            current_steering = self.past_steering + 0.2
+        elif current_steering < self.past_steering - 0.2:
+            current_steering = self.past_steering - 0.2
 
         if current_steering >= 0:
             steering = min(self.max_steer, current_steering)
