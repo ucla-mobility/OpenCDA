@@ -278,7 +278,7 @@ class LocalPlanner(object):
                 self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
                                                 self._waypoint_buffer[0][1],
                                                 sample_speed))
-            print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
+        # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
     def pop_buffer(self, vehicle_transform):
         """
@@ -394,7 +394,7 @@ class LocalPlanner(object):
                                   size=0.05,
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._trajectory_buffer, z=0.1)
+                                  self._trajectory_buffer, z=0.1, lt=0.2)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),
@@ -402,6 +402,6 @@ class LocalPlanner(object):
                                   z=0.1,
                                   size=0.1,
                                   color=carla.Color(0, 0, 255),
-                                  lt=1)
+                                  lt=0.2)
 
         return control

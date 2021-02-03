@@ -13,7 +13,7 @@ import numpy as np
 import carla
 
 
-def draw_trajetory_points(world, waypoints, z=0.25,  color=carla.Color(255, 0, 0), lt=5, size=0.1):
+def draw_trajetory_points(world, waypoints, z=0.25, color=carla.Color(255, 0, 0), lt=5, size=0.1):
     """
     Draw a list of trajetory points
     :param size:
@@ -52,16 +52,17 @@ def draw_waypoints(world, waypoints, z=0.5):
         world.debug.draw_arrow(begin, end, arrow_size=0.3, life_time=1.0)
 
 
-def get_speed(vehicle):
+def get_speed(vehicle, meters=False):
     """
     Compute speed of a vehicle in Km/h.
 
+        :param meters: use m/s or km/h
         :param vehicle: the vehicle for which speed is calculated
         :return: speed as a float in Km/h
     """
     vel = vehicle.get_velocity()
-
-    return 3.6 * math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
+    vel_meter_per_second = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
+    return vel_meter_per_second if meters else 3.6 * vel_meter_per_second
 
 
 def is_within_distance_ahead(target_transform, current_transform, max_distance):
@@ -90,6 +91,24 @@ def is_within_distance_ahead(target_transform, current_transform, max_distance):
     d_angle = math.degrees(math.acos(np.clip(np.dot(forward_vector, target_vector) / norm_target, -1., 1.)))
 
     return d_angle < 90.0
+
+
+def cal_distance_angle(target_location, current_location, orientation):
+    """
+    Calculate the vehicle current relative distance to target location
+    :param target_location:
+    :param current_location:
+    :param orientation:
+    :return: distance and angle
+    """
+    target_vector = np.array([target_location.x - current_location.x, target_location.y - current_location.y])
+    norm_target = np.linalg.norm(target_vector)
+
+    forward_vector = np.array(
+        [math.cos(math.radians(orientation)), math.sin(math.radians(orientation))])
+    d_angle = math.degrees(math.acos(np.clip(np.dot(forward_vector, target_vector) / norm_target, -1., 1.)))
+
+    return norm_target, d_angle
 
 
 def is_within_distance(target_location, current_location, orientation, max_distance, d_angle_th_up, d_angle_th_low=0):

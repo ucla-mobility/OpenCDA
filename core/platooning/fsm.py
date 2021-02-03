@@ -11,7 +11,7 @@ from enum import Enum
 
 class FSM(Enum):
     SEARCHING = 0
-    JOINING_NEGOTIATION = 1
+    OPEN_GAP = 1
     MOVE_TO_POINT = 2
     JOINING = 3
     MAINTINING = 4

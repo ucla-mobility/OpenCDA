@@ -6,7 +6,6 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-from core.communication.platooning_communication_manager import PlatooningCommunicationManager
 from core.vehicle.vehicle_manager import VehicleManager
 
 
@@ -15,9 +14,10 @@ class PlatooningManager(object):
     Platooning manager for vehicle managers
     """
 
-    def __init__(self, maximum_capcity=10):
+    def __init__(self, world, maximum_capcity=10):
         """
         Construct class
+        :param world: platooning world object
         :param maximum_capcity:
         """
         # TODO: Find a better way to give id
@@ -31,7 +31,7 @@ class PlatooningManager(object):
         self.agent = None
         self.destination = None
 
-        self._platooning_communication = PlatooningCommunicationManager()
+        world.update_platooning(self)
 
     def set_lead(self, vehicle_manager):
         """
@@ -42,7 +42,7 @@ class PlatooningManager(object):
         # TODO: Right we only consider the platooning is empty, and the lead vehicle is the first one join in
         self.leader_uuid = vehicle_manager.vid
         self.vehicle_manager_list.append(vehicle_manager)
-        vehicle_manager.set_platooning(self.pmid, True)
+        vehicle_manager.set_platooning(self, self.pmid, 0, True)
 
     def add_member(self, vehicle_manager):
         """
@@ -52,7 +52,15 @@ class PlatooningManager(object):
         :return:
         """
         self.vehicle_manager_list.append(vehicle_manager)
-        vehicle_manager.set_platooning(self.pmid, False)
+        vehicle_manager.set_platooning(self, self.pmid, len(self.vehicle_manager_list)-1, False)
+
+    def response_joining_request(self):
+        """
+        Check whether to accept joining
+        TODO: Consider platooning status as well, etc. changinglane, collision status
+        :return:
+        """
+        return True if len(self.vehicle_manager_list) < self.maximum_capacity else False
 
     def set_destination(self, destination):
         """
@@ -60,6 +68,7 @@ class PlatooningManager(object):
         TODO: Right now all the vehicles have the same destination, change it later
         :return:
         """
+        self.destination = destination
         for i in range(len(self.vehicle_manager_list)):
             self.vehicle_manager_list[i].agent.set_destination(
                 self.vehicle_manager_list[i].vehicle.get_location(), destination, clean=True)

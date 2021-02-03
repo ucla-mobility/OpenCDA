@@ -122,6 +122,8 @@ class BehaviorAgent(Agent):
         """
         if clean:
             self._local_planner.waypoints_queue.clear()
+            self._local_planner._trajectory_buffer.clear()
+            self._local_planner._waypoint_buffer.clear()
 
         self.start_waypoint = self._map.get_waypoint(start_location)
         self.end_waypoint = self._map.get_waypoint(end_location)
@@ -327,14 +329,13 @@ class BehaviorAgent(Agent):
 
         return walker_state, walker, distance
 
-    def car_following_manager(self, vehicle, distance, debug=False):
+    def car_following_manager(self, vehicle, distance):
         """
         Module in charge of car-following behaviors when there's
         someone in front of us.
 
             :param vehicle: car to follow
             :param distance: distance from vehicle
-            :param debug: boolean for debugging
             :return control: carla.VehicleControl
         """
 
@@ -346,26 +347,24 @@ class BehaviorAgent(Agent):
         if self.behavior.safety_time > ttc > 0.0:
             control = self._local_planner.run_step(
                 target_speed=min(positive(vehicle_speed - self.behavior.speed_decrease),
-                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)),
-                debug=debug)
+                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)))
         # Actual safety distance area, try to follow the speed of the vehicle in front.
         elif 2 * self.behavior.safety_time > ttc >= self.behavior.safety_time:
             control = self._local_planner.run_step(
                 target_speed=min(max(self.min_speed, vehicle_speed),
-                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)),
-                debug=debug)
+                                 min(self.behavior.max_speed, self.speed_limit - self.behavior.speed_lim_dist)))
         # Normal behavior.
         else:
             control = self._local_planner.run_step(
-                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist, debug=debug)
+                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dis)
 
         return control
 
-    def run_step(self, debug=True):
+    def run_step(self, target_speed=None):
         """
         Execute one step of navigation.
 
-            :param debug: boolean for debugging
+            :param target_speed: a manual order to achieve certain speed
             :return control: carla.VehicleControl
         """
         if self.behavior.tailgate_counter > 0:
@@ -425,6 +424,7 @@ class BehaviorAgent(Agent):
         # Calculate controller based on no turn, traffic light or vehicle in front
         else:
             control = self._local_planner.run_step(
-                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist)
+                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist
+                if not target_speed else target_speed)
 
         return control
