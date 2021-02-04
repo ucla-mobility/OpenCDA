@@ -132,6 +132,11 @@ class BehaviorAgent(Agent):
 
         self._local_planner.set_global_plan(route_trace, clean)
 
+    def get_local_planner(self):
+        """return the local planner
+        """
+        return self._local_planner
+
     def reroute(self, spawn_points):
         """
         This method implements re-routing for vehicles approaching its destination.

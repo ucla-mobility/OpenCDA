@@ -79,16 +79,20 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         :return:
         """
         print("start merging !")
-        frontal_vehicle_transform = frontal_vehicle_vm.vehicle.get_location()
+        frontal_vehicle_loc = frontal_vehicle_vm.vehicle.get_location()
+
+        # we choose next waypoint of the frontal vehicle as starting point to have smooth speed
+        frontal_vehicle_waypoint = frontal_vehicle_vm.agent._map.get_waypoint(frontal_vehicle_loc)
+        frontal_vehicle_next_waypoint = frontal_vehicle_waypoint.next(6)[0].transform.location
 
         # retrieve the platooning's destination
         _, _, platooning_manager = frontal_vehicle_vm.get_platooning_status()
         destination = platooning_manager.destination
 
         # regenerate route the route to make merge(lane change)
-        self.set_destination(frontal_vehicle_transform, destination, clean=True)
+        self.set_destination(frontal_vehicle_next_waypoint, destination, clean=True)
 
-        control = self._local_planner.run_step(target_speed=0.8 * get_speed(frontal_vehicle_vm.vehicle))
+        control = self._local_planner.run_step(target_speed=1.1 * get_speed(frontal_vehicle_vm.vehicle))
 
         return control
 
@@ -103,7 +107,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_vehicle = self.frontal_vehicle.vehicle
         # TODO: Aviod access to protected member
         frontal_agent_target_road_option = \
-            self.frontal_vehicle.agent._local_planner.target_road_option
+            self.frontal_vehicle.agent.get_local_planner().target_road_option
         frontal_vehicle_loc = frontal_vehicle.get_location()
         ego_vehicle_loc = self.vehicle.get_location()
 
@@ -124,7 +128,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         return control
 
-    def run_step_move2point(self, frontal_vehicle_vm, rear_vehicle_vm=None):
+    def run_step_cut_in_move2point(self, frontal_vehicle_vm, rear_vehicle_vm=None):
         """
         TODO: right now we only consider the vehicle is sitting next to the platooning lane
         The vehicle is trying to get to the move in point
@@ -140,36 +144,44 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         distance, angle = cal_distance_angle(frontal_vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
 
+        # the vehicle needs to warm up first
+        if get_speed(self.vehicle) <= self.behavior.warm_up_speed:
+            print("warming up speed")
+            return self.run_step(self.behavior.tailgate_speed), False
+
         # if the ego vehicle is still too far away
-        if distance > get_speed(frontal_vehicle, True) * 1.5:
+        if distance > get_speed(frontal_vehicle, True) * 1.7 and angle <= 70:
             print('trying to get the vehicle')
+            rear_vehicle_vm.set_platooning_status(FSM.MAINTINING)
             return self.run_step(1.5 * get_speed(frontal_vehicle)), False
 
         # if the ego vehicle is too close or exceed the frontal vehicle
         if distance < get_speed(frontal_vehicle, True) * 1.0 or angle >= 70:
             print('too close, step back!')
-            return self.run_step(0.9 * get_speed(frontal_vehicle)), False
+            return self.run_step(0.95 * get_speed(frontal_vehicle)), False
 
         # communicate to the rear vehicle for open gap
         if not rear_vehicle_vm:
             return self.platooning_merge_management(frontal_vehicle_vm), True
 
-        rear_vehicle_vm.set_platooning_status(FSM.OPEN_GAP)
-
         distance, angle = cal_distance_angle(rear_vehicle_vm.vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
-        if distance < get_speed(rear_vehicle_vm.vehicle, True) or angle <= 90:
-            return self.run_step(1.0 * get_speed(frontal_vehicle)), False
+        # check whether the rear vehicle gives enough gap
+        if distance < 1.2 * get_speed(rear_vehicle_vm.vehicle, True) or angle <= 90:
+            # force the rear vehicle open gap for self
+            rear_vehicle_vm.set_platooning_status(FSM.OPEN_GAP)
+            return self.run_step(1.05 * get_speed(frontal_vehicle)), False
 
         return self.platooning_merge_management(frontal_vehicle_vm), True
 
-    def run_step_joining(self, frontal_vehicle_vm):
+    def run_step_cut_in_joining(self, frontal_vehicle_vm, rear_vehicle_vm=None):
         """
         Check if the vehicle has been joined succusfully
+        :param rear_vehicle_vm:
         :param frontal_vehicle_vm:
         :return:
         """
-
+        print("merging speed %d" % get_speed(self.vehicle))
         frontal_vehicle = frontal_vehicle_vm.vehicle
         frontal_lane = self._map.get_waypoint(frontal_vehicle.get_location()).lane_id
 
@@ -180,7 +192,28 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         distance, angle = cal_distance_angle(frontal_vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
 
-        if frontal_lane == ego_vehicle_lane and angle <= 10:
+        if frontal_lane == ego_vehicle_lane and angle <= 5:
+            print('merge finished')
+            if rear_vehicle_vm:
+                rear_vehicle_vm.set_platooning_status(FSM.MAINTINING)
             return self.run_step_maintaining(frontal_vehicle_vm), True
 
         return self._local_planner.run_step(target_speed=get_speed(frontal_vehicle)), False
+
+    def run_step_open_gap(self):
+        """
+        Open gap for cut-in vehicle
+        :return:
+        """
+        frontal_vehicle = self.frontal_vehicle.vehicle
+
+        vehicle_speed = get_speed(frontal_vehicle)
+        vehicle_loc = frontal_vehicle.get_transform()
+        frontal_agent_target_road_option = \
+            self.frontal_vehicle.agent.get_local_planner().target_road_option
+
+        control = self._local_planner.run_step(target_speed=0.80 * vehicle_speed,
+                                               target_waypoint=vehicle_loc,
+                                               target_road_option=frontal_agent_target_road_option)
+
+        return control

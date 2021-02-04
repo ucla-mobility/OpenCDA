@@ -9,6 +9,7 @@ import uuid
 import weakref
 
 from core.agents.navigation.platoon_behavior_agent import PlatooningBehaviorAgent
+from core.agents.tools.misc import get_speed
 from core.platooning.platooning_plugin import PlatooningPlugin
 from core.platooning.fsm import FSM
 
@@ -66,7 +67,7 @@ class VehicleManager(object):
         Check whether the vehicle in the platooning
         :return:
         """
-        return self._platooning_plugin.in_platooning, self._platooning_plugin.platooning_id, \
+        return self._platooning_plugin.in_platooning, self._platooning_plugin.id_in_team, \
                self._platooning_plugin.platooning_object
 
     def get_fsm_status(self):
@@ -104,31 +105,37 @@ class VehicleManager(object):
             if self._platooning_plugin.status == FSM.SEARCHING:
                 # get ready to move to the point if platooning found
                 self.set_platooning_status(FSM.MOVE_TO_POINT) \
-                 if self._platooning_plugin.platooning_search(self.vid, self.world, self.vehicle.get_location()) \
-                 else self.set_platooning_status(FSM.SEARCHING)
+                    if self._platooning_plugin.platooning_search(self.vid, self.world, self.vehicle.get_location()) \
+                    else self.set_platooning_status(FSM.SEARCHING)
 
                 return self.agent.run_step()
 
+            # if the vehicle already find the platooning and trying to move to the merge point
             elif self._platooning_plugin.status == FSM.MOVE_TO_POINT:
-                control, ready_to_join = self.agent.run_step_move2point(self._platooning_plugin.front_vehicle,
-                                                                        self._platooning_plugin.rear_vechile)
+                control, ready_to_join = self.agent.run_step_cut_in_move2point(self._platooning_plugin.front_vehicle,
+                                                                               self._platooning_plugin.rear_vechile)
                 if ready_to_join:
                     self.set_platooning_status(FSM.JOINING)
                 return control
 
+            # if the vehicle arrives at the meeting point and ready for merging
             elif self._platooning_plugin.status == FSM.JOINING:
-                control, joining_finished = self.agent.run_step_joining(self._platooning_plugin.front_vehicle)
+                control, joining_finished = self.agent.run_step_cut_in_joining(self._platooning_plugin.front_vehicle,
+                                                                               self._platooning_plugin.rear_vechile)
+
                 if joining_finished:
-                    _, _, platooning_manager = self._platooning_plugin.front_vehicle.get_platooning_status()
+                    _, index, platooning_manager = self._platooning_plugin.front_vehicle.get_platooning_status()
                     # TODO: If cut-in joining, the whole list may need reorder
-                    platooning_manager.add_member(self)
+                    platooning_manager.set_member(self, index+1)
                     self.set_platooning_status(FSM.MAINTINING)
                 return control
 
         else:
             if self._platooning_plugin.leader:
                 control = self.agent.run_step()
-            # TODO: ADD OPENGAP LATER FOR cut-in joining
+            elif self._platooning_plugin.status == FSM.OPEN_GAP:
+                print("opening gap with speed %d!" % get_speed(self.vehicle))
+                control = self.agent.run_step_open_gap()
             else:
                 control = self.agent.run_step_maintaining()
 
