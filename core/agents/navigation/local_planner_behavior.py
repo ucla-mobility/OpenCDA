@@ -90,8 +90,8 @@ class LocalPlanner(object):
 
         # trajectory point buffer
         self._long_plan_debug = []
-        self._trajectory_buffer = deque(maxlen=10)
-        self._velocity_buffer = deque(maxlen=10)
+        self._trajectory_buffer = deque(maxlen=30)
+        self._velocity_buffer = deque(maxlen=30)
         # debug option
         self.debug = debug
         self.debug_trajectory = debug_trajectory
@@ -253,12 +253,12 @@ class LocalPlanner(object):
                 self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # sample the trajectory by 0.1 second
-        sample_resolution = (current_speed + target_speed) / 2 * 0.1
+        sample_resolution = (current_speed + target_speed) / 2 / 3.6 * 0.1
         distance = compute_distance(self._waypoint_buffer[-1][0].transform.location
                                     if len(self._waypoint_buffer) < 4 else self._waypoint_buffer[3][
             0].transform.location,
                                     current_location)
-        sample_num = distance // sample_resolution
+        sample_num = 2.0 // ds
 
         if sample_num == 0 or len(rx) == 0:
             print('no trajectory')
