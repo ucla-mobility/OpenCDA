@@ -111,4 +111,6 @@ class PlatooningManager(object):
         :return:
         """
         for i in range(len(self.vehicle_manager_list)):
+            if i > 0:
+                self.vehicle_manager_list[i].cal_performance()
             self.vehicle_manager_list[i].vehicle.destroy()

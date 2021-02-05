@@ -7,6 +7,7 @@
 
 import uuid
 import weakref
+import statistics
 
 from core.agents.navigation.platoon_behavior_agent import PlatooningBehaviorAgent
 from core.agents.tools.misc import get_speed
@@ -93,6 +94,17 @@ class VehicleManager(object):
         :return:
         """
         self.agent.update_information(world, frontal_vehicle)
+
+    def cal_performance(self):
+        """
+        Quantitive way to judge the peroformance of the system
+        :return:
+        """
+        time_gap_list = self.agent.time_gap_list[200:]
+        print(len(time_gap_list))
+        print("the mean of the time gap is %f and std is %f" %(statistics.mean(time_gap_list),
+                                                               statistics.stdev(time_gap_list)))
+
 
     def run_step(self):
         """
