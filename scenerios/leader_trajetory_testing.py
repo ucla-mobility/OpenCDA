@@ -20,6 +20,14 @@ def main():
 
         # Retrieve the world that is currently running
         world = client.get_world()
+        origin_settings = world.get_settings()
+
+        # set sync mode
+        # settings = world.get_settings()
+        # settings.synchronous_mode = True
+        # settings.fixed_delta_seconds = 0.05
+        # world.apply_settings(settings)
+
         blueprint_library = world.get_blueprint_library()
 
         # setup spawn points
@@ -58,13 +66,13 @@ def main():
             transform = vehicle_1.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
-            print(get_speed(vehicle_1))
+            # print(get_speed(vehicle_1))
             platooning_manager.update_information(world)
             platooning_manager.run_step()
 
     finally:
         platooning_manager.destroy()
-
+        world.apply_settings(origin_settings)
 
 if __name__ == '__main__':
     try:

@@ -28,10 +28,10 @@ def main():
         #                               carla.Rotation(pitch=0.000000, yaw=0.065, roll=0.000000))
         transform_2 = carla.Transform(carla.Location(x=69.36635742, y=-193.63253906, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=49.36635742, y=-193.63253906, z=0.3),
+        transform_3 = carla.Transform(carla.Location(x=59.36635742, y=-193.63253906, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
-        transform_4 = carla.Transform(carla.Location(x=39.36635742, y=-193.63253906, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
+        # transform_4 = carla.Transform(carla.Location(x=39.36635742, y=-193.63253906, z=0.3),
+        #                               carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
 
         transform_destination = carla.Transform(carla.Location(x=58.18258789, y=187.85683594, z=0.3),
                                                 carla.Rotation(pitch=0.000000, yaw=-179.712173, roll=0.000000))
@@ -47,21 +47,22 @@ def main():
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_2 = world.spawn_actor(ego_vehicle_bp, transform_2)
 
-        ego_vehicle_bp.set_attribute('color', '255, 255, 255')
-        vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
+        # ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+        # vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
 
-        ego_vehicle_bp.set_attribute('color', '255, 255, 255')
-        vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
+        # ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+        # vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
 
         # create platooning world
         platooning_world = PlatooningWorld()
 
         # setup managers
         vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
-                                           debug_trajectory=True, debug=True, ignore_traffic_light=True)
-        vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world)
-        vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world)
-        vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world)
+                                           debug_trajectory=False, debug=False, ignore_traffic_light=True)
+        vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, buffer_size=8,
+                                           debug_trajectory=True, debug=True)
+        # vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=True, debug=True)
+        # vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world)
 
         platooning_manager = PlatooningManager(platooning_world)
 
@@ -69,8 +70,8 @@ def main():
         platooning_manager.set_lead(vehicle_manager_1)
         # add member
         platooning_manager.add_member(vehicle_manager_2)
-        platooning_manager.add_member(vehicle_manager_3)
-        platooning_manager.add_member(vehicle_manager_4)
+        # platooning_manager.add_member(vehicle_manager_3)
+        # platooning_manager.add_member(vehicle_manager_4)
 
         # set destination TODO: the spawn point may have conflict
         destination = transform_destination.location
@@ -81,8 +82,8 @@ def main():
             if not world.wait_for_tick(10.0):
                 continue
             spectator = world.get_spectator()
-            transform = vehicle_1.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
+            transform = vehicle_2.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=40),
                                                     carla.Rotation(pitch=-90)))
 
             platooning_manager.update_information(world)
