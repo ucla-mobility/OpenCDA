@@ -290,11 +290,11 @@ class LocalPlanner(object):
                 self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
                                                 self._waypoint_buffer[0][1],
                                                 sample_speed,
-                                                (i + 1) * dt))
+                                                i * dt))
                 self._trajectory_complete_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
-                                                self._waypoint_buffer[0][1],
-                                                sample_speed,
-                                                (i + 1) * dt))
+                                                         self._waypoint_buffer[0][1],
+                                                         sample_speed,
+                                                         i * dt))
         # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
     def pop_buffer(self, vehicle_transform):
@@ -374,8 +374,8 @@ class LocalPlanner(object):
             self._trajectory_complete_buffer.clear()
             self.generate_trajectory(self.debug_trajectory)
         elif trajectory:
-            self._trajectory_buffer = trajectory
-            self._trajectory_complete_buffer = trajectory
+            self._trajectory_buffer = trajectory.copy()
+            self._trajectory_complete_buffer = trajectory.copy()
 
         # Current vehicle waypoint
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())

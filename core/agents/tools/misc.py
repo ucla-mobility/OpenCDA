@@ -26,7 +26,7 @@ def draw_trajetory_points(world, waypoints, z=0.25, color=carla.Color(255, 0, 0)
     """
     for i in range(len(waypoints)):
         wpt = waypoints[i]
-        if isinstance(wpt, tuple):
+        if isinstance(wpt, tuple) or isinstance(wpt, list):
             wpt = wpt[0]
         if hasattr(wpt, 'is_junction'):
             wpt_t = wpt.transform
