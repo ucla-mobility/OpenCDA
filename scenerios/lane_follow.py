@@ -31,8 +31,6 @@ def main():
         transform_4 = carla.Transform(carla.Location(x=44.36635742, y=-193.63253906, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
 
-        transform_destination = carla.Transform(carla.Location(x=58.18258789, y=187.85683594, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=-179.712173, roll=0.000000))
         transform_destination = carla.Transform(carla.Location(x=24.54736572, y=161.94428711, z=0.3),
                                                 carla.Rotation(pitch=0.000000, yaw=90, roll=0.000000))
 
@@ -56,11 +54,13 @@ def main():
 
         # setup managers
         vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
-                                           debug_trajectory=False, debug=False, ignore_traffic_light=True)
+                                           debug_trajectory=True, debug=False, ignore_traffic_light=True)
         vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, buffer_size=8,
                                            debug_trajectory=True, debug=True)
-        vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=True, debug=True)
-        vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, debug_trajectory=True, debug=True)
+        vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world,
+                                           debug_trajectory=True, debug=True)
+        vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world,
+                                           debug_trajectory=True, debug=True)
 
         platooning_manager = PlatooningManager(platooning_world)
 

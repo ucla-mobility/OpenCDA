@@ -101,10 +101,12 @@ class VehicleManager(object):
         :return:
         """
         time_gap_list = self.agent.time_gap_list[200:]
+        velocity_list = self.agent.velocity_list[200:]
         print(len(time_gap_list))
-        print("the mean of the time gap is %f and std is %f" %(statistics.mean(time_gap_list),
+        print("the mean of the time gap is %f and std is %f" % (statistics.mean(time_gap_list),
                                                                statistics.stdev(time_gap_list)))
-
+        print("the mean of the velocity is %f and std is %f" % (statistics.mean(velocity_list),
+                                                                statistics.stdev(velocity_list)))
 
     def run_step(self):
         """

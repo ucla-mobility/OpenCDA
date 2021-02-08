@@ -92,7 +92,7 @@ class LocalPlanner(object):
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         # save whole trajetory for car following
-        self._trajectory_complete_buffer = deque(maxlen=30)
+        # self._trajectory_complete_buffer = deque(maxlen=30)
         # debug option
         self.debug = debug
         self.debug_trajectory = debug_trajectory
@@ -291,10 +291,10 @@ class LocalPlanner(object):
                                                 self._waypoint_buffer[0][1],
                                                 sample_speed,
                                                 i * dt))
-                self._trajectory_complete_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
-                                                         self._waypoint_buffer[0][1],
-                                                         sample_speed,
-                                                         i * dt))
+                # self._trajectory_complete_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
+                #                                          self._waypoint_buffer[0][1],
+                #                                          sample_speed,
+                #                                          i * dt))
         # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
     def pop_buffer(self, vehicle_transform):
@@ -370,12 +370,12 @@ class LocalPlanner(object):
                     break
 
         # trajectory generation
-        if not trajectory and not self._trajectory_buffer:
-            self._trajectory_complete_buffer.clear()
+        if not trajectory and len(self._trajectory_buffer) < 8:
+            self._trajectory_buffer.clear()
             self.generate_trajectory(self.debug_trajectory)
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
-            self._trajectory_complete_buffer = trajectory.copy()
+            # self._trajectory_complete_buffer = trajectory.copy()
 
         # Current vehicle waypoint
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
@@ -417,7 +417,7 @@ class LocalPlanner(object):
                                   size=0.05,
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._trajectory_buffer, z=0.1, lt=0.2)
+                                  self._trajectory_buffer, z=0.1, lt=0.5)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),
