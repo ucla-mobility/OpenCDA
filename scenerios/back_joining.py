@@ -24,22 +24,19 @@ def main():
         blueprint_library = world.get_blueprint_library()
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=89.40094727, y=-193.74714844, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
+        transform_1 = carla.Transform(carla.Location(x=-188.81, y=26.56, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_2 = carla.Transform(carla.Location(x=-198.11, y=26.56, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_3 = carla.Transform(carla.Location(x=-208.11, y=26.56, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_4 = carla.Transform(carla.Location(x=-308.11, y=31.56, z=0.28),
+                                      carla.Rotation(pitch=0.000000, yaw=-0.3, roll=0.000000))
 
-        transform_2 = carla.Transform(carla.Location(x=79.36635742, y=-193.63253906, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
-
-        transform_3 = carla.Transform(carla.Location(x=65.36635742, y=-193.63253906, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
-
-        transform_4 = carla.Transform(carla.Location(x=74.36635742, y=-190.2471679, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0, roll=-0.242500))
-
-        transform_destination_1 = carla.Transform(carla.Location(x=7.116189, y=-193.484, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=-0.767, roll=-0.2425))
-        transform_destination_2 = carla.Transform(carla.Location(x=193.54, y=13.6585, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=0, roll=90))
+        transform_destination_1 = carla.Transform(carla.Location(x=400.62, y=-16.62, z=0.3),
+                                                carla.Rotation(pitch=0.000000, yaw=-79, roll=0.000000))
+        transform_destination_2 = carla.Transform(carla.Location(x=404.06, y=-15.97, z=0.3),
+                                                carla.Rotation(pitch=0.000000, yaw=-79, roll=0.000000))
 
         # create the leading vehicle
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
