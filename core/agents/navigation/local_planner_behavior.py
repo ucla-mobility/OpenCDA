@@ -90,8 +90,9 @@ class LocalPlanner(object):
 
         # trajectory point buffer
         self._long_plan_debug = []
-        self._trajectory_buffer = deque(maxlen=10)
-        self._velocity_buffer = deque(maxlen=10)
+        self._trajectory_buffer = deque(maxlen=30)
+        # save whole trajetory for car following
+        # self._trajectory_complete_buffer = deque(maxlen=30)
         # debug option
         self.debug = debug
         self.debug_trajectory = debug_trajectory
@@ -197,6 +198,13 @@ class LocalPlanner(object):
                 return None, RoadOption.VOID
         return None, RoadOption.VOID
 
+    def get_trajetory(self):
+        """
+        Get the trajetory
+        :return:
+        """
+        return self._trajectory_buffer
+
     def generate_trajectory(self, debug=True):
         """
         Generate a smooth trajectory using spline fitting
@@ -207,6 +215,8 @@ class LocalPlanner(object):
 
         # [m] distance of each intepolated points
         ds = 0.1
+        # unit time space
+        dt = 0.1
 
         target_speed = self._target_speed
         current_speed = get_speed(self._vehicle)
@@ -253,12 +263,12 @@ class LocalPlanner(object):
                 self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # sample the trajectory by 0.1 second
-        sample_resolution = (current_speed + target_speed) / 2 * 0.1
+        # sample_resolution = (current_speed + target_speed) / 2 / 3.6 * dt
         distance = compute_distance(self._waypoint_buffer[-1][0].transform.location
                                     if len(self._waypoint_buffer) < 4 else self._waypoint_buffer[3][
             0].transform.location,
                                     current_location)
-        sample_num = distance // sample_resolution
+        sample_num = 2.0 // dt
 
         if sample_num == 0 or len(rx) == 0:
             print('no trajectory')
@@ -267,17 +277,24 @@ class LocalPlanner(object):
                                             target_speed))
         else:
             for i in range(1, int(sample_num) + 1):
+                sample_speed = current_speed + (target_speed - current_speed) * i / sample_num
+                sample_resolution = sample_speed / 3.6 * dt
+
                 if int(i * sample_resolution // ds - 1) >= len(rx):
                     sample_x = rx[-1]
                     sample_y = ry[-1]
                 else:
                     sample_x = rx[int(i * sample_resolution // ds - 1)]
                     sample_y = ry[int(i * sample_resolution // ds - 1)]
-                sample_speed = current_speed + (target_speed - current_speed) * i / sample_num
 
                 self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
                                                 self._waypoint_buffer[0][1],
-                                                sample_speed))
+                                                sample_speed,
+                                                i * dt))
+                # self._trajectory_complete_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
+                #                                          self._waypoint_buffer[0][1],
+                #                                          sample_speed,
+                #                                          i * dt))
         # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
     def pop_buffer(self, vehicle_transform):
@@ -307,20 +324,22 @@ class LocalPlanner(object):
 
         if self._trajectory_buffer:
             max_index = -1
-            for i, (waypoint, _, _) in enumerate(self._trajectory_buffer):
+            for i, (waypoint, _, _, _) in enumerate(self._trajectory_buffer):
                 if distance_vehicle(
                         waypoint, vehicle_transform) < max(self._min_distance - 1, 1):
                     max_index = i
             if max_index >= 0:
                 for i in range(max_index + 1):
                     self._trajectory_buffer.popleft()
+            # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
-    def run_step(self, target_speed=None, target_waypoint=None, target_road_option=None):
+    def run_step(self, target_speed=None, target_waypoint=None, target_road_option=None, trajectory=None):
         """
         Execute one step of local planning which involves
         running the longitudinal and lateral PID controllers to
         follow the smooth waypoints trajectory.
 
+            :param trajectory:
             :param target_road_option:
             :param target_waypoint:
             :param target_speed: desired speed
@@ -351,15 +370,19 @@ class LocalPlanner(object):
                     break
 
         # trajectory generation
-        if not self._trajectory_buffer:
+        if not trajectory and len(self._trajectory_buffer) < 8:
+            self._trajectory_buffer.clear()
             self.generate_trajectory(self.debug_trajectory)
+        elif trajectory:
+            self._trajectory_buffer = trajectory.copy()
+            # self._trajectory_complete_buffer = trajectory.copy()
 
         # Current vehicle waypoint
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
 
         # Target waypoint
         if not target_waypoint or not target_road_option:
-            self.target_waypoint, self.target_road_option, self._target_speed = self._trajectory_buffer[0]
+            self.target_waypoint, self.target_road_option, self._target_speed, dt = self._trajectory_buffer[0]
         else:
             self._following_buffer.append((target_waypoint, target_road_option))
             self.target_waypoint, self.target_road_option = self._following_buffer[0]
@@ -367,7 +390,7 @@ class LocalPlanner(object):
         if self.dynamic_pid:
             args_lat, args_long = compute_pid(self)
 
-        elif target_speed > 50:
+        elif self._target_speed > 50:
             args_lat = self.args_lat_hw_dict
             args_long = self.args_long_hw_dict
 
@@ -394,7 +417,7 @@ class LocalPlanner(object):
                                   size=0.05,
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._trajectory_buffer, z=0.1, lt=0.2)
+                                  self._trajectory_buffer, z=0.1, lt=0.5)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),

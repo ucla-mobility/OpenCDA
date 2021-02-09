@@ -58,6 +58,7 @@ class VehiclePIDController:
         """
 
         acceleration = self._lon_controller.run_step(target_speed)
+        # print(acceleration)
         current_steering = self._lat_controller.run_step(waypoint)
         control = carla.VehicleControl()
         if acceleration >= 0.0:
