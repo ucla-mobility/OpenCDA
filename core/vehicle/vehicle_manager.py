@@ -100,11 +100,11 @@ class VehicleManager(object):
         Quantitive way to judge the peroformance of the system
         :return:
         """
-        time_gap_list = self.agent.time_gap_list[200:]
-        velocity_list = self.agent.velocity_list[200:]
+        time_gap_list = self.agent.time_gap_list[100:]
+        velocity_list = self.agent.velocity_list[100:]
         print(len(time_gap_list))
         print("the mean of the time gap is %f and std is %f" % (statistics.mean(time_gap_list),
-                                                               statistics.stdev(time_gap_list)))
+                                                                statistics.stdev(time_gap_list)))
         print("the mean of the velocity is %f and std is %f" % (statistics.mean(velocity_list),
                                                                 statistics.stdev(velocity_list)))
 
@@ -113,6 +113,9 @@ class VehicleManager(object):
         Execute one step of navigation based on platooning status
         :return:
         """
+        # get current speed
+        self.agent.velocity_list.append(get_speed(self.vehicle))
+
         # TODO: Right now take lead is not in consideration
         if not self._platooning_plugin.in_platooning:
             # if the ego-vehicle is still searching for platooning
@@ -140,7 +143,7 @@ class VehicleManager(object):
                 if joining_finished:
                     _, index, platooning_manager = self._platooning_plugin.front_vehicle.get_platooning_status()
                     # TODO: If cut-in joining, the whole list may need reorder
-                    platooning_manager.set_member(self, index+1)
+                    platooning_manager.set_member(self, index + 1)
                     self.set_platooning_status(FSM.MAINTINING)
                 return control
 

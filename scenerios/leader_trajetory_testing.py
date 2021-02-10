@@ -66,7 +66,7 @@ def main():
             transform = vehicle_1.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
-            print(get_speed(vehicle_1))
+            # print(get_speed(vehicle_1))
             platooning_manager.update_information(world)
             platooning_manager.run_step()
 

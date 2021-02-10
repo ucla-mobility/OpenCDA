@@ -50,7 +50,7 @@ class LocalPlanner(object):
     # (e.g. within 80% of total distance)
 
     # FPS used for dt
-    FPS = 20
+    FPS = 10
 
     def __init__(self, agent, buffer_size=5, dynamic_pid=False, debug=False, debug_trajectory=False):
         """
@@ -287,9 +287,10 @@ class LocalPlanner(object):
                     sample_x = rx[int(i * sample_resolution // ds - 1)]
                     sample_y = ry[int(i * sample_resolution // ds - 1)]
 
-                self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
+                self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y,
+                                                                               self._waypoint_buffer[0][0].transform.location.z + 0.5)),
                                                 self._waypoint_buffer[0][1],
-                                                sample_speed,
+                                                target_speed,
                                                 i * dt))
                 # self._trajectory_complete_buffer.append((carla.Transform(carla.Location(sample_x, sample_y, 0)),
                 #                                          self._waypoint_buffer[0][1],
@@ -417,7 +418,7 @@ class LocalPlanner(object):
                                   size=0.05,
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._trajectory_buffer, z=0.1, lt=0.5)
+                                  self._trajectory_buffer, z=0.1, lt=0.1)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),

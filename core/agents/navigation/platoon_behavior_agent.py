@@ -36,14 +36,17 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         super(PlatooningBehaviorAgent, self).__init__(vehicle, ignore_traffic_light, behavior, sampling_resolution,
                                                       buffer_size, dynamic_pid, debug_trajectory, debug)
-        self._move_to_point_distance = move_to_point_distance
+        # used for control open gap gradually
+        self.current_gap = self.behavior.inter_gap
+
         # used to see the average time gap between ego and frontal vehicle
         self.time_gap_list = []
         self.velocity_list = []
 
-    def platooning_folloing_manager(self):
+    def platooning_following_manager(self, inter_gap):
         """
         Car following behavior in platooning with gap regulation
+        :param inter_gap: the gap designed for platooning
         :return:
         """
         # must match leading vehicle's trajectory unit time
@@ -53,11 +56,11 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         else:
             frontal_vehicle_vm = self.frontal_vehicle
             frontal_trajectory = frontal_vehicle_vm.agent.get_local_planner().get_trajetory()
-            print("vehicle id is %d,"
-                  " length of self trajectory is %d,"
-                  " the length of frontal is %d" % (self.vehicle.id,
-                                                    len(self._local_planner.get_trajetory()),
-                                                    len(frontal_trajectory)))
+            # print("vehicle id is %d,"
+            #       " length of self trajectory is %d,"
+            #       " the length of frontal is %d" % (self.vehicle.id,
+            #                                         len(self._local_planner.get_trajetory()),
+            #                                         len(frontal_trajectory)))
 
             ego_trajetory = deque(maxlen=30)
             ego_loc_x, ego_loc_y, ego_loc_z = self.vehicle.get_location().x, \
@@ -69,24 +72,26 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 delta_t = 0.1
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
-                    pos_x = (frontal_trajectory[i][0].location.x + self.behavior.inter_gap / delta_t * ego_loc_x) / \
-                            (1 + self.behavior.inter_gap / delta_t)
-                    pos_y = (frontal_trajectory[i][0].location.y + self.behavior.inter_gap / delta_t * ego_loc_y) / \
-                            (1 + self.behavior.inter_gap / delta_t)
+                    pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \
+                            (1 + inter_gap / delta_t)
+                    pos_y = (frontal_trajectory[i][0].location.y + inter_gap/ delta_t * ego_loc_y) / \
+                            (1 + inter_gap / delta_t)
                 else:
                     pos_x = (frontal_trajectory[i][0].location.x +
-                             self.behavior.inter_gap / delta_t * ego_trajetory[i - 1][0].location.x) / \
-                            (1 + self.behavior.inter_gap / delta_t)
+                             inter_gap / delta_t * ego_trajetory[i - 1][0].location.x) / \
+                            (1 + inter_gap/ delta_t)
                     pos_y = (frontal_trajectory[i][0].location.y +
-                             self.behavior.inter_gap / delta_t * ego_trajetory[i - 1][0].location.y) / \
-                            (1 + self.behavior.inter_gap / delta_t)
+                             inter_gap / delta_t * ego_trajetory[i - 1][0].location.y) / \
+                            (1 + inter_gap / delta_t)
 
                 distance = np.sqrt((pos_x - ego_loc_x) ** 2 + (pos_y - ego_loc_y) ** 2)
                 velocity = distance / delta_t * 3.6
-                ego_trajetory.append([carla.Transform(carla.Location(pos_x, pos_y, ego_loc_z)),
-                                      frontal_trajectory[i][1],
-                                      velocity,
-                                      t_origin + delta_t])
+                ego_trajetory.append([carla.Transform(
+                    carla.Location(pos_x, pos_y,
+                                   self._map.get_waypoint(self.vehicle.get_location()).transform.location.z)),
+                    frontal_trajectory[i][1],
+                    velocity,
+                    t_origin + delta_t])
 
                 t_origin = frontal_trajectory[i][3]
                 ego_loc_x = pos_x
@@ -99,53 +104,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                       RoadOption.LANEFOLLOW,
                                       get_speed(self.vehicle),
                                       t_origin + 0.2))
-
-            # consider all frontal vehicles TODO: repitive codes, use a wrapper function
-            counter = 2
-            frontal_vehicle_vm = frontal_vehicle_vm.agent.frontal_vehicle
-
-            # while frontal_vehicle_vm:
-            #     frontal_trajectory = frontal_vehicle_vm.agent.get_local_planner()._trajectory_complete_buffer.copy()
-            #
-            #     ego_loc_x, ego_loc_y, ego_loc_z = self.vehicle.get_location().x, \
-            #                                       self.vehicle.get_location().y, self.vehicle.get_location().z
-            #     for i in range(len(ego_trajetory)):
-            #         delta_t = ego_trajetory[i][3]
-            #         if i == 0:
-            #             pos_x = (frontal_trajectory[i][0].location.x + self.behavior.inter_gap * counter /
-            #                      delta_t * ego_loc_x) / \
-            #                     (1 + self.behavior.inter_gap * counter / delta_t)
-            #             pos_y = (frontal_trajectory[i][0].location.y + self.behavior.inter_gap * counter /
-            #                      delta_t * ego_loc_y) / \
-            #                     (1 + self.behavior.inter_gap * counter / delta_t)
-            #         else:
-            #             pos_x = (frontal_trajectory[i][0].location.x + self.behavior.inter_gap * counter /
-            #                      delta_t * ego_trajetory[i - 1][0].location.x) / \
-            #                     (1 + self.behavior.inter_gap * counter / delta_t)
-            #             pos_y = (frontal_trajectory[i][0].location.y + self.behavior.inter_gap * counter /
-            #                      delta_t * ego_trajetory[i - 1][0].location.y) / \
-            #                     (1 + self.behavior.inter_gap * counter / delta_t)
-            #
-            #         distance = np.sqrt((pos_x - ego_loc_x) ** 2 + (pos_y - ego_loc_y) ** 2)
-            #         velocity = distance / delta_t * 3.6
-            #
-            #         # TODO: Use weighted coefficient
-            #         # print('previous x :%f' % ego_trajetory[i][0].location.x)
-            #         ego_trajetory[i][0].location.x = (ego_trajetory[i][0].location.x * 8 + pos_x * 2) / 10
-            #         # print('after x :%f' % ego_trajetory[i][0].location.x)
-            #         ego_trajetory[i][0].location.y = (ego_trajetory[i][0].location.y * 8 + pos_y * 2) / 10
-            #         ego_trajetory[i][3] = (ego_trajetory[i][3] * 8 + velocity * 2) / 10
-            #
-            #         # iterotar
-            #         ego_loc_x = pos_x
-            #         ego_loc_y = pos_y
-            #
-            #     break
-            #     counter += 1
-            #     frontal_vehicle_vm = frontal_vehicle_vm.agent.frontal_vehicle
-
-            # if counter >= 3 :
-            #     print('check here ')
 
             return self._local_planner.run_step(trajectory=ego_trajetory)
 
@@ -166,7 +124,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # too close to the frontal vehicle, slow down
         if self.behavior.inter_gap > ttc > 0.0:
-            # print("too close!")
             control = self._local_planner.run_step(
                 target_speed=positive(vehicle_speed - self.behavior.speed_decrease),
                 target_waypoint=vehicle_loc,
@@ -176,14 +133,12 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             control = self._local_planner.run_step(target_speed=max(self.min_speed, vehicle_speed),
                                                    target_waypoint=vehicle_loc,
                                                    target_road_option=vehicle_target_road_option)
-            # print("keep distance!!!!!!!!!, speed: %d" % (max(self.min_speed, vehicle_speed)))
         # too far, tailgating
         else:
 
             control = self._local_planner.run_step(target_speed=self.behavior.tailgate_speed,
                                                    target_waypoint=vehicle_loc,
                                                    target_road_option=vehicle_target_road_option)
-            # print("tailgating!!!!!!!!!!!, ttc: %f, speed: %d" % (ttc, self.behavior.tailgate_speed))
         return control
 
     def platooning_merge_management(self, frontal_vehicle_vm):
@@ -197,7 +152,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # we choose next waypoint of the frontal vehicle as starting point to have smooth speed
         frontal_vehicle_waypoint = frontal_vehicle_vm.agent._map.get_waypoint(frontal_vehicle_loc)
-        frontal_vehicle_next_waypoint = frontal_vehicle_waypoint.next(6)[0].transform.location
+        frontal_vehicle_next_waypoint = frontal_vehicle_waypoint.next(
+            get_speed(frontal_vehicle_vm.vehicle, True))[0].transform.location
 
         # retrieve the platooning's destination
         _, _, platooning_manager = frontal_vehicle_vm.get_platooning_status()
@@ -206,7 +162,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # regenerate route the route to make merge(lane change)
         self.set_destination(frontal_vehicle_next_waypoint, destination, clean=True)
 
-        control = self._local_planner.run_step(target_speed=1.1 * get_speed(frontal_vehicle_vm.vehicle))
+        control = self._local_planner.run_step(target_speed=1.5 * get_speed(frontal_vehicle_vm.vehicle))
 
         return control
 
@@ -215,6 +171,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         Behavior planning for speed maintaining
         :return:
         """
+        self.current_gap = self.behavior.inter_gap
+
         if not self.frontal_vehicle:
             self.frontal_vehicle = frontal_vehicle
 
@@ -230,8 +188,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         delta_v = get_speed(self.vehicle, True)
         ttc = distance / delta_v
         self.time_gap_list.append(ttc)
-        self.velocity_list.append(delta_v * 3.6)
-        # print("THE TTC IS %f" % ttc)
 
         # Distance is computed from the center of the two cars,
         # use bounding boxes to calculate the actual distance
@@ -244,10 +200,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             print("emergency stop!")
             return self.emergency_stop()
 
-        # control = self.platooning_following_manager_naive(frontal_vehicle, distance,
-        #                                                   frontal_vehicle.get_transform(),
-        #                                                   frontal_agent_target_road_option)
-        control = self.platooning_folloing_manager()
+        control = self.platooning_following_manager(self.behavior.inter_gap)
 
         return control
 
@@ -273,13 +226,12 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return self.run_step(self.behavior.tailgate_speed), False
 
         # if the ego vehicle is still too far away
-        if distance > get_speed(frontal_vehicle, True) * 1.7 and angle <= 70:
+        if distance > get_speed(self.vehicle, True) * (self.behavior.inter_gap + 0.5) and angle <= 70:
             print('trying to get the vehicle')
-            rear_vehicle_vm.set_platooning_status(FSM.MAINTINING)
-            return self.run_step(1.5 * get_speed(frontal_vehicle)), False
+            return self.run_step(2.0 * get_speed(frontal_vehicle)), False
 
         # if the ego vehicle is too close or exceed the frontal vehicle
-        if distance < get_speed(frontal_vehicle, True) * 1.0 or angle >= 70:
+        if distance < get_speed(self.vehicle, True) * self.behavior.inter_gap or angle >= 80:
             print('too close, step back!')
             return self.run_step(0.95 * get_speed(frontal_vehicle)), False
 
@@ -290,10 +242,12 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         distance, angle = cal_distance_angle(rear_vehicle_vm.vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
         # check whether the rear vehicle gives enough gap
-        if distance < 1.2 * get_speed(rear_vehicle_vm.vehicle, True) or angle <= 90:
+        if distance < 1.0 * self.behavior.inter_gap * get_speed(rear_vehicle_vm.vehicle, True) \
+                or angle <= 100 or rear_vehicle_vm.agent.current_gap < self.behavior.open_gap:
             # force the rear vehicle open gap for self
+            print("too close to rear vehicle!")
             rear_vehicle_vm.set_platooning_status(FSM.OPEN_GAP)
-            return self.run_step(1.05 * get_speed(frontal_vehicle)), False
+            return self.run_step(1.5 * get_speed(frontal_vehicle)), False
 
         return self.platooning_merge_management(frontal_vehicle_vm), True
 
@@ -328,15 +282,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         Open gap for cut-in vehicle
         :return:
         """
-        frontal_vehicle = self.frontal_vehicle.vehicle
-
-        vehicle_speed = get_speed(frontal_vehicle)
-        vehicle_loc = frontal_vehicle.get_transform()
-        frontal_agent_target_road_option = \
-            self.frontal_vehicle.agent.get_local_planner().target_road_option
-
-        control = self._local_planner.run_step(target_speed=0.80 * vehicle_speed,
-                                               target_waypoint=vehicle_loc,
-                                               target_road_option=frontal_agent_target_road_option)
+        # gradually open the gap
+        if self.current_gap < self.behavior.open_gap:
+            self.current_gap += 0.005
+        print('cuurent gap is %f' % self.current_gap)
+        control = self.platooning_following_manager(self.current_gap)
 
         return control
