@@ -22,17 +22,17 @@ def main():
         blueprint_library = world.get_blueprint_library()
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=-335.11, y=26.56, z=0.3),
+        transform_1 = carla.Transform(carla.Location(x=51.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=-345.11, y=26.56, z=0.3),
+        transform_2 = carla.Transform(carla.Location(x=41.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=-355.11, y=26.56, z=0.3),
+        transform_3 = carla.Transform(carla.Location(x=31.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_4 = carla.Transform(carla.Location(x=-365.11, y=26.56, z=0.28),
-                                      carla.Rotation(pitch=0.000000, yaw=-0.3, roll=0.000000))
+        transform_4 = carla.Transform(carla.Location(x=21.7194, y=139.51, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
-        transform_destination = carla.Transform(carla.Location(x=400.62, y=-16.62, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=-79, roll=0.000000))
+        transform_destination = carla.Transform(carla.Location(x=606.87, y=141.39, z=0.3),
+                                                carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         # create the leading vehicle
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
@@ -79,10 +79,10 @@ def main():
         while True:
             if not world.wait_for_tick(10.0):
                 continue
-            # spectator = world.get_spectator()
-            # transform = vehicle_2.get_transform()
-            # spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
-            #                                         carla.Rotation(pitch=-90)))
+            spectator = world.get_spectator()
+            transform = vehicle_2.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
+                                                    carla.Rotation(pitch=-90)))
 
             platooning_manager.update_information(world)
             platooning_manager.run_step()

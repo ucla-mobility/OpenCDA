@@ -24,19 +24,21 @@ def main():
         blueprint_library = world.get_blueprint_library()
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=-188.81, y=26.56, z=0.3),
+        transform_1 = carla.Transform(carla.Location(x=51.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=-198.11, y=26.56, z=0.3),
+        transform_2 = carla.Transform(carla.Location(x=41.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=-208.11, y=26.56, z=0.3),
+        transform_3 = carla.Transform(carla.Location(x=31.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_4 = carla.Transform(carla.Location(x=-308.11, y=31.56, z=0.28),
-                                      carla.Rotation(pitch=0.000000, yaw=-0.3, roll=0.000000))
+        transform_4 = carla.Transform(carla.Location(x=37.7194, y=143.51, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_5 = carla.Transform(carla.Location(x=21.7194, y=139.51, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
-        transform_destination_1 = carla.Transform(carla.Location(x=400.62, y=-16.62, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=-79, roll=0.000000))
-        transform_destination_2 = carla.Transform(carla.Location(x=404.06, y=-15.97, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=-79, roll=0.000000))
+        transform_destination_1 = carla.Transform(carla.Location(x=606.87, y=141.39, z=0.3),
+                                                carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_destination_2 = carla.Transform(carla.Location(x=606.87, y=145.39, z=0.3),
+                                                carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         # create the leading vehicle
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
@@ -53,14 +55,18 @@ def main():
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
 
+        ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+        vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
+
         # create platooning world
         platooning_world = PlatooningWorld()
 
         # setup managers
         vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
-                                           debug_trajectory=False, debug=False, ignore_traffic_light=True)
-        vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world)
-        vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world)
+                                           debug_trajectory=True, debug=False, ignore_traffic_light=True)
+        vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, debug_trajectory=True, debug=False)
+        vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=True, debug=False)
+        vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world, debug_trajectory=True, debug=False)
 
         vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, status=FSM.SEARCHING, sample_resolution=6.0,
                                            buffer_size=8, debug_trajectory=True, debug=True)
@@ -72,20 +78,22 @@ def main():
         # add member
         platooning_manager.add_member(vehicle_manager_2)
         platooning_manager.add_member(vehicle_manager_3)
+        platooning_manager.add_member(vehicle_manager_5)
 
         # set destination TODO: the spawn point may have conflict
         platooning_manager.set_destination(transform_destination_1.location)
         vehicle_manager_4.agent.set_destination(vehicle_manager_4.vehicle.get_location(),
                                                 transform_destination_2.location,
                                                 clean=True)
-
+        counter = 0
+        spectator = world.get_spectator()
         while True:
             if not world.wait_for_tick(10.0):
                 continue
-            spectator = world.get_spectator()
-            transform = vehicle_4.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
-                                                    carla.Rotation(pitch=-90)))
+            if counter % 1 == 0:
+                transform = vehicle_4.get_transform()
+                spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
+                                                        carla.Rotation(pitch=-90)))
 
             platooning_manager.update_information(world)
 
@@ -98,7 +106,7 @@ def main():
             if not in_platooning:
                 control = vehicle_manager_4.run_step()
                 vehicle_manager_4. vehicle.apply_control(control)
-
+            counter += 1
     finally:
         platooning_manager.destroy()
         vehicle_manager_4.vehicle.destroy()
