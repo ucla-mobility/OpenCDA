@@ -188,8 +188,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         delta_v = get_speed(self.vehicle, True)
         ttc = distance / delta_v
         self.time_gap_list.append(ttc)
-        self.velocity_list.append(delta_v * 3.6)
-        # print("THE TTC IS %f" % ttc)
 
         # Distance is computed from the center of the two cars,
         # use bounding boxes to calculate the actual distance

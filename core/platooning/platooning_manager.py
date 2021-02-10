@@ -6,7 +6,10 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+import numpy as np
+
 from core.vehicle.vehicle_manager import VehicleManager
+from pviz.profile_plotting import draw_velocity_profile
 
 
 class PlatooningManager(object):
@@ -110,7 +113,12 @@ class PlatooningManager(object):
         TODO: Only destroy vehicles for now
         :return:
         """
+        # for evaluation purpose
+        velocity_list = []
         for i in range(len(self.vehicle_manager_list)):
             self.vehicle_manager_list[i].vehicle.destroy()
             if i > 0:
                 self.vehicle_manager_list[i].cal_performance()
+            velocity_list.append(self.vehicle_manager_list[i].agent.velocity_list)
+
+        draw_velocity_profile(velocity_list, np.arange(0, len(velocity_list)))

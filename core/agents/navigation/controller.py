@@ -85,7 +85,7 @@ class VehiclePIDController:
         control.manual_gear_shift = False
         self.past_steering = steering
 
-        print("thronttle is %f, steering is %f" %(control.throttle, control.steer))
+        # print("thronttle is %f, steering is %f" %(control.throttle, control.steer))
 
         return control
 
