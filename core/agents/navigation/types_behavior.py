@@ -20,7 +20,7 @@ class Cautious(object):
 
 class Normal(object):
     """Class for Normal agent."""
-    max_speed = 45
+    max_speed = 90
     tailgate_speed = 55
     warm_up_speed = max_speed / 1.8
     speed_lim_dist = 3

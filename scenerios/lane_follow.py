@@ -22,16 +22,16 @@ def main():
         blueprint_library = world.get_blueprint_library()
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=51.7194, y=139.51, z=0.3),
+        transform_1 = carla.Transform(carla.Location(x=-209.21, y=243.62, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=41.7194, y=139.51, z=0.3),
+        transform_2 = carla.Transform(carla.Location(x=-219.44, y=243.62, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=31.7194, y=139.51, z=0.3),
+        transform_3 = carla.Transform(carla.Location(x=-229.44, y=243.62, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         transform_4 = carla.Transform(carla.Location(x=21.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
-        transform_destination = carla.Transform(carla.Location(x=606.87, y=141.39, z=0.3),
+        transform_destination = carla.Transform(carla.Location(x=600, y=241.23, z=0.3),
                                                 carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         # create the leading vehicle
@@ -45,22 +45,22 @@ def main():
 
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
-
-        ego_vehicle_bp.set_attribute('color', '255, 255, 255')
-        vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
+        #
+        # ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+        # vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
 
         # create platooning world
         platooning_world = PlatooningWorld()
 
         # setup managers
-        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
+        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
                                            debug_trajectory=True, debug=False, ignore_traffic_light=True)
         vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, buffer_size=8,
                                            debug_trajectory=True, debug=True)
         vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world,
                                            debug_trajectory=True, debug=True)
-        vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world,
-                                           debug_trajectory=True, debug=True)
+        # vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world,
+        #                                    debug_trajectory=True, debug=True)
 
         platooning_manager = PlatooningManager(platooning_world)
 
@@ -69,7 +69,7 @@ def main():
         # add member
         platooning_manager.add_member(vehicle_manager_2)
         platooning_manager.add_member(vehicle_manager_3)
-        platooning_manager.add_member(vehicle_manager_4)
+        # platooning_manager.add_member(vehicle_manager_4)
 
         # set destination TODO: the spawn point may have conflict
         destination = transform_destination.location
