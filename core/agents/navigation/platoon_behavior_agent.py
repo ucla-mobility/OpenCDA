@@ -52,7 +52,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # must match leading vehicle's trajectory unit time
         t_origin = 0
         if len(self._local_planner.get_trajetory()) > 7:
-            return self._local_planner.run_step()
+            return self._local_planner.run_step(following=True)
         else:
             frontal_vehicle_vm = self.frontal_vehicle
             frontal_trajectory = frontal_vehicle_vm.agent.get_local_planner().get_trajetory()
@@ -69,7 +69,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 else len(frontal_trajectory)
 
             for i in range(tracked_length):
-                delta_t = 0.1
+                delta_t = 0.2
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \
