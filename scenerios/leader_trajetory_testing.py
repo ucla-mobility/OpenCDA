@@ -19,7 +19,8 @@ def main():
         client.set_timeout(2.0)
 
         # Retrieve the world that is currently running
-        world = client.get_world()
+        # world = client.get_world()
+        world = client.load_world('Town05')
         origin_settings = world.get_settings()
 
         # set sync mode

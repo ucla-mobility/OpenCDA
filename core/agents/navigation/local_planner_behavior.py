@@ -92,6 +92,8 @@ class LocalPlanner(object):
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
+        # old positions 
+        self._history_position = deque(maxlen=5)
         # save whole trajetory for car following
         # self._trajectory_complete_buffer = deque(maxlen=30)
         # debug option
@@ -238,10 +240,34 @@ class LocalPlanner(object):
         _, angle = cal_distance_angle(current_wpt, current_location, current_yaw)
         if angle < 90:
             print('current way point is: %f, %f' % (current_wpt.x, current_wpt.y))
+            # reset PID when change lane 
+            self.args_lat_hw_dict = {
+                'K_P': 0.75-0.2,
+                'K_D': 0.02,
+                'K_I': 0.4-0.08,
+                'dt': 1.0 / self.FPS}
+
+            self.args_long_hw_dict = {
+                'K_P': 0.37-0.13,
+                'K_D': 0.024,
+                'K_I': 0.032,
+                'dt': 1.0 / self.FPS}
             x.append(current_wpt.x)
             y.append(current_wpt.y)
         else:
             print('current point is: %f, %f' % (current_wpt.x, current_wpt.y))
+            # change PID when change lane 
+            self.args_lat_hw_dict = {
+                'K_P': 0.75-0.24,
+                'K_D': 0.02,
+                'K_I': 0.4-0.24,
+                'dt': 1.0 / self.FPS}
+
+            self.args_long_hw_dict = {
+                'K_P': 0.37-0.2,
+                'K_D': 0.024,
+                'K_I': 0.032-0.02,
+                'dt': 1.0 / self.FPS}
             x.append(current_location.x)
             y.append(current_location.y)
 
@@ -297,8 +323,9 @@ class LocalPlanner(object):
             for i in range(1, int(sample_num) + 1):
                 acceleration = min(0.75,
                                    (target_speed / 3.6 - current_speed) / dt)
-                sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
+                # sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
                 current_speed += acceleration * dt
+                sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
 
                 # print(sample_resolution)
                 if int(i * sample_resolution // ds - 1) >= len(rx):
@@ -377,6 +404,10 @@ class LocalPlanner(object):
             :param target_speed: desired speed
             :return: control
         """
+
+        # record history position
+        current_location = self._vehicle.get_location()
+        self._history_position.append(current_location)
 
         if target_speed is not None:
             self._target_speed = target_speed
