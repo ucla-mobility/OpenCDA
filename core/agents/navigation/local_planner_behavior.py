@@ -326,7 +326,6 @@ class LocalPlanner(object):
             for i in range(1, int(sample_num) + 1):
                 acceleration = min(0.75,
                                    (target_speed / 3.6 - current_speed) / dt)
-                # sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
                 current_speed += acceleration * dt
                 sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
 
