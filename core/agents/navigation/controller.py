@@ -71,18 +71,10 @@ class VehiclePIDController:
             control.brake = min(abs(acceleration), self.max_brake)
 
         # Steering regulation: changes cannot happen abruptly, can't steer too much.
-
-        # edit max steering with regard to speed 
-        current_speed = get_speed(self._vehicle)
-        if current_speed >= 40:
-            # steady steering for high speed
-            self.max_steer = self.max_steer*0.75
-            self.max_delta_steer = self.max_delta_steer*0.85
-
-        if current_steering > self.past_steering + self.max_delta_steer: 
-            current_steering = self.past_steering + self.max_delta_steer 
-        elif current_steering < self.past_steering - self.max_delta_steer: 
-            current_steering = self.past_steering - self.max_delta_steer 
+        if current_steering > self.past_steering + 0.2: 
+            current_steering = self.past_steering + 0.2 
+        elif current_steering < self.past_steering - 0.2: 
+            current_steering = self.past_steering - 0.2 
 
         if current_steering >= 0:
             steering = min(self.max_steer, current_steering)

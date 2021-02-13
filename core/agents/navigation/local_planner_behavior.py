@@ -92,8 +92,6 @@ class LocalPlanner(object):
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
-        # old positions 
-        self._history_position = deque(maxlen=5)
         # save whole trajetory for car following
         # self._trajectory_complete_buffer = deque(maxlen=30)
         # debug option
@@ -227,6 +225,14 @@ class LocalPlanner(object):
         current_location = self._vehicle.get_location()
         current_yaw = self._vehicle.get_transform().rotation.yaw
         current_wpt = self._map.get_waypoint(current_location).next(1)[0].transform.location
+        current_waypoint = self._map.get_waypoint(current_location) 
+        future_wpt = self._waypoint_buffer[-1][0] # future waypoints, used to compare lane ID 
+        previous_wpts = self._history_buffer[0][0] if len(self._history_buffer)>0 else current_waypoint
+
+        # check lane position 
+        is_lanechange = (future_wpt.lane_id != current_waypoint.lane_id)
+        # lanechange transition time 
+        is_near_lanechange = (previous_wpts.lane_id != future_wpt.lane_id)
 
         index = 0
         for i in range(len(self._history_buffer)):
@@ -237,39 +243,36 @@ class LocalPlanner(object):
                 y.append(prev_wpt.y)
                 index += 1
 
-        _, angle = cal_distance_angle(current_wpt, current_location, current_yaw)
-        if angle < 90:
-            print('current way point is: %f, %f' % (current_wpt.x, current_wpt.y))
-            # reset PID when change lane 
+        # check if lane change 
+        # lane change 
+        if is_lanechange or is_near_lanechange: 
+            # smoother PID 
+            print('lane change mode!')
             self.args_lat_hw_dict = {
-                'K_P': 0.75-0.2,
+                'K_P': 0.75-0.32,
                 'K_D': 0.02,
-                'K_I': 0.4-0.08,
+                'K_I': 0.4-0.32,
                 'dt': 1.0 / self.FPS}
 
             self.args_long_hw_dict = {
-                'K_P': 0.37-0.13,
+                'K_P': 0.37-0.15,
                 'K_D': 0.024,
-                'K_I': 0.032,
+                'K_I': 0.032-0.01,
                 'dt': 1.0 / self.FPS}
-            x.append(current_wpt.x)
-            y.append(current_wpt.y)
-        else:
-            print('current point is: %f, %f' % (current_wpt.x, current_wpt.y))
-            # change PID when change lane 
-            self.args_lat_hw_dict = {
-                'K_P': 0.75-0.24,
-                'K_D': 0.02,
-                'K_I': 0.4-0.24,
-                'dt': 1.0 / self.FPS}
-
-            self.args_long_hw_dict = {
-                'K_P': 0.37-0.2,
-                'K_D': 0.024,
-                'K_I': 0.032-0.02,
-                'dt': 1.0 / self.FPS}
+            # use veh position instead of waypoints 
             x.append(current_location.x)
             y.append(current_location.y)
+        else: 
+            # not lane changing 
+            _, angle = cal_distance_angle(current_wpt, current_location, current_yaw)
+            if angle < 90:
+                print('current way point is: %f, %f' % (current_wpt.x, current_wpt.y)) 
+                x.append(current_wpt.x)
+                y.append(current_wpt.y)
+            else:
+                print('current point is: %f, %f' % (current_wpt.x, current_wpt.y))
+                x.append(current_location.x)
+                y.append(current_location.y)
 
         # used to filter the duplicate points
         prev_x = x[index]
@@ -404,10 +407,6 @@ class LocalPlanner(object):
             :param target_speed: desired speed
             :return: control
         """
-
-        # record history position
-        current_location = self._vehicle.get_location()
-        self._history_position.append(current_location)
 
         if target_speed is not None:
             self._target_speed = target_speed
