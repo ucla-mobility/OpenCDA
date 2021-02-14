@@ -92,6 +92,8 @@ class LocalPlanner(object):
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
+        # old positions 
+        self._history_wpts = deque(maxlen=6)
         # save whole trajetory for car following
         # self._trajectory_complete_buffer = deque(maxlen=30)
         # debug option
@@ -142,6 +144,19 @@ class LocalPlanner(object):
             'K_D': 0.05,
             'K_I': 0.07,
             'dt': 1.0 / self.FPS}
+        # tune PID 
+        # reset PID when change lane 
+        # self.args_lat_hw_dict = {
+        #     'K_P': 0.75-0.28,
+        #     'K_D': 0.02,
+        #     'K_I': 0.4-0.1,
+        #     'dt': 1.0 / self.FPS}
+
+        # self.args_long_hw_dict = {
+        #     'K_P': 0.37-0.13,
+        #     'K_D': 0.024,
+        #     'K_I': 0.032,
+        #     'dt': 1.0 / self.FPS}
 
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
 
@@ -225,8 +240,8 @@ class LocalPlanner(object):
         current_location = self._vehicle.get_location()
         current_yaw = self._vehicle.get_transform().rotation.yaw
         current_wpt = self._map.get_waypoint(current_location).next(1)[0].transform.location
-        current_waypoint = self._map.get_waypoint(current_location) 
-        future_wpt = self._waypoint_buffer[-1][0] # future waypoints, used to compare lane ID 
+        current_waypoint = self._map.get_waypoint(current_location)
+        future_wpt = self._waypoint_buffer[-1][0]
         previous_wpts = self._history_buffer[0][0] if len(self._history_buffer)>0 else current_waypoint
 
         # check lane position 
@@ -238,15 +253,16 @@ class LocalPlanner(object):
         for i in range(len(self._history_buffer)):
             prev_wpt = self._history_buffer[i][0].transform.location
             _, angle = cal_distance_angle(prev_wpt, current_location, current_yaw)
-            if angle > 90:
+            # use older history for lane change 
+            if angle > 90 and is_lanechange:
+                # print('First of history buffer: ' + str(self._history_buffer[0][0].transform.location))
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
 
-        # check if lane change 
         # lane change 
         if is_lanechange or is_near_lanechange: 
-            # smoother PID 
+            # change PID 
             print('lane change mode!')
             self.args_lat_hw_dict = {
                 'K_P': 0.75-0.32,
@@ -262,18 +278,18 @@ class LocalPlanner(object):
             # use veh position instead of waypoints 
             x.append(current_location.x)
             y.append(current_location.y)
+        # not lane change
         else: 
-            # not lane changing 
             _, angle = cal_distance_angle(current_wpt, current_location, current_yaw)
             if angle < 90:
-                print('current way point is: %f, %f' % (current_wpt.x, current_wpt.y)) 
+                # print('current way point is: %f, %f' % (current_wpt.x, current_wpt.y))
                 x.append(current_wpt.x)
                 y.append(current_wpt.y)
             else:
-                print('current point is: %f, %f' % (current_wpt.x, current_wpt.y))
+                # print('current point is: %f, %f' % (current_wpt.x, current_wpt.y))
                 x.append(current_location.x)
                 y.append(current_location.y)
-
+            
         # used to filter the duplicate points
         prev_x = x[index]
         prev_y = y[index]
@@ -290,8 +306,11 @@ class LocalPlanner(object):
             y.append(cur_y)
 
         sp = Spline2D(x, y)
-        s = np.arange(sp.s[index], sp.s[-1], ds)
-
+        # s = np.arange(sp.s[index], sp.s[-1], ds) 
+        if index >= 1:
+            s = np.arange(sp.s[index-2], sp.s[-1], ds) # calculate from previous location
+        else:
+            s = np.arange(sp.s[index], sp.s[-1], ds) # calculate from current location 
         # calculate interpolation points
         rx, ry, ryaw, rk = [], [], [], []
         # we only need the interpolation points until next waypoint
@@ -326,6 +345,7 @@ class LocalPlanner(object):
             for i in range(1, int(sample_num) + 1):
                 acceleration = min(0.75,
                                    (target_speed / 3.6 - current_speed) / dt)
+                # sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
                 current_speed += acceleration * dt
                 sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
 
@@ -339,12 +359,28 @@ class LocalPlanner(object):
                     sample_x = rx[int(i * sample_resolution // ds - 1)]
                     sample_y = ry[int(i * sample_resolution // ds - 1)]
 
-                self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y,
-                                                                               self._waypoint_buffer[0][
-                                                                                   0].transform.location.z + 0.5)),
-                                                self._waypoint_buffer[0][1],
-                                                target_speed,
-                                                i * dt))
+                # check if sampled coordinates are in the past 
+                current_z = self._waypoint_buffer[0][0].transform.location.z
+                sample_transform = carla.Transform(carla.Location(sample_x, sample_y, current_z + 0.5))
+                # _, angle = cal_distance_angle(sample_transform.location, current_location, current_yaw)
+
+                if len(self._history_buffer)>0: 
+                    start_location = self._history_buffer[0][0].transform.location
+                else: 
+                    start_location = current_location
+                x_in_range = (start_location.x <= sample_x <= current_location.x) or (current_location.x <= sample_x <= start_location.x)
+                y_in_range = (start_location.y <= sample_y <= current_location.y) or (current_location.y <= sample_y <= start_location.y) 
+
+                if (not x_in_range and not y_in_range):
+                    self._trajectory_buffer.append((sample_transform,
+                                                    self._waypoint_buffer[0][1],
+                                                    target_speed,
+                                                    i * dt))
+                else: 
+                    self._trajectory_buffer.append((self._waypoint_buffer[0][0],
+                                            self._waypoint_buffer[0][1],
+                                            target_speed,
+                                            i * dt))
                 if break_flag:
                     break
 
@@ -406,6 +442,11 @@ class LocalPlanner(object):
             :param target_speed: desired speed
             :return: control
         """
+
+        # record history position
+        if self._waypoint_buffer[-1] not in self._history_wpts:
+            # add history trajectory points
+            self._history_wpts.append(self._waypoint_buffer[-1])
 
         if target_speed is not None:
             self._target_speed = target_speed
@@ -482,12 +523,23 @@ class LocalPlanner(object):
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._trajectory_buffer, z=0.1, lt=0.1)
 
+
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._waypoint_buffer,
+                                  # self._waypoint_buffer,
+                                  self._history_buffer,
                                   z=0.1,
                                   size=0.1,
                                   color=carla.Color(0, 0, 255),
-                                  lt=0.2)
+                                  lt=0.3)
+            # draw_trajetory_points(self._vehicle.get_world(),
+            #                       self._history_wpts,
+            #                       z=0.1,
+            #                       size=0.1,
+            #                       color=carla.Color(255, 0, 0),
+            #                       lt=0.2)
+            # if len(self._history_wpts)>=2:
+            #     wpt_t = self._history_wpts[-3][0].transform
+            #     self._vehicle.get_world().debug.draw_point(wpt_t.location + carla.Location(0.25), 0.1, carla.Color(255, 0, 0), 0.2, False)
 
         return control
