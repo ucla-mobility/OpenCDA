@@ -247,7 +247,8 @@ class LocalPlanner(object):
         # chekc lane ID (lanechange transition steps) 
         is_near_lanechange = (previous_wpts.lane_id != future_wpt.lane_id)
         # check the lateral shift range
-        is_lateral_within_range = (1.8*veh_width < lateral_diff < (2*lane_width-1.8*veh_width))
+        is_lateral_within_range = (1.2*veh_width < lateral_diff < (2*lane_width-1.2*veh_width))
+        # print('The lateral distance: ' + str(is_lateral_within_range))
 
         index = 0
         for i in range(len(self._history_buffer)):
