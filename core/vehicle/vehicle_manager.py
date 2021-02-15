@@ -21,7 +21,7 @@ class VehicleManager(object):
     """
 
     def __init__(self, vehicle, world, behavior='normal', communication_range=35,
-                 buffer_size=5, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING,
+                 buffer_size=8, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING,
                  ignore_traffic_light=False, debug_trajectory=False, debug=False):
         """
         Construct class

@@ -11,6 +11,7 @@ low-level waypoint following based on PID controllers. """
 
 from collections import deque
 from enum import Enum
+import statistics
 
 import carla
 import numpy as np
@@ -92,6 +93,7 @@ class LocalPlanner(object):
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
+        self._trajectory_len = 30
         # save whole trajetory for car following
         # self._trajectory_complete_buffer = deque(maxlen=30)
         # debug option
@@ -224,7 +226,15 @@ class LocalPlanner(object):
         current_speed = get_speed(self._vehicle)
         current_location = self._vehicle.get_location()
         current_yaw = self._vehicle.get_transform().rotation.yaw
-        current_wpt = self._map.get_waypoint(current_location).next(1)[0].transform.location
+        current_wpt = self._map.get_waypoint(current_location).next(1)[0]
+        current_wpt_loc = current_wpt.transform.location
+
+        # check whether doing lane change
+        future_wpt = self._waypoint_buffer[-1][0]
+        previous_wpt = self._history_buffer[0][0] if len(self._history_buffer) > 0 else current_wpt
+
+        is_lanechange = (future_wpt.lane_id != current_wpt.lane_id)
+        is_near_lanechange = (previous_wpt.lane_id != future_wpt.lane_id)
 
         index = 0
         for i in range(len(self._history_buffer)):
@@ -235,19 +245,25 @@ class LocalPlanner(object):
                 y.append(prev_wpt.y)
                 index += 1
 
-        _, angle = cal_distance_angle(current_wpt, current_location, current_yaw)
-        if angle < 90:
-            print('current way point is: %f, %f' % (current_wpt.x, current_wpt.y))
-            x.append(current_wpt.x)
-            y.append(current_wpt.y)
+        _, angle = cal_distance_angle(current_wpt_loc, current_location, current_yaw)
+
+        # To make lane change stable, we will avoid current position
+        if is_lanechange or is_near_lanechange:
+            print('lane change!')
+            pass
         else:
-            print('current point is: %f, %f' % (current_wpt.x, current_wpt.y))
-            x.append(current_location.x)
-            y.append(current_location.y)
+            if angle < 90:
+                # print('current way point is %f, %f' % (current_wpt_loc.x, current_wpt_loc.y))
+                x.append(current_wpt_loc.x)
+                y.append(current_wpt_loc.y)
+            else:
+                # print('current location is %f, %f' % (current_location.x, current_location.y))
+                x.append(current_location.x)
+                y.append(current_location.y)
 
         # used to filter the duplicate points
-        prev_x = x[index]
-        prev_y = y[index]
+        prev_x = 0 if is_near_lanechange or is_lanechange else x[index]
+        prev_y = 0 if is_near_lanechange or is_lanechange else y[index]
         # more waypoints will lead to a more optimized planning path
         for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
@@ -270,15 +286,14 @@ class LocalPlanner(object):
             ix, iy = sp.calc_position(i_s)
             if abs(ix - x[index]) <= ds and abs(iy - y[index]) <= ds:
                 continue
-            # if abs(ix - x[1]) <= ds and abs(iy - y[1]) <= ds:
-            #     break
             rx.append(ix)
             ry.append(iy)
+            rk.append(sp.calc_curvature(i_s))
 
         # debug purpose
         if debug:
             self._long_plan_debug = []
-            for i_s in s:
+            for i_s in np.arange(sp.s[0], sp.s[-1], ds):
                 ix, iy = sp.calc_position(i_s)
                 self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
 
@@ -290,25 +305,33 @@ class LocalPlanner(object):
             print('no trajectory')
             self._trajectory_buffer.append((self._waypoint_buffer[0][0],
                                             self._waypoint_buffer[0][1],
-                                            target_speed))
+                                            target_speed,
+                                            dt))
         else:
             break_flag = False
             current_speed = current_speed / 3.6
+            sample_resolution = 0
+
+            # use mean curvature to constrain the speed
+            mean_k = abs(statistics.mean(rk))
+            target_speed = min(target_speed, np.sqrt(3.6 / mean_k) * 3.6)
+            print('target speed %f, constrain speed %f' % (target_speed, np.sqrt(2.0 / mean_k) * 3.6))
+
             for i in range(1, int(sample_num) + 1):
                 acceleration = min(0.75,
                                    (target_speed / 3.6 - current_speed) / dt)
-                sample_resolution = current_speed * dt + 0.5 * acceleration * dt ** 2
+                sample_resolution += current_speed * dt + 0.5 * acceleration * dt ** 2
                 current_speed += acceleration * dt
 
                 # print(sample_resolution)
-                if int(i * sample_resolution // ds - 1) >= len(rx):
+                if int(sample_resolution // ds - 1) >= len(rx):
                     sample_x = rx[-1]
                     sample_y = ry[-1]
                     break_flag = True
 
                 else:
-                    sample_x = rx[int(i * sample_resolution // ds - 1)]
-                    sample_y = ry[int(i * sample_resolution // ds - 1)]
+                    sample_x = rx[max(0, int(sample_resolution // ds - 1))]
+                    sample_y = ry[max(0, int(sample_resolution // ds - 1))]
 
                 self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y,
                                                                                self._waypoint_buffer[0][
@@ -318,6 +341,7 @@ class LocalPlanner(object):
                                                 i * dt))
                 if break_flag:
                     break
+            self._trajectory_len = len(self._trajectory_buffer)
 
     def pop_buffer(self, vehicle_transform):
         """
@@ -400,8 +424,6 @@ class LocalPlanner(object):
                         self.waypoints_queue.popleft())
                 else:
                     break
-            # self._trajectory_buffer.clear()
-            # self.generate_trajectory(self.debug_trajectory)
 
         # trajectory generation
         if not trajectory and len(self._trajectory_buffer) < 15 and not following:
@@ -409,7 +431,6 @@ class LocalPlanner(object):
             self.generate_trajectory(self.debug_trajectory)
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
-            # self._trajectory_complete_buffer = trajectory.copy()
 
         # Current vehicle waypoint
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
@@ -449,9 +470,9 @@ class LocalPlanner(object):
                                   self._long_plan_debug,
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
-                                  lt=0.2)
+                                  lt=0.05)
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._trajectory_buffer, z=0.1, lt=0.1)
+                                  self._trajectory_buffer, z=0.1, lt=0.05)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),
@@ -459,6 +480,13 @@ class LocalPlanner(object):
                                   z=0.1,
                                   size=0.1,
                                   color=carla.Color(0, 0, 255),
-                                  lt=0.2)
+                                  lt=0.05)
+            draw_trajetory_points(self._vehicle.get_world(),
+                                  self._history_buffer,
+                                  z=0.1,
+                                  size=0.1,
+                                  color=carla.Color(255, 0, 255),
+                                  lt=0.05)
+
 
         return control

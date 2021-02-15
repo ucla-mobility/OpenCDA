@@ -54,11 +54,11 @@ def main():
 
         # setup managers
         vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
-                                           debug_trajectory=True, debug=False, ignore_traffic_light=True)
+                                           debug_trajectory=True, debug=True, ignore_traffic_light=True)
         vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, buffer_size=8,
-                                           debug_trajectory=True, debug=True)
+                                           debug_trajectory=True, debug=False)
         vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world,
-                                           debug_trajectory=True, debug=True)
+                                           debug_trajectory=True, debug=False)
         # vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world,
         #                                    debug_trajectory=True, debug=True)
 

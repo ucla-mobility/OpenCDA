@@ -31,12 +31,11 @@ def main():
         blueprint_library = world.get_blueprint_library()
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=51.7194, y=139.51, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_1 = carla.Transform(carla.Location(x=79.40094727, y=-193.74714844, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0.855804, roll=0.000000))
 
-        transform_destination = carla.Transform(carla.Location(x=606.87, y=141.39, z=0.3),
-                                                carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-
+        transform_destination = carla.Transform(carla.Location(x=24.54736572, y=161.94428711, z=0.3),
+                                                carla.Rotation(pitch=0.000000, yaw=90, roll=0.000000))
         # create the leading vehicle
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
         # black color
