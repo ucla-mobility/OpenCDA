@@ -234,7 +234,7 @@ class LocalPlanner(object):
         previous_wpts = self._history_buffer[0][0] if len(self._history_buffer)>0 else current_waypoint
         # lateral position change
         vec_norm, angle = cal_distance_angle(previous_wpts.transform.location, current_location, current_yaw)
-        lateral_diff = vec_norm*math.sin(math.radians(angle))
+        lateral_diff = abs(vec_norm*math.sin(math.radians(angle)))
         # vehicle boundary 
         boundingbox = self._vehicle.bounding_box
         # vehicle width
@@ -264,9 +264,9 @@ class LocalPlanner(object):
             # change PID 
             print('lane change mode!')
             self.args_lat_hw_dict = {
-                'K_P': 0.75-0.32,
+                'K_P': 0.75-0.28,
                 'K_D': 0.02,
-                'K_I': 0.4-0.32,
+                'K_I': 0.4-0.28,
                 'dt': 1.0 / self.FPS}
 
             self.args_long_hw_dict = {
