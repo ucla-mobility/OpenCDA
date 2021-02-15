@@ -99,7 +99,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
             if not ego_trajetory:
                 wpt = self._map.get_waypoint(self.vehicle.get_location())
-                next_wpt = wpt.next(get_speed(self.vehicle, True) * 0.2)[0]
+                next_wpt = wpt.next(max(2, get_speed(self.vehicle, True) * 1))[0]
                 ego_trajetory.append((next_wpt.transform,
                                       RoadOption.LANEFOLLOW,
                                       get_speed(self.vehicle),

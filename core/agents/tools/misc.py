@@ -65,6 +65,20 @@ def get_speed(vehicle, meters=False):
     return vel_meter_per_second if meters else 3.6 * vel_meter_per_second
 
 
+def get_acc(vehicle, meters=False):
+    """
+    Compute speed of a vehicle in Km/h.
+
+        :param meters: use m/s or km/h
+        :param vehicle: the vehicle for which speed is calculated
+        :return: speed as a float in Km/h
+    """
+    acc = vehicle.get_acceleration()
+    acc_meter_per_second = math.sqrt(acc.x ** 2 + acc.y ** 2 + acc.z ** 2)
+
+    return acc_meter_per_second if meters else 3.6 * acc_meter_per_second
+
+
 def is_within_distance_ahead(target_transform, current_transform, max_distance):
     """
     Check if a target object is within a certain distance in front of a reference object.
