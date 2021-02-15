@@ -39,8 +39,6 @@ class VehiclePIDController:
         self.max_brake = max_brake
         self.max_throttle = max_throttle
         self.max_steer = max_steering
-        # maximum delta value for steering input 
-        self.max_delta_steer = 0.2
 
         self._vehicle = vehicle
         self._world = self._vehicle.get_world()
@@ -71,10 +69,11 @@ class VehiclePIDController:
             control.brake = min(abs(acceleration), self.max_brake)
 
         # Steering regulation: changes cannot happen abruptly, can't steer too much.
-        if current_steering > self.past_steering + 0.2: 
-            current_steering = self.past_steering + 0.2 
-        elif current_steering < self.past_steering - 0.2: 
-            current_steering = self.past_steering - 0.2 
+
+        if current_steering > self.past_steering + 0.2:
+            current_steering = self.past_steering + 0.2
+        elif current_steering < self.past_steering - 0.2:
+            current_steering = self.past_steering - 0.2
 
         if current_steering >= 0:
             steering = min(self.max_steer, current_steering)
