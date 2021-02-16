@@ -1,13 +1,9 @@
-#!/usr/bin/env python
-
-# Copyright (c) 2018 Intel Labs.
-# authors: German Ros (german.ros@intel.com)
-#
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
-
+# -*- coding: utf-8 -*-
 """ This module contains a local planner to perform
 low-level waypoint following based on PID controllers. """
+
+# Author: Runsheng Xu <rxx3386@ucla.edu>
+# License: MIT
 
 from collections import deque
 from enum import Enum
@@ -235,8 +231,8 @@ class LocalPlanner(object):
         previous_wpt = self._history_buffer[0][0] if len(self._history_buffer) > 0 else current_wpt
 
         # lateral position change
-        vec_norm, angle = cal_distance_angle(previous_wpt.transform.location, future_wpt.transform.location,
-                                             future_wpt.transform.rotation.yaw)
+        vec_norm, angle = cal_distance_angle(future_wpt.transform.location, previous_wpt.transform.location,
+                                             previous_wpt.transform.rotation.yaw)
         lateral_diff = abs(vec_norm*math.sin(math.radians(angle)))
         # vehicle boundary
         boundingbox = self._vehicle.bounding_box
@@ -244,7 +240,7 @@ class LocalPlanner(object):
         veh_width = 2*abs(boundingbox.location.y - boundingbox.extent.y)
         # lane width
         lane_width = current_wpt.lane_width
-        is_lateral_within_range = veh_width < lateral_diff
+        is_lateral_within_range = veh_width < lateral_diff < 2 * lane_width
 
         # intersection = future_wpt.is_junction
 

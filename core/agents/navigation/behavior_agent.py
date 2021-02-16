@@ -12,6 +12,7 @@ import random
 import numpy as np
 import carla
 
+from core.agents.navigation.collision_check import CollisionChecker
 from core.agents.navigation.agent import Agent
 from core.agents.navigation.local_planner_behavior import RoadOption
 from core.agents.navigation.global_route_planner import GlobalRoutePlanner
@@ -71,6 +72,9 @@ class BehaviorAgent(Agent):
         self.min_speed = 5
         self.behavior = None
         self._sampling_resolution = sampling_resolution
+
+        # collision checker
+        self._collision_check = CollisionChecker()
 
         # Parameters for agent behavior
         if behavior == 'cautious':
