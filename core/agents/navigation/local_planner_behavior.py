@@ -12,6 +12,7 @@ low-level waypoint following based on PID controllers. """
 from collections import deque
 from enum import Enum
 import statistics
+import math
 
 import carla
 import numpy as np
@@ -53,7 +54,7 @@ class LocalPlanner(object):
     # FPS used for dt
     FPS = 10
 
-    def __init__(self, agent, buffer_size=5, dynamic_pid=False, debug=False, debug_trajectory=False):
+    def __init__(self, agent, buffer_size=5, dynamic_pid=False, debug=False, debug_trajectory=False, update_freq=15):
         """
         :param agent: agent that regulates the vehicle
         :param buffer_size: the buffer size for waypoint
@@ -93,7 +94,7 @@ class LocalPlanner(object):
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
-        self._trajectory_len = 30
+        self.update_freq = update_freq
         # save whole trajetory for car following
         # self._trajectory_complete_buffer = deque(maxlen=30)
         # debug option
@@ -233,8 +234,22 @@ class LocalPlanner(object):
         future_wpt = self._waypoint_buffer[-1][0]
         previous_wpt = self._history_buffer[0][0] if len(self._history_buffer) > 0 else current_wpt
 
-        is_lanechange = (future_wpt.lane_id != current_wpt.lane_id)
-        is_near_lanechange = (previous_wpt.lane_id != future_wpt.lane_id)
+        # lateral position change
+        vec_norm, angle = cal_distance_angle(previous_wpt.transform.location, future_wpt.transform.location,
+                                             future_wpt.transform.rotation.yaw)
+        lateral_diff = abs(vec_norm*math.sin(math.radians(angle)))
+        # vehicle boundary
+        boundingbox = self._vehicle.bounding_box
+        # vehicle width
+        veh_width = 2*abs(boundingbox.location.y - boundingbox.extent.y)
+        # lane width
+        lane_width = current_wpt.lane_width
+        is_lateral_within_range = veh_width < lateral_diff
+
+        # intersection = future_wpt.is_junction
+
+        is_lanechange = (future_wpt.lane_id != current_wpt.lane_id) and is_lateral_within_range
+        is_near_lanechange = (previous_wpt.lane_id != future_wpt.lane_id) and is_lateral_within_range
 
         index = 0
         for i in range(len(self._history_buffer)):
@@ -298,7 +313,6 @@ class LocalPlanner(object):
                 self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # sample the trajectory by 0.1 second
-        # sample_resolution = (current_speed + target_speed) / 2 / 3.6 * dt
         sample_num = 2.0 // dt
 
         if sample_num == 0 or len(rx) == 0:
@@ -313,13 +327,15 @@ class LocalPlanner(object):
             sample_resolution = 0
 
             # use mean curvature to constrain the speed
-            mean_k = abs(statistics.mean(rk))
+            mean_k = abs(abs(statistics.mean(rk)) + statistics.stdev(rk))
             target_speed = min(target_speed, np.sqrt(3.6 / mean_k) * 3.6)
-            print('target speed %f, constrain speed %f' % (target_speed, np.sqrt(2.0 / mean_k) * 3.6))
+            acceleration = max(min(2.5,
+                               (target_speed / 3.6 - current_speed) / dt), -3.5)
+            # print('acceleration: %f, target speed %f, constrain speed %f' % (acceleration,
+            # target_speed, np.sqrt(2.0 / mean_k) * 3.6))
 
             for i in range(1, int(sample_num) + 1):
-                acceleration = min(0.75,
-                                   (target_speed / 3.6 - current_speed) / dt)
+
                 sample_resolution += current_speed * dt + 0.5 * acceleration * dt ** 2
                 current_speed += acceleration * dt
 
@@ -426,7 +442,7 @@ class LocalPlanner(object):
                     break
 
         # trajectory generation
-        if not trajectory and len(self._trajectory_buffer) < 15 and not following:
+        if not trajectory and len(self._trajectory_buffer) < self.update_freq and not following:
             self._trajectory_buffer.clear()
             self.generate_trajectory(self.debug_trajectory)
         elif trajectory:
@@ -470,7 +486,7 @@ class LocalPlanner(object):
                                   self._long_plan_debug,
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
-                                  lt=0.05)
+                                  lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._trajectory_buffer, z=0.1, lt=0.05)
 
@@ -480,13 +496,13 @@ class LocalPlanner(object):
                                   z=0.1,
                                   size=0.1,
                                   color=carla.Color(0, 0, 255),
-                                  lt=0.05)
+                                  lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._history_buffer,
                                   z=0.1,
                                   size=0.1,
                                   color=carla.Color(255, 0, 255),
-                                  lt=0.05)
+                                  lt=0.2)
 
 
         return control
