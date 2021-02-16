@@ -28,7 +28,7 @@ class BehaviorAgent(Agent):
 
     def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal',
                  sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, debug_trajectory=False,
-                 debug=False):
+                 debug=False, update_freq=15):
         """
         Construct class
         :param vehicle: actor
@@ -50,7 +50,8 @@ class BehaviorAgent(Agent):
         self.look_ahead_steps = 0
 
         self._local_planner = CustomizedLocalPlanner(self, buffer_size=buffer_size, dynamic_pid=dynamic_pid,
-                                                     debug_trajectory=debug_trajectory, debug=debug)
+                                                     debug_trajectory=debug_trajectory, debug=debug,
+                                                     update_freq=update_freq)
         self._global_planner = None
 
         # Vehicle information

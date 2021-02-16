@@ -22,7 +22,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
     def __init__(self, vehicle, ignore_traffic_light=True, behavior='normal',
                  sampling_resolution=4.5, buffer_size=5, dynamic_pid=False,
-                 move_to_point_distance=5, debug_trajectory=True, debug=True):
+                 update_freq=15, debug_trajectory=True, debug=True):
         """
         Construct class
         :param vehicle: actor
@@ -35,7 +35,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
 
         super(PlatooningBehaviorAgent, self).__init__(vehicle, ignore_traffic_light, behavior, sampling_resolution,
-                                                      buffer_size, dynamic_pid, debug_trajectory, debug)
+                                                      buffer_size, dynamic_pid, debug_trajectory, debug, update_freq)
         # used for control open gap gradually
         self.current_gap = self.behavior.inter_gap
 
@@ -99,7 +99,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
             if not ego_trajetory:
                 wpt = self._map.get_waypoint(self.vehicle.get_location())
-                next_wpt = wpt.next(get_speed(self.vehicle, True) * 0.2)[0]
+                next_wpt = wpt.next(max(2, get_speed(self.vehicle, True) * 1))[0]
                 ego_trajetory.append((next_wpt.transform,
                                       RoadOption.LANEFOLLOW,
                                       get_speed(self.vehicle),

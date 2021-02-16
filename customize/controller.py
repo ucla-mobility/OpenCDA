@@ -27,7 +27,7 @@ class CustomizedVehiclePIDController(VehiclePIDController):
     """
 
     def __init__(self, vehicle, args_lateral, args_longitudinal,
-                 max_throttle=0.75, max_brake=0.3, max_steering=0.8):
+                 max_throttle=1.5, max_brake=0.3, max_steering=0.8):
         """
         Constructor method.
 

@@ -20,8 +20,8 @@ class VehicleManager(object):
     A class manager to embed different modules with vehicle together
     """
 
-    def __init__(self, vehicle, world, behavior='normal', communication_range=35,
-                 buffer_size=5, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING,
+    def __init__(self, vehicle, world, behavior='normal', communication_range=35, update_freq=15,
+                 buffer_size=8, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING,
                  ignore_traffic_light=False, debug_trajectory=False, debug=False):
         """
         Construct class
@@ -39,7 +39,7 @@ class VehicleManager(object):
         self.vehicle = vehicle
         self.agent = PlatooningBehaviorAgent(vehicle, behavior=behavior, ignore_traffic_light=ignore_traffic_light,
                                              buffer_size=buffer_size, sampling_resolution=sample_resolution,
-                                             debug_trajectory=debug_trajectory, debug=debug)
+                                             debug_trajectory=debug_trajectory, debug=debug, update_freq=15)
 
         self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=communication_range)
 
@@ -100,8 +100,10 @@ class VehicleManager(object):
         Quantitive way to judge the peroformance of the system
         :return:
         """
-        time_gap_list = self.agent.time_gap_list[100:]
-        velocity_list = self.agent.velocity_list[100:]
+        index = 100 if len(self.agent.time_gap_list) > 100 else 0
+        time_gap_list = self.agent.time_gap_list[index:]
+        velocity_list = self.agent.velocity_list
+
         print(len(time_gap_list))
         print("the mean of the time gap is %f and std is %f" % (statistics.mean(time_gap_list),
                                                                 statistics.stdev(time_gap_list)))

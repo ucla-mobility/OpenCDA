@@ -9,7 +9,7 @@
 import numpy as np
 
 from core.vehicle.vehicle_manager import VehicleManager
-from pviz.profile_plotting import draw_velocity_profile
+from pviz.profile_plotting import draw_velocity_profile, draw_intergap_profile
 
 
 class PlatooningManager(object):
@@ -115,10 +115,13 @@ class PlatooningManager(object):
         """
         # for evaluation purpose
         velocity_list = []
+        gap_list = []
         for i in range(len(self.vehicle_manager_list)):
             self.vehicle_manager_list[i].vehicle.destroy()
             if i > 0:
                 self.vehicle_manager_list[i].cal_performance()
+                gap_list.append(self.vehicle_manager_list[i].agent.time_gap_list[100:])
             velocity_list.append(self.vehicle_manager_list[i].agent.velocity_list)
 
         draw_velocity_profile(velocity_list, np.arange(0, len(velocity_list)))
+        draw_intergap_profile(gap_list, np.arange(0, len(gap_list)))
