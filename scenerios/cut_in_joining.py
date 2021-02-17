@@ -68,7 +68,7 @@ def main():
         vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world, debug_trajectory=False, debug=False)
 
         vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, status=FSM.SEARCHING, sample_resolution=4.5,
-                                           buffer_size=8, debug_trajectory=True, debug=False, update_freq=4)
+                                           buffer_size=8, debug_trajectory=True, debug=False, update_freq=15)
 
         platooning_manager = PlatooningManager(platooning_world)
 

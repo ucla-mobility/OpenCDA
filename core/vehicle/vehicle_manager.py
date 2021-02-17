@@ -39,7 +39,7 @@ class VehicleManager(object):
         self.vehicle = vehicle
         self.agent = PlatooningBehaviorAgent(vehicle, behavior=behavior, ignore_traffic_light=ignore_traffic_light,
                                              buffer_size=buffer_size, sampling_resolution=sample_resolution,
-                                             debug_trajectory=debug_trajectory, debug=debug, update_freq=15)
+                                             debug_trajectory=debug_trajectory, debug=debug, update_freq=update_freq)
 
         self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=communication_range)
 
