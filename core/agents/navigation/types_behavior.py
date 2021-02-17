@@ -11,7 +11,7 @@ class Cautious(object):
     speed_lim_dist = 6
     speed_decrease = 12
     inter_gap = 1.3
-    safety_time = 3
+    safety_time = 5
     min_proximity_threshold = 12
     braking_distance = 6
     overtake_counter = -1
@@ -27,7 +27,7 @@ class Normal(object):
     speed_decrease = 10
     inter_gap = 0.8
     open_gap = 1.8
-    safety_time = 3
+    safety_time = 4
     min_proximity_threshold = 10
     braking_distance = max_speed / 3.6 * 0.1
     overtake_counter = 0

@@ -20,7 +20,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     The behavior agent for platooning
     """
 
-    def __init__(self, vehicle, ignore_traffic_light=True, behavior='normal',
+    def __init__(self, vehicle, ignore_traffic_light=True, behavior='normal', overtake_allowed=False,
                  sampling_resolution=4.5, buffer_size=5, dynamic_pid=False,
                  update_freq=15, debug_trajectory=True, debug=True):
         """
@@ -34,8 +34,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         provide customized function under customize/controller
         """
 
-        super(PlatooningBehaviorAgent, self).__init__(vehicle, ignore_traffic_light, behavior, sampling_resolution,
-                                                      buffer_size, dynamic_pid, debug_trajectory, debug, update_freq)
+        super(PlatooningBehaviorAgent, self).__init__(vehicle, ignore_traffic_light, behavior, overtake_allowed,
+                                                      sampling_resolution, buffer_size, dynamic_pid,
+                                                      debug_trajectory, debug, update_freq)
         # used for control open gap gradually
         self.current_gap = self.behavior.inter_gap
 

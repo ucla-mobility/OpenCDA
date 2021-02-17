@@ -313,7 +313,7 @@ class LocalPlanner(object):
 
         return rx, ry, rk, ryaw
 
-    def generate_trajectory(self, rx, ry, rk, debug=True):
+    def generate_trajectory(self, rx, ry, rk):
         """
         Sampling the generated path and assign speed to each point
         :param rx: x coordinates of planning path
@@ -341,7 +341,7 @@ class LocalPlanner(object):
         mean_k = abs(abs(statistics.mean(rk)) + statistics.stdev(rk))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
         target_speed = min(target_speed, np.sqrt(3.6 / mean_k) * 3.6)
-        print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
+        # print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
         # TODO: This may need to be tuned more(for instance, use history speed)
         acceleration = max(min(2.5,
                                (target_speed / 3.6 - current_speed) / dt), -3.5)
@@ -454,7 +454,7 @@ class LocalPlanner(object):
         # we will generate the trajectory only if it is not a following vehicle in the platooning
         if not trajectory and len(self._trajectory_buffer) < self.update_freq and not following:
             self._trajectory_buffer.clear()
-            self.generate_trajectory(rx, ry, rk, debug=self.debug_trajectory)
+            self.generate_trajectory(rx, ry, rk)
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
 

@@ -92,11 +92,11 @@ def main():
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
 
-            platooning_manager.update_information(world)
+            platooning_manager.update_information(platooning_world)
 
             in_platooning, _, _ = vehicle_manager_4.get_platooning_status()
             if not in_platooning:
-                vehicle_manager_4.agent.update_information(world)
+                vehicle_manager_4.agent.update_information(platooning_world)
                 control = vehicle_manager_4.run_step()
                 vehicle_manager_4. vehicle.apply_control(control)
 

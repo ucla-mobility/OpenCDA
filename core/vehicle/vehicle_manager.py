@@ -22,7 +22,7 @@ class VehicleManager(object):
 
     def __init__(self, vehicle, world, behavior='normal', communication_range=35, update_freq=15,
                  buffer_size=8, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING,
-                 ignore_traffic_light=False, debug_trajectory=False, debug=False):
+                 ignore_traffic_light=False, overtake_allowed=False, debug_trajectory=False, debug=False):
         """
         Construct class
         :param vehicle: carla Actor
@@ -39,6 +39,7 @@ class VehicleManager(object):
         self.vehicle = vehicle
         self.agent = PlatooningBehaviorAgent(vehicle, behavior=behavior, ignore_traffic_light=ignore_traffic_light,
                                              buffer_size=buffer_size, sampling_resolution=sample_resolution,
+                                             overtake_allowed=overtake_allowed,
                                              debug_trajectory=debug_trajectory, debug=debug, update_freq=update_freq)
 
         self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=communication_range)

@@ -23,6 +23,7 @@ class PlatooningWorld(object):
         :param self:
         :return:
         """
+        self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
 
@@ -32,6 +33,7 @@ class PlatooningWorld(object):
         :param vehicle_manager:
         :return:
         """
+        self.vehicle_id_set.add(vehicle_manager.vehicle.id)
         self._vehicle_manager_dict.update({vehicle_manager.vid: vehicle_manager})
 
     def update_platooning(self, platooning_manger):
