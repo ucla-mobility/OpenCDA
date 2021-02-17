@@ -372,6 +372,29 @@ class BehaviorAgent(Agent):
 
     def run_step(self, target_speed=None):
         """
+        Excute one step of naviation
+        :param target_speed:  a manual order to achieve certain speed
+        :return: control: carla.VehicleControl
+        """
+        # generated plan path first
+        rx, ry, rk, ryaw = self._local_planner.generate_path()
+
+        # Checking if there's a junction nearby to slow down
+        if self.incoming_waypoint.is_junction and (
+                self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
+            print('turnning')
+            control = self._local_planner.run_step(rx, ry, rk,
+                target_speed=min(self.behavior.max_speed, 20))
+
+        # normal behavior
+        control = self._local_planner.run_step(rx, ry, rk,
+                                               target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist
+                                               if not target_speed else target_speed)
+        return control
+
+    # TODO: Delete it after new algorithm is donw
+    def run_step_old(self, target_speed=None):
+        """
         Execute one step of navigation.
 
             :param target_speed: a manual order to achieve certain speed

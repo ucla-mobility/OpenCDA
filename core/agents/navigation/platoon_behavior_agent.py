@@ -52,7 +52,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # must match leading vehicle's trajectory unit time
         t_origin = 0
         if len(self._local_planner.get_trajetory()) > 7:
-            return self._local_planner.run_step(following=True)
+            return self._local_planner.run_step([], [], [], following=True)
         else:
             frontal_vehicle_vm = self.frontal_vehicle
             frontal_trajectory = frontal_vehicle_vm.agent.get_local_planner().get_trajetory()
@@ -105,41 +105,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                       get_speed(self.vehicle),
                                       t_origin + 0.2))
 
-            return self._local_planner.run_step(trajectory=ego_trajetory)
-
-    def platooning_following_manager_naive(self, frontal_vehicle, distance,
-                                           vehicle_loc, vehicle_target_road_option, debug=False):
-        """
-        Naive Car following behavior in platooning
-        :param frontal_vehicle:  car to follow
-        :param vehicle_target_road_option:
-        :param vehicle_loc:
-        :param distance: distance from vehicle
-        :param debug: boolean for debugging
-        :return: control: carla.VehicleControl
-        """
-        vehicle_speed = get_speed(frontal_vehicle)
-        delta_v = max(1, (self.speed - vehicle_speed) / 3.6)
-        ttc = distance / delta_v if delta_v != 0 else distance / np.nextafter(0., 1.)
-
-        # too close to the frontal vehicle, slow down
-        if self.behavior.inter_gap > ttc > 0.0:
-            control = self._local_planner.run_step(
-                target_speed=positive(vehicle_speed - self.behavior.speed_decrease),
-                target_waypoint=vehicle_loc,
-                target_road_option=vehicle_target_road_option)
-        # in the safe following area
-        elif 3 * self.behavior.inter_gap > ttc > self.behavior.inter_gap:
-            control = self._local_planner.run_step(target_speed=max(self.min_speed, vehicle_speed),
-                                                   target_waypoint=vehicle_loc,
-                                                   target_road_option=vehicle_target_road_option)
-        # too far, tailgating
-        else:
-
-            control = self._local_planner.run_step(target_speed=self.behavior.tailgate_speed,
-                                                   target_waypoint=vehicle_loc,
-                                                   target_road_option=vehicle_target_road_option)
-        return control
+            return self._local_planner.run_step([], [], [], trajectory=ego_trajetory)
 
     def platooning_merge_management(self, frontal_vehicle_vm):
         """
@@ -162,7 +128,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # regenerate route the route to make merge(lane change)
         self.set_destination(frontal_vehicle_next_waypoint, destination, clean=True)
 
-        control = self._local_planner.run_step(target_speed=1.5 * get_speed(frontal_vehicle_vm.vehicle))
+        control = self.run_step(target_speed=1.5 * get_speed(frontal_vehicle_vm.vehicle))
 
         return control
 
@@ -275,7 +241,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 rear_vehicle_vm.set_platooning_status(FSM.MAINTINING)
             return self.run_step_maintaining(frontal_vehicle_vm), True
 
-        return self._local_planner.run_step(target_speed=get_speed(frontal_vehicle)), False
+        return self.run_step(target_speed=get_speed(frontal_vehicle)), False
 
     def run_step_open_gap(self):
         """

@@ -91,8 +91,7 @@ class LocalPlanner(object):
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
         self.update_freq = update_freq
-        # save whole trajetory for car following
-        # self._trajectory_complete_buffer = deque(maxlen=30)
+
         # debug option
         self.debug = debug
         self.debug_trajectory = debug_trajectory
@@ -205,77 +204,78 @@ class LocalPlanner(object):
         """
         return self._trajectory_buffer
 
-    def generate_trajectory(self, debug=True):
+    def generate_path(self):
         """
-        Generate a smooth trajectory using spline fitting
-        :return:
+        Generate the smooth path using cubic spline
+        :return: rx, ry, ryaw, rk: list of planned path points' x,y coordinates, yaw angle and curvature
         """
+
+        # used to save all key spline node
         x = []
         y = []
 
-        # [m] distance of each intepolated points
+        # [m] distance of each interpolated points
         ds = 0.1
-        # unit time space
-        dt = 0.2
 
-        target_speed = self._target_speed
-
-        current_speed = get_speed(self._vehicle)
+        # retrieve current location, yaw angle
         current_location = self._vehicle.get_location()
         current_yaw = self._vehicle.get_transform().rotation.yaw
+
+        # retrieve the corresponding waypoint of the current location
         current_wpt = self._map.get_waypoint(current_location).next(1)[0]
         current_wpt_loc = current_wpt.transform.location
 
-        # check whether doing lane change
+        # retrieve the future and past waypoint to check whether a lane change is gonna operated
         future_wpt = self._waypoint_buffer[-1][0]
         previous_wpt = self._history_buffer[0][0] if len(self._history_buffer) > 0 else current_wpt
 
-        # lateral position change
-        vec_norm, angle = cal_distance_angle(future_wpt.transform.location, previous_wpt.transform.location,
-                                             previous_wpt.transform.rotation.yaw)
-        lateral_diff = abs(vec_norm*math.sin(math.radians(angle)))
-        # vehicle boundary
+        # check lateral offset from previous waypoint to current waypoint
+        vec_norm, angle = cal_distance_angle(previous_wpt.transform.location,
+                                             future_wpt.transform.location,
+                                             future_wpt.transform.rotation.yaw)
+        # distance in the lateral direction
+        lateral_diff = abs(vec_norm * math.sin(math.radians(angle)))
+
         boundingbox = self._vehicle.bounding_box
-        # vehicle width
-        veh_width = 2*abs(boundingbox.location.y - boundingbox.extent.y)
-        # lane width
+        veh_width = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
         lane_width = current_wpt.lane_width
+
         is_lateral_within_range = veh_width < lateral_diff < 2 * lane_width
 
-        # intersection = future_wpt.is_junction
+        # check if the vehicle is in lane change based on lane id and lateral offset
+        is_lane_change = (future_wpt.lane_id != current_wpt.lane_id
+                          or previous_wpt.lane_id != future_wpt.lane_id) \
+                          and is_lateral_within_range
 
-        is_lanechange = (future_wpt.lane_id != current_wpt.lane_id) and is_lateral_within_range
-        is_near_lanechange = (previous_wpt.lane_id != future_wpt.lane_id) and is_lateral_within_range
-
+        # we consider history waypoint to generate trajectory
         index = 0
         for i in range(len(self._history_buffer)):
             prev_wpt = self._history_buffer[i][0].transform.location
             _, angle = cal_distance_angle(prev_wpt, current_location, current_yaw)
+            # make sure the history waypoint is already passed by
             if angle > 90:
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
 
-        _, angle = cal_distance_angle(current_wpt_loc, current_location, current_yaw)
-
-        # To make lane change stable, we will avoid current position
-        if is_lanechange or is_near_lanechange:
-            print('lane change!')
+        # to make sure the vehicle is stable during lane change, we don't include any current position in planed path
+        if is_lane_change:
+            print('lane change')
             pass
         else:
+            _, angle = cal_distance_angle(current_wpt_loc, current_location, current_yaw)
+            # we prefer to use waypoint as the current position for path generation if the waypoint is
+            # in front of us. This is because waypoint always sits in the center
             if angle < 90:
-                # print('current way point is %f, %f' % (current_wpt_loc.x, current_wpt_loc.y))
                 x.append(current_wpt_loc.x)
                 y.append(current_wpt_loc.y)
             else:
-                # print('current location is %f, %f' % (current_location.x, current_location.y))
                 x.append(current_location.x)
                 y.append(current_location.y)
 
-        # used to filter the duplicate points
-        prev_x = 0 if is_near_lanechange or is_lanechange else x[index]
-        prev_y = 0 if is_near_lanechange or is_lanechange else y[index]
-        # more waypoints will lead to a more optimized planning path
+        # used to filter the waypoints that are too close
+        prev_x = 0 if is_lane_change else x[index]
+        prev_y = 0 if is_lane_change else y[index]
         for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
@@ -287,7 +287,9 @@ class LocalPlanner(object):
             x.append(cur_x)
             y.append(cur_y)
 
+        # Cubic Spline Interpolation calculation
         sp = Spline2D(x, y)
+        # we only need the interpolation points after current position
         s = np.arange(sp.s[index], sp.s[-1], ds)
 
         # calculate interpolation points
@@ -300,60 +302,72 @@ class LocalPlanner(object):
             rx.append(ix)
             ry.append(iy)
             rk.append(sp.calc_curvature(i_s))
+            ryaw.append(sp.calc_yaw(i_s))
 
         # debug purpose
-        if debug:
-            self._long_plan_debug = []
-            for i_s in np.arange(sp.s[0], sp.s[-1], ds):
-                ix, iy = sp.calc_position(i_s)
-                self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
+        self._long_plan_debug = []
+        s = np.arange(sp.s[0], sp.s[-1], ds)
+        for i_s in s:
+            ix, iy = sp.calc_position(i_s)
+            self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
+
+        return rx, ry, rk, ryaw
+
+    def generate_trajectory(self, rx, ry, rk, debug=True):
+        """
+        Sampling the generated path and assign speed to each point
+        :param rx: x coordinates of planning path
+        :param ry: y coordinates of planning path
+        :param rk: curvature of planning path
+        :param debug: whether to draw the whole plan path
+        :return:
+        """
+        # unit distance for interpolation points
+        ds = 0.1
+        # unit time space
+        dt = 0.2
+
+        target_speed = self._target_speed
+        current_speed = get_speed(self._vehicle)
 
         # sample the trajectory by 0.1 second
         sample_num = 2.0 // dt
 
-        if sample_num == 0 or len(rx) == 0:
-            print('no trajectory')
-            self._trajectory_buffer.append((self._waypoint_buffer[0][0],
+        break_flag = False
+        current_speed = current_speed / 3.6
+        sample_resolution = 0
+
+        # use mean curvature to constrain the speed
+        mean_k = abs(abs(statistics.mean(rk)) + statistics.stdev(rk))
+        # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
+        target_speed = min(target_speed, np.sqrt(3.6 / mean_k) * 3.6)
+        print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
+        # TODO: This may need to be tuned more(for instance, use history speed)
+        acceleration = max(min(2.5,
+                               (target_speed / 3.6 - current_speed) / dt), -3.5)
+
+        for i in range(1, int(sample_num) + 1):
+            sample_resolution += current_speed * dt + 0.5 * acceleration * dt ** 2
+            current_speed += acceleration * dt
+
+            # print(sample_resolution)
+            if int(sample_resolution // ds - 1) >= len(rx):
+                sample_x = rx[-1]
+                sample_y = ry[-1]
+                break_flag = True
+
+            else:
+                sample_x = rx[max(0, int(sample_resolution // ds - 1))]
+                sample_y = ry[max(0, int(sample_resolution // ds - 1))]
+
+            self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y,
+                                                                           self._waypoint_buffer[0][
+                                                                               0].transform.location.z + 0.5)),
                                             self._waypoint_buffer[0][1],
                                             target_speed,
-                                            dt))
-        else:
-            break_flag = False
-            current_speed = current_speed / 3.6
-            sample_resolution = 0
-
-            # use mean curvature to constrain the speed
-            mean_k = abs(abs(statistics.mean(rk)) + statistics.stdev(rk))
-            target_speed = min(target_speed, np.sqrt(3.6 / mean_k) * 3.6)
-            acceleration = max(min(2.5,
-                               (target_speed / 3.6 - current_speed) / dt), -3.5)
-            # print('acceleration: %f, target speed %f, constrain speed %f' % (acceleration,
-            # target_speed, np.sqrt(2.0 / mean_k) * 3.6))
-
-            for i in range(1, int(sample_num) + 1):
-
-                sample_resolution += current_speed * dt + 0.5 * acceleration * dt ** 2
-                current_speed += acceleration * dt
-
-                # print(sample_resolution)
-                if int(sample_resolution // ds - 1) >= len(rx):
-                    sample_x = rx[-1]
-                    sample_y = ry[-1]
-                    break_flag = True
-
-                else:
-                    sample_x = rx[max(0, int(sample_resolution // ds - 1))]
-                    sample_y = ry[max(0, int(sample_resolution // ds - 1))]
-
-                self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y,
-                                                                               self._waypoint_buffer[0][
-                                                                                   0].transform.location.z + 0.5)),
-                                                self._waypoint_buffer[0][1],
-                                                target_speed,
-                                                i * dt))
-                if break_flag:
-                    break
-            self._trajectory_len = len(self._trajectory_buffer)
+                                            i * dt))
+            if break_flag:
+                break
 
     def pop_buffer(self, vehicle_transform):
         """
@@ -399,17 +413,17 @@ class LocalPlanner(object):
                     self._trajectory_buffer.popleft()
             # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
-    def run_step(self, target_speed=None, target_waypoint=None, target_road_option=None,
-                 trajectory=None, following=False):
+    def run_step(self, rx, ry, rk, target_speed=None, trajectory=None, following=False):
         """
         Execute one step of local planning which involves
         running the longitudinal and lateral PID controllers to
         follow the smooth waypoints trajectory.
 
-            :param following:
-            :param trajectory:
-            :param target_road_option:
-            :param target_waypoint:
+            :param rx: generated path x coordinates
+            :param ry: generated path y coordinates
+            :param rk: generated path curvatures
+            :param following: whether the vehicle is under following status
+            :param trajectory: pre-generated trajectory only for following vehicles in the platooning
             :param target_speed: desired speed
             :return: control
         """
@@ -428,7 +442,7 @@ class LocalPlanner(object):
             control.manual_gear_shift = False
             return control
 
-        # Buffering the waypoints. Always keep the waypoint buffer alive in case of dissolving
+        # Buffering the waypoints. Always keep the waypoint buffer alive
         if len(self._waypoint_buffer) < 4:
             for i in range(self._buffer_size):
                 if self.waypoints_queue:
@@ -437,10 +451,10 @@ class LocalPlanner(object):
                 else:
                     break
 
-        # trajectory generation
+        # we will generate the trajectory only if it is not a following vehicle in the platooning
         if not trajectory and len(self._trajectory_buffer) < self.update_freq and not following:
             self._trajectory_buffer.clear()
-            self.generate_trajectory(self.debug_trajectory)
+            self.generate_trajectory(rx, ry, rk, debug=self.debug_trajectory)
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
 
@@ -448,11 +462,7 @@ class LocalPlanner(object):
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
 
         # Target waypoint
-        if not target_waypoint or not target_road_option:
-            self.target_waypoint, self.target_road_option, self._target_speed, dt = self._trajectory_buffer[0]
-        else:
-            self._following_buffer.append((target_waypoint, target_road_option))
-            self.target_waypoint, self.target_road_option = self._following_buffer[0]
+        self.target_waypoint, self.target_road_option, self._target_speed, dt = self._trajectory_buffer[0]
 
         if self.dynamic_pid:
             args_lat, args_long = compute_pid(self)
@@ -482,7 +492,7 @@ class LocalPlanner(object):
                                   self._long_plan_debug,
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
-                                  lt=0.2)
+                                  lt=2)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._trajectory_buffer, z=0.1, lt=0.05)
 
@@ -499,6 +509,5 @@ class LocalPlanner(object):
                                   size=0.1,
                                   color=carla.Color(255, 0, 255),
                                   lt=0.2)
-
 
         return control
