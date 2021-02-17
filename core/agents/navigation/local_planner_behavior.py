@@ -241,7 +241,6 @@ class LocalPlanner(object):
         lane_width = current_wpt.lane_width
 
         is_lateral_within_range = veh_width < lateral_diff < 2 * lane_width
-
         # check if the vehicle is in lane change based on lane id and lateral offset
         is_lane_change = (future_wpt.lane_id != current_wpt.lane_id
                           or previous_wpt.lane_id != future_wpt.lane_id) \

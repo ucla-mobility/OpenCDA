@@ -88,7 +88,7 @@ def main():
         while True:
             if not world.wait_for_tick(10.0):
                 continue
-            transform = vehicle_2.get_transform()
+            transform = vehicle_4.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
 

@@ -310,6 +310,52 @@ class BehaviorAgent(Agent):
 
         return target_speed
 
+    def overtake_management(self, obstacle_vehicle):
+        """
+        Overtake behavior for back_joining car
+        :param obstacle_vehicle: the vehicle
+        :return:
+        """
+        # obstacle vehicle's location
+        obstacle_vehicle_loc = obstacle_vehicle.get_location()
+        obstacle_vehicle_wpt = self._map.get_waypoint(obstacle_vehicle_loc)
+
+        # whether a lane change is allowed
+        left_turn = obstacle_vehicle_wpt.left_lane_marking.lane_change
+        right_turn = obstacle_vehicle_wpt.right_lane_marking.lane_change
+
+        # left and right waypoint of the obstacle vehicle
+        left_wpt = obstacle_vehicle_wpt.get_left_lane()
+        right_wpt = obstacle_vehicle_wpt.get_right_lane()
+
+        # if the vehicle is able to operate left overtake
+        if (left_turn == carla.LaneChange.Left or left_turn ==
+            carla.LaneChange.Both) and obstacle_vehicle_wpt.lane_id * left_wpt.lane_id > 0 \
+                and left_wpt.lane_type == carla.LaneType.Driving:
+            # this not the real plan path, but just a quick path to check collision
+            rx, ry, ryaw = self._collision_check.overtake_collision_path(ego_loc=self.vehicle.get_location(),
+                                                                         target_loc=left_wpt.transform.location)
+            vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
+                                                         self._map.get_waypoint(self.vehicle.get_location()))
+            if not vehicle_state:
+                print("left overtake is operated")
+                self.set_destination(left_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
+                return vehicle_state
+
+        if (right_turn == carla.LaneChange.Right or right_turn ==
+            carla.LaneChange.Both) and obstacle_vehicle_wpt.lane_id * right_wpt.lane_id > 0 \
+                and right_wpt.lane_type == carla.LaneType.Driving:
+            rx, ry, ryaw = self._collision_check.overtake_collision_path(ego_loc=self.vehicle.get_location(),
+                                                                         target_loc=right_wpt.transform.location)
+            vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
+                                                         self._map.get_waypoint(self.vehicle.get_location()))
+            if not vehicle_state:
+                print("right overtake is operated")
+                self.set_destination(right_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
+                return vehicle_state
+
+        return True
+
     def run_step(self, target_speed=None):
         """
         Excute one step of naviation
@@ -328,18 +374,30 @@ class BehaviorAgent(Agent):
 
         # 3: collision check
         is_hazard, obstacle_vehicle, distance = self.collision_manager(rx, ry, ryaw, ego_vehicle_wp)
+        car_following_flag = False
+
         if is_hazard and not self.overtake_allowed:
             print("collision detected !!!")
+            car_following_flag = True
+
+        if is_hazard and self.overtake_allowed:
+            print("collision detected!")
+            obstacle_speed = get_speed(obstacle_vehicle)
+            # overtake the vehicle
+            if get_speed(self.vehicle) > 1.1 * obstacle_speed:
+                car_following_flag = self.overtake_management(obstacle_vehicle)
+
+        if car_following_flag:
             target_speed = self.car_following_manager(obstacle_vehicle, distance)
             control = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
-
             return control
+
         # 4. Checking if there's a junction nearby to slow down TODO: This is a very ROUGH WAY for now
         if self.incoming_waypoint.is_junction and (
                 self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
             control = self._local_planner.run_step(rx, ry, rk,
                                                    target_speed=min(self.behavior.max_speed, 24))
-            return  control
+            return control
 
         # 5. normal behavior
         control = self._local_planner.run_step(rx, ry, rk,

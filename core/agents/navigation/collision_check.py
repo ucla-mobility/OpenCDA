@@ -10,6 +10,7 @@ from scipy import spatial
 import numpy as np
 
 from core.agents.tools.misc import cal_distance_angle
+from core.agents.navigation.spline import Spline2D
 
 
 class CollisionChecker:
@@ -45,6 +46,7 @@ class CollisionChecker:
                 candidate_loc.y <= min_y - 2 or candidate_loc.y >= max_y + 2:
             return False
 
+        ego_wpt = carla_map.get_waypoint(ego_loc)
         candidate_wpt = carla_map.get_waypoint(candidate_loc)
         target_wpt = carla_map.get_waypoint(target_loc)
 
@@ -52,7 +54,7 @@ class CollisionChecker:
         if target_wpt.lane_id == candidate_wpt.lane_id:
             return True
 
-        # if the candidate is in the same section, then we can confirm they are not in the same lane
+        # in case they are in the same lane but section id is different which changes their id
         if target_wpt.section_id == candidate_wpt.section_id:
             return False
 
@@ -61,6 +63,29 @@ class CollisionChecker:
                                       candidate_wpt.transform.rotation.yaw)
 
         return True if angle <= 3 else False
+
+    def overtake_collision_path(self, ego_loc, target_loc):
+        """
+        Generate a rough path to be used for collicion check for overtaking only
+        :param ego_loc:
+        :param target_loc:
+        :return:
+        """
+        x, y = [ego_loc.x, target_loc.x], [ego_loc.y, target_loc.y]
+        ds = 0.1
+
+        sp = Spline2D(x, y)
+        s = np.arange(sp.s[0], sp.s[-1], ds)
+
+        # calculate interpolation points
+        rx, ry, ryaw= [], [], []
+        # we only need the interpolation points until next waypoint
+        for i_s in s:
+            ix, iy = sp.calc_position(i_s)
+            rx.append(ix)
+            ry.append(iy)
+            ryaw.append(sp.calc_yaw(i_s))
+        return rx, ry, ryaw
 
     def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle):
         """

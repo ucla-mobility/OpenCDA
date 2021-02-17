@@ -70,7 +70,7 @@ def main():
 
         vehicle_5.set_autopilot(True, 8000)
         vehicle_6.set_autopilot(True, 8000)
-        vehicle_7.set_autopilot(True, 8000)
+        vehicle_7.set_autopilot(True)
 
         # create platooning world
         platooning_world = PlatooningWorld()
