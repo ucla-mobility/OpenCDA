@@ -22,7 +22,7 @@ class VehicleManager(object):
 
     def __init__(self, vehicle, world, behavior='normal', communication_range=35, update_freq=15,
                  buffer_size=8, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING,
-                 ignore_traffic_light=False, debug_trajectory=False, debug=False):
+                 ignore_traffic_light=False, overtake_allowed=False, debug_trajectory=False, debug=False):
         """
         Construct class
         :param vehicle: carla Actor
@@ -39,9 +39,10 @@ class VehicleManager(object):
         self.vehicle = vehicle
         self.agent = PlatooningBehaviorAgent(vehicle, behavior=behavior, ignore_traffic_light=ignore_traffic_light,
                                              buffer_size=buffer_size, sampling_resolution=sample_resolution,
-                                             debug_trajectory=debug_trajectory, debug=debug, update_freq=15)
+                                             overtake_allowed=overtake_allowed,
+                                             debug_trajectory=debug_trajectory, debug=debug, update_freq=update_freq)
 
-        self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=communication_range)
+        self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=200)
 
         world.update_vehicle_manager(self)
         self.world = weakref.ref(world)()
@@ -122,10 +123,13 @@ class VehicleManager(object):
         if not self._platooning_plugin.in_platooning:
             # if the ego-vehicle is still searching for platooning
             if self._platooning_plugin.status == FSM.SEARCHING:
-                # get ready to move to the point if platooning found
-                self.set_platooning_status(FSM.MOVE_TO_POINT) \
-                    if self._platooning_plugin.platooning_search(self.vid, self.world, self.vehicle.get_location()) \
-                    else self.set_platooning_status(FSM.SEARCHING)
+                platoon_searched, distance, _ = \
+                    self._platooning_plugin.platooning_search(self.vid, self.world, self.vehicle.get_location())
+                # if find platooning and platooning is close enough, we use cut-joining
+                if platoon_searched and distance < 15:
+                    self.set_platooning_status(FSM.MOVE_TO_POINT)
+                elif platoon_searched and distance >= 15:
+                    self.set_platooning_status(FSM.BACK_JOINING)
 
                 return self.agent.run_step()
 
@@ -144,7 +148,16 @@ class VehicleManager(object):
 
                 if joining_finished:
                     _, index, platooning_manager = self._platooning_plugin.front_vehicle.get_platooning_status()
-                    # TODO: If cut-in joining, the whole list may need reorder
+                    platooning_manager.set_member(self, index + 1)
+                    self.set_platooning_status(FSM.MAINTINING)
+                return control
+
+            # if the vehicle is doing back joining
+            elif self._platooning_plugin.status == FSM.BACK_JOINING:
+                control, joining_finished = self.agent.run_step_back_joining(self._platooning_plugin.front_vehicle)
+
+                if joining_finished:
+                    _, index, platooning_manager = self._platooning_plugin.front_vehicle.get_platooning_status()
                     platooning_manager.set_member(self, index + 1)
                     self.set_platooning_status(FSM.MAINTINING)
                 return control

@@ -17,3 +17,4 @@ class FSM(Enum):
     MAINTINING = 4
     LEAVE_NEGOTIATION = 5
     DISENGAGE = 6
+    BACK_JOINING = 7

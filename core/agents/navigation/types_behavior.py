@@ -11,7 +11,7 @@ class Cautious(object):
     speed_lim_dist = 6
     speed_decrease = 12
     inter_gap = 1.3
-    safety_time = 3
+    safety_time = 5
     min_proximity_threshold = 12
     braking_distance = 6
     overtake_counter = -1
@@ -20,14 +20,14 @@ class Cautious(object):
 
 class Normal(object):
     """Class for Normal agent."""
-    max_speed = 65
-    tailgate_speed = 55
-    warm_up_speed = max_speed / 1.8
+    max_speed = 50
+    tailgate_speed = max_speed + 10
+    warm_up_speed = max_speed / 1.5
     speed_lim_dist = 3
     speed_decrease = 10
     inter_gap = 0.8
     open_gap = 1.8
-    safety_time = 3
+    safety_time = 6
     min_proximity_threshold = 10
     braking_distance = max_speed / 3.6 * 0.1
     overtake_counter = 0

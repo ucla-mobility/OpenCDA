@@ -68,7 +68,7 @@ def main():
         vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world, debug_trajectory=False, debug=False)
 
         vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, status=FSM.SEARCHING, sample_resolution=4.5,
-                                           buffer_size=8, debug_trajectory=True, debug=False, update_freq=4)
+                                           buffer_size=8, debug_trajectory=True, debug=False, update_freq=15)
 
         platooning_manager = PlatooningManager(platooning_world)
 
@@ -88,15 +88,15 @@ def main():
         while True:
             if not world.wait_for_tick(10.0):
                 continue
-            transform = vehicle_2.get_transform()
+            transform = vehicle_4.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
 
-            platooning_manager.update_information(world)
+            platooning_manager.update_information(platooning_world)
 
             in_platooning, _, _ = vehicle_manager_4.get_platooning_status()
             if not in_platooning:
-                vehicle_manager_4.agent.update_information(world)
+                vehicle_manager_4.agent.update_information(platooning_world)
                 control = vehicle_manager_4.run_step()
                 vehicle_manager_4. vehicle.apply_control(control)
 
