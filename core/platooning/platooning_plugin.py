@@ -17,7 +17,7 @@ class PlatooningPlugin(object):
 
     def __init__(self, cda_enabled=True, in_platooning=False,
                  platooning_id=None, leader=False, status=FSM.SEARCHING,
-                 search_range=35):
+                 search_range=200):
         """
         Construct class
         :param cda_enabled: whether cda enabled
@@ -106,4 +106,4 @@ class PlatooningPlugin(object):
             if min_index < len(platooning_object.vehicle_manager_list) - 1:
                 self.rear_vechile = platooning_object.vehicle_manager_list[min_index + 1]
 
-            return True
+            return True, min_distance, min_index

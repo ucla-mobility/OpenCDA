@@ -211,39 +211,6 @@ class BehaviorAgent(Agent):
             self.light_id_to_ignore = -1
         return 0
 
-    def _overtake(self, location, waypoint, vehicle_list):
-        """
-        This method is in charge of overtaking behaviors.
-
-            :param location: current location of the agent
-            :param waypoint: current waypoint of the agent
-            :param vehicle_list: list of all the nearby vehicles
-        """
-
-        left_turn = waypoint.left_lane_marking.lane_change
-        right_turn = waypoint.right_lane_marking.lane_change
-
-        left_wpt = waypoint.get_left_lane()
-        right_wpt = waypoint.get_right_lane()
-
-        if (left_turn == carla.LaneChange.Left or left_turn ==
-            carla.LaneChange.Both) and waypoint.lane_id * left_wpt.lane_id > 0 and left_wpt.lane_type == carla.LaneType.Driving:
-            new_vehicle_state, _, _ = self._bh_is_vehicle_hazard(waypoint, location, vehicle_list, max(
-                self.behavior.min_proximity_threshold, self.speed_limit / 3), up_angle_th=180, lane_offset=-1)
-            if not new_vehicle_state:
-                print("Overtaking to the left!")
-                self.behavior.overtake_counter = 200
-                self.set_destination(left_wpt.transform.location,
-                                     self.end_waypoint.transform.location, clean=True)
-        elif right_turn == carla.LaneChange.Right and waypoint.lane_id * right_wpt.lane_id > 0 and right_wpt.lane_type == carla.LaneType.Driving:
-            new_vehicle_state, _, _ = self._bh_is_vehicle_hazard(waypoint, location, vehicle_list, max(
-                self.behavior.min_proximity_threshold, self.speed_limit / 3), up_angle_th=180, lane_offset=1)
-            if not new_vehicle_state:
-                print("Overtaking to the right!")
-                self.behavior.overtake_counter = 200
-                self.set_destination(right_wpt.transform.location,
-                                     self.end_waypoint.transform.location, clean=True)
-
     def collision_manager(self, rx, ry, ryaw, waypoint):
         """
         This module is in charge of warning in case of a collision
@@ -294,7 +261,7 @@ class BehaviorAgent(Agent):
         vehicle_speed = get_speed(vehicle)
         delta_v = max(1, (self.speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / np.nextafter(0., 1.)
-
+        print(ttc)
         # Under safety time distance, slow down.
         if self.behavior.safety_time > ttc > 0.0:
             target_speed = min(positive(vehicle_speed - self.behavior.speed_decrease),
@@ -339,6 +306,7 @@ class BehaviorAgent(Agent):
                                                          self._map.get_waypoint(self.vehicle.get_location()))
             if not vehicle_state:
                 print("left overtake is operated")
+                self.behavior.overtake_counter = 15
                 self.set_destination(left_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
                 return vehicle_state
 
@@ -351,6 +319,7 @@ class BehaviorAgent(Agent):
                                                          self._map.get_waypoint(self.vehicle.get_location()))
             if not vehicle_state:
                 print("right overtake is operated")
+                self.behavior.overtake_counter = 15
                 self.set_destination(right_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
                 return vehicle_state
 
@@ -362,6 +331,9 @@ class BehaviorAgent(Agent):
         :param target_speed:  a manual order to achieve certain speed
         :return: control: carla.VehicleControl
         """
+        if self.behavior.overtake_counter > 0:
+            self.behavior.overtake_counter -= 1
+
         ego_vehicle_loc = self.vehicle.get_location()
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
 
@@ -384,10 +356,11 @@ class BehaviorAgent(Agent):
             print("collision detected!")
             obstacle_speed = get_speed(obstacle_vehicle)
             # overtake the vehicle
-            if get_speed(self.vehicle) > 1.1 * obstacle_speed:
+            if get_speed(self.vehicle) > obstacle_speed:
                 car_following_flag = self.overtake_management(obstacle_vehicle)
 
         if car_following_flag:
+            print("car following mode!")
             target_speed = self.car_following_manager(obstacle_vehicle, distance)
             control = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
             return control

@@ -92,6 +92,9 @@ class LocalPlanner(object):
         self._history_buffer = deque(maxlen=3)
         self.update_freq = update_freq
 
+        # lane change flag
+        self.lane_change = False
+
         # debug option
         self.debug = debug
         self.debug_trajectory = debug_trajectory
@@ -242,7 +245,7 @@ class LocalPlanner(object):
 
         is_lateral_within_range = veh_width < lateral_diff < 2 * lane_width
         # check if the vehicle is in lane change based on lane id and lateral offset
-        is_lane_change = (future_wpt.lane_id != current_wpt.lane_id
+        self.lane_change = (future_wpt.lane_id != current_wpt.lane_id
                           or previous_wpt.lane_id != future_wpt.lane_id) \
                           and is_lateral_within_range
 
@@ -258,7 +261,7 @@ class LocalPlanner(object):
                 index += 1
 
         # to make sure the vehicle is stable during lane change, we don't include any current position in planed path
-        if is_lane_change:
+        if self.lane_change:
             print('lane change')
             pass
         else:
@@ -273,8 +276,8 @@ class LocalPlanner(object):
                 y.append(current_location.y)
 
         # used to filter the waypoints that are too close
-        prev_x = 0 if is_lane_change else x[index]
-        prev_y = 0 if is_lane_change else y[index]
+        prev_x = 0 if self.lane_change else x[index]
+        prev_y = 0 if self.lane_change else y[index]
         for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
@@ -491,7 +494,7 @@ class LocalPlanner(object):
                                   self._long_plan_debug,
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
-                                  lt=2)
+                                  lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._trajectory_buffer, z=0.1, lt=0.05)
 

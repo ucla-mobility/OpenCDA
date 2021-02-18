@@ -59,7 +59,7 @@ class CollisionChecker:
             return False
 
         # check the angle
-        _, angle = cal_distance_angle(target_wpt.transform.location, candidate_wpt.transform.location,
+        distance, angle = cal_distance_angle(target_wpt.transform.location, candidate_wpt.transform.location,
                                       candidate_wpt.transform.rotation.yaw)
 
         return True if angle <= 3 else False
