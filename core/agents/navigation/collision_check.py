@@ -99,7 +99,7 @@ class CollisionChecker:
         collision_free = True
 
         # every step is 0.1m, so we check every 10 points
-        for i in range(0, int(len(path_x)/1), 10):
+        for i in range(0, int(len(path_x)/1.0), 10):
             ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
 
             # circle_x = point_x + circle_offset*cos(yaw), circle_y = point_y + circle_offset*sin(yaw)

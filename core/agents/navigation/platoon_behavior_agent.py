@@ -72,7 +72,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 else len(frontal_trajectory)
 
             for i in range(tracked_length):
-                delta_t = 0.3
+                delta_t = 0.25
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \
@@ -251,9 +251,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         Open gap for cut-in vehicle
         :return:
         """
-        # gradually open the gap
+        # gradually open the gap TODO: Make this dynamic to map a linear relationship with speed
         if self.current_gap < self.behavior.open_gap:
-            self.current_gap += 0.005
+            self.current_gap += 0.02
         print('cuurent gap is %f' % self.current_gap)
         control = self.platooning_following_manager(self.current_gap)
 
