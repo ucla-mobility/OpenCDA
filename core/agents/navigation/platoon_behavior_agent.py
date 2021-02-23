@@ -72,7 +72,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 else len(frontal_trajectory)
 
             for i in range(tracked_length):
-                delta_t = 0.2
+                delta_t = 0.3
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \

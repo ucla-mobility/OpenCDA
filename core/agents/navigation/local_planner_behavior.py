@@ -249,50 +249,74 @@ class LocalPlanner(object):
                           or previous_wpt.lane_id != future_wpt.lane_id) \
                           and is_lateral_within_range
 
-        # we consider history waypoint to generate trajectory
-        index = 0
-        for i in range(len(self._history_buffer)):
-            prev_wpt = self._history_buffer[i][0].transform.location
-            _, angle = cal_distance_angle(prev_wpt, current_location, current_yaw)
-            # make sure the history waypoint is already passed by
-            if angle > 90:
-                x.append(prev_wpt.x)
-                y.append(prev_wpt.y)
-                index += 1
+        _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location, current_location, current_yaw)
+        if self.lane_change and current_wpt.lane_id == future_wpt.lane_id and angle < 3:
+            x.append(current_location.x)
+            y.append(current_location.y)
 
-        # to make sure the vehicle is stable during lane change, we don't include any current position in planed path
-        if self.lane_change:
-            print('lane change')
-            pass
+            x.append(self._waypoint_buffer[0][0].transform.location.x)
+            y.append(self._waypoint_buffer[0][0].transform.location.y)
+
+            index = 0
+            print('Going Straight with angle %f ' % angle)
+
         else:
-            _, angle = cal_distance_angle(current_wpt_loc, current_location, current_yaw)
-            # we prefer to use waypoint as the current position for path generation if the waypoint is
-            # in front of us. This is because waypoint always sits in the center
-            if angle < 90:
-                x.append(current_wpt_loc.x)
-                y.append(current_wpt_loc.y)
+            # we consider history waypoint to generate trajectory
+            index = 0
+            for i in range(len(self._history_buffer)):
+                prev_wpt = self._history_buffer[i][0].transform.location
+                _, angle = cal_distance_angle(prev_wpt, current_location, current_yaw)
+                # make sure the history waypoint is already passed by
+                if angle > 90 and not self.lane_change:
+                    x.append(prev_wpt.x)
+                    y.append(prev_wpt.y)
+                    index += 1
+                if self.lane_change:
+                    x.append(prev_wpt.x)
+                    y.append(prev_wpt.y)
+                    index += 1
+
+            # to make sure the vehicle is stable during lane change, we don't include any current position
+            if self.lane_change:
+                _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location,
+                                              current_location, current_yaw)
+                print('lane change')
+                print(angle)
+                pass
             else:
-                x.append(current_location.x)
-                y.append(current_location.y)
+                _, angle = cal_distance_angle(current_wpt_loc, current_location, current_yaw)
+                # we prefer to use waypoint as the current position for path generation if the waypoint is
+                # in front of us. This is because waypoint always sits in the center
+                if angle < 90:
+                    x.append(current_wpt_loc.x)
+                    y.append(current_wpt_loc.y)
+                else:
+                    x.append(current_location.x)
+                    y.append(current_location.y)
 
-        # used to filter the waypoints that are too close
-        prev_x = 0 if self.lane_change else x[index]
-        prev_y = 0 if self.lane_change else y[index]
-        for i in range(len(self._waypoint_buffer)):
-            cur_x = self._waypoint_buffer[i][0].transform.location.x
-            cur_y = self._waypoint_buffer[i][0].transform.location.y
-            if abs(prev_x - cur_x) < 0.5 and abs(prev_y - cur_y) < 0.5:
-                continue
-            prev_x = cur_x
-            prev_y = cur_y
+            # used to filter the waypoints that are too close
+            prev_x = 0 if self.lane_change else x[index]
+            prev_y = 0 if self.lane_change else y[index]
+            for i in range(len(self._waypoint_buffer)):
+                cur_x = self._waypoint_buffer[i][0].transform.location.x
+                cur_y = self._waypoint_buffer[i][0].transform.location.y
+                if abs(prev_x - cur_x) < 0.5 and abs(prev_y - cur_y) < 0.5:
+                    continue
+                prev_x = cur_x
+                prev_y = cur_y
 
-            x.append(cur_x)
-            y.append(cur_y)
+                x.append(cur_x)
+                y.append(cur_y)
 
         # Cubic Spline Interpolation calculation
         sp = Spline2D(x, y)
+
+        diff_x = current_location.x - sp.sx.y[0]
+        diff_y = current_location.y - sp.sy.y[0]
+        diff_s = np.hypot(diff_x, diff_y)
+
         # we only need the interpolation points after current position
-        s = np.arange(sp.s[index], sp.s[-1], ds)
+        s = np.arange(diff_s, sp.s[-1], ds)
 
         # calculate interpolation points
         rx, ry, ryaw, rk = [], [], [], []
@@ -327,7 +351,7 @@ class LocalPlanner(object):
         # unit distance for interpolation points
         ds = 0.1
         # unit time space
-        dt = 0.2
+        dt = 0.3
 
         target_speed = self._target_speed
         current_speed = get_speed(self._vehicle)

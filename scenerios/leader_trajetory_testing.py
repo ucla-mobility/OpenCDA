@@ -31,7 +31,7 @@ def main():
         # setup spawn points
         transform_1 = carla.Transform(carla.Location(x=51.71, y=139.53, z=1.0),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=201.7194, y=139.51, z=0.3),
+        transform_2 = carla.Transform(carla.Location(x=201.7194, y=140.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         transform_3 = carla.Transform(carla.Location(x=221.7194, y=143.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
@@ -50,9 +50,9 @@ def main():
         vehicle_2.apply_control(carla.VehicleControl(throttle=0.55))
         vehicle_2.set_autopilot(False)
 
-        vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
-        vehicle_3.apply_control(carla.VehicleControl(throttle=0.5))
-        vehicle_3.set_autopilot(False)
+        # vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
+        # vehicle_3.apply_control(carla.VehicleControl(throttle=0.5))
+        # vehicle_3.set_autopilot(False)
 
         # create platooning world
         platooning_world = PlatooningWorld()

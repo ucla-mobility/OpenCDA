@@ -64,13 +64,13 @@ def main():
 
         # vehicle 5-7 are background traffic
         ego_vehicle_bp.set_attribute('color', '0, 255, 0')
-        vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
-        vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
-        vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
-
-        vehicle_5.set_autopilot(True, 8000)
-        vehicle_6.set_autopilot(True, 8000)
-        vehicle_7.set_autopilot(True)
+        # vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
+        # vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
+        # vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
+        #
+        # vehicle_5.set_autopilot(True, 8000)
+        # vehicle_6.set_autopilot(True, 8000)
+        # vehicle_7.set_autopilot(True)
 
         # create platooning world
         platooning_world = PlatooningWorld()
@@ -103,7 +103,7 @@ def main():
             if not world.wait_for_tick(10.0):
                 continue
             spectator = world.get_spectator()
-            transform = vehicle_1.get_transform()
+            transform = vehicle_2.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
 

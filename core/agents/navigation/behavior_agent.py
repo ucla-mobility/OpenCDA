@@ -304,7 +304,7 @@ class BehaviorAgent(Agent):
                                                                          target_loc=left_wpt.transform.location)
             vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
                                                          self._map.get_waypoint(self.vehicle.get_location()))
-            if not vehicle_state:
+            if True:
                 print("left overtake is operated")
                 self.behavior.overtake_counter = 15
                 self.set_destination(left_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
@@ -359,7 +359,7 @@ class BehaviorAgent(Agent):
             if get_speed(self.vehicle) > obstacle_speed:
                 car_following_flag = self.overtake_management(obstacle_vehicle)
 
-        if car_following_flag:
+        if False:
             print("car following mode!")
             target_speed = self.car_following_manager(obstacle_vehicle, distance)
             control = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
