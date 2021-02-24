@@ -165,7 +165,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.vehicle.bounding_box.extent.y, self.vehicle.bounding_box.extent.x)
 
         # safe control for car following
-        if distance <= self.behavior.braking_distance:
+        if distance <= self.behavior.following_braking_distance:
             print("emergency stop!")
             return self.emergency_stop()
 
@@ -296,7 +296,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return v.get_location().distance(ego_vehicle_loc)
 
         # only consider vehicles in 45 meters, not in the platooning as the candidate of collision
-        vehicle_list = [v for v in vehicle_list if dist(v) < 45 and
+        vehicle_list = [v for v in vehicle_list if dist(v) < 60 and
                         v.id != self.vehicle.id and
                         v.id not in self._platooning_world.vehicle_id_set]
 

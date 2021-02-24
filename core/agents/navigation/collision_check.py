@@ -7,9 +7,10 @@
 from math import sin, cos
 from scipy import spatial
 
+import carla
 import numpy as np
 
-from core.agents.tools.misc import cal_distance_angle
+from core.agents.tools.misc import cal_distance_angle, draw_trajetory_points
 from core.agents.navigation.spline import Spline2D
 
 
@@ -60,36 +61,59 @@ class CollisionChecker:
 
         # check the angle
         distance, angle = cal_distance_angle(target_wpt.transform.location, candidate_wpt.transform.location,
-                                      candidate_wpt.transform.rotation.yaw)
+                                             candidate_wpt.transform.rotation.yaw)
 
         return True if angle <= 3 else False
 
-    def overtake_collision_path(self, ego_loc, target_loc):
+    def overtake_collision_path(self, ego_loc, target_wpt, world):
         """
-        Generate a rough path to be used for collicion check for overtaking only
+        Generate a rough path to be used for collicion check for overtaking
+        :param world: carla world
         :param ego_loc:
-        :param target_loc:
+        :param target_wpt:
         :return:
         """
-        x, y = [ego_loc.x, target_loc.x], [ego_loc.y, target_loc.y]
+        # we first need to consider the vehicle on the other lane in front
+        target_wpt_next = target_wpt.next(10)[0]
+
+        # Next we consider the vehicle behind us
+        diff_x = target_wpt_next.transform.location.x - ego_loc.x
+        diff_y = target_wpt_next.transform.location.y - ego_loc.y
+        diff_s = np.hypot(diff_x, diff_y)
+
+        target_wpt_previous = target_wpt.previous(diff_s)[0]
+
+        x, y = [target_wpt_next.transform.location.x, target_wpt_previous.transform.location.x], \
+               [target_wpt_next.transform.location.y, target_wpt_previous.transform.location.y]
         ds = 0.1
 
         sp = Spline2D(x, y)
         s = np.arange(sp.s[0], sp.s[-1], ds)
 
+        debug_tmp = []
+
         # calculate interpolation points
-        rx, ry, ryaw= [], [], []
-        # we only need the interpolation points until next waypoint
+        rx, ry, ryaw = [], [], []
         for i_s in s:
             ix, iy = sp.calc_position(i_s)
             rx.append(ix)
             ry.append(iy)
             ryaw.append(sp.calc_yaw(i_s))
+            debug_tmp.append(carla.Transform(carla.Location(ix, iy, 0)))
+
+        # TODO: Remove this after debugging
+        draw_trajetory_points(world,
+                              debug_tmp,
+                              color=carla.Color(255, 255, 0),
+                              size=0.05,
+                              lt=0.1)
+
         return rx, ry, ryaw
 
-    def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle, speed):
+    def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle, speed, overtake_check=False):
         """
         Use circled collision check to see whether potential hazard on the forwarding path
+        :param overtake_check: always give full path for overtaking check
         :param speed: ego vehicle speed in m/s
         :param path_yaw: a list of yaw angles
         :param path_x: a list of x coordinates
@@ -99,8 +123,9 @@ class CollisionChecker:
         """
         collision_free = True
         # detect 2 second ahead
-        distance_check = min(int(speed * 2 / 0.1), len(path_x))
-
+        distance_check = min(int(speed * 2 / 0.1), len(path_x)) if not overtake_check else len(path_x)
+        obstacle_vehicle_loc = obstacle_vehicle.get_location()
+        
         # every step is 0.1m, so we check every 10 points
         for i in range(0, distance_check, 10):
             ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
@@ -111,7 +136,6 @@ class CollisionChecker:
             circle_locations[:, 0] = ptx + circle_offsets * cos(yaw)
             circle_locations[:, 1] = pty + circle_offsets * sin(yaw)
 
-            obstacle_vehicle_loc = obstacle_vehicle.get_location()
             # we need compute the four corner of the bbx
             obstacle_vehicle_bbx_array = np.array([[obstacle_vehicle_loc.x - obstacle_vehicle.bounding_box.extent.x,
                                                     obstacle_vehicle_loc.y - obstacle_vehicle.bounding_box.extent.y],

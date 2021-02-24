@@ -426,7 +426,6 @@ class LocalPlanner(object):
             if max_index >= 0:
                 for i in range(max_index + 1):
                     self._trajectory_buffer.popleft()
-            # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
     def run_step(self, rx, ry, rk, target_speed=None, trajectory=None, following=False):
         """
@@ -494,7 +493,6 @@ class LocalPlanner(object):
         self._pid_controller = CustomizedVehiclePIDController(self._vehicle,
                                                               args_lateral=args_lat,
                                                               args_longitudinal=args_long)
-
         control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform.location
         if hasattr(self.target_waypoint, 'is_junction')
         else self.target_waypoint.location)
