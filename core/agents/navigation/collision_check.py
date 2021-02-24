@@ -87,9 +87,10 @@ class CollisionChecker:
             ryaw.append(sp.calc_yaw(i_s))
         return rx, ry, ryaw
 
-    def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle):
+    def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle, speed):
         """
         Use circled collision check to see whether potential hazard on the forwarding path
+        :param speed: ego vehicle speed in m/s
         :param path_yaw: a list of yaw angles
         :param path_x: a list of x coordinates
         :param path_y: a loist of y coordinates
@@ -97,9 +98,11 @@ class CollisionChecker:
         :return:
         """
         collision_free = True
+        # detect 2 second ahead
+        distance_check = min(int(speed * 2 / 0.1), len(path_x))
 
         # every step is 0.1m, so we check every 10 points
-        for i in range(0, int(len(path_x)/1.0), 10):
+        for i in range(0, distance_check, 10):
             ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
 
             # circle_x = point_x + circle_offset*cos(yaw), circle_y = point_y + circle_offset*sin(yaw)

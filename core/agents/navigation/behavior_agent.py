@@ -238,7 +238,8 @@ class BehaviorAgent(Agent):
         target_vehicle = None
 
         for vehicle in vehicle_list:
-            collision_free = self._collision_check.collision_circle_check(rx, ry, ryaw, vehicle)
+            collision_free = self._collision_check.collision_circle_check(rx, ry, ryaw, vehicle,
+                                                                          get_speed(self.vehicle, True))
             if not collision_free:
                 vehicle_state = True
                 distance = dist(vehicle)
