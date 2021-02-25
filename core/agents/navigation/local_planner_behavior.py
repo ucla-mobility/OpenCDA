@@ -237,7 +237,7 @@ class LocalPlanner(object):
                                              future_wpt.transform.location,
                                              future_wpt.transform.rotation.yaw)
         # distance in the lateral direction
-        lateral_diff = abs(vec_norm * math.sin(math.radians(angle)))
+        lateral_diff = abs(vec_norm * math.sin(math.radians(angle - 1 if angle > 90 else angle + 1)))
 
         boundingbox = self._vehicle.bounding_box
         veh_width = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
@@ -246,8 +246,10 @@ class LocalPlanner(object):
         is_lateral_within_range = veh_width < lateral_diff < 2 * lane_width
         # check if the vehicle is in lane change based on lane id and lateral offset
         self.lane_change = (future_wpt.lane_id != current_wpt.lane_id
-                          or previous_wpt.lane_id != future_wpt.lane_id) \
-                          and is_lateral_within_range
+                            or previous_wpt.lane_id != future_wpt.lane_id) \
+                           and is_lateral_within_range
+
+        _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location, current_location, current_yaw)
 
         # we consider history waypoint to generate trajectory
         index = 0
@@ -255,13 +257,19 @@ class LocalPlanner(object):
             prev_wpt = self._history_buffer[i][0].transform.location
             _, angle = cal_distance_angle(prev_wpt, current_location, current_yaw)
             # make sure the history waypoint is already passed by
-            if angle > 90:
+            if angle > 90 and not self.lane_change:
+                x.append(prev_wpt.x)
+                y.append(prev_wpt.y)
+                index += 1
+            if self.lane_change:
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
 
-        # to make sure the vehicle is stable during lane change, we don't include any current position in planed path
+        # to make sure the vehicle is stable during lane change, we don't include any current position
         if self.lane_change:
+            _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location,
+                                          current_location, current_yaw)
             print('lane change')
             pass
         else:
@@ -291,8 +299,13 @@ class LocalPlanner(object):
 
         # Cubic Spline Interpolation calculation
         sp = Spline2D(x, y)
+
+        diff_x = current_location.x - sp.sx.y[0]
+        diff_y = current_location.y - sp.sy.y[0]
+        diff_s = np.hypot(diff_x, diff_y)
+
         # we only need the interpolation points after current position
-        s = np.arange(sp.s[index], sp.s[-1], ds)
+        s = np.arange(diff_s, sp.s[-1], ds)
 
         # calculate interpolation points
         rx, ry, ryaw, rk = [], [], [], []
@@ -326,8 +339,8 @@ class LocalPlanner(object):
         """
         # unit distance for interpolation points
         ds = 0.1
-        # unit time space
-        dt = 0.2
+        # unit time space TODO: Make this dynamic to map a linear relationship with speed
+        dt = 0.25
 
         target_speed = self._target_speed
         current_speed = get_speed(self._vehicle)
@@ -340,7 +353,7 @@ class LocalPlanner(object):
         sample_resolution = 0
 
         # use mean curvature to constrain the speed
-        mean_k = abs(abs(statistics.mean(rk)) + statistics.stdev(rk))
+        mean_k = abs(abs(statistics.mean(rk)) + 0.2 * statistics.stdev(rk))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
         target_speed = min(target_speed, np.sqrt(3.6 / mean_k) * 3.6)
         # print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
@@ -413,7 +426,6 @@ class LocalPlanner(object):
             if max_index >= 0:
                 for i in range(max_index + 1):
                     self._trajectory_buffer.popleft()
-            # print('Trajectory buffer size : %d' % len(self._trajectory_buffer))
 
     def run_step(self, rx, ry, rk, target_speed=None, trajectory=None, following=False):
         """
@@ -464,7 +476,8 @@ class LocalPlanner(object):
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
 
         # Target waypoint
-        self.target_waypoint, self.target_road_option, self._target_speed, dt = self._trajectory_buffer[0]
+        self.target_waypoint, self.target_road_option, self._target_speed, dt = \
+            self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
 
         if self.dynamic_pid:
             args_lat, args_long = compute_pid(self)
@@ -480,7 +493,6 @@ class LocalPlanner(object):
         self._pid_controller = CustomizedVehiclePIDController(self._vehicle,
                                                               args_lateral=args_lat,
                                                               args_longitudinal=args_long)
-
         control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform.location
         if hasattr(self.target_waypoint, 'is_junction')
         else self.target_waypoint.location)

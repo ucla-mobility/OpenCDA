@@ -64,22 +64,22 @@ def main():
 
         # vehicle 5-7 are background traffic
         ego_vehicle_bp.set_attribute('color', '0, 255, 0')
-        vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
-        vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
-        vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
-
-        vehicle_5.set_autopilot(True, 8000)
-        vehicle_6.set_autopilot(True, 8000)
-        vehicle_7.set_autopilot(True)
+        # vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
+        # vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
+        # vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
+        #
+        # vehicle_5.set_autopilot(True, 8000)
+        # vehicle_6.set_autopilot(True, 8000)
+        # vehicle_7.set_autopilot(True)
 
         # create platooning world
         platooning_world = PlatooningWorld()
 
         # setup managers
-        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
+        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
                                            debug_trajectory=True, debug=False, ignore_traffic_light=True)
         vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, buffer_size=8,
-                                           debug_trajectory=False, debug=False)
+                                           debug_trajectory=True, debug=False)
         vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world,
                                            debug_trajectory=False, debug=False)
         vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world,
@@ -103,7 +103,7 @@ def main():
             if not world.wait_for_tick(10.0):
                 continue
             spectator = world.get_spectator()
-            transform = vehicle_1.get_transform()
+            transform = vehicle_2.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
 

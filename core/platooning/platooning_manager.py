@@ -104,8 +104,12 @@ class PlatooningManager(object):
         Run a step for each vehicles
         :return:
         """
+        control_list = []
         for i in range(len(self.vehicle_manager_list)):
             control = self.vehicle_manager_list[i].run_step()
+            control_list.append(control)
+
+        for (i, control) in enumerate(control_list):
             self.vehicle_manager_list[i].vehicle.apply_control(control)
 
     def destroy(self):

@@ -31,13 +31,21 @@ def main():
         # setup spawn points
         transform_1 = carla.Transform(carla.Location(x=51.71, y=139.53, z=1.0),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=201.7194, y=139.51, z=0.3),
+        # for town 5
+        # transform_1 = carla.Transform(carla.Location(x=79.40094727, y=-193.74714844, z=0.3),
+        #                               carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_2 = carla.Transform(carla.Location(x=241.7194, y=141, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=221.7194, y=143.51, z=0.3),
+        transform_3 = carla.Transform(carla.Location(x=241.7194, y=137.51, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_4 = carla.Transform(carla.Location(x=241.7194, y=144, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         transform_destination = carla.Transform(carla.Location(x=630, y=142, z=0.3),
                                                 carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        # for town 5
+        # transform_destination = carla.Transform(carla.Location(x=58.16, y=191.35, z=0.3),
+        #                                         carla.Rotation(pitch=0.000000, yaw=90, roll=0.000000))
         # create the leading vehicle
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
         # black color
@@ -51,15 +59,19 @@ def main():
         vehicle_2.set_autopilot(False)
 
         vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
-        vehicle_3.apply_control(carla.VehicleControl(throttle=0.5))
+        vehicle_3.apply_control(carla.VehicleControl(throttle=0.65))
         vehicle_3.set_autopilot(False)
+
+        vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
+        vehicle_4.apply_control(carla.VehicleControl(throttle=0.60))
+        vehicle_4.set_autopilot(False)
 
         # create platooning world
         platooning_world = PlatooningWorld()
 
         # setup managers
-        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
-                                           debug_trajectory=True, debug=True, ignore_traffic_light=True,
+        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.5, buffer_size=8,
+                                           debug_trajectory=True, debug=False, ignore_traffic_light=True,
                                            overtake_allowed=True)
         platooning_manager = PlatooningManager(platooning_world)
 
@@ -86,7 +98,9 @@ def main():
         platooning_manager.destroy()
         vehicle_2.destroy()
         vehicle_3.destroy()
+        vehicle_4.destroy()
         world.apply_settings(origin_settings)
+
 
 if __name__ == '__main__':
     try:
