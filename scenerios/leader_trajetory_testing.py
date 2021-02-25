@@ -22,9 +22,10 @@ def main():
         world = client.get_world()
         origin_settings = world.get_settings()
 
-        # traffic manager for background traffic
-        traffic_manager = client.get_trafficmanager(8000)
-        traffic_manager.set_synchronous_mode(False)
+        origin_settings.synchronous_mode = True
+        origin_settings.fixed_delta_seconds = 0.05
+        world.apply_settings(origin_settings)
+
 
         blueprint_library = world.get_blueprint_library()
 
@@ -51,19 +52,20 @@ def main():
         # black color
         ego_vehicle_bp.set_attribute('color', '0, 0, 0')
         vehicle_1 = world.spawn_actor(ego_vehicle_bp, transform_1)
+        world.tick()
 
         # simple background traffic
         ego_vehicle_bp.set_attribute('color', '0, 255, 0')
         vehicle_2 = world.spawn_actor(ego_vehicle_bp, transform_2)
-        vehicle_2.apply_control(carla.VehicleControl(throttle=0.55))
+        vehicle_2.apply_control(carla.VehicleControl(throttle=0.45))
         vehicle_2.set_autopilot(False)
 
         vehicle_3 = world.spawn_actor(ego_vehicle_bp, transform_3)
-        vehicle_3.apply_control(carla.VehicleControl(throttle=0.65))
+        vehicle_3.apply_control(carla.VehicleControl(throttle=0.72))
         vehicle_3.set_autopilot(False)
 
         vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
-        vehicle_4.apply_control(carla.VehicleControl(throttle=0.60))
+        vehicle_4.apply_control(carla.VehicleControl(throttle=0.33))
         vehicle_4.set_autopilot(False)
 
         # create platooning world
@@ -71,7 +73,7 @@ def main():
 
         # setup managers
         vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.5, buffer_size=8,
-                                           debug_trajectory=True, debug=False, ignore_traffic_light=True,
+                                           debug_trajectory=True, debug=True, ignore_traffic_light=True,
                                            overtake_allowed=True)
         platooning_manager = PlatooningManager(platooning_world)
 
@@ -84,8 +86,7 @@ def main():
         platooning_manager.set_destination(destination)
 
         while True:
-            if not world.wait_for_tick(10.0):
-                continue
+            world.tick()
             spectator = world.get_spectator()
             transform = vehicle_1.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
@@ -99,6 +100,8 @@ def main():
         vehicle_2.destroy()
         vehicle_3.destroy()
         vehicle_4.destroy()
+
+        origin_settings.synchronous_mode = False
         world.apply_settings(origin_settings)
 
 
