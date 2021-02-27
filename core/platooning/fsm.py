@@ -15,6 +15,5 @@ class FSM(Enum):
     MOVE_TO_POINT = 2
     JOINING = 3
     MAINTINING = 4
-    LEAVE_NEGOTIATION = 5
-    DISENGAGE = 6
-    BACK_JOINING = 7
+    BACK_JOINING =5
+    CUT_IN_TO_BACK = 6
