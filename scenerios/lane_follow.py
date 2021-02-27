@@ -76,11 +76,11 @@ def main():
         vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
         vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
 
-        vehicle_5.apply_control(carla.VehicleControl(throttle=0.45))
+        vehicle_5.apply_control(carla.VehicleControl(throttle=0.55))
         vehicle_5.set_autopilot(False)
-        vehicle_6.apply_control(carla.VehicleControl(throttle=0.45))
+        vehicle_6.apply_control(carla.VehicleControl(throttle=0.55))
         vehicle_6.set_autopilot(False)
-        vehicle_7.apply_control(carla.VehicleControl(throttle=0.45))
+        vehicle_7.apply_control(carla.VehicleControl(throttle=0.55))
         vehicle_7.set_autopilot(False)
 
         # create platooning world

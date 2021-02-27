@@ -67,11 +67,11 @@ def main():
         # vehicle 5-7 are background traffic
         ego_vehicle_bp.set_attribute('color', '0, 255, 0')
         # vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
-        # vehicle_5.apply_control(carla.VehicleControl(throttle=0.55))
+        # vehicle_5.apply_control(carla.VehicleControl(throttle=0.65))
         # vehicle_5.set_autopilot(False)
         #
         # vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
-        # vehicle_6.apply_control(carla.VehicleControl(throttle=0.45))
+        # vehicle_6.apply_control(carla.VehicleControl(throttle=0.55))
         # vehicle_6.set_autopilot(False)
 
         world.tick()

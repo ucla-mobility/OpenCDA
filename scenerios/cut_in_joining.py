@@ -40,6 +40,10 @@ def main():
         transform_5 = carla.Transform(carla.Location(x=21.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
+        # background testing traffic car
+        transform_6 = carla.Transform(carla.Location(x=121.7194, y=143.51, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+
         transform_destination_1 = carla.Transform(carla.Location(x=630, y=141.39, z=0.3),
                                                   carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         transform_destination_2 = carla.Transform(carla.Location(x=606.87, y=145.39, z=0.3),
@@ -63,7 +67,16 @@ def main():
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
 
+        # spwan background traffic
+        ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+
+        vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
+        vehicle_6.apply_control(carla.VehicleControl(throttle=0.75))
+        vehicle_6.set_autopilot(False)
+
+        # update the server information once
         world.tick()
+
         # create platooning world
         platooning_world = PlatooningWorld()
 
@@ -75,7 +88,8 @@ def main():
         vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world, debug_trajectory=False, debug=False)
 
         vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, status=FSM.SEARCHING, sample_resolution=4.5,
-                                           buffer_size=8, debug_trajectory=True, debug=False, update_freq=15)
+                                           buffer_size=8, debug_trajectory=True, debug=False, update_freq=15,
+                                           overtake_allowed=False, time_ahead=1.0)
 
         platooning_manager = PlatooningManager(platooning_world)
 
@@ -113,6 +127,7 @@ def main():
     finally:
         world.apply_settings(origin_settings)
         platooning_manager.destroy()
+        vehicle_6.destroy()
         vehicle_manager_4.vehicle.destroy()
 
 

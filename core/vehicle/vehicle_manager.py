@@ -21,7 +21,7 @@ class VehicleManager(object):
     """
 
     def __init__(self, vehicle, world, behavior='normal', communication_range=35, update_freq=15,
-                 buffer_size=8, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING,
+                 buffer_size=8, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING, time_ahead=2.0,
                  ignore_traffic_light=False, overtake_allowed=False, debug_trajectory=False, debug=False):
         """
         Construct class
@@ -39,7 +39,7 @@ class VehicleManager(object):
         self.vehicle = vehicle
         self.agent = PlatooningBehaviorAgent(vehicle, behavior=behavior, ignore_traffic_light=ignore_traffic_light,
                                              buffer_size=buffer_size, sampling_resolution=sample_resolution,
-                                             overtake_allowed=overtake_allowed,
+                                             overtake_allowed=overtake_allowed, time_ahead=time_ahead,
                                              debug_trajectory=debug_trajectory, debug=debug, update_freq=update_freq)
 
         self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=200)
@@ -135,8 +135,17 @@ class VehicleManager(object):
 
             # if the vehicle already find the platooning and trying to move to the merge point
             elif self._platooning_plugin.status == FSM.MOVE_TO_POINT:
-                control, ready_to_join = self.agent.run_step_cut_in_move2point(self._platooning_plugin.front_vehicle,
-                                                                               self._platooning_plugin.rear_vechile)
+                control, ready_to_join, transition_to_back_joining = \
+                    self.agent.run_step_cut_in_move2point(self._platooning_plugin.front_vehicle,
+                                                          self._platooning_plugin.rear_vechile)
+                # change from cut_in_joining to back joining
+                if transition_to_back_joining:
+                    print('transition to back joining')
+                    _, index, platooning_manager = self._platooning_plugin.front_vehicle.get_platooning_status()
+                    self._platooning_plugin.front_vehicle = platooning_manager.vehicle_manager_list[-1]
+                    self._platooning_plugin.rear_vechile = None
+                    self.set_platooning_status(FSM.BACK_JOINING)
+
                 if ready_to_join:
                     self.set_platooning_status(FSM.JOINING)
                 return control

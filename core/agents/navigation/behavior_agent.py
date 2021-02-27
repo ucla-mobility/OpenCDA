@@ -29,7 +29,7 @@ class BehaviorAgent(Agent):
 
     def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal', overtake_allowed=False,
                  sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, debug_trajectory=False,
-                 debug=False, update_freq=15):
+                 debug=False, update_freq=15, time_ahead=2.0):
         """
         Construct class
         :param vehicle: actor
@@ -76,11 +76,14 @@ class BehaviorAgent(Agent):
         self._sampling_resolution = sampling_resolution
 
         # collision checker
-        self._collision_check = CollisionChecker()
+        self._collision_check = CollisionChecker(time_ahead=time_ahead)
         self.overtake_allowed = overtake_allowed
 
         # emergency stop flag
-        self.emergency_flag = False
+        self.hazard_flag = False
+
+        # car following flag
+        self.car_following_flag = False
 
         # Parameters for agent behavior
         if behavior == 'cautious':
@@ -243,7 +246,7 @@ class BehaviorAgent(Agent):
         for vehicle in vehicle_list:
             collision_free = self._collision_check.collision_circle_check(rx, ry, ryaw, vehicle,
                                                                           get_speed(self.vehicle, True),
-                                                                          overtake_check)
+                                                                          overtake_check=overtake_check)
             if not collision_free:
                 vehicle_state = True
                 distance = dist(vehicle)
@@ -253,15 +256,18 @@ class BehaviorAgent(Agent):
 
         return vehicle_state, target_vehicle, min_distance
 
-    def car_following_manager(self, vehicle, distance):
+    def car_following_manager(self, vehicle, distance, target_speed=None):
         """
         Module in charge of car-following behaviors when there's
         someone in front of us.
 
+            :param target_speed:
             :param vehicle: car to follow
             :param distance: distance from vehicle
             :return control: carla.VehicleControl
         """
+        if not target_speed:
+            target_speed = self.behavior.max_speed - self.behavior.speed_lim_dist
 
         vehicle_speed = get_speed(vehicle)
         delta_v = max(1, (self.speed - vehicle_speed) / 3.6)
@@ -269,16 +275,12 @@ class BehaviorAgent(Agent):
         # Under safety time distance, slow down.
         if self.behavior.safety_time > ttc > 0.0:
             target_speed = min(positive(vehicle_speed - self.behavior.speed_decrease),
-                               self.behavior.max_speed - self.behavior.speed_lim_dist)
+                               target_speed)
 
         # Actual safety distance area, try to follow the speed of the vehicle in front.
         elif 3 * self.behavior.safety_time > ttc >= self.behavior.safety_time:
             target_speed = min(max(self.min_speed, vehicle_speed),
-                               self.behavior.max_speed - self.behavior.speed_lim_dist)
-        # Normal behavior.
-        else:
-            target_speed = self.behavior.max_speed - self.behavior.speed_lim_dist
-
+                              target_speed)
         return target_speed
 
     def overtake_management(self, obstacle_vehicle):
@@ -333,9 +335,10 @@ class BehaviorAgent(Agent):
 
         return True
 
-    def run_step(self, target_speed=None):
+    def run_step(self, target_speed=None, collision_detector_enabled=True):
         """
         Excute one step of naviation
+        :param collision_detector_enabled: whether to enable collision detection
         :param target_speed:  a manual order to achieve certain speed
         :return: control: carla.VehicleControl
         """
@@ -353,8 +356,13 @@ class BehaviorAgent(Agent):
         rx, ry, rk, ryaw = self._local_planner.generate_path()
 
         # 3: collision check
-        is_hazard, obstacle_vehicle, distance = self.collision_manager(rx, ry, ryaw, ego_vehicle_wp)
+        is_hazard = False
+        if collision_detector_enabled:
+            is_hazard, obstacle_vehicle, distance = self.collision_manager(rx, ry, ryaw, ego_vehicle_wp)
         car_following_flag = False
+
+        # this flag is used for transition from cut-in joining to back joining
+        self.hazard_flag = True if is_hazard else False
 
         # the case that the vehicle is doing lane change as planned but found vehicle blocking on the other lane
         if is_hazard \
@@ -382,14 +390,17 @@ class BehaviorAgent(Agent):
             else:
                 car_following_flag = True
 
-        if car_following_flag:
-            print("car following mode!")
+        if not car_following_flag:
+            self.car_following_flag = False
+        else:
+            print("vehicle id %d: car following mode!" % self.vehicle.id)
+            self.car_following_flag = True
+
             if distance < self.behavior.braking_distance:
                 return self.emergency_stop()
 
-            target_speed = self.car_following_manager(obstacle_vehicle, distance)
+            target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
             control = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
-            self.emergency_flag = False
             return control
 
         # 4. Checking if there's a junction nearby to slow down TODO: This is a very ROUGH WAY for now

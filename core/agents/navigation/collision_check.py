@@ -15,13 +15,14 @@ from core.agents.navigation.spline import Spline2D
 
 
 class CollisionChecker:
-    def __init__(self, circle_radius=1.5, circle_offsets=None):
+    def __init__(self, time_ahead=2.0, circle_radius=1.5, circle_offsets=None):
         """
         Construction method
+        :param time_ahead: how many seconds we look ahead in advance for collision check
         :param circle_offsets: the offset between collision checking circle and the trajectory point
         :param circle_radius: The radius of the collision checking circle
         """
-
+        self.time_ahead = time_ahead
         self._circle_offsets = [-1.0, 1.0, -3.0, 3.0] if circle_offsets is None else circle_offsets
         self._circle_radius = circle_radius
 
@@ -123,7 +124,7 @@ class CollisionChecker:
         """
         collision_free = True
         # detect 2 second ahead
-        distance_check = min(int(speed * 2 / 0.1), len(path_x)) if not overtake_check else len(path_x)
+        distance_check = min(int(self.time_ahead * speed / 0.1), len(path_x)) if not overtake_check else len(path_x)
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
         
         # every step is 0.1m, so we check every 10 points
