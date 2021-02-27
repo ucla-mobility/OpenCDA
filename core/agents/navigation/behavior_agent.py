@@ -77,8 +77,10 @@ class BehaviorAgent(Agent):
 
         # collision checker
         self._collision_check = CollisionChecker()
-
         self.overtake_allowed = overtake_allowed
+
+        # emergency stop flag
+        self.emergency_flag = False
 
         # Parameters for agent behavior
         if behavior == 'cautious':
@@ -264,7 +266,6 @@ class BehaviorAgent(Agent):
         vehicle_speed = get_speed(vehicle)
         delta_v = max(1, (self.speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / np.nextafter(0., 1.)
-        print(ttc)
         # Under safety time distance, slow down.
         if self.behavior.safety_time > ttc > 0.0:
             target_speed = min(positive(vehicle_speed - self.behavior.speed_decrease),
@@ -311,7 +312,7 @@ class BehaviorAgent(Agent):
                                                          True)
             if not vehicle_state:
                 print("left overtake is operated")
-                self.behavior.overtake_counter = 50
+                self.behavior.overtake_counter = 35
                 self.set_destination(left_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
                 return vehicle_state
 
@@ -326,7 +327,7 @@ class BehaviorAgent(Agent):
                                                          True)
             if not vehicle_state:
                 print("right overtake is operated")
-                self.behavior.overtake_counter = 50
+                self.behavior.overtake_counter = 35
                 self.set_destination(right_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
                 return vehicle_state
 
@@ -355,12 +356,25 @@ class BehaviorAgent(Agent):
         is_hazard, obstacle_vehicle, distance = self.collision_manager(rx, ry, ryaw, ego_vehicle_wp)
         car_following_flag = False
 
-        if is_hazard and (not self.overtake_allowed or self.behavior.overtake_counter > 0):
-            print("collision detected !!!")
+        # the case that the vehicle is doing lane change as planned but found vehicle blocking on the other lane
+        if is_hazard \
+                and self.get_local_planner().lane_change \
+                and self.behavior.overtake_counter <= 0 \
+                and self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id != ego_vehicle_wp.lane_id:
+
+            reset_target = ego_vehicle_wp.next(get_speed(self.vehicle, True))[0]
+            print('destination pushed forward because of potential collision')
+            self.set_destination(reset_target.transform.location, self.end_waypoint.transform.location, clean=True)
+
+            # no emergency stop
+            return self.run_step(target_speed)
+
+        # the case that vehicle is blocing in front and overtake not allowed or it is doing overtaking
+        # the second condistion is to prevent successive overtaking
+        elif is_hazard and (not self.overtake_allowed or self.behavior.overtake_counter > 0):
             car_following_flag = True
 
-        if is_hazard and self.overtake_allowed and self.behavior.overtake_counter <= 0:
-            print("collision detected, try to do overtake!")
+        elif is_hazard and self.overtake_allowed and self.behavior.overtake_counter <= 0:
             obstacle_speed = get_speed(obstacle_vehicle)
             # overtake the vehicle
             if get_speed(self.vehicle) > obstacle_speed:
@@ -371,11 +385,11 @@ class BehaviorAgent(Agent):
         if car_following_flag:
             print("car following mode!")
             if distance < self.behavior.braking_distance:
-                print("emergency stop!")
                 return self.emergency_stop()
 
             target_speed = self.car_following_manager(obstacle_vehicle, distance)
             control = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
+            self.emergency_flag = False
             return control
 
         # 4. Checking if there's a junction nearby to slow down TODO: This is a very ROUGH WAY for now
@@ -389,4 +403,5 @@ class BehaviorAgent(Agent):
         control = self._local_planner.run_step(rx, ry, rk,
                                                target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist
                                                if not target_speed else target_speed)
+
         return control

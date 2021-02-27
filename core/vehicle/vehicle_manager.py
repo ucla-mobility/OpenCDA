@@ -102,7 +102,7 @@ class VehicleManager(object):
         :return:
         """
         index = 100 if len(self.agent.time_gap_list) > 100 else 0
-        time_gap_list = self.agent.time_gap_list[index:]
+        time_gap_list = self.agent.time_gap_list[index:-10]
         velocity_list = self.agent.velocity_list
 
         print(len(time_gap_list))

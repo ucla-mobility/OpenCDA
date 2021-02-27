@@ -22,6 +22,12 @@ def main():
         world = client.get_world()
         blueprint_library = world.get_blueprint_library()
 
+        origin_settings = world.get_settings()
+        settings = world.get_settings()
+        settings.synchronous_mode = True
+        settings.fixed_delta_seconds = 0.05
+        world.apply_settings(settings)
+
         # setup spawn points
         transform_1 = carla.Transform(carla.Location(x=51.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
@@ -57,6 +63,7 @@ def main():
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
 
+        world.tick()
         # create platooning world
         platooning_world = PlatooningWorld()
 
@@ -86,8 +93,9 @@ def main():
                                                 clean=True)
         spectator = world.get_spectator()
         while True:
-            if not world.wait_for_tick(10.0):
-                continue
+            # if not world.wait_for_tick(10.0):
+            #     continue
+            world.tick()
             transform = vehicle_4.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
@@ -103,6 +111,7 @@ def main():
             platooning_manager.run_step()
 
     finally:
+        world.apply_settings(origin_settings)
         platooning_manager.destroy()
         vehicle_manager_4.vehicle.destroy()
 

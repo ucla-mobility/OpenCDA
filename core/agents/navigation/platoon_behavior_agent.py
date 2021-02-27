@@ -195,12 +195,12 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return self.run_step(self.behavior.tailgate_speed), False
 
         # if the ego vehicle is still too far away
-        if distance > get_speed(self.vehicle, True) * (self.behavior.inter_gap + 0.5) and angle <= 70:
+        if distance > get_speed(self.vehicle, True) * (self.behavior.inter_gap + 0.5) and angle <= 80:
             print('trying to get the vehicle')
             return self.run_step(2.0 * get_speed(frontal_vehicle)), False
 
         # if the ego vehicle is too close or exceed the frontal vehicle
-        if distance < get_speed(self.vehicle, True) * self.behavior.inter_gap or angle >= 80:
+        if distance < get_speed(self.vehicle, True) * self.behavior.inter_gap / 2 or angle >= 80:
             print('too close, step back!')
             return self.run_step(0.95 * get_speed(frontal_vehicle)), False
 
@@ -265,8 +265,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         :param frontal_vehicle_vm: the vehicle that ego is trying to catch up
         :return: control command and whether back joining finished
         """
-        # 1. make sure the speed is warmed up first
-        if get_speed(self.vehicle) < self.behavior.warm_up_speed:
+        # 1. make sure the speed is warmed up first. Also we don't want to reset destination during lane change
+        if get_speed(self.vehicle) < self.behavior.warm_up_speed or self.get_local_planner().lane_change:
             print('warm up speed')
             return self.run_step(self.behavior.tailgate_speed), False
 
@@ -283,6 +283,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         ego_vehicle_yaw = self.vehicle.get_transform().rotation.yaw
 
         if not self.destination_changed:
+            print('destination reset!!!!')
             self.destination_changed = True
             self.set_destination(ego_wpt.next(4.5)[0].transform.location, frontal_destination)
 
@@ -317,6 +318,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # 4. If vehicle is not blocked, make ego back to the frontal vehicle's lane
         if not vehicle_blocking_status:
+            print('no vehicle is blocking!!!')
             if frontal_lane != ego_vehicle_lane:
                 left_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_left_lane()
                 right_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_right_lane()
