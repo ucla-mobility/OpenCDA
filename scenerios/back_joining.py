@@ -22,6 +22,12 @@ def main():
         world = client.get_world()
         origin_settings = world.get_settings()
 
+        # traffic manager setting
+        tm = client.get_trafficmanager()
+        tm.set_global_distance_to_leading_vehicle(1.0)
+        tm.set_synchronous_mode(True)
+
+
         settings = world.get_settings()
         settings.synchronous_mode = True
         settings.fixed_delta_seconds = 0.05
@@ -39,9 +45,13 @@ def main():
         transform_4 = carla.Transform(carla.Location(x=27.7194, y=143.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         # background testing traffic car
-        transform_5 = carla.Transform(carla.Location(x=81.7194, y=139.51, z=0.3),
+        transform_5 = carla.Transform(carla.Location(x=81.7194, y=136.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_6 = carla.Transform(carla.Location(x=57.7194, y=143.51, z=0.3),
+        transform_6 = carla.Transform(carla.Location(x=57.7194, y=144.51, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_7 = carla.Transform(carla.Location(x=77.7194, y=139.51, z=0.3),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_8 = carla.Transform(carla.Location(x=151.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         transform_destination_1 = carla.Transform(carla.Location(x=630, y=141.39, z=0.3),
@@ -66,13 +76,19 @@ def main():
 
         # vehicle 5-7 are background traffic
         ego_vehicle_bp.set_attribute('color', '0, 255, 0')
-        # vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
-        # vehicle_5.apply_control(carla.VehicleControl(throttle=0.65))
-        # vehicle_5.set_autopilot(False)
-        #
-        # vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
-        # vehicle_6.apply_control(carla.VehicleControl(throttle=0.55))
-        # vehicle_6.set_autopilot(False)
+        vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
+        vehicle_5.set_autopilot(True, 8000)
+
+        vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
+        vehicle_6.set_autopilot(True, 8000)
+
+        vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
+        vehicle_7.set_autopilot(True, 8000)
+
+        vehicle_8 = world.spawn_actor(ego_vehicle_bp, transform_8)
+        vehicle_8.set_autopilot(True, 8000)
+
+        tm.global_percentage_speed_difference(-60.0)
 
         world.tick()
         # create platooning world
@@ -116,14 +132,17 @@ def main():
             if not in_platooning:
                 vehicle_manager_4.agent.update_information(platooning_world)
                 control = vehicle_manager_4.run_step()
-                vehicle_manager_4. vehicle.apply_control(control)
+                vehicle_manager_4.vehicle.apply_control(control)
 
     finally:
         world.apply_settings(origin_settings)
         platooning_manager.destroy()
         vehicle_manager_4.vehicle.destroy()
-        # vehicle_5.destroy()
-        # vehicle_6.destroy()
+        vehicle_5.destroy()
+        vehicle_6.destroy()
+        vehicle_7.destroy()
+        vehicle_8.destroy()
+
 
 if __name__ == '__main__':
     try:
