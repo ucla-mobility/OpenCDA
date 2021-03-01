@@ -17,14 +17,14 @@ class PlatooningManager(object):
     Platooning manager for vehicle managers
     """
 
-    def __init__(self, world, maximum_capcity=10):
+    def __init__(self, world, maximum_capcity=10, pmid=1):
         """
         Construct class
         :param world: platooning world object
         :param maximum_capcity:
         """
         # TODO: Find a better way to give id
-        self.pmid = 1
+        self.pmid = pmid
 
         # TODO: Use a more stable data structure
         self.vehicle_manager_list = []
@@ -57,15 +57,16 @@ class PlatooningManager(object):
         self.vehicle_manager_list.append(vehicle_manager)
         vehicle_manager.set_platooning(self, self.pmid, len(self.vehicle_manager_list)-1, False)
 
-    def set_member(self, vehicle_manager, index):
+    def set_member(self, vehicle_manager, index, lead=False):
         """
         Set member at specific index
+        :param lead:
         :param vehicle_manager:
         :param index:
         :return:
         """
         self.vehicle_manager_list.insert(index, vehicle_manager)
-        vehicle_manager.set_platooning(self, self.pmid, index, False)
+        vehicle_manager.set_platooning(self, self.pmid, index, lead)
 
     def response_joining_request(self):
         """

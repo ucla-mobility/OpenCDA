@@ -6,7 +6,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-from core.agents.tools.misc import compute_distance
+from core.agents.tools.misc import compute_distance, cal_distance_angle
 from core.platooning.fsm import FSM
 
 
@@ -40,6 +40,9 @@ class PlatooningPlugin(object):
         # used for cut-in joining
         self.front_vehicle = None
         self.rear_vechile = None
+
+        # the platooning list that not consider to join anymore
+        self.platooning_black_list = []
 
     def dissolve(self):
         """
@@ -75,31 +78,46 @@ class PlatooningPlugin(object):
                 return uuid, vm
         return None, None
 
-    def platooning_search(self, ego_id, platooning_world, cur_loc):
+    def platooning_search(self, ego_id, platooning_world, ego_vehicle):
         """
         Search platooning nearby and if any existed communicate with them to prepare for joinning
         :param ego_id:
         :param platooning_world:
-        :param cur_loc:
+        :param ego_vehicle:
         :return:
         """
+        cur_loc = ego_vehicle.get_location()
+        cur_yaw = ego_vehicle.get_transform().rotation.yaw
+
         uuid, vm = self.communication_searching(ego_id, platooning_world, cur_loc)
         if not uuid:
-            return False
+            return False, 0, 0
         else:
             _, _, platooning_object = vm.get_platooning_status()
+            if platooning_object.pmid in self.platooning_black_list:
+                return False,0 ,0
+
             min_distance = float('inf')
             min_index = -1
+            min_angle = 0
 
             # if the platooning is not open to joining
             if not platooning_object.response_joining_request():
-                return False
+                return False, 0, 0
 
             for (i, vehicle_manager) in enumerate(platooning_object.vehicle_manager_list):
-                distance = compute_distance(cur_loc, vehicle_manager.vehicle.get_location())
+                distance, angle = cal_distance_angle(vehicle_manager.vehicle.get_location(),
+                                                     cur_loc, cur_yaw)
                 if distance < min_distance:
                     min_distance = distance
                     min_index = i
+                    min_angle = angle
+
+            # if the ego is in front of the platooning
+            if min_index == 0 and min_angle > 90:
+                self.front_vehicle = None
+                self.rear_vechile = platooning_object.vehicle_manager_list[0]
+                return True, min_distance, min_index
 
             self.front_vehicle = platooning_object.vehicle_manager_list[min_index]
 

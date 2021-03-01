@@ -47,6 +47,32 @@ class VehicleManager(object):
         world.update_vehicle_manager(self)
         self.world = weakref.ref(world)()
 
+    def get_platooning_status(self):
+        """
+        Check whether the vehicle in the platooning
+        :return:
+        """
+        return self._platooning_plugin.in_platooning, self._platooning_plugin.id_in_team, \
+               self._platooning_plugin.platooning_object
+
+    def get_pmid(self):
+        return self._platooning_plugin.platooning_id
+
+    def get_fsm_status(self):
+        """
+        return the fsm status
+        :return:
+        """
+        return self._platooning_plugin.status
+
+    def set_platooning_status(self, status):
+        """
+        Set the platooning status
+        :param status:
+        :return:
+        """
+        self._platooning_plugin.status = status
+
     def set_platooning(self, platooning_object, platooning_id, in_team_id, lead=False):
         """
         Called when vehicle joined/formed a platooning
@@ -64,28 +90,12 @@ class VehicleManager(object):
         if lead:
             self._platooning_plugin.take_charge()
 
-    def get_platooning_status(self):
+    def unset_lead(self):
         """
-        Check whether the vehicle in the platooning
+        cancel lead position
         :return:
         """
-        return self._platooning_plugin.in_platooning, self._platooning_plugin.id_in_team, \
-               self._platooning_plugin.platooning_object
-
-    def get_fsm_status(self):
-        """
-        return the fsm status
-        :return:
-        """
-        return self._platooning_plugin.status
-
-    def set_platooning_status(self, status):
-        """
-        Set the platooning status
-        :param status:
-        :return:
-        """
-        self._platooning_plugin.status = status
+        self._platooning_plugin.leader = False
 
     def update_info(self, world, frontal_vehicle=None):
         """
@@ -123,13 +133,19 @@ class VehicleManager(object):
         if not self._platooning_plugin.in_platooning:
             # if the ego-vehicle is still searching for platooning
             if self._platooning_plugin.status == FSM.SEARCHING:
-                platoon_searched, distance, _ = \
-                    self._platooning_plugin.platooning_search(self.vid, self.world, self.vehicle.get_location())
+                platoon_searched, distance, min_index = \
+                    self._platooning_plugin.platooning_search(self.vid, self.world, self.vehicle)
                 # if find platooning and platooning is close enough, we use cut-joining
                 if platoon_searched and distance < 15:
+                    print('cut in joining mode')
                     self.set_platooning_status(FSM.MOVE_TO_POINT)
-                elif platoon_searched and distance >= 15:
+                elif platoon_searched and distance >= 15 and self._platooning_plugin.front_vehicle:
+                    print('back joining mode')
                     self.set_platooning_status(FSM.BACK_JOINING)
+                elif platoon_searched and distance >= 15 and min_index == 0 \
+                        and not self._platooning_plugin.front_vehicle:
+                    print('frontal joining mode')
+                    self.set_platooning_status(FSM.FRONT_JOINING)
 
                 return self.agent.run_step()
 
@@ -169,6 +185,27 @@ class VehicleManager(object):
                     _, index, platooning_manager = self._platooning_plugin.front_vehicle.get_platooning_status()
                     platooning_manager.set_member(self, index + 1)
                     self.set_platooning_status(FSM.MAINTINING)
+                return control
+
+            elif self._platooning_plugin.status == FSM.FRONT_JOINING:
+                rear_vehicle = self._platooning_plugin.rear_vechile
+                control, status = self.agent.run_step_front_joining(rear_vehicle)
+                _, index, platooning_manager = rear_vehicle.get_platooning_status()
+
+                if status == FSM.SEARCHING:
+                    self.set_platooning_status(status)
+                    self._platooning_plugin.platooning_black_list.append(
+                        rear_vehicle.get_pmid())
+                if status == FSM.BACK_JOINING:
+                    self._platooning_plugin.front_vehicle = platooning_manager.vehicle_manager_list[-1]
+                    self._platooning_plugin.rear_vechile = None
+                    self.set_platooning_status(FSM.BACK_JOINING)
+                if status == FSM.JOINING_FINISHED:
+                    # first take away old leader position
+                    rear_vehicle.unset_lead()
+                    rear_vehicle.set_platooning_status(FSM.MAINTINING)
+                    # add lead position to ego
+                    platooning_manager.set_member(self, 0, True)
                 return control
 
         else:

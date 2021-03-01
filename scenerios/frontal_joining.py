@@ -35,22 +35,17 @@ def main():
         blueprint_library = world.get_blueprint_library()
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=111.7194, y=139.51, z=0.3),
+        transform_1 = carla.Transform(carla.Location(x=47.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=101.7194, y=139.51, z=0.3),
+        transform_2 = carla.Transform(carla.Location(x=37.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=91.7194, y=139.51, z=0.3),
+        transform_3 = carla.Transform(carla.Location(x=27.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_4 = carla.Transform(carla.Location(x=27.7194, y=143.51, z=0.3),
+        transform_4 = carla.Transform(carla.Location(x=67.7194, y=143.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+
         # background testing traffic car
-        transform_5 = carla.Transform(carla.Location(x=81.7194, y=136.51, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_6 = carla.Transform(carla.Location(x=57.7194, y=144.51, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_7 = carla.Transform(carla.Location(x=77.7194, y=139.51, z=0.3),
-                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_8 = carla.Transform(carla.Location(x=151.7194, y=139.51, z=0.3),
+        transform_5 = carla.Transform(carla.Location(x=141.7194, y=143.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         transform_destination_1 = carla.Transform(carla.Location(x=630, y=141.39, z=0.3),
@@ -78,16 +73,7 @@ def main():
         vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
         vehicle_5.set_autopilot(True, 8000)
 
-        vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
-        vehicle_6.set_autopilot(True, 8000)
-
-        vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
-        vehicle_7.set_autopilot(True, 8000)
-
-        vehicle_8 = world.spawn_actor(ego_vehicle_bp, transform_8)
-        vehicle_8.set_autopilot(True, 8000)
-
-        tm.global_percentage_speed_difference(-60.0)
+        tm.global_percentage_speed_difference(-80.0)
 
         world.tick()
         # create platooning world
@@ -136,11 +122,8 @@ def main():
     finally:
         world.apply_settings(origin_settings)
         platooning_manager.destroy()
-        vehicle_manager_4.vehicle.destroy()
         vehicle_5.destroy()
-        vehicle_6.destroy()
-        vehicle_7.destroy()
-        vehicle_8.destroy()
+        vehicle_manager_4.vehicle.destroy()
 
 
 if __name__ == '__main__':
