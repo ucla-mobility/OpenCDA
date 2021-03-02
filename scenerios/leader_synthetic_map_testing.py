@@ -15,8 +15,13 @@ from core.platooning.platooning_world import PlatooningWorld
 from core.platooning.platooning_manager import PlatooningManager
 from core.vehicle.vehicle_manager import VehicleManager
 
-# import Vehicle class 
-from src.vehicle_CARLA import Vehicle # use to replace SUMO vehicle class(extract data from simulation)
+# import GFS_controller
+from core.GFS.GFS_controller import GFSController
+from FISmoduleGFSBestMergePoint import FIS
+# import GFS dependencies
+import numpy as np
+import pdb
+import pickle
 
 
 def main():
@@ -60,12 +65,19 @@ def main():
 
         # read all default waypoints
         all_deafault_spawn = world.get_map().get_spawn_points()
+
         # setup spawn points
+        # merge lane
         transform_point = all_deafault_spawn[11]
         # move forward along acceleration lane 
-        transform_point.location.x = transform_point.location.x + 0.7*(all_deafault_spawn[2].location.x-all_deafault_spawn[11].location.x)
-        transform_point.location.y = transform_point.location.y + 0.7*(all_deafault_spawn[2].location.y-all_deafault_spawn[11].location.y)
-        
+        # transform_point.location.x = transform_point.location.x + 0.7*(all_deafault_spawn[2].location.x-all_deafault_spawn[11].location.x)
+        # transform_point.location.y = transform_point.location.y + 0.7*(all_deafault_spawn[2].location.y-all_deafault_spawn[11].location.y)
+
+        # main line
+        transform_point = carla.Transform(carla.Location(x=-20.000000, y=7.500000, z=3.000000),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+
+
         # destination 
         # transform_destination = all_deafault_spawn[4]  # left lane 
         transform_destination = all_deafault_spawn[3] # middle lane 
@@ -77,9 +89,6 @@ def main():
         ego_vehicle_bp.set_attribute('color', '0, 0, 0')
         vehicle_1 = world.spawn_actor(ego_vehicle_bp, transform_point)
         vehicle_1.apply_control(carla.VehicleControl(brake=1.0))
-
-        # init Vehicle class to read simulation data 
-        leader = Vehicle(vehicle_1)
 
         # create platooning world
         platooning_world = PlatooningWorld()
@@ -93,62 +102,47 @@ def main():
         platooning_manager.set_lead(vehicle_manager_1)
 
         # set destination TODO: the spawn point may have conflict
-        destination = transform_destination.location #+ carla.Location(x=-160)
+        destination = transform_destination.location
         # destination = carla.Location(x=319.547150, y=-82.862183, z=0.033884)
         platooning_manager.set_destination(destination)
         
-        # top view 
-        spectator = world.get_spectator()
-        transform = vehicle_1.get_transform()
-        spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),# + carla.Location(x=-65),
-                                                carla.Rotation(pitch=-90)))
+        # # manaul spectator
+        # spectator = world.get_spectator()
+        # transform = vehicle_1.get_transform()
+        # spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),# + carla.Location(x=-65),
+        #                                         carla.Rotation(pitch=-90)))
+
+        # load rules for GFS
+        with open(r'BestFIS-theBest37-Safe.pickle','rb') as f:
+            gfs_m_speed = pickle.load(f)
+
+        with open(r'BestFIS-pl-score.pickle','rb') as g:
+            gfs_pl_score = pickle.load(g)
+
+        with open(r'BestGFS_PL_speed.pickle','rb') as h:
+            gfs_pl_speed = pickle.load(h)
 
         # simulation loop
         while True:
             if not world.wait_for_tick(10.0):
                 continue
-            # # top view 
-            # spectator = world.get_spectator()
-            # transform = vehicle_1.get_transform()
-            # spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),# + carla.Location(x=-65),
-            #                                         carla.Rotation(pitch=-90)))
+            # top view
+            spectator = world.get_spectator()
+            transform = vehicle_1.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),# + carla.Location(x=-65),
+                                                    carla.Rotation(pitch=-90)))
             # print(get_speed(vehicle_1))
             platooning_manager.update_information(world)
             platooning_manager.run_step()
 
-            # ---------------------- read simulation data ---------------------
-            # nearby vehicles
-            leadVeh = leader.getLeader(50)
-            leftLeadVeh = leader.getLeftLeader()
-            rightLeadVeh = leader.getRightLeader()
-            leftFollowVeh = leader.getLeftFollower()
-            rightFollowVeh = leader.getRightFollower()
-
-            # leader info
-            l_id = leader.getName()
-            l_state = leader.getState()
-            l_position = leader.getPosition()
-            l_speed = leader.getSpeed()
-            l_lane = leader.getLane()
-            l_tar_lane = leader.getTargetLane()
-            l_active = leader.isActive()
-            l_edge = leader.getEdge()
-            l_lane_index = leader.getLaneIndex()
-            if leadVeh is not None:
-                lead, dist = leadVeh
-                l_distance_to_front = leader.getDistance(Vehicle(lead))
-            l_max_speed = leader.getMaxSpeed()
-
-            # # setters 
-            # leader.setState("RequestDissovle")
-            # l_state = leader.getState()
-            # leader.setTau(0.66776677)
-            # l_Tau = leader.getTau()
-            # leader.setInActive()
-            # leader.setMinGap(10.010101)
-            # leader.setSpeedFactor(0101)
-            # leader.setTargetLane(-1)
-
+            # read GFS controller output
+            sensor_range = 150
+            dt = 0.25
+            GFS_contoller = GFSController(gfs_pl_score, gfs_pl_speed, gfs_m_speed, platooning_manager, sensor_range, dt)
+            # platoon position
+            leadVeh, rearVeh = GFS_contoller.getBestMergePosition(vehicle_1, platooning_manager)
+            # merge_speed = GFS_contoller.getDesiredSpeed_m(vehicle_1)
+            # leader_speed = GFS_contoller.getDesiredSpeed_pl(vehicle_1) # v1 is leader
     finally:
         platooning_manager.destroy()
         world.apply_settings(origin_settings)

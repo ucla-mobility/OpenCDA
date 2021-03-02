@@ -19,13 +19,6 @@ def main():
 
         # Retrieve the world that is currently running
         world = client.get_world()
-        origin_settings = world.get_settings()
-
-        settings = world.get_settings()
-        settings.synchronous_mode = True
-        settings.fixed_delta_seconds = 0.05
-        world.apply_settings(settings)
-
         blueprint_library = world.get_blueprint_library()
 
         # traffic manager for background traffic
@@ -69,19 +62,15 @@ def main():
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
 
-        world.tick()
         # vehicle 5-7 are background traffic
         ego_vehicle_bp.set_attribute('color', '0, 255, 0')
-        vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
-        vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
-        vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
-
-        vehicle_5.apply_control(carla.VehicleControl(throttle=0.55))
-        vehicle_5.set_autopilot(False)
-        vehicle_6.apply_control(carla.VehicleControl(throttle=0.55))
-        vehicle_6.set_autopilot(False)
-        vehicle_7.apply_control(carla.VehicleControl(throttle=0.55))
-        vehicle_7.set_autopilot(False)
+        # vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
+        # vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
+        # vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)
+        #
+        # vehicle_5.set_autopilot(True, 8000)
+        # vehicle_6.set_autopilot(True, 8000)
+        # vehicle_7.set_autopilot(True)
 
         # create platooning world
         platooning_world = PlatooningWorld()
@@ -111,9 +100,8 @@ def main():
         platooning_manager.set_destination(destination)
 
         while True:
-            # if not world.wait_for_tick(10.0):
-            #     continue
-            world.tick()
+            if not world.wait_for_tick(10.0):
+                continue
             spectator = world.get_spectator()
             transform = vehicle_2.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
@@ -124,13 +112,9 @@ def main():
 
     finally:
         platooning_manager.destroy()
-        origin_settings.synchronous_mode = False
-        world.apply_settings(origin_settings)
-
         vehicle_5.destroy()
         vehicle_6.destroy()
         vehicle_7.destroy()
-
 
 if __name__ == '__main__':
     try:

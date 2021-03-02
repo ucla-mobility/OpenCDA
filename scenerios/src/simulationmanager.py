@@ -6,8 +6,8 @@ Created on Tue Dec 1, 2020
 @authors: Yi Guo, Anoop Sathyan, Jiaqi Ma
 """
 
-from src.intersectionController import IntersectionController # need to update for CARLA 
-from src.platoon import Platoon # need to update to CARLA
+from src.intersectionController import IntersectionController
+from src.platoon import Platoon
 from src.vehicle import Vehicle
 from src.simlib import flatten
 
@@ -39,10 +39,17 @@ Max_Platoon_Length = 10
 INTER_TAU = 1.5
 INTRA_TAU = 0.6
 DISSOLVE_GAP = 0.8
+FORMATION_GAP = 1.3
 
 # vehicle type
 HDV_TYPE = 'DEFAULT_VEHTYPE'
 CDA_TYPE = 'vType_0'
+
+#formation related
+FORM_TIME = 15.0
+SUSPENDING_TIME = 1.0
+
+
 
 class SimulationManager():
 
@@ -52,15 +59,17 @@ class SimulationManager():
         self.platoonCreation = pCreation
         self.vehicles = dict()
         self.mergelist = dict()
+        self.mergingBuffer = dict()
+        self.ticklist = dict()
         self.dissolvelist = dict()
         self.maxStoppedVehicles = dict()
         self.dissolvetest = 0
         self.relevantPlatoonHist = [] # For data collection
         self.relevantMergeList = [] # For data collection for merge position
-        if iCoordination:
-            for intersection in traci.trafficlights.getIDList():
-                controller = IntersectionController(intersection, iZipping)
-                self.intersections.append(controller)
+        # if iCoordination:
+        #     for intersection in traci.trafficlights.getIDList():
+        #         controller = IntersectionController(intersection, iZipping)
+        #         self.intersections.append(controller)
 
     def createPlatoon(self, vehicles):
         # Creates a platoon with the given vehicles
@@ -117,13 +126,13 @@ class SimulationManager():
             ''' preference: left follower better than left leader'''
             # potential left rear platoon
             if leftFollowVeh and leftFollowVeh[1] < 50:  # and direction == 0
-        
+                
                 leadIns = self.vehicles[leftFollowVeh[0]]
                 possiblePlatoon = self.getPlatoonByVehicle(leadIns)
                 if possiblePlatoon:
                     y_Leader = possiblePlatoon[0]._vehicles[0].getPosition()[1]
                     y_leftFollowVeh = leadIns.getPosition()[1]
-                    if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length and abs(y_leftFollowVeh-y_Leader) < 1e-3:  #Second condition is to check if the closest vehicle in the same lane as the platoon leader   # Dec 30, 2020 --> Max_Platoon_Length
+                    if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length and abs(y_leftFollowVeh+4.8) < 1e-3:  #Second condition is to check if the closest vehicle in the same lane as the platoon leader   # Dec 30, 2020 --> Max_Platoon_Length
                         # ensure the platoon is not engaging another operation
                         # the leader state could be Leading or SearchForPlatooning
                         if 'Leading' in possiblePlatoon[0].getLeadVehicle().getState() or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
@@ -138,7 +147,7 @@ class SimulationManager():
                 if possiblePlatoon:
                     y_Leader = possiblePlatoon[0]._vehicles[0].getPosition()[1]
                     y_leftLeadVeh = leadIns.getPosition()[1]
-                    if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length and abs(y_leftLeadVeh-y_Leader) < 1e-3:  #Second condition is to check if the closest vehicle in the same lane as the platoon leader   # Dec 30, 2020 --> Max_Platoon_Length
+                    if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length and abs(y_leftLeadVeh+4.8) < 1e-3:  #Second condition is to check if the closest vehicle in the same lane as the platoon leader   # Dec 30, 2020 --> Max_Platoon_Length
                         # ensure the platoon is not engaging another operation
                         # the leader state could be Leading or SearchForPlatooning
                         if 'Leading' in possiblePlatoon[0].getLeadVehicle().getState() or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
@@ -152,7 +161,7 @@ class SimulationManager():
                     if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length:     # Dec 30, 2020 --> Max_Platoon_Length
                         # ensure the platoon is not engaging another operation
                         # the leader state could be Leading or SearchForPlatooning
-                        if 'Leading' in possiblePlatoon[0].getLeadVehicle().getState() or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
+                        if possiblePlatoon[0].getLeadVehicle().getState() == "Leading" or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
                             if possiblePlatoon[0].checkVehiclePathsConverge([vehicle]) and vehicle not in possiblePlatoon[0].getAllVehicles():
                                 return possiblePlatoon[0], 0, leadVeh
             # potential left preceding platoon
@@ -163,7 +172,7 @@ class SimulationManager():
                     if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length:     # Dec 30, 2020 --> Max_Platoon_Length
                         # ensure the platoon is not engaging another operation
                         # the leader state could be Leading or SearchForPlatooning
-                        if 'Leading' in possiblePlatoon[0].getLeadVehicle().getState() or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
+                        if possiblePlatoon[0].getLeadVehicle().getState() == "Leading" or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
                             if possiblePlatoon[0].checkVehiclePathsConverge([vehicle]) and vehicle not in possiblePlatoon[0].getAllVehicles():
                                 return possiblePlatoon[0], 1, leftLeadVeh
     
@@ -175,7 +184,7 @@ class SimulationManager():
                     if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length:  # Dec 30, 2020 --> Max_Platoon_Length
                         # ensure the platoon is not engaging another operation
                         # the leader state could be Leading or SearchForPlatooning
-                        if 'Leading' in possiblePlatoon[0].getLeadVehicle().getState() or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
+                        if possiblePlatoon[0].getLeadVehicle().getState() == "Leading" or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
                             if possiblePlatoon[0].checkVehiclePathsConverge([vehicle]) and vehicle not in \
                                     possiblePlatoon[0].getAllVehicles():
                                 return possiblePlatoon[0], 1, rightLeadVeh
@@ -189,12 +198,12 @@ class SimulationManager():
                     if len(possiblePlatoon[0]._vehicles) < Max_Platoon_Length:  # Dec 30, 2020 --> Max_Platoon_Length
                         # ensure the platoon is not engaging another operation
                         # the leader state could be Leading or SearchForPlatooning
-                        if 'Leading' in possiblePlatoon[0].getLeadVehicle().getState() or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
+                        if possiblePlatoon[0].getLeadVehicle().getState() == "Leading" or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
                             if possiblePlatoon[0].checkVehiclePathsConverge([vehicle]) and vehicle not in \
                                     possiblePlatoon[0].getAllVehicles():
                                 return possiblePlatoon[0], -1, leftFollowVeh
     
-            # potential left rear platoon
+            # potential right rear platoon
             if rightFollowVeh and rightFollowVeh[1] < 50:  # and direction == 0
                 leadIns = self.vehicles[rightFollowVeh[0]]
                 possiblePlatoon = self.getPlatoonByVehicle(leadIns)
@@ -203,16 +212,58 @@ class SimulationManager():
                                0]._vehicles) < Max_Platoon_Length:  # Dec 30, 2020 --> Max_Platoon_Length
                         # ensure the platoon is not engaging another operation
                         # the leader state could be Leading or SearchForPlatooning
-                        if 'Leading' in possiblePlatoon[0].getLeadVehicle().getState() or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
+                        if possiblePlatoon[0].getLeadVehicle().getState() == "Leading" or possiblePlatoon[0].getLeadVehicle().getState() == "SearchingForPlatooning":
                             if possiblePlatoon[0].checkVehiclePathsConverge([vehicle]) and vehicle not in \
                                     possiblePlatoon[0].getAllVehicles():
                                 return possiblePlatoon[0], -1, rightFollowVeh
     # added the default return value
         return None, -100, leadVeh
                     
-    def handleSimulationStepFIS(self, fisMergeLoc, gfs_pl_speed, gfs_m):
+    def handleSimulationStepFIS(self, time, fisMergeLoc, gfs_pl_speed, gfs_m):
         allVehicles = traci.vehicle.getIDList()
         # Check mark vehicles as in-active if they are outside the map
+
+        # check intersection
+        intersections = self.intersections
+        print(intersections)
+
+        # print data to verify type
+        if len(allVehicles) >= 10:
+            # print all data for comparison
+            leader = Vehicle('flow_1.0')
+            # nearby vehicles
+            leadVeh = leader.getLeader(50)
+            leftLeadVeh = leader.getLeftLeader()
+            rightLeadVeh = leader.getRightLeader()
+            leftFollowVeh = leader.getLeftFollower()
+            rightFollowVeh = leader.getRightFollower()
+
+            # leader info
+            l_id = leader.getName()
+            l_state = leader.getState()
+            l_position = leader.getPosition()
+            l_speed = leader.getSpeed()
+            l_Tau = leader.getTau()
+            l_lane = leader.getLane()
+            print('current lane is: ' + str(l_lane))
+            l_tar_lane = leader.getTargetLane()
+            l_active = leader.isActive()
+            l_edge = leader.getEdge()
+            l_lane_index = leader.getLaneIndex()
+            l_route = leader.getRoute()
+            # print(l_route)
+            # print('length of the route: '+str(len(l_route)))
+            l_remain_route = leader.getRemainingRoute()
+            # print(l_remain_route)
+            # print('length of the remaining route: ' + str(len(l_remain_route)))
+            # print('---------------------------------------------------')
+            l_ln_pos = leader.getLanePosition()
+            l_ln_pos_front = leader.getLanePositionFromFront()
+
+            if leadVeh is not None:
+                lead, dist = leadVeh
+                l_distance_to_front = leader.getDistance(Vehicle(lead))
+            l_max_speed = leader.getMaxSpeed()
 
         allSpeeds = []
         for v in list(self.vehicles):
@@ -224,27 +275,26 @@ class SimulationManager():
             # the dissolve super-state may be further initiated by several conditions
             # since in this version we only have one route for mainline traffic
             # here just set certain vehicle(s) to dissolve for illustration purpose.
-            else:
-                vVeh = self.getVehicleByID(v)
-                vVeh_speed = vVeh.getSpeed()
-#                if vVeh_speed < 1:           
-#                    return -10
-                allSpeeds.append(vVeh_speed)
-                if v == 'flow_0.10' and self.dissolvetest == 0:
-                    v_ins = self.getVehicleByID(v)
-                    if v_ins.getPosition()[0] > -1280:
-                        v_ins.setState("RequestDissolve")
-                        platoon = self.getPlatoonByVehicle(v_ins)
-                        plt_leader = platoon[0].getLeadVehicle()
-                        if plt_leader.getName() == v:
-                            lead = -1
-                            # v.setState("Dissolving")
-                        else:
-                            lead = plt_leader
-                            lead.setState("PreParingForDissolve")
-                        self.dissolvelist[v] = lead
-
-                        self.dissolvetest = 1
+            # else:
+            #     vVeh = self.getVehicleByID(v)
+            #     vVeh_speed = vVeh.getSpeed()
+            #
+            #     allSpeeds.append(vVeh_speed)
+            #     if v == 'flow_0.10' and self.dissolvetest == 0:
+            #         v_ins = self.getVehicleByID(v)
+            #         if v_ins.getPosition()[0] > -1280:
+            #             v_ins.setState("RequestDissolve")
+            #             platoon = self.getPlatoonByVehicle(v_ins)
+            #             plt_leader = platoon[0].getLeadVehicle()
+            #             if plt_leader.getName() == v:
+            #                 lead = -1
+            #                 # v.setState("Dissolving")
+            #             else:
+            #                 lead = plt_leader
+            #                 lead.setState("PreParingForDissolve")
+            #             self.dissolvelist[v] = lead
+            #
+            #             self.dissolvetest = 1
         
         # Update all platoons active status
         for p in self.getActivePlatoons():
@@ -299,12 +349,30 @@ class SimulationManager():
                 
                 if not vehicle.isActive():
                     continue
-                
+                # have not completed the lane change, align with the center of lane
+                if vehicle.getName() in self.mergingBuffer.keys():
+                    tmp_lane, tmp_direction = self.mergingBuffer[vehicle.getName()]
+
+                    if vehicle.getLaneIndex() == tmp_lane and abs(vehicle.getLatPos()) <= 0.01:
+                        self.mergingBuffer.pop(vehicle.getName(), None)
+                    else:
+                        # have not aligned to the original lane
+                        vehicle.changeLane(tmp_lane, tmp_direction)
+                        continue
+
+
                 possiblePlatoon, direction, leadVeh = self.getReleventPlatoon(vehicle)
-               
+                
                 if vehicle.getLane() == 'gneE4_1' and direction == -1:
                     possiblePlatoon = None
-                
+
+                # no possible platooning opportunity, then no cooperative merge
+                if vehicle.getLane() == 'gneE4_0' and not possiblePlatoon:
+                    vehicle.changeLane(1, 0)
+                    self.mergelist[vehicle.getName()] = (-1,-1)
+                    self.ticklist[vehicle.getName()]= time
+                    vehicle.setState("Merging")
+
                 if possiblePlatoon: #and direction == 0
                     
                     curPlatoon = self.getPlatoonByVehicle(vehicle)
@@ -329,6 +397,12 @@ class SimulationManager():
 
                     # not in the same lane
                     elif curX > -2300.00 and direction != 0:
+                        # if in the suspending time
+                        if vehicleID in self.ticklist.keys():
+                            tmp_time = self.ticklist[vehicleID]
+                            if time - tmp_time <= SUSPENDING_TIME:
+                                traci.vehicle.setColor(vehicleID, (255, 0, 0))
+                                continue
                         # also add to the platoon list
                         # v.state --> swtich to "PreparingForPlatooning"
                         # get relevant vehicles
@@ -342,22 +416,16 @@ class SimulationManager():
                         
                         if vehicle.getLane() == 'gneE4_0':
                             frontVeh, rearVeh = self.getBestMergePosition(vehicle,possiblePlatoon,fisMergeLoc)
-                            if frontVeh == -1:
-                                pdb.set_trace()
                         else:
+                            if curPlatoon:
+                                curPlatoon[0].disband()
                             frontVeh, rearVeh = possiblePlatoon.getMergePosition(leadVeh[0], vehicle, direction)
                             
                         # add to merge list
                         self.mergelist[vehicleID] = (frontVeh, rearVeh)
                         vehicle.setState("PreparingForPlatooning")
                         possiblePlatoon.getLeadVehicle().setState("LeadingWithOperation")
-                        # if frontVeh == -1:
-                        #     possiblePlatoon.addVehicle(vehicle, 0)
-                        # elif rearVeh == -1:
-                        #     possiblePlatoon.addVehicle(vehicle, len(possiblePlatoon._vehicles))
-                        # else:
-                        #     merge_id = possiblePlatoon._vehicles.index(rearVeh)
-                        #     possiblePlatoon.addVehicle(vehicle, merge_id)
+                        
                 else:
                     if not self.getPlatoonByVehicle(vehicle):
                         self.createPlatoon([vehicle, ])
@@ -377,7 +445,8 @@ class SimulationManager():
             #   merging
             # operational state: leading/following
             for platoon in self.getActivePlatoons():
-                platoon.update()
+                # platoon.update()
+                platoon.updateIsActive()
                 vehsInPlatoon = platoon.getAllVehicles()
                 # if len(vehsInPlatoon) > 1:
                 for v in vehsInPlatoon:
@@ -386,6 +455,9 @@ class SimulationManager():
                     #traci.vehicle.setLaneChangeMode(v.getName(), 0b000100000000)
                     if not v.isActive():
                         continue
+                    else:
+                        # all platoon members are set to lane-change prohibition
+                        traci.vehicle.setLaneChangeMode(v.getName(), 0b001000000000)
                     # v._state = 'Platooning'
                     # vehicle needs to follow the given tau (desired tau)
                     # if current tau is larger than the des_tau
@@ -394,32 +466,25 @@ class SimulationManager():
                     if v.getState() == "Leading" or v.getState() == "LeadingWithOperation":
                         v.setTau(INTER_TAU)
                         v.setSpeedMode(SPD_ALL_CHECK)
-#                        if -50 < v.getPosition()[0] < 450:
-                        if v.getLane() == 'gneE4_1':
-                            rightLeadVeh = v.getRightLeader()
-                            if rightLeadVeh:
-                                if rightLeadVeh[1] < 150:                                   
-                                    des_speed = self.getDesiredSpeed(v,gfs_pl_speed)
-                                    #des_speed = max(15.0,des_speed)
-                                    v.setSpeed(des_speed)
-                                else:
-                                    v.setSpeed(SPEED)
-                            else:
-                                v.setSpeed(SPEED)
+                        if -50 < v.getPosition()[0] < 450:
+                                               
+                            des_speed = self.getDesiredSpeed(v,gfs_pl_speed)
+                            #des_speed = max(15.0,des_speed)
+                            v.setSpeed(des_speed)
                         else:
                             v.setSpeed(SPEED)
                         
                         v.setColor((230, 0, 255))
-                        traci.vehicle.setLaneChangeMode(v.getName(), 0b000000000000)  # to-do: encap, lane-change prohibit mode
+                        traci.vehicle.setLaneChangeMode(v.getName(), 0b001000000000)  # to-do: encap, lane-change prohibit mode
                     elif v.getState() == "Following":
                         dis = v.getLeader(60)  # return ID and dis of leading vehicle within 60 meters (2s * speed)
                         spd = v.getSpeed()
                         v.setTau(INTRA_TAU)
                         v.setColor((0, 255, 255))
-                        traci.vehicle.setLaneChangeMode(v.getName(), 0b000000000000)  # to-do: encap
+                        traci.vehicle.setLaneChangeMode(v.getName(), 0b001000000000)  # to-do: encap
                         # des_tau = v.getTau()
                         if dis is not None and dis[1] / (spd + 0.00001) > INTRA_TAU + 0.01:
-                            # v.setSpeedFactor(1.2)
+                            #v.setSpeedFactor(1.2)
                             v.setSpeed(SPEED * 1.1)
                             v.setSpeedMode(SPD_DIS_SAFE)
                         elif dis is not None and dis[1] /  (spd + 0.00001) <= INTRA_TAU + 0.01:
@@ -455,11 +520,11 @@ class SimulationManager():
                                     dc = egoVehPosx - midPointPosx
                                     des_merge_dist = 200 - egoVehPosx  # x = 200 is set as the point for the merge vehicle to meet the merge position within the platoon
                                     if des_merge_dist > 0:
-                                        T_des = des_merge_dist/v.getSpeed()
+                                        T_des = des_merge_dist/(v.getSpeed()+0.0001)
                                     else:
                                         T_des = dt
                                         
-                                    vM = max((midPointSpeed*T_des - dc)/T_des,0.0)
+                                    vM = max((midPointSpeed*T_des - dc)/(T_des+0.0001),0.0)
                                     v.setSpeed(vM)
                                     
                                     v.setSpeedMode(SPD_ALL_CHECK)
@@ -469,9 +534,18 @@ class SimulationManager():
                                 else:
                                     if dis > frontSpd * (INTRA_TAU + 0.2):
                                         v.setSpeed(frontSpd * 1.1)
-                                        v.setSpeedMode(SPD_ALL_CHECK)
+                                        # beware of this change
+                                        tmp_leader = v.getLeader()
+                                        if tmp_leader and tmp_leader[1] < 50:
+                                            tmp_ego_spd = v.getSpeed()
+                                            if tmp_leader[1] / (tmp_ego_spd + 0.0001) <= INTRA_TAU:
+                                                v.setSpeedMode(SPD_ALL_CHECK)
+                                            else:
+                                                v.setSpeedMode(SPD_DIS_SAFE)
+                                        else:
+                                            v.setSpeedMode(SPD_DIS_SAFE)
                                     elif dis < LENGTH and not des_speed:
-                                        v.setSpeed(frontSpd * 0.95)
+                                        v.setSpeed(frontSpd * 0.9)
                                         v.setSpeedMode(SPD_ALL_CHECK)
                                     else:
                                         if des_speed:
@@ -484,152 +558,313 @@ class SimulationManager():
                                         v.setState("InPosition")
                                 if rearVeh != -1:
                                     rearVeh.setState("OpeningGap")
+                                    self.ticklist[v.getName()] = -1
+                                else:
+                                    self.ticklist[v.getName()] = time
                             elif frontVeh == -1: # must have rearVeh
                                 dis = v.getDistance(rearVeh)
                                 rearSpd = rearVeh.getSpeed()
-                                if dis > rearSpd * (INTRA_TAU - 0.05):
-                                    v.setSpeed(SPEED)
-                                    v.setSpeedMode(SPD_ALL_CHECK)
-                                    v.setState("InPosition")
-                                    # to-do: a specific state for this vehicle
-                                    rearVeh.setTau(INTRA_TAU)
-                                    rearVeh.setState("LeadingWithOperation")
-                                else:
-                                    if des_speed:
-                                        v.setSpeed(des_speed)
+                                if v.getLane() == 'gneE4_0':
+                                    midPointSpeed = rearSpd + 0.5
+                                    midPointPosx = rearVeh.getPosition()[0] + INTRA_TAU*rearSpd
+                                    rearVehPosx = rearVeh.getPosition()[0]
+                                    egoVehPosx = v.getPosition()[0]
+                                    dc = egoVehPosx - midPointPosx
+                                    des_merge_dist = 200 - egoVehPosx  # x = 200 is set as the point for the merge vehicle to meet the merge position within the platoon
+                                    if des_merge_dist > 0:
+                                        T_des = des_merge_dist/(v.getSpeed()+0.0001)
                                     else:
-                                        v.setSpeed(SPEED * 1.1)
-                                    #v.setSpeed(SPEED * 1.1)
+                                        T_des = dt
+                                        
+                                    vM = max((midPointSpeed*T_des - dc)/(T_des+0.0001),0.0)
+                                    v.setSpeed(vM)
                                     
                                     v.setSpeedMode(SPD_ALL_CHECK)
+                                    
+                                    if rearVehPosx < egoVehPosx: # If vehicle between front and rear vehicles
+                                        v.setState("InPosition")
+                                else:
+                                    if dis > rearSpd * (INTRA_TAU - 0.05):
+                                        v.setSpeed(SPEED)
+                                        v.setSpeedMode(SPD_ALL_CHECK)
+                                        v.setState("InPosition")
+                                        # front join --> tick now
+                                        # record time
+                                        self.ticklist[v.getName()] = time
+                                        # [solved]to-do: a specific state for this vehicle
+                                        rearVeh.setTau(INTRA_TAU)
+                                        rearVeh.setState("LeadingWithOperation")
+                                    else:
+                                        if des_speed:
+                                            v.setSpeed(des_speed)
+                                        else:
+                                            v.setSpeed(SPEED * 1.1)
+                                        #v.setSpeed(SPEED * 1.1)
+                                        
+                                        v.setSpeedMode(SPD_ALL_CHECK)
                     elif v.getState() == "InPosition":
                         v.setColor((255, 165, 0))
                         frontVeh, rearVeh = self.mergelist[v.getName()]
                         frontEdge = -100
                         rearEdge = -100
-                        if frontVeh != -1:
-                            frontEdge = frontVeh.getEdge()
-                        if rearVeh != -1:
-                            rearEdge = rearVeh.getEdge()
-                        egoEdge = v.getEdge()
-                        laneID = -1
-                        
-                        if frontEdge != -100 and egoEdge == frontEdge:
-                            laneID = frontVeh.getLaneIndex()
-                        elif rearEdge != -100 and egoEdge == rearEdge:
-                            laneID = rearVeh.getLaneIndex()
-                        
-                        if laneID != -1:
-                            v.setState("Merging")
-                            #v.changeLane(laneID)
-                            #traci.vehicle.setLaneChangeMode(v.getName(), 0b000100000000)
-                            v.changeLane(laneID)
-                            
-                            
+                        if v.getName() in self.ticklist.keys():
+                            tick_time = self.ticklist[v.getName()]
+                            # within the given time limit
+                            if tick_time == -1 or time - tick_time <= FORM_TIME:
+                                if frontVeh != -1:
+                                    frontEdge = frontVeh.getEdge()
+                                if rearVeh != -1:
+                                    rearEdge = rearVeh.getEdge()
+                                egoEdge = v.getEdge()
+                                laneID = -1
+                                # check if the gap was created
+                                if tick_time == -1:
+                                    if rearVeh != -1:
+                                        tmp_spd = rearVeh.getSpeed()
+                                        tmp_dis = rearVeh.getLeader(60)[1]
+                                        if tmp_dis / (tmp_spd + 0.0001) >= FORMATION_GAP - 0.05:
+                                            self.ticklist[v.getName()] = time
+                                if frontEdge != -100 and egoEdge == frontEdge:
+                                    laneID = frontVeh.getLaneIndex()
+                                elif rearEdge != -100 and egoEdge == rearEdge:
+                                    laneID = rearVeh.getLaneIndex()
+                                # Modified - Only change state, not sent merging command
+                                if laneID >= -1:
+                                    v.setState("Merging")
+                            # abandon the formation
+                            else:
+                                v.setState("SearchingForPlatooning")
+                                v.setTargetLane(v.getLaneIndex())
+                                traci.vehicle.setLaneChangeMode(v.getName(), 0b001000000000)
+                                if frontVeh != -1:
+                                    curPlatoon = self.getPlatoonByVehicle(frontVeh)
+                                    # end this operation session and allow another operation
+                                    curPlatoon[0].getLeadVehicle().setState("Leading")
+                                    if v in curPlatoon[0].getAllVehicles():
+                                        curPlatoon[0].removeVehicle(v)
+                                if rearVeh != -1:
+                                    rearVeh.setState("Following")
+                                    curPlatoon = self.getPlatoonByVehicle(rearVeh)
+                                    # end this operation session and allow another operation
+                                    curPlatoon[0].getLeadVehicle().setState("Leading")
+                                    if v in curPlatoon[0].getAllVehicles():
+                                        curPlatoon[0].removeVehicle(v)
+                                # set a suspending time
+                                self.ticklist[v.getName()] = time
+                    # Feb 09, 2021, consider incomplete case
                     elif v.getState() == "Merging":
-                        
                         v.setColor((255, 255, 0))
                         frontVeh, rearVeh = self.mergelist[v.getName()]
-                        frontEdge = -100
-                        rearEdge = -100
-                        if frontVeh != -1:                            
-                            frontEdge = frontVeh.getEdge()
-                            
-                        if rearVeh != -1:
-                            rearEdge = rearVeh.getEdge()
-                        egoEdge = v.getEdge()
-                        egoLane = v.getLaneIndex()
-                        laneID = -1
-                        
-                        if frontEdge != -100 and egoEdge == frontEdge:
-                            laneID = frontVeh.getLaneIndex()
-                        elif rearEdge != -100 and egoEdge == rearEdge:
-                            laneID = rearVeh.getLaneIndex()
-                        
-                        
-                        if laneID != -1:
-                            v.changeLane(laneID)
-                        
-                        if v.getLane() == 'gneE4_0':                            
-                            des_speed = self.getDesiredSpeed(v,gfs_m)
-                        else:
-                            des_speed = None
-                        
-                        if frontVeh != -1:
-                            #dis = v.getDistance(frontVeh)
-                            dis = frontVeh.getPosition()[0] - v.getPosition()[0]
-                            frontSpd = frontVeh.getSpeed()  # use preceding veh's speed
-                            
-                            if dis > frontSpd * (INTRA_TAU + 0.2):
-                                v.setSpeed(frontSpd * 1.1)
-                                v.setSpeedMode(SPD_ALL_CHECK)
-                            elif dis < LENGTH and not des_speed:
-                                v.setSpeed(frontSpd * 0.95)
-                                v.setSpeedMode(SPD_ALL_CHECK)
-                            else:
-                                if des_speed:
-                                    v.setSpeed(des_speed)
-                                else:
-                                    v.setSpeed(frontSpd)
-                                
-                                v.setSpeedMode(SPD_ALL_CHECK)
-
-                            if frontEdge != -100 and egoEdge == frontEdge:
-                                if egoLane == frontVeh.getLaneIndex():
-                                    v.setState("Following")
-                                    if rearEdge != -100:
-                                        rearVeh.setState("Following")
-                                    curPlatoon = self.getPlatoonByVehicle(v)
-                                    if 'flow_1' in v._name:
-                                        if curPlatoon:
-                                            curPlatoon[0].disband()
-                                        mainPlatoon = self.getPlatoonByVehicle(frontVeh)
-                                        insertPoint = mainPlatoon[0]._vehicles.index(frontVeh)+1
-                                        mainPlatoon[0].addVehicle(v,insertPoint)
-                                        v.setState("Following")
-                                        
+                        if v.getName() in self.ticklist.keys():
+                            tick_time = self.ticklist[v.getName()]
+                            # within the given time limit
+                            if tick_time == -1 or time - tick_time <= FORM_TIME:
+                                frontEdge = -100
+                                rearEdge = -100
+                                if frontVeh != -1:
+                                    frontEdge = frontVeh.getEdge()
+                                if rearVeh != -1:
+                                    rearEdge = rearVeh.getEdge()
+                                # check if the gap was created
+                                if tick_time == -1:
+                                    if rearVeh != -1:
+                                        tmp_spd = rearVeh.getSpeed()
+                                        tmp_dis = rearVeh.getLeader(60)[1]
+                                        if tmp_dis / (tmp_spd + 0.0001) >= FORMATION_GAP - 0.05:
+                                            self.ticklist[v.getName()] = time
+                                egoEdge = v.getEdge()
+                                egoLane = v.getLaneIndex()
+                                laneID = -1
+                                if v.getLane() == 'gneE4_0':
+                                    des_speed = self.getDesiredSpeed(v, gfs_m)
+                                    if frontVeh == -1:
+                                        front_speed = 40
                                     else:
-                                        # end this operation session and allow another operation
-                                        curPlatoon[0].getLeadVehicle().setState("Leading")
-                            elif rearEdge != -100 and egoEdge == rearEdge:
-                                if egoLane == rearVeh.getLaneIndex():
-                                    v.setState("Following")
-                                    rearVeh.setState("Following")
-                                    curPlatoon = self.getPlatoonByVehicle(v)
-                                    if 'flow_1' in v._name:
-                                        if curPlatoon:
-                                            curPlatoon[0].disband()
-                                        mainPlatoon = self.getPlatoonByVehicle(rearVeh)
-                                        insertPoint = mainPlatoon[0]._vehicles.index(rearVeh)
-                                        mainPlatoon[0].addVehicle(v,insertPoint)
-                                        v.setState("Following")
-                                        
+                                        front_speed = frontVeh.getSpeed()
+                                    if rearVeh == -1:
+                                        rear_speed = 0
                                     else:
-                                        # end this operation session and allow another operation
-                                        curPlatoon[0].getLeadVehicle().setState("Leading")
-                        elif frontVeh == -1:
-                            dis = v.getDistance(rearVeh)
-                            rearSpd = rearVeh.getSpeed()
-                            
-                            # tweak this parameter
-                            if dis > rearSpd * (INTRA_TAU - 0.05):
-                                v.setSpeed(SPEED)
-                                v.setSpeedMode(SPD_ALL_CHECK)
-                            else:
-                                if des_speed:
-                                    v.setSpeed(des_speed)
+                                        rear_speed = rearVeh.getSpeed()
                                 else:
-                                    v.setSpeed(rearSpd * 1.1)
-                                
-                                v.setSpeedMode(SPD_ALL_CHECK)
-                            if rearEdge != -100 and egoEdge == rearEdge:
-                                if egoLane == rearVeh.getLaneIndex():
-                                    v.setState("Leading")
-                                    curPlt = self.getPlatoonByVehicle(v)[0]
-                                    curPlt.getAllVehicles().pop(0) # remove v from list
-                                    curPlt.addVehicle(v, 0)
+                                    des_speed = None
+                                if frontVeh != -1:
+                                    # dis = v.getDistance(frontVeh)
+                                    dis = frontVeh.getPosition()[0] - v.getPosition()[0]
+                                    frontSpd = frontVeh.getSpeed()  # use preceding veh's speed
+                                    if dis > frontSpd * (INTRA_TAU + 0.2):
+                                        v.setSpeed(frontSpd * 1.1)
+                                        tmp_leader = v.getLeader()
+                                        # if the lane change is initiated
+                                        if v.getName() in self.mergingBuffer.keys():
+                                           tmp_laneID, tmp_direction =  self.mergingBuffer[v.getName()]
+                                           v.changeLane(tmp_laneID, tmp_direction)
+                                        if tmp_leader and tmp_leader[1] < 50:
+                                            tmp_ego_spd = v.getSpeed()
+                                            if tmp_leader[1] / (tmp_ego_spd + 0.0001) <= INTRA_TAU:
+                                                v.setSpeedMode(SPD_ALL_CHECK)
+                                            else:
+                                                v.setSpeedMode(SPD_DIS_SAFE)
+                                        else:
+                                            v.setSpeedMode(SPD_DIS_SAFE)
+                                    elif dis <= LENGTH + (v.getSpeed() * INTRA_TAU) and not des_speed:
+                                        v.setSpeed(frontSpd * 0.9)
+                                        v.setSpeedMode(SPD_ALL_CHECK)
+                                    else:
+                                        if des_speed:
+                                            v.setSpeed(des_speed)
+                                        else:
+                                            v.setSpeed(frontSpd)
+                                        v.setSpeedMode(SPD_ALL_CHECK)
+                                        frontEdge = frontVeh.getEdge()
+                                        if egoEdge == frontEdge:
+                                            laneID = frontVeh.getLaneIndex()
+                                        if laneID > -1:
+                                            if rearVeh == -1:
+                                                v.changeLane(laneID,1)
+                                                if v.getName() not in self.mergingBuffer.keys():
+                                                    self.mergingBuffer[v.getName()] = (laneID,1)
+                                            else:
+                                                v.changeLane(laneID,0)
+                                                if v.getName() not in self.mergingBuffer.keys():
+                                                    self.mergingBuffer[v.getName()] = (laneID,1)
+                                    if frontEdge != -100 and egoEdge == frontEdge:
+                                        if egoLane == frontVeh.getLaneIndex():
+                                            # update time every time
+                                            self.ticklist[v.getName()] = time
+                                            if laneID > -1:
+                                                if rearVeh == -1:
+                                                    v.changeLane(laneID, 1)
+                                                else:
+                                                    v.changeLane(laneID, 0)
+                                            if abs(v.getLatPos()) <= 0.01:
+                                                v.setState("Following")
+                                                v.setTau(INTRA_TAU)
+                                                if rearEdge != -100:
+                                                    rearVeh.setState("Following")
+                                                    rearVeh.setTau(INTRA_TAU)
+                                                curPlatoon = self.getPlatoonByVehicle(v)
+                                                if 'flow_1' in v._name and (v.getLane() == 'gneE4_1' or v.getEdge() == 'gneE6_0'):
+                                                    if curPlatoon:
+                                                        curPlatoon[0].disband()
+                                                    mainPlatoon = self.getPlatoonByVehicle(frontVeh)
+                                                    insertPoint = mainPlatoon[0]._vehicles.index(frontVeh) + 1
+                                                    mainPlatoon[0].addVehicle(v, insertPoint)
+                                                    v.setState("Following")
+                                                else:
+                                                    # end this operation session and allow another operation
+                                                    curPlatoon[0].getLeadVehicle().setState("Leading")
+                                                self.ticklist.pop(v.getName(), None)
+                                                self.mergingBuffer.pop(v.getName(), None)
+                                                traci.vehicle.setLateralAlignment(v.getName(), 'center')
+                                                # curPlatoon[0].getLeadVehicle().setTau(INTER_TAU)
+                                    elif rearEdge != -100 and egoEdge == rearEdge:
+                                        if egoLane == rearVeh.getLaneIndex():
+                                            # update time every time
+                                            self.ticklist[v.getName()] = time
+                                            if laneID > -1:
+                                                if rearVeh == -1:
+                                                    v.changeLane(laneID, 1)
+                                                    if v.getName() not in self.mergingBuffer.keys():
+                                                        self.mergingBuffer[v.getName()] = (laneID, 1)
+                                                else:
+                                                    v.changeLane(laneID, 0)
+                                                    if v.getName() not in self.mergingBuffer.keys():
+                                                        self.mergingBuffer[v.getName()] = (laneID, 1)
+                                            if abs(v.getLatPos()) <= 0.01:
+                                                v.setState("Following")
+                                                v.setTau(INTRA_TAU)
+                                                rearVeh.setState("Following")
+                                                rearVeh.setTau(INTRA_TAU)
+                                                curPlatoon = self.getPlatoonByVehicle(v)
+                                                # end this operation session and allow another operation
+                                                curPlatoon[0].getLeadVehicle().setState("Leading")
+                                                self.ticklist.pop(v.getName(), None)
+                                                self.mergingBuffer.pop(v.getName(), None)
+                                                traci.vehicle.setLateralAlignment(v.getName(), 'center')
+                                            # curPlatoon[0].getLeadVehicle().setTau(INTER_TAU)
+                                elif frontVeh == -1:
+                                    if rearVeh == -1:
+                                        if v.getLane() == 'gneE4_1' or v.getEdge() == 'gneE6_0':
+                                            curPlatoon = self.getPlatoonByVehicle(v)
+                                            if curPlatoon[0].getLeadVehicle() == v.getName():
+                                                curPlatoon[0].disband()
+                                                v.setState("SearchForPlatooning")
+                                                self.ticklist.pop(v.getName(), None)
+                                            continue
+                                        else:
+                                            continue
+                                    dis = v.getDistance(rearVeh)
+                                    rearSpd = rearVeh.getSpeed()
+                                    rearVeh.setTau(INTRA_TAU)
+                                    # tweak this parameter
+                                    # if distance larger than a threshold, reduce speed
+                                    if dis > rearSpd * (INTRA_TAU + 1.0):
+                                        v.setSpeed(SPEED * 0.9) # 0.95 --> 0.9
+                                        v.setSpeedMode(SPD_ALL_CHECK)
+                                        v.changeLane(rearVeh.getLaneIndex(), 1)
+                                    # Between  INTRA_TAU - 0.05 and INTER_TAU - 0.5
+                                    elif dis > rearSpd * (INTRA_TAU - 0.05):
+                                        v.setSpeed(SPEED)
+                                        v.setSpeedMode(SPD_ALL_CHECK)
+                                        v.changeLane(rearVeh.getLaneIndex(), 1)
+                                    else:
+                                        if des_speed:
+                                            v.setSpeed(des_speed)
+                                        else:
+                                            v.setSpeed(rearSpd * 1.1)
+                                            tmp_leader = v.getLeader()
+                                            if tmp_leader and tmp_leader[1] < 50:
+                                                tmp_ego_spd = v.getSpeed()
+                                                if tmp_leader[1] / (tmp_ego_spd + 0.0001) <= INTRA_TAU:
+                                                    v.setSpeedMode(SPD_ALL_CHECK)
+                                                else:
+                                                    v.setSpeedMode(SPD_DIS_SAFE)
+                                            else:
+                                                v.setSpeedMode(SPD_DIS_SAFE)
+                                    if rearEdge != -100 and egoEdge == rearEdge:
+                                        if egoLane == rearVeh.getLaneIndex():
+                                            # update time every time
+                                            self.ticklist[v.getName()] = time
+                                            if laneID > -1:
+                                                if rearVeh == -1:
+                                                    v.changeLane(laneID, 1)
+                                                else:
+                                                    v.changeLane(laneID, 0)
+                                            if abs(v.getLatPos()) <= 0.01:
+                                                v.setState("Leading")
+                                                curPlt = self.getPlatoonByVehicle(v)[0]
+                                                curPlt.getAllVehicles().pop(1)  # remove v from list
+                                                curPlt.addVehicle(v, 0)
+                                                # end this operation session and allow another operation
+                                                rearVeh.setState("Following")
+                                                self.ticklist.pop(v.getName(), None)
+                                                self.mergingBuffer.pop(v.getName(), None)
+                                                traci.vehicle.setLateralAlignment(v.getName(), 'center')
+                            # abandon the formation
+                            else:
+                                v.setState("SearchingForPlatooning")
+                                v.setTargetLane(v.getLaneIndex())
+                                traci.vehicle.setLaneChangeMode(v.getName(), 0b001000000000)
+                                if frontVeh != -1:
+                                    curPlatoon = self.getPlatoonByVehicle(frontVeh)
                                     # end this operation session and allow another operation
+                                    curPlatoon[0].getLeadVehicle().setState("Leading")
+                                    if v in curPlatoon[0].getAllVehicles():
+                                        curPlatoon[0].removeVehicle(v)
+                                if rearVeh != -1:
                                     rearVeh.setState("Following")
+                                    curPlatoon = self.getPlatoonByVehicle(rearVeh)
+                                    # end this operation session and allow another operation
+                                    curPlatoon[0].getLeadVehicle().setState("Leading")
+                                    if v in curPlatoon[0].getAllVehicles():
+                                        curPlatoon[0].removeVehicle(v)
+
+                                # set a suspending time
+                                self.ticklist[v.getName()] = time
+                                if abs(v.getLatPos()) > 0.01:
+                                    self.mergingBuffer[v.getName()] = (v.getLaneIndex(), 1)
+                                else:
+                                    self.mergingBuffer.pop(v.getName(), None)
                     elif v.getState() == "OpeningGap":
                         v.setColor((0, 0, 255))                         
                         
@@ -642,11 +877,10 @@ class SimulationManager():
                             v.setSpeed(SPEED)
                             v.setSpeedMode(SPD_ALL_CHECK)
                             cur_Tau = traci.vehicle.getTau(v.getName())
-                            if cur_Tau < 1.1:
+                            if cur_Tau < FORMATION_GAP:
                                 cur_Tau += 0.05
-                            traci.vehicle.setTau(v.getName(), cur_Tau)
+                            v.setTau(cur_Tau)
                     elif v.getState() == 'RequestDissolve':
-                        
                         v.setSpeed(SPEED)
                         v.setSpeedMode(SPD_ALL_CHECK)
                         plt_lead = self.dissolvelist[v.getName()]
@@ -785,6 +1019,10 @@ class SimulationManager():
                 signals[3] = veh[2][veh_id_behind[0]][91]
             
         else:
+            # tmp_lane = [abs(p-veh_pos[1]) for p in Y_ML]
+            # veh_lane = tmp_lane.index(min(tmp_lane))
+            # tmp_y_value = Y_ML[veh_lane]
+            # veh_lane = Y_ML.index[idx]
             veh_lane = Y_ML.index(veh_pos[1])
         
             lanes_cons = [Y_ML[a] for a in [veh_lane-1,veh_lane,veh_lane+1] if a >-1 and a<3]
@@ -869,6 +1107,7 @@ class SimulationManager():
                 leadPos = [500,500]
                 leadSpeed = 50
                 rear = platoon_vehicles[j]
+                
                 rearPos = rear.getPosition()
                 rearSpeed = rear.getSpeed()
                 
