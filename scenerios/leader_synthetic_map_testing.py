@@ -16,8 +16,8 @@ from core.platooning.platooning_manager import PlatooningManager
 from core.vehicle.vehicle_manager import VehicleManager
 
 # import GFS_controller
-from core.GFS.GFS_controller import GFSController
-from FISmoduleGFSBestMergePoint import FIS
+from model.GFS.GFS_controller import GFSController
+from model.GFS.FISmoduleGFSBestMergePoint import FIS
 # import GFS dependencies
 import numpy as np
 import pdb
@@ -113,13 +113,13 @@ def main():
         #                                         carla.Rotation(pitch=-90)))
 
         # load rules for GFS
-        with open(r'BestFIS-theBest37-Safe.pickle','rb') as f:
+        with open(r'/home/xuhan/Carla-0.9.10/OpenPlatooning/model/GFS/BestFIS-theBest37-Safe.pickle','rb') as f:
             gfs_m_speed = pickle.load(f)
 
-        with open(r'BestFIS-pl-score.pickle','rb') as g:
+        with open(r'/home/xuhan/Carla-0.9.10/OpenPlatooning/model/GFS/BestFIS-pl-score.pickle','rb') as g:
             gfs_pl_score = pickle.load(g)
 
-        with open(r'BestGFS_PL_speed.pickle','rb') as h:
+        with open(r'/home/xuhan/Carla-0.9.10/OpenPlatooning/model/GFS/BestGFS_PL_speed.pickle','rb') as h:
             gfs_pl_speed = pickle.load(h)
 
         # simulation loop
@@ -141,8 +141,8 @@ def main():
             GFS_contoller = GFSController(gfs_pl_score, gfs_pl_speed, gfs_m_speed, platooning_manager, sensor_range, dt)
             # platoon position
             leadVeh, rearVeh = GFS_contoller.getBestMergePosition(vehicle_1, platooning_manager)
-            # merge_speed = GFS_contoller.getDesiredSpeed_m(vehicle_1)
-            # leader_speed = GFS_contoller.getDesiredSpeed_pl(vehicle_1) # v1 is leader
+            merge_speed = GFS_contoller.getDesiredSpeed_m(vehicle_1)
+            leader_speed = GFS_contoller.getDesiredSpeed_pl(vehicle_1) # v1 is leader
     finally:
         platooning_manager.destroy()
         world.apply_settings(origin_settings)
