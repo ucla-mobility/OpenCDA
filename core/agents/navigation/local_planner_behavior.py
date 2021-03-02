@@ -247,7 +247,7 @@ class LocalPlanner(object):
         # check if the vehicle is in lane change based on lane id and lateral offset
         self.lane_change = (future_wpt.lane_id != current_wpt.lane_id
                             or previous_wpt.lane_id != future_wpt.lane_id) \
-                           and is_lateral_within_range
+                            or is_lateral_within_range
 
         _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location, current_location, current_yaw)
 
@@ -353,12 +353,12 @@ class LocalPlanner(object):
         sample_resolution = 0
 
         # use mean curvature to constrain the speed
-        mean_k = abs(abs(statistics.mean(rk)) + 0.2 * statistics.stdev(rk))
+        mean_k = abs(abs(statistics.mean(rk)))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
-        target_speed = min(target_speed, np.sqrt(3.6 / mean_k) * 3.6)
+        target_speed = min(target_speed, np.sqrt(6.0 / mean_k) * 3.6)
         # print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
         # TODO: This may need to be tuned more(for instance, use history speed)
-        acceleration = max(min(2.5,
+        acceleration = max(min(4.5,
                                (target_speed / 3.6 - current_speed) / dt), -3.5)
 
         for i in range(1, int(sample_num) + 1):
@@ -457,7 +457,7 @@ class LocalPlanner(object):
             return control
 
         # Buffering the waypoints. Always keep the waypoint buffer alive
-        if len(self._waypoint_buffer) < 4:
+        if len(self._waypoint_buffer) < 5:
             for i in range(self._buffer_size):
                 if self.waypoints_queue:
                     self._waypoint_buffer.append(

@@ -41,7 +41,7 @@ def main():
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         # background testing traffic car
-        transform_6 = carla.Transform(carla.Location(x=121.7194, y=143.51, z=0.3),
+        transform_6 = carla.Transform(carla.Location(x=141.7194, y=143.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         transform_7 = carla.Transform(carla.Location(x=121.7194, y=139.51, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
@@ -73,7 +73,7 @@ def main():
         ego_vehicle_bp.set_attribute('color', '0, 255, 0')
 
         vehicle_6 = world.spawn_actor(ego_vehicle_bp, transform_6)
-        vehicle_6.apply_control(carla.VehicleControl(throttle=0.55))
+        vehicle_6.apply_control(carla.VehicleControl(throttle=0.65))
         vehicle_6.set_autopilot(False)
 
         vehicle_7 = world.spawn_actor(ego_vehicle_bp, transform_7)

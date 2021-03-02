@@ -42,7 +42,7 @@ class VehicleManager(object):
                                              overtake_allowed=overtake_allowed, time_ahead=time_ahead,
                                              debug_trajectory=debug_trajectory, debug=debug, update_freq=update_freq)
 
-        self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=200)
+        self._platooning_plugin = PlatooningPlugin(cda_enabled, status=status, search_range=communication_range)
 
         world.update_vehicle_manager(self)
         self.world = weakref.ref(world)()
@@ -121,7 +121,7 @@ class VehicleManager(object):
         print("the mean of the velocity is %f and std is %f" % (statistics.mean(velocity_list),
                                                                 statistics.stdev(velocity_list)))
 
-    def run_step(self):
+    def run_step(self, target_speed=None):
         """
         Execute one step of navigation based on platooning status
         :return:
@@ -133,16 +133,20 @@ class VehicleManager(object):
         if not self._platooning_plugin.in_platooning:
             # if the ego-vehicle is still searching for platooning
             if self._platooning_plugin.status == FSM.SEARCHING:
-                platoon_searched, distance, min_index = \
+                platoon_searched, distance, min_index, platoon_manager = \
                     self._platooning_plugin.platooning_search(self.vid, self.world, self.vehicle)
                 # if find platooning and platooning is close enough, we use cut-joining
-                if platoon_searched and distance < 15:
+                if platoon_searched and self._platooning_plugin.front_vehicle \
+                        and self._platooning_plugin.rear_vechile:
                     print('cut in joining mode')
                     self.set_platooning_status(FSM.MOVE_TO_POINT)
-                elif platoon_searched and distance >= 15 and self._platooning_plugin.front_vehicle:
+
+                elif platoon_searched and self._platooning_plugin.front_vehicle \
+                        and not self._platooning_plugin.rear_vechile:
                     print('back joining mode')
                     self.set_platooning_status(FSM.BACK_JOINING)
-                elif platoon_searched and distance >= 15 and min_index == 0 \
+
+                elif platoon_searched and min_index == 0 \
                         and not self._platooning_plugin.front_vehicle:
                     print('frontal joining mode')
                     self.set_platooning_status(FSM.FRONT_JOINING)
@@ -210,7 +214,7 @@ class VehicleManager(object):
 
         else:
             if self._platooning_plugin.leader:
-                control = self.agent.run_step()
+                control = self.agent.run_step(target_speed)
             elif self._platooning_plugin.status == FSM.OPEN_GAP:
                 print("opening gap with speed %d!" % get_speed(self.vehicle))
                 control = self.agent.run_step_open_gap()
