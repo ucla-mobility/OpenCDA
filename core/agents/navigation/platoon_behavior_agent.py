@@ -206,7 +206,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # if the ego vehicle is too close or exceed the frontal vehicle
         if distance < get_speed(self.vehicle, True) * self.behavior.inter_gap / 1.5 or angle >= 80:
             print('too close, step back!')
-            return self.run_step(0.95 * get_speed(frontal_vehicle)), False, False
+            return self.run_step(0.9 * get_speed(frontal_vehicle)), False, False
 
         # communicate to the rear vehicle for open gap
         if not rear_vehicle_vm:
@@ -257,7 +257,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         # gradually open the gap TODO: Make this dynamic to map a linear relationship with speed
         if self.current_gap < self.behavior.open_gap:
-            self.current_gap += 0.02
+            self.current_gap += 0.01
         print('cuurent gap is %f' % self.current_gap)
         control = self.platooning_following_manager(self.current_gap)
 
