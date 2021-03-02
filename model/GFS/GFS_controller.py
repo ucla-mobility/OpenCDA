@@ -24,11 +24,8 @@ gfs_pl_speed output:
 
 """
 
-import sys
 import math
-import carla
 import numpy as np
-from core.platooning.platooning_manager import PlatooningManager
 
 class GFSController(object):
     """

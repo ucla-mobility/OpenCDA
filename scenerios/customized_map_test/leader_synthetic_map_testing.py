@@ -14,6 +14,7 @@ from core.agents.tools.misc import get_speed
 from core.platooning.platooning_world import PlatooningWorld
 from core.platooning.platooning_manager import PlatooningManager
 from core.vehicle.vehicle_manager import VehicleManager
+from scenerios.customized_map_test.load_customized_world import load_customized_world
 
 # import GFS_controller
 from model.GFS.GFS_controller import GFSController
@@ -30,29 +31,11 @@ def main():
         client.set_timeout(2.0)
 
         # Retrieve the world that is currently running
-        xodr_path = 'map_output/map_v7.3_SUMO_full.xodr'
-        if os.path.exists(xodr_path):
-            with open(xodr_path) as od_file:
-                try:
-                    data = od_file.read()
-                except OSError:
-                    print('file could not be readed.')
-                    sys.exit()
-            print('load opendrive map %r.' % os.path.basename(xodr_path))
-            vertex_distance = 2.0  # in meters
-            max_road_length = 500.0 # in meters
-            wall_height = 1.0      # in meters
-            extra_width = 0.6      # in meters
-            world = client.generate_opendrive_world(
-                data, carla.OpendriveGenerationParameters(
-                    vertex_distance=vertex_distance,
-                    max_road_length=max_road_length,
-                    wall_height=wall_height,
-                    additional_width=extra_width,
-                    smooth_junctions=False,
-                    enable_mesh_visibility=True))
-        else:
-            print('file not found.')
+        xodr_path = '../../customized_map_output/map_v7.3_SUMO_full.xodr'
+        world = load_customized_world(xodr_path, client)
+        if not world:
+            sys.exit()
+
         origin_settings = world.get_settings()
 
         # set sync mode

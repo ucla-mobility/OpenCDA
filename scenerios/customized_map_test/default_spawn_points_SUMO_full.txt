@@ -1,0 +1,15 @@
+index: 0; Location(x=-4.722836, y=7.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Left Lane ID: -2
+index: 1; Location(x=-4.722836, y=4.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Right Lane ID: -1
+index: 2; Location(x=-4.621987, y=12.058071, z=3.000000); Rotation(pitch=0.000000, yaw=-20.486628, roll=0.000000)LANE change: NONE Lane ID: -1
+index: 3; Location(x=418.372955, y=7.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Both Lane ID: -2
+index: 4; Location(x=418.372955, y=4.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Right Lane ID: -1
+index: 5; Location(x=418.372955, y=10.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Left Lane ID: -3
+index: 6; Location(x=423.020386, y=10.437519, z=3.000000); Rotation(pitch=0.000000, yaw=71.373940, roll=0.000000)LANE change: NONE Lane ID: -1
+index: 7; Location(x=-1204.722778, y=7.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Left Lane ID: -2
+index: 8; Location(x=-1204.722778, y=4.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Right Lane ID: -1
+index: 9; Location(x=426.991699, y=7.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Both Lane ID: -2
+index: 10; Location(x=426.991699, y=4.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Right Lane ID: -1
+index: 11; Location(x=-1204.197754, y=460.242096, z=3.000000); Rotation(pitch=0.000000, yaw=-20.486628, roll=0.000000)LANE change: NONE Lane ID: -1
+index: 12; Location(x=0.000000, y=10.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Left Lane ID: -3
+index: 13; Location(x=0.000000, y=7.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Both Lane ID: -2
+index: 14; Location(x=0.000000, y=4.500000, z=3.000000); Rotation(pitch=0.000000, yaw=0.000000, roll=0.000000)LANE change: Right Lane ID: -1
