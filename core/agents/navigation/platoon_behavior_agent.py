@@ -337,10 +337,15 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             if frontal_lane != ego_vehicle_lane:
                 left_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_left_lane()
                 right_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_right_lane()
+
+                if not left_wpt and not right_wpt:
+                    pass
                 # check which lane is closer to the platooning
-                if abs(left_wpt.lane_id - frontal_lane) < abs(right_wpt.lane_id - frontal_lane):
+                elif not right_wpt or abs(left_wpt.lane_id - frontal_lane) < abs(right_wpt.lane_id - frontal_lane):
+                    print('take left lane')
                     self.set_destination(left_wpt.transform.location, frontal_destination, clean=True)
                 else:
+                    print('take right lane')
                     self.set_destination(right_wpt.transform.location, frontal_destination, clean=True)
 
         return self.run_step(self.behavior.tailgate_speed), False
