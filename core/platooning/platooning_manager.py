@@ -34,6 +34,11 @@ class PlatooningManager(object):
         self.agent = None
         self.destination = None
 
+        # this is used to control platooning speed during joining
+        self.leader_target_speed = 0
+        self.origin_leader_target_speed = 0
+        self.recover_speed_counter = 0
+
         world.update_platooning(self)
 
     def set_lead(self, vehicle_manager):
@@ -42,9 +47,12 @@ class PlatooningManager(object):
         :param vehicle_manager:
         :return:
         """
-        # TODO: Right we only consider the platooning is empty, and the lead vehicle is the first one join in
         self.leader_uuid = vehicle_manager.vid
         self.vehicle_manager_list.append(vehicle_manager)
+
+        leader_behavior = vehicle_manager.agent.behavior
+        self.origin_leader_target_speed = leader_behavior.max_speed - leader_behavior.speed_lim_dist
+
         vehicle_manager.set_platooning(self, self.pmid, 0, True)
 
     def add_member(self, vehicle_manager):
@@ -68,13 +76,29 @@ class PlatooningManager(object):
         self.vehicle_manager_list.insert(index, vehicle_manager)
         vehicle_manager.set_platooning(self, self.pmid, index, lead)
 
+    def reset_speed(self):
+        """
+        Reset the leader speed to old state
+        :return:
+        """
+        if self.recover_speed_counter <= 0:
+            self.leader_target_speed = self.origin_leader_target_speed
+        else:
+            self.recover_speed_counter -= 1
+
     def response_joining_request(self):
         """
         Check whether to accept joining
         TODO: Consider platooning status as well, etc. changinglane, collision status
         :return:
         """
-        return True if len(self.vehicle_manager_list) < self.maximum_capacity else False
+        if len(self.vehicle_manager_list) >= self.maximum_capacity:
+            return False
+        else:
+            # TODO: USE GFS Model to do this
+            self.leader_target_speed = self.origin_leader_target_speed - 20
+            self.recover_speed_counter = 200
+            return True
 
     def set_destination(self, destination):
         """
@@ -93,6 +117,7 @@ class PlatooningManager(object):
         :param world:
         :return:
         """
+        self.reset_speed()
         for i in range(len(self.vehicle_manager_list)):
             if i == 0:
                 self.vehicle_manager_list[i].update_info(world)
@@ -107,7 +132,7 @@ class PlatooningManager(object):
         """
         control_list = []
         for i in range(len(self.vehicle_manager_list)):
-            control = self.vehicle_manager_list[i].run_step()
+            control = self.vehicle_manager_list[i].run_step(self.leader_target_speed)
             control_list.append(control)
 
         for (i, control) in enumerate(control_list):

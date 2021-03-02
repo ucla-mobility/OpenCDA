@@ -84,7 +84,7 @@ def main():
         platooning_world = PlatooningWorld()
 
         # setup managers
-        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
+        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
                                            debug_trajectory=True, debug=False, ignore_traffic_light=True)
         vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, buffer_size=8,
                                            debug_trajectory=True, debug=False)

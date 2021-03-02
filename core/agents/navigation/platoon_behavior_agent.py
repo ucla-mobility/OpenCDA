@@ -215,7 +215,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         distance, angle = cal_distance_angle(rear_vehicle_vm.vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
         # check whether the rear vehicle gives enough gap
-        if distance < 1.0 * self.behavior.inter_gap * get_speed(rear_vehicle_vm.vehicle, True) \
+        if distance < 1.0 * self.behavior.inter_gap / 2.0 * get_speed(rear_vehicle_vm.vehicle, True) \
                 or angle <= 100 or rear_vehicle_vm.agent.current_gap < self.behavior.open_gap:
             # force the rear vehicle open gap for self
             print("too close to rear vehicle!")
@@ -335,8 +335,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if not vehicle_blocking_status:
             print('no vehicle is blocking!!!')
             if frontal_lane != ego_vehicle_lane:
-                left_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_left_lane()
-                right_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_right_lane()
+                left_wpt = ego_wpt.next(max(1.2 * get_speed(self.vehicle, True), 5))[0].get_left_lane()
+                right_wpt = ego_wpt.next(max(1.2 * get_speed(self.vehicle, True), 5))[0].get_right_lane()
 
                 if not left_wpt and not right_wpt:
                     pass
@@ -402,6 +402,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # if vehicle is already in the same lane with the platooning
         if ego_vehicle_lane == rear_lane:
+            # after in the same lane, no overtake is allowed anymore
+            self.overtake_allowed = False
+
             if not self.destination_changed:
                 self.set_destination(ego_wpt.next(4.5)[0].transform.location, rear_destination)
             if distance < get_speed(self.vehicle, True) * self.behavior.inter_gap * 1.5:
@@ -425,12 +428,17 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.set_destination(ego_wpt.next(4.5)[0].transform.location, rear_destination)
 
         # check which lane is closer to operate lane change
-        left_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_left_lane()
-        right_wpt = ego_wpt.next(max(get_speed(self.vehicle, True), 5))[0].get_right_lane()
+        left_wpt = ego_wpt.next(max(1.2 * get_speed(self.vehicle, True), 5))[0].get_left_lane()
+        right_wpt = ego_wpt.next(max(1.2 * get_speed(self.vehicle, True), 5))[0].get_right_lane()
         # check which lane is closer to the platooning
-        if abs(left_wpt.lane_id - rear_lane) < abs(right_wpt.lane_id - rear_lane):
+        if not left_wpt and not right_wpt:
+            pass
+        # check which lane is closer to the platooning
+        elif not right_wpt or abs(left_wpt.lane_id - rear_lane) < abs(right_wpt.lane_id - rear_lane):
+            print('take left lane')
             self.set_destination(left_wpt.transform.location, rear_destination, clean=True)
         else:
+            print('take right lane')
             self.set_destination(right_wpt.transform.location, rear_destination, clean=True)
 
         return self.run_step(self.behavior.tailgate_speed), FSM.FRONT_JOINING
