@@ -17,7 +17,7 @@ class PlatooningPlugin(object):
 
     def __init__(self, cda_enabled=True, in_platooning=False,
                  platooning_id=None, leader=False, status=FSM.SEARCHING,
-                 search_range=200):
+                 search_range=40):
         """
         Construct class
         :param cda_enabled: whether cda enabled
@@ -91,11 +91,11 @@ class PlatooningPlugin(object):
 
         uuid, vm = self.communication_searching(ego_id, platooning_world, cur_loc)
         if not uuid:
-            return False, 0, 0
+            return False, 0, 0, None
         else:
             _, _, platooning_object = vm.get_platooning_status()
             if platooning_object.pmid in self.platooning_black_list:
-                return False,0 ,0
+                return False, 0, 0, None
 
             min_distance = float('inf')
             min_index = -1
@@ -103,7 +103,7 @@ class PlatooningPlugin(object):
 
             # if the platooning is not open to joining
             if not platooning_object.response_joining_request():
-                return False, 0, 0
+                return False, 0, 0, None
 
             for (i, vehicle_manager) in enumerate(platooning_object.vehicle_manager_list):
                 distance, angle = cal_distance_angle(vehicle_manager.vehicle.get_location(),
@@ -117,11 +117,11 @@ class PlatooningPlugin(object):
             if min_index == 0 and min_angle > 90:
                 self.front_vehicle = None
                 self.rear_vechile = platooning_object.vehicle_manager_list[0]
-                return True, min_distance, min_index
+                return True, min_distance, min_index, platooning_object
 
             self.front_vehicle = platooning_object.vehicle_manager_list[min_index]
 
             if min_index < len(platooning_object.vehicle_manager_list) - 1:
                 self.rear_vechile = platooning_object.vehicle_manager_list[min_index + 1]
 
-            return True, min_distance, min_index
+            return True, min_distance, min_index, platooning_object

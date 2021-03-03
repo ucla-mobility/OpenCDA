@@ -355,6 +355,11 @@ class BehaviorAgent(Agent):
         # 2: generated plan path first
         rx, ry, rk, ryaw = self._local_planner.generate_path()
 
+        if self.get_local_planner().lane_change:
+            self._collision_check.time_ahead = 0.5
+        else:
+            self._collision_check.time_ahead = 2.0
+
         # 3: collision check
         is_hazard = False
         if collision_detector_enabled:
@@ -373,9 +378,7 @@ class BehaviorAgent(Agent):
             reset_target = ego_vehicle_wp.next(get_speed(self.vehicle, True))[0]
             print('destination pushed forward because of potential collision')
             self.set_destination(reset_target.transform.location, self.end_waypoint.transform.location, clean=True)
-
-            # no emergency stop
-            return self.run_step(target_speed)
+            rx, ry, rk, ryaw = self._local_planner.generate_path()
 
         # the case that vehicle is blocing in front and overtake not allowed or it is doing overtaking
         # the second condistion is to prevent successive overtaking
