@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenDRIVE>
     <header revMajor="1" revMinor="4" name="IHP Freeway" version="1.00" date="Tue Feb 23 02:52:39 2021" north="312.29" south="0.00" east="1740.89" west="0.00">
-        <geoReference><![CDATA[+lat_0=4.9000000000000000e+1 +lon_0=8.0000000000000000e+0]]></geoReference>
+    	<geoReference><![CDATA[+lat_0=4.9000000000000000e+1 +lon_0=8.0000000000000000e+0]]></geoReference>
     </header>
     <road name="gneE4" length="418.37298446" id="60" junction="-1">
         <link>
@@ -51,13 +51,13 @@
         <objects/>
         <signals/>
     </road>
-    <road name="gneE1" length="1280.566746413232" id="61" junction="-1">
+    <road name="gneE1" length="580.5246654466666" id="61" junction="-1">
         <link>
             <successor elementType="junction" elementId="1"/>
         </link>
         <type s="0" type="town"/>
         <planView>
-            <geometry s="0.00000000" x="-1204.72283593" y="-458.83698208" hdg="0.35755917" length="1280.566746413232">
+            <geometry s="0.00000000" x="-548.95570215" y="-213.83008141" hdg="0.35755917" length="580.5246654466666">
                 <line/>
             </geometry>
         </planView>
@@ -86,13 +86,13 @@
         <objects/>
         <signals/>
     </road>
-    <road name="gneE5" length="1200" id="62" junction="-1">
+    <road name="gneE5" length="603.74201583" id="62" junction="-1">
         <link>
             <predecessor elementType="junction" elementId="2"/>
         </link>
         <type s="0" type="town"/>
         <planView>
-            <geometry s="0.00000000" x="426.99172801" y="-3.0" hdg="0.00000000" length="1200">
+            <geometry s="0.00000000" x="426.99172801" y="-3.0" hdg="0.00000000" length="603.74201583">
                 <line/>
             </geometry>
         </planView>
@@ -127,13 +127,13 @@
         <objects/>
         <signals/>
     </road>
-    <road name="gneE0" length="1200" id="63" junction="-1">
+    <road name="gneE0" length="544.23286622" id="63" junction="-1">
         <link>
             <successor elementType="junction" elementId="1"/>
         </link>
         <type s="0" type="town"/>
         <planView>
-            <geometry s="0.00000000" x="-1204.72283593" y="-3.0" hdg="0.00000000" length="1200">
+            <geometry s="0.00000000" x='-548.95570215' y="-3.0" hdg="0.00000000" length="544.23286622">
                 <line/>
             </geometry>
         </planView>
