@@ -20,8 +20,6 @@ import os
 import random
 import math
 
-import co_simulation.sumo_src.ccparams as cc
-
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(tools)
@@ -30,16 +28,12 @@ else:
 
 import sumolib
 import traci
+import co_simulation.sumo_src.ccparams as cc
 
 # constants for lane change mode
 # add a new lane change mode to accelerate the lane change; avoid immediate collision
-# AVOID_COL_LC = 0b010101010101
-# DEFAULT_LC = 0b011001010101
-# DEFAULT_NOTRACI_LC = 0b1010101010
-# FIX_LC = 0b0000000000
-AVOID_COL_LC =  0b100110010101
-# DEFAULT_LC =    0b101010101010
-DEFAULT_LC =    0b101001010101
+AVOID_COL_LC = 0b010101010101
+DEFAULT_LC = 0b011001010101
 DEFAULT_NOTRACI_LC = 0b1010101010
 FIX_LC = 0b0000000000
 
@@ -63,6 +57,7 @@ def get_par(vid, par):
     """
     return traci.vehicle.getParameter(vid, "carFollowModel.%s" % par)
 
+
 def get_pos(vid):
     """
         @Author: Yi
@@ -72,6 +67,7 @@ def get_pos(vid):
         :return: the 2-D coordination of the ego vehicle
     """
     return traci.vehicle.getPosition(vid)
+
 
 def get_par_new(vid):
     """
@@ -89,7 +85,6 @@ def change_lane(vid, lane):
     :param vid: vehicle id
     :param lane: lane index
     """
-    # traci.vehicle.setLaneChangeMode(vid, FIX_LC)
     traci.vehicle.setLaneChangeMode(vid, DEFAULT_LC)
     traci.vehicle.changeLane(vid, lane, 10000.0)
 
@@ -106,17 +101,9 @@ def add_vehicle(vid, position, lane, speed, cacc_spacing, real_engine=False):
     model
     """
     # add method has been updated. The original add method is named as "addLegacy" now
-    # traci.vehicle.addLegacy(vid, "platoon_route",
-    #                   pos=position, speed=speed, lane=lane,
-    #                   typeID="vtypeauto")
     traci.vehicle.add(vid, "!flow_0",
-                      departPos=str(position), departSpeed=str(speed), departLane=str(lane)) #typeID="vtypeauto","platoon_route",typeID="cacc",
+                      departPos=str(position), departSpeed=str(speed), departLane=str(lane))
     traci.vehicle.setTau(vid, 0.6)
-    # set_par(vid, cc.CC_PAR_CACC_C1, 0.5)s
-    # set_par(vid, cc.CC_PAR_CACC_XI, 2)
-    # set_par(vid, cc.CC_PAR_CACC_OMEGA_N, 1)
-    # set_par(vid, cc.PAR_CACC_SPACING, cacc_spacing)
-    # set_par(vid, cc.PAR_CC_DESIRED_SPEED, speed)
     if real_engine:
         set_par(vid, cc.CC_PAR_VEHICLE_ENGINE_MODEL,
                 cc.CC_ENGINE_MODEL_REALISTIC)
@@ -136,10 +123,6 @@ def get_distance(v1, v2):
     """
     x1, y1 = get_pos(v1)
     x2, y2 = get_pos(v2)
-    # v_data = get_par(v1, cc.PAR_SPEED_AND_ACCELERATION)
-    # (v, a, u, x1, y1, t) = cc.unpack(v_data)
-    # v_data = get_par(v2, cc.PAR_SPEED_AND_ACCELERATION)
-    # (v, a, u, x2, y2, t) = cc.unpack(v_data)
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) - 4
 
 

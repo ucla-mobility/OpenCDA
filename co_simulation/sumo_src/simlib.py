@@ -8,8 +8,9 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 
-def setUpSimulation(configFile, trafficScale, validation):
+def setUpSimulation(configFile, trafficScale=1):
     # Check SUMO has been set up properly
+    sumoBinary = checkBinary("sumo-gui")
 
     # Set up logger
     logging.basicConfig(format='%(asctime)s %(message)s')
@@ -17,21 +18,5 @@ def setUpSimulation(configFile, trafficScale, validation):
     root.setLevel(logging.DEBUG)
 
     # Start Simulation and step through
-    if validation == 0:
-        # Start Simulation and step through, --step-length param can be added if needed. --random ensures random
-        sumoBinary = checkBinary("sumo")
-        traci.start(
-            [sumoBinary, "-c", configFile, "--collision.action", "warn", "--start", "--quit-on-end", "--seed", str(50),
-             "--step-length", str(0.25), "--collision.mingap-factor", str(0),
-             ])
-    elif validation == 1:
-        sumoBinary = checkBinary("sumo-gui")
-        traci.start(
-            [sumoBinary, "-c", configFile, "--collision.action", "warn", "--start", "--quit-on-end", "--seed", str(200),
-             "--log", "logfile.txt", "--step-length", str(0.25), "--collision.mingap-factor", str(0),
-             ])
-    else:
-        sumoBinary = checkBinary("sumo-gui")
-        traci.start([sumoBinary, "-c", configFile, "--collision.action", "warn", "--start", "--quit-on-end", "--random",
-                     "--step-length", str(0.25), "--collision.mingap-factor", str(0),
-                     ])
+    traci.start([sumoBinary, "-c", configFile, "--step-length", "0.5", "--collision.action", "none", "--start",
+                 "--duration-log.statistics", "--scale", str(trafficScale)])

@@ -18,17 +18,15 @@ import time
 import pickle
 
 import carla
-import model.gfs.FISmoduleGFSBestMergePoint as FISmoduleGFSBestMergePoint
 
-from co_simulation.sumo_integration.bridge_helper import BridgeHelper  # pylint: disable=wrong-import-position
-from co_simulation.sumo_integration.carla_simulation import CarlaSimulation  # pylint: disable=wrong-import-position
-from co_simulation.sumo_integration.constants import INVALID_ACTOR_ID  # pylint: disable=wrong-import-position
-from co_simulation.sumo_integration.sumo_simulation import SumoSimulation  # pylint: disable=wrong-import-position
+from co_simulation.sumo_integration.bridge_helper import BridgeHelper
+from co_simulation.sumo_integration.carla_simulation import CarlaSimulation
+from co_simulation.sumo_integration.constants import INVALID_ACTOR_ID
+from co_simulation.sumo_integration.sumo_simulation import SumoSimulation
 from co_simulation.sumo_src.simulationmanager import SimulationManager
-
-# for pickle loading
-sys.modules['FISmodule'] = FISmoduleGFSBestMergePoint
-sys.modules['FISmoduleGFSBestMergePoint'] = FISmoduleGFSBestMergePoint
+from core.platooning.platooning_world import PlatooningWorld
+from core.platooning.platooning_manager import PlatooningManager
+from core.vehicle.vehicle_manager import VehicleManager
 
 os.environ['SUMO_HOME'] = "/usr/share/sumo"
 if 'SUMO_HOME' in os.environ:
@@ -86,7 +84,7 @@ class SimulationSynchronization(object):
         # -----------------
 
         # add platooning protocol here
-        self.manager.handleSimulationStepFIS(time_tmp, gfs_pl_score, gfs_pl_speed, gfs_m)
+        self.manager.handleSimulationStep(time_tmp)
         self.sumo.tick()
 
         # Spawning new sumo actors in carla (i.e, not controlled by carla).
@@ -224,12 +222,56 @@ def synchronization_loop(args):
 
     synchronization = SimulationSynchronization(sumo_simulation, carla_simulation, args.tls_manager,
                                                 args.sync_vehicle_color, args.sync_vehicle_lights)
+
+    # platooning algorithm related
+    blueprint_library = carla_simulation.world.get_blueprint_library()
+    # read all default waypoints
+    all_deafault_spawn = carla_simulation.world.get_map().get_spawn_points()
+    # setup spawn points
+    transform_point = all_deafault_spawn[11]
+    # move forward along acceleration lane
+    transform_point.location.x = transform_point.location.x + \
+                                0.1 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+    transform_point.location.y = transform_point.location.y + \
+                                 0.1 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+    transform_destination = carla.Transform(carla.Location(x=700.372955, y=7.500000, z=3.000000),
+                                            carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+
+    # create the leading vehicle
+    ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
+    # black color
+    ego_vehicle_bp.set_attribute('color', '0, 0, 0')
+    vehicle_1 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_point)
+
+    carla_simulation.world.tick()
+    # create platooning world
+    platooning_world = PlatooningWorld()
+    # setup managers
+    vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
+                                       debug_trajectory=True, debug=True, ignore_traffic_light=True)
+    platooning_manager = PlatooningManager(platooning_world)
+
+    # set leader
+    platooning_manager.set_lead(vehicle_manager_1)
+    # set destination
+    platooning_manager.set_destination(transform_destination.location)
+
     try:
         time_tmp = 0
+
         while True:
             start = time.time()
 
             synchronization.tick(time_tmp)
+
+            # top view
+            spectator = carla_simulation.world.get_spectator()
+            transform = vehicle_1.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
+                                                    carla.Rotation(pitch=-90)))
+            # print(get_speed(vehicle_1))
+            platooning_manager.update_information(platooning_world)
+            platooning_manager.run_step()
 
             end = time.time()
             elapsed = end - start
@@ -244,6 +286,7 @@ def synchronization_loop(args):
         logging.info('Cleaning synchronization')
 
         synchronization.close()
+        platooning_manager.destroy()
 
 
 if __name__ == '__main__':
@@ -304,12 +347,4 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
-    with open('../../model/gfs/BestFIS-theBest37-Safe.pickle', 'rb') as f:
-        gfs_m = pickle.load(f)
-
-    with open('../../model/gfs/BestFIS-pl-score.pickle', 'rb') as g:
-        gfs_pl_score = pickle.load(g)
-
-    with open('../../model/gfs/BestGFS_PL_speed.pickle', 'rb') as h:
-        gfs_pl_speed = pickle.load(h)
     synchronization_loop(arguments)

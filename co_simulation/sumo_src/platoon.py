@@ -10,11 +10,12 @@ import logging
 import traci
 
 
-class Platoon():
+class Platoon:
 
     def __init__(self, startingVehicles):
         """Create a platoon, setting default values for all variables"""
-        # logging.info("Creating a new platoon with: %s", startingVehicles)
+        logging.info("Creating a new platoon with: %s", startingVehicles)
+
         self._vehicles = list(startingVehicles)
 
         self._active = True
@@ -37,7 +38,10 @@ class Platoon():
     def addVehicle(self, vehicle, index):
         """Adds a single vehicle to this platoon at the index provided"""
         self._vehicles.insert(index, vehicle)
+        # self._vehicles.append(vehicle)
         self.startBehaviour([vehicle, ])
+        logging.info("Adding %s to platoon %s, New length: %s",
+                     vehicle.getName(), self.getID(), len(self._vehicles))
 
     def canMerge(self):
         """
@@ -60,7 +64,7 @@ class Platoon():
         """Marks a platoon as dead and returns vehicles to normal"""
         self.stopBehaviour()
         self._active = False
-        # logging.info("Disbanding platoon: %s", self.getID())
+        logging.info("Disbanding platoon: %s", self.getID())
 
     def getAcceleration(self):
         return max([v.getAcceleration() for v in self.getAllVehicles()])
@@ -74,7 +78,7 @@ class Platoon():
         return [v.getName() for v in self.getAllVehicles()]
 
     def getSpeed(self):
-        return self.getLeadVehicle().getSpeed()
+        return self._currentSpeed
 
     def getID(self):
         """Generates and returns a unique ID for this platoon"""
@@ -119,8 +123,7 @@ class Platoon():
     def getMergePosition(self, relVeh, vehicle, direction):
         """
         Get the merge position and relevant vehicle(s)
-        :param direction:
-        :param relVeh: the closet veh's ID in the target platoon
+        :param leadVeh: the closet veh's ID in the target platoon
         :param vehicle: the ego vehicle instance
         :return: relevant vehicle(s): frontVeh, rearVeh
         """
@@ -146,12 +149,14 @@ class Platoon():
                         return frontVeh, rearVeh
                 elif direction == -1:
                     rearVeh = self._vehicles[idx]
+                    # invovle a VL in this operation
                     # if the target following veh is a platoon leader
                     if idx == 0:
                         # get rear veh ID first
                         frontVeh = -1
 
                         # insert the new member
+                        # cannot insert the member at idx = 0 since the getLeadVechicle() will be affected.
                         self.addVehicle(vehicle, idx + 1)
                         return frontVeh, rearVeh
                     else:
@@ -273,7 +278,7 @@ class Platoon():
         2. set the speed of all vehicles in the convoy,
            using the lead vehicle's current speed
         3. is this platoon still alive (in the map),
-           should it be labelled as inactive?   
+           should it be labelled as inactive?
         """
         self.updateIsActive()
 
@@ -288,8 +293,6 @@ class Platoon():
             self._lane = self.getLeadVehicle().getLane()
             self._lanePosition = self.getLeadVehicle().getLanePosition()
 
-            # Route updates
-            # Check that all cars still want to continue onto the next edge, otherwise disband the platoon
             if not self._currentSpeed == 0:
                 if not self.checkVehiclePathsConverge(self.getAllVehicles()):
                     self._disbandReason = "Platoon paths now diverge"
@@ -318,8 +321,6 @@ class Platoon():
                 logging.error("Could not change lane of %s", veh.getName())
             # Only set the speed if the vehicle is not in a lane controlled by a third party.
             if veh.getLane() not in self._controlledLanes:
-                # If we're in range of the leader and they are moving follow their speed
-                # Otherwise follow vehicle speed limit rules to catch up
                 leadVeh = veh.getLeader()
                 if leadVeh and leadVeh[1] <= 5 and self._currentSpeed != 0:
                     veh.setSpeed(speed)
