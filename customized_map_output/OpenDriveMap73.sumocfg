@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<configuration>
+  <input>
+    <net-file value="OpenDriveMap73.net.xml"/>
+    <route-files value="OpenDriveMap73.rou.xml"/>
+  </input>
+  <num-clients value="1"/>
+</configuration>
