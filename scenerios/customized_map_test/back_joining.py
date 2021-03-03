@@ -21,7 +21,7 @@ def main():
         client.set_timeout(2.0)
 
         # Retrieve the world that is currently running
-        xodr_path = 'customized_map_output/map_v7.3_SUMO_full.xodr'
+        xodr_path = '../../customized_map_output/map_v7.3_SUMO_full.xodr'
         world = load_customized_world(xodr_path, client)
         if not world:
             sys.exit()
@@ -43,18 +43,18 @@ def main():
         # get all spawn points
         all_deafault_spawn = world.get_map().get_spawn_points()
         transform_point = all_deafault_spawn[11]
-        # move forward along acceleration lane
+        # move forward along acceleration lane 0.627 for cut-in-joining
         transform_point.location.x = transform_point.location.x + \
-                                     0.8 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+                                     0.625 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
         transform_point.location.y = transform_point.location.y + \
-                                     0.8 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+                                     0.625 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=-200.722836, y=7.500000, z=3.000000),
+        transform_1 = carla.Transform(carla.Location(x=-450.722836, y=7.500000, z=3.000000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=-210.722836, y=7.500000, z=3.000000),
+        transform_2 = carla.Transform(carla.Location(x=-460.722836, y=7.500000, z=3.000000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=-220.722836, y=7.500000, z=3.000000),
+        transform_3 = carla.Transform(carla.Location(x=-470.722836, y=7.500000, z=3.000000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         transform_4 = transform_point
 
@@ -63,7 +63,7 @@ def main():
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         transform_6 = carla.Transform(carla.Location(x=-130.722836, y=4.5, z=0.3),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_7 = carla.Transform(carla.Location(x=-230, y=7.5, z=3.0),
+        transform_7 = carla.Transform(carla.Location(x=-480, y=7.5, z=3.0),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
         # transform_8 = carla.Transform(carla.Location(x=151.7194, y=139.51, z=0.3),
         #                               carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))

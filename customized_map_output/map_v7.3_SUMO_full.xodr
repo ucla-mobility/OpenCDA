@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenDRIVE>
-    <header revMajor="1" revMinor="4" name="IHP Freeway" version="1.00" date="Tue Feb 23 02:52:39 2021" north="312.29" south="0.00" east="1740.89" west="0.00"/>
+    <header revMajor="1" revMinor="4" name="IHP Freeway" version="1.00" date="Tue Feb 23 02:52:39 2021" north="312.29" south="0.00" east="1740.89" west="0.00">
+        <geoReference><![CDATA[+lat_0=4.9000000000000000e+1 +lon_0=8.0000000000000000e+0]]></geoReference>
+    </header>
     <road name="gneE4" length="418.37298446" id="60" junction="-1">
         <link>
             <predecessor elementType="junction" elementId="1"/>
