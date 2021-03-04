@@ -229,11 +229,11 @@ def synchronization_loop(args):
     # get all spawn points
     all_deafault_spawn = carla_simulation.world.get_map().get_spawn_points()
     transform_point = all_deafault_spawn[11]
-    # move forward along acceleration lane 0.630 for cut-in-joining, 623 for back joining
+    # move forward along acceleration lane 0.50 for cut-in-joining, 623 for back joining
     transform_point.location.x = transform_point.location.x + \
-                                 0.44 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+                                 0.50 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
     transform_point.location.y = transform_point.location.y + \
-                                 0.44 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+                                 0.50 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
 
     # setup spawn points
     transform_1 = carla.Transform(carla.Location(x=-650.722836, y=7.500000, z=3.000000),

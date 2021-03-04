@@ -342,7 +342,7 @@ class SimulationManager():
                         possiblePlatoon.addVehicle(vehicle, len(possiblePlatoon._vehicles))
                         vehicle.setState("Following")
                     # not in the same lane
-                    elif curX > 1210.00:
+                    elif curX > 2000.00:
                         # if in the suspending time
                         if vehicleID in self.ticklist.keys():
                             tmp_time = self.ticklist[vehicleID]
