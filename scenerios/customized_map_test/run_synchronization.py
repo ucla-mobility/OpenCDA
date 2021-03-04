@@ -26,6 +26,7 @@ from co_simulation.sumo_integration.sumo_simulation import SumoSimulation
 from co_simulation.sumo_src.simulationmanager import SimulationManager
 from core.platooning.platooning_world import PlatooningWorld
 from core.platooning.platooning_manager import PlatooningManager
+from core.platooning.platooning_plugin import FSM
 from core.vehicle.vehicle_manager import VehicleManager
 
 os.environ['SUMO_HOME'] = "/usr/share/sumo"
@@ -223,38 +224,82 @@ def synchronization_loop(args):
     synchronization = SimulationSynchronization(sumo_simulation, carla_simulation, args.tls_manager,
                                                 args.sync_vehicle_color, args.sync_vehicle_lights)
 
-    # platooning algorithm related
     blueprint_library = carla_simulation.world.get_blueprint_library()
-    # read all default waypoints
+
+    # get all spawn points
     all_deafault_spawn = carla_simulation.world.get_map().get_spawn_points()
-    # setup spawn points
     transform_point = all_deafault_spawn[11]
-    # move forward along acceleration lane
+    # move forward along acceleration lane 0.630 for cut-in-joining, 623 for back joining
     transform_point.location.x = transform_point.location.x + \
-                                0.1 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+                                 0.44 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
     transform_point.location.y = transform_point.location.y + \
-                                 0.1 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
-    transform_destination = carla.Transform(carla.Location(x=700.372955, y=7.500000, z=3.000000),
-                                            carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+                                 0.44 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+
+    # setup spawn points
+    transform_1 = carla.Transform(carla.Location(x=-650.722836, y=7.500000, z=3.000000),
+                                  carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+    transform_2 = carla.Transform(carla.Location(x=-660.722836, y=7.500000, z=3.000000),
+                                  carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+    transform_3 = carla.Transform(carla.Location(x=-670.722836, y=7.500000, z=3.000000),
+                                  carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+    transform_4 = transform_point
+
+    transform_5 = carla.Transform(carla.Location(x=-480.722836, y=7.500000, z=3.000000),
+                                  carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+
+    transform_destination_1 = carla.Transform(carla.Location(x=700.372955, y=7.500000, z=3.000000),
+                                              carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+
+    transform_destination_2 = all_deafault_spawn[5]
 
     # create the leading vehicle
     ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
     # black color
     ego_vehicle_bp.set_attribute('color', '0, 0, 0')
-    vehicle_1 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_point)
+    vehicle_1 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_1)
+
+    ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+    vehicle_2 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_2)
+
+    ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+    vehicle_3 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_3)
+
+    ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+    vehicle_4 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_4)
+
+    # ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+    # vehicle_5 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_5)
+    # vehicle_5.apply_control(carla.VehicleControl(throttle=0.75))
 
     carla_simulation.world.tick()
+
     # create platooning world
     platooning_world = PlatooningWorld()
+
     # setup managers
-    vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
-                                       debug_trajectory=True, debug=True, ignore_traffic_light=True)
+    vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
+                                       debug_trajectory=False, debug=False, ignore_traffic_light=True)
+    vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, debug_trajectory=False, debug=False)
+    vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=False, debug=False)
+
+    vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, status=FSM.SEARCHING, sample_resolution=4.5,
+                                       buffer_size=8, debug_trajectory=True, debug=True, update_freq=15,
+                                       overtake_allowed=True)
+
     platooning_manager = PlatooningManager(platooning_world)
 
     # set leader
     platooning_manager.set_lead(vehicle_manager_1)
+    # add member
+    platooning_manager.add_member(vehicle_manager_2)
+    platooning_manager.add_member(vehicle_manager_3)
+
     # set destination
-    platooning_manager.set_destination(transform_destination.location)
+    platooning_manager.set_destination(transform_destination_1.location)
+    vehicle_manager_4.agent.set_destination(vehicle_manager_4.vehicle.get_location(),
+                                            transform_destination_2.location,
+                                            clean=True)
+    spectator = carla_simulation.world.get_spectator()
 
     try:
         time_tmp = 0
@@ -264,14 +309,17 @@ def synchronization_loop(args):
 
             synchronization.tick(time_tmp)
 
-            # top view
-            spectator = carla_simulation.world.get_spectator()
-            transform = vehicle_1.get_transform()
+            transform = vehicle_4.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
-            # print(get_speed(vehicle_1))
+
             platooning_manager.update_information(platooning_world)
             platooning_manager.run_step()
+            in_platooning, _, _ = vehicle_manager_4.get_platooning_status()
+            if not in_platooning:
+                vehicle_manager_4.agent.update_information(platooning_world)
+                control = vehicle_manager_4.run_step()
+                vehicle_manager_4.vehicle.apply_control(control)
 
             end = time.time()
             elapsed = end - start
@@ -287,6 +335,8 @@ def synchronization_loop(args):
 
         synchronization.close()
         platooning_manager.destroy()
+        vehicle_4.destroy()
+        # vehicle_5.destroy()
 
 
 if __name__ == '__main__':

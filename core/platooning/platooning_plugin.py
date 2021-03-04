@@ -6,8 +6,19 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+import pickle
+import os
+import sys
+
+import model.GFS.FISmodule as FISmodule
+import model.GFS.FISmoduleGFSBestMergePoint as FISmoduleGFSBestMergePoint
+
 from core.agents.tools.misc import compute_distance, cal_distance_angle
 from core.platooning.fsm import FSM
+from model.GFS.GFS_controller import GFSController
+
+sys.modules['FISmodule'] = FISmodule
+sys.modules['FISmoduleGFSBestMergePoint'] = FISmoduleGFSBestMergePoint
 
 
 class PlatooningPlugin(object):
@@ -17,7 +28,7 @@ class PlatooningPlugin(object):
 
     def __init__(self, cda_enabled=True, in_platooning=False,
                  platooning_id=None, leader=False, status=FSM.SEARCHING,
-                 search_range=40):
+                 search_range=35):
         """
         Construct class
         :param cda_enabled: whether cda enabled
@@ -43,6 +54,23 @@ class PlatooningPlugin(object):
 
         # the platooning list that not consider to join anymore
         self.platooning_black_list = []
+
+        # gfs model path
+        absolute_path = os.path.abspath(__file__)
+        diretory_path = os.path.dirname(absolute_path)
+        model_path = os.path.join(diretory_path, '../../model/GFS/')
+
+        # load 3 different fuzzy model for platooning joining position, speed and merging speed
+        with open(os.path.join(model_path, 'BestFIS-theBest37-Safe.pickle'), 'rb') as f:
+            gfs_m_speed = pickle.load(f)
+
+        with open(os.path.join(model_path, 'BestFIS-pl-score.pickle'), 'rb') as g:
+            gfs_pl_score = pickle.load(g)
+
+        with open(os.path.join(model_path, 'BestGFS_PL_speed.pickle'), 'rb') as h:
+            gfs_pl_speed = pickle.load(h)
+
+        self.gfs_controller = GFSController(gfs_pl_score, gfs_pl_speed, gfs_m_speed, search_range + 20, 0.05)
 
     def dissolve(self):
         """
@@ -77,6 +105,33 @@ class PlatooningPlugin(object):
             if distance < self._range:
                 return uuid, vm
         return None, None
+
+    def platooning_search_gfs(self, ego_id, platooning_world, ego_vehicle):
+        """
+        Search Platooning and find the best joining position and corresponding speed with gfs model
+        :param ego_id:
+        :param platooning_world:
+        :param ego_vehicle:
+        :return:
+        """
+
+        cur_loc = ego_vehicle.get_location()
+        cur_yaw = ego_vehicle.get_transform().rotation.yaw
+
+        uuid, vm = self.communication_searching(ego_id, platooning_world, cur_loc)
+        if not uuid:
+            return False, 0, 0, None
+
+        else:
+            _, _, platooning_object = vm.get_platooning_status()
+            if platooning_object.pmid in self.platooning_black_list:
+                return False, 0, 0, None
+            front_vehicle, rear_vehicle, best_idx = self.gfs_controller.getBestMergePosition(ego_vehicle,
+                                                                                             platooning_object)
+            self.front_vehicle = front_vehicle
+            self.rear_vechile = rear_vehicle
+
+            return True, 0, best_idx, platooning_object
 
     def platooning_search(self, ego_id, platooning_world, ego_vehicle):
         """

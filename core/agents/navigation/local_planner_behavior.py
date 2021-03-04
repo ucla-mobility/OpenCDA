@@ -356,7 +356,7 @@ class LocalPlanner(object):
 
         mean_k = 0.0001 if len(rk) < 2 else abs(statistics.mean(rk))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
-        target_speed = min(target_speed, np.sqrt(6.0 / mean_k) * 3.6)
+        target_speed = min(target_speed, np.sqrt(7.2 / mean_k) * 3.6)
         # print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
         # TODO: This may need to be tuned more(for instance, use history speed)
         acceleration = max(min(4.5,

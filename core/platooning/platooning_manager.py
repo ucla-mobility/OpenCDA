@@ -96,7 +96,7 @@ class PlatooningManager(object):
             return False
         else:
             # TODO: USE GFS Model to do this
-            self.leader_target_speed = self.origin_leader_target_speed - 20
+            self.leader_target_speed = self.origin_leader_target_speed - 10
             self.recover_speed_counter = 200
             return True
 
