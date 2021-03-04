@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Simple platooning following test
+"""Test platooning quantitively
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
@@ -52,10 +52,6 @@ def main():
         transform_4 = carla.Transform(carla.Location(x=-530.722836, y=7.500000, z=3.000000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
-        # background testing traffic car
-        # transform_5 = carla.Transform(carla.Location(x=-100.722836, y=7.500000, z=3.000000),
-        #                               carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-
         transform_destination = carla.Transform(carla.Location(x=700.372955, y=7.500000, z=3.000000),
                                                 carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
@@ -75,11 +71,6 @@ def main():
         vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
 
         world.tick()
-        # vehicle 5-7 are background traffic
-        # ego_vehicle_bp.set_attribute('color', '0, 255, 0')
-        # vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
-        # vehicle_5.set_autopilot(True)
-
         # create platooning world
         platooning_world = PlatooningWorld()
 
@@ -123,10 +114,6 @@ def main():
         platooning_manager.destroy()
         origin_settings.synchronous_mode = False
         world.apply_settings(origin_settings)
-
-        vehicle_5.destroy()
-        vehicle_6.destroy()
-        vehicle_7.destroy()
 
 
 if __name__ == '__main__':

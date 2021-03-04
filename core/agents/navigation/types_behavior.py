@@ -26,7 +26,7 @@ class Normal(object):
     speed_lim_dist = 3
     speed_decrease = 15
     inter_gap = 0.62
-    open_gap = inter_gap * 2
+    open_gap = inter_gap * 2.3
     safety_time = 4
     min_proximity_threshold = 10
     braking_distance = max_speed / 3.6 * 0.4
