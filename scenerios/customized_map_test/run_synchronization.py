@@ -219,7 +219,7 @@ def synchronization_loop(args):
     sumo_simulation = SumoSimulation(args.sumo_cfg_file, args.step_length, args.sumo_host,
                                      args.sumo_port, args.sumo_gui, args.client_order)
     carla_simulation = CarlaSimulation(args.carla_host, args.carla_port, args.step_length,
-                                       '../../customized_map_output/map_v7.3_SUMO_full.xodr')
+                                       '../../customized_map_output/map_v7.4_smooth_curve.xodr')
 
     synchronization = SimulationSynchronization(sumo_simulation, carla_simulation, args.tls_manager,
                                                 args.sync_vehicle_color, args.sync_vehicle_lights)
@@ -231,9 +231,9 @@ def synchronization_loop(args):
     transform_point = all_deafault_spawn[11]
     # move forward along acceleration lane 0.50 for cut-in-joining, 623 for back joining
     transform_point.location.x = transform_point.location.x + \
-                                 0.50 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+                                 0.45 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
     transform_point.location.y = transform_point.location.y + \
-                                 0.50 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+                                 0.45 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
 
     # setup spawn points
     transform_1 = carla.Transform(carla.Location(x=-650.722836, y=7.500000, z=3.000000),
@@ -243,9 +243,6 @@ def synchronization_loop(args):
     transform_3 = carla.Transform(carla.Location(x=-670.722836, y=7.500000, z=3.000000),
                                   carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
     transform_4 = transform_point
-
-    transform_5 = carla.Transform(carla.Location(x=-480.722836, y=7.500000, z=3.000000),
-                                  carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
     transform_destination_1 = carla.Transform(carla.Location(x=700.372955, y=7.500000, z=3.000000),
                                               carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
@@ -267,10 +264,6 @@ def synchronization_loop(args):
     ego_vehicle_bp.set_attribute('color', '255, 255, 255')
     vehicle_4 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_4)
 
-    # ego_vehicle_bp.set_attribute('color', '0, 255, 0')
-    # vehicle_5 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_5)
-    # vehicle_5.apply_control(carla.VehicleControl(throttle=0.75))
-
     carla_simulation.world.tick()
 
     # create platooning world
@@ -278,7 +271,7 @@ def synchronization_loop(args):
 
     # setup managers
     vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
-                                       debug_trajectory=False, debug=False, ignore_traffic_light=True)
+                                       debug_trajectory=True, debug=False, ignore_traffic_light=True)
     vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, debug_trajectory=False, debug=False)
     vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=False, debug=False)
 
@@ -306,12 +299,15 @@ def synchronization_loop(args):
 
         while True:
             start = time.time()
-
+            # background traffic tick
             synchronization.tick(time_tmp)
 
-            transform = vehicle_4.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
+            transform = vehicle_2.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=90),
                                                     carla.Rotation(pitch=-90)))
+
+            # update the sumo2carla id
+            platooning_world.update_sumo_vehicles(synchronization.sumo2carla_ids)
 
             platooning_manager.update_information(platooning_world)
             platooning_manager.run_step()
@@ -325,7 +321,7 @@ def synchronization_loop(args):
             elapsed = end - start
             if elapsed < args.step_length:
                 time.sleep(args.step_length - elapsed)
-            time_tmp += 0.25
+            time_tmp += 0.05
 
     except KeyboardInterrupt:
         logging.info('Cancelled by user.')
@@ -336,7 +332,6 @@ def synchronization_loop(args):
         synchronization.close()
         platooning_manager.destroy()
         vehicle_4.destroy()
-        # vehicle_5.destroy()
 
 
 if __name__ == '__main__':

@@ -4,12 +4,9 @@
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
-
-import os
 import sys
 import carla
 
-from core.agents.tools.misc import get_speed
 from core.platooning.platooning_world import PlatooningWorld
 from core.platooning.platooning_manager import PlatooningManager
 from core.vehicle.vehicle_manager import VehicleManager
@@ -22,7 +19,7 @@ def main():
         client.set_timeout(2.0)
 
         # Retrieve the world that is currently running
-        xodr_path = '../../customized_map_output/map_v7.3_SUMO_full.xodr'
+        xodr_path = '../../customized_map_output/map_v7.4_smooth_curve.xodr'
         world = load_customized_world(xodr_path, client)
         if not world:
             sys.exit()
@@ -43,12 +40,12 @@ def main():
         transform_point = all_deafault_spawn[11]
         # move forward along acceleration lane
         transform_point.location.x = transform_point.location.x + \
-                                     0.8 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+                                     0.45 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
         transform_point.location.y = transform_point.location.y + \
-                                     0.8 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+                                     0.45 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
         # destination
         # transform_destination = all_deafault_spawn[4]  # left lane
-        transform_destination = all_deafault_spawn[3]  # middle lane
+        transform_destination = all_deafault_spawn[5]  # middle lane
         # transform_destination = all_deafault_spawn[5] # acceleration lane
 
         # create the leading vehicle
