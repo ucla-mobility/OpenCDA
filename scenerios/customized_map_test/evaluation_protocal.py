@@ -14,14 +14,13 @@ from core.platooning.platooning_manager import PlatooningManager
 from core.vehicle.vehicle_manager import VehicleManager
 from scenerios.customized_map_test.load_customized_world import load_customized_world
 
-
 def main():
     try:
         client = carla.Client('localhost', 2000)
         client.set_timeout(2.0)
 
         # Retrieve the world that is currently running
-        xodr_path = '../../customized_map_output/map_v7.3_SUMO_full.xodr'
+        xodr_path = '../../customized_map_output/map_v7.4_smooth_curve.xodr'
         world = load_customized_world(xodr_path, client)
         if not world:
             sys.exit()
@@ -43,13 +42,15 @@ def main():
         traffic_manager.set_synchronous_mode(True)
 
         # setup spawn points
-        transform_1 = carla.Transform(carla.Location(x=-500.722836, y=7.500000, z=3.000000),
+        transform_1 = carla.Transform(carla.Location(x=-500.722836, y=7.500000, z=0.3000000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_2 = carla.Transform(carla.Location(x=-510.722836, y=7.500000, z=3.000000),
+        transform_2 = carla.Transform(carla.Location(x=-510.722836, y=7.500000, z=0.300000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_3 = carla.Transform(carla.Location(x=-520.722836, y=7.500000, z=3.000000),
+        transform_3 = carla.Transform(carla.Location(x=-520.722836, y=7.500000, z=0.300000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
-        transform_4 = carla.Transform(carla.Location(x=-530.722836, y=7.500000, z=3.000000),
+        transform_4 = carla.Transform(carla.Location(x=-530.722836, y=7.500000, z=0.300000),
+                                      carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
+        transform_5 = carla.Transform(carla.Location(x=-540.722836, y=7.500000, z=0.300000),
                                       carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
         transform_destination = carla.Transform(carla.Location(x=700.372955, y=7.500000, z=3.000000),
@@ -70,6 +71,9 @@ def main():
         ego_vehicle_bp.set_attribute('color', '255, 255, 255')
         vehicle_4 = world.spawn_actor(ego_vehicle_bp, transform_4)
 
+        ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+        vehicle_5 = world.spawn_actor(ego_vehicle_bp, transform_5)
+
         world.tick()
         # create platooning world
         platooning_world = PlatooningWorld()
@@ -83,6 +87,8 @@ def main():
                                            debug_trajectory=False, debug=False)
         vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world,
                                            debug_trajectory=False, debug=False)
+        vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world,
+                                           debug_trajectory=False, debug=False)
 
         platooning_manager = PlatooningManager(platooning_world)
 
@@ -92,15 +98,14 @@ def main():
         platooning_manager.add_member(vehicle_manager_2)
         platooning_manager.add_member(vehicle_manager_3)
         platooning_manager.add_member(vehicle_manager_4)
+        platooning_manager.add_member(vehicle_manager_5)
 
-        # set destination TODO: the spawn point may have conflict
+        # set destination
         destination = transform_destination.location
 
         platooning_manager.set_destination(destination)
 
         while True:
-            # if not world.wait_for_tick(10.0):
-            #     continue
             world.tick()
             spectator = world.get_spectator()
             transform = vehicle_1.get_transform()

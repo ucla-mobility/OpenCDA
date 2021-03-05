@@ -207,6 +207,12 @@ class LocalPlanner(object):
         """
         return self._trajectory_buffer
 
+    def set_controlle_longitudinal(self, max_throttle, max_break):
+        """
+        Change the parameters of controller
+        :return:
+        """
+
     def generate_path(self):
         """
         Generate the smooth path using cubic spline
