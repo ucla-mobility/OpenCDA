@@ -21,7 +21,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     """
 
     def __init__(self, vehicle, ignore_traffic_light=True, behavior='normal', overtake_allowed=False,
-                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, time_ahead=2.0,
+                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, time_ahead=1.5,
                  update_freq=15, debug_trajectory=True, debug=True):
         """
         Construct class
