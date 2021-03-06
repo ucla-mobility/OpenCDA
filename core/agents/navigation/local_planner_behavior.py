@@ -95,6 +95,10 @@ class LocalPlanner(object):
         # lane change flag
         self.lane_change = False
 
+        # controller param
+        self.max_throttle = 1.0
+        self.max_break = 1.0
+
         # debug option
         self.debug = debug
         self.debug_trajectory = debug_trajectory
@@ -207,11 +211,13 @@ class LocalPlanner(object):
         """
         return self._trajectory_buffer
 
-    def set_controlle_longitudinal(self, max_throttle, max_break):
+    def set_controller_longitudinal(self, max_throttle, max_break):
         """
         Change the parameters of controller
         :return:
         """
+        self.max_throttle = max_throttle
+        self.max_break = max_break
 
     def generate_path(self):
         """
@@ -361,8 +367,8 @@ class LocalPlanner(object):
         # use mean curvature to constrain the speed
         mean_k = abs(abs(statistics.mean(rk)))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
-        target_speed = min(target_speed, np.sqrt(6.0 / mean_k) * 3.6)
-        # print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
+        target_speed = min(target_speed, np.sqrt(7.2 / mean_k) * 3.6)
+        print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
         # TODO: This may need to be tuned more(for instance, use history speed)
         acceleration = max(min(4.5,
                                (target_speed / 3.6 - current_speed) / dt), -3.5)
@@ -498,7 +504,10 @@ class LocalPlanner(object):
 
         self._pid_controller = CustomizedVehiclePIDController(self._vehicle,
                                                               args_lateral=args_lat,
-                                                              args_longitudinal=args_long)
+                                                              args_longitudinal=args_long,
+                                                              max_brake=self.max_break,
+                                                              max_throttle=self.max_throttle)
+
         control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform.location
         if hasattr(self.target_waypoint, 'is_junction')
         else self.target_waypoint.location)
