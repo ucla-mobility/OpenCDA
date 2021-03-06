@@ -21,7 +21,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     """
 
     def __init__(self, vehicle, ignore_traffic_light=True, behavior='normal', overtake_allowed=False,
-                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, time_ahead=2.0,
+                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, time_ahead=1.2,
                  update_freq=15, debug_trajectory=True, debug=True):
         """
         Construct class
@@ -42,7 +42,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # used to see the average time gap between ego and frontal vehicle
         self.time_gap_list = []
+        self.distance_gap_list = []
         self.velocity_list = []
+        self.acceleration_list = []
 
         self.destination_changed = False
 
@@ -150,11 +152,17 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_vehicle_loc = frontal_vehicle.get_location()
         ego_vehicle_loc = self.vehicle.get_location()
 
+        # headway distance
         distance = compute_distance(ego_vehicle_loc, frontal_vehicle_loc)
 
+        # we need to count the vehicle length in to calculate the gap
+        boundingbox = self._vehicle.bounding_box
+        veh_length = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
+
         delta_v = get_speed(self.vehicle, True)
-        ttc = distance / delta_v
-        self.time_gap_list.append(ttc)
+        time_gap = (distance - veh_length) / delta_v
+        self.time_gap_list.append(time_gap)
+        self.distance_gap_list.append(distance - veh_length)
 
         # Distance is computed from the center of the two cars,
         # use bounding boxes to calculate the actual distance
@@ -287,10 +295,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                              ego_vehicle_loc, ego_vehicle_yaw)
 
         # 0. make sure the vehicle is behind the ego vehicle
-        if angle >= 70:
+        if angle >= 80:
             self.overtake_allowed = False
             print("angle is too large, wait")
-            return self.run_step(get_speed(frontal_vehicle) * 0.7), False
+            return self.run_step(get_speed(frontal_vehicle) * 0.95), False
 
         else:
             self.overtake_allowed = True
