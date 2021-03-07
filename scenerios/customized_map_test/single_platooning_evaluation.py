@@ -22,11 +22,11 @@ from scenerios.customized_map_test.load_customized_world import load_customized_
 
 def arg_parse():
     parser = argparse.ArgumentParser(description="Evaluation settings")
-    parser.add_argument("--max_throttle", type=float, default=0.75, help='Maximum throttle, in range 0-1')
-    parser.add_argument("--max_break", type=float, default=0.75, help='Maximum break, in range 0-1')
+    parser.add_argument("--max_throttle", type=float, default=1.0, help='Maximum throttle, in range 0-1')
+    parser.add_argument("--max_break", type=float, default=1.0, help='Maximum break, in range 0-1')
     parser.add_argument("--stage_duration", type=float, default=20.0, help='duration for each stage')
-    parser.add_argument("--speed1", type=float, default=20.0, help='stage1 desired speed')
-    parser.add_argument("--speed2", type=float, default=25.0, help='stage2 desired speed')
+    parser.add_argument("--speed1", type=float, default=25.0, help='stage1 desired speed')
+    parser.add_argument("--speed2", type=float, default=30.0, help='stage2 desired speed')
 
     opt = parser.parse_args()
 

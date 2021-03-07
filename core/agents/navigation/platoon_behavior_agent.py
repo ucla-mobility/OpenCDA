@@ -48,6 +48,21 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         self.destination_changed = False
 
+    def calculate_gap(self, distance):
+        """
+        Calculate the current vehicle and frontal vehicle's time/distance gap
+        :param distance:  distance between the ego vehicle and frontal vehicle
+        :return:
+        """
+        # we need to count the vehicle length in to calculate the gap
+        boundingbox = self._vehicle.bounding_box
+        veh_length = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
+
+        delta_v = get_speed(self.vehicle, True)
+        time_gap = (distance - veh_length) / delta_v
+        self.time_gap_list.append(time_gap)
+        self.distance_gap_list.append(distance - veh_length)
+
     def platooning_following_manager(self, inter_gap):
         """
         Car following behavior in platooning with gap regulation
@@ -154,15 +169,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # headway distance
         distance = compute_distance(ego_vehicle_loc, frontal_vehicle_loc)
-
-        # we need to count the vehicle length in to calculate the gap
-        boundingbox = self._vehicle.bounding_box
-        veh_length = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
-
-        delta_v = get_speed(self.vehicle, True)
-        time_gap = (distance - veh_length) / delta_v
-        self.time_gap_list.append(time_gap)
-        self.distance_gap_list.append(distance - veh_length)
+        self.calculate_gap(distance)
 
         # Distance is computed from the center of the two cars,
         # use bounding boxes to calculate the actual distance
@@ -194,6 +201,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         distance, angle = cal_distance_angle(frontal_vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
+
+        # calculate the time gap with the frontal vehicle
+        self.calculate_gap(distance)
 
         # if there is a obstacle blocking ahead, we just change to back joining mode
         if self.hazard_flag:
@@ -249,6 +259,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         distance, angle = cal_distance_angle(frontal_vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
+        # calculate the time gap with the frontal vehicle
+        self.calculate_gap(distance)
 
         if frontal_lane == ego_vehicle_lane and angle <= 5:
             print('merge finished')
@@ -263,6 +275,14 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         Open gap for cut-in vehicle
         :return:
         """
+        # calculate the time gap under this state
+        ego_vehicle_loc = self.vehicle.get_location()
+        ego_vehicle_yaw = self.vehicle.get_transform().rotation.yaw
+
+        distance, _ = cal_distance_angle(self.frontal_vehicle.vehicle.get_location(),
+                                         ego_vehicle_loc, ego_vehicle_yaw)
+        self.calculate_gap(distance)
+
         # gradually open the gap TODO: Make this dynamic to map a linear relationship with speed
         if self.current_gap < self.behavior.open_gap:
             self.current_gap += 0.01
@@ -293,6 +313,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         distance, angle = cal_distance_angle(frontal_vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
+
+        # calculate the time gap with the frontal vehicle
+        self.calculate_gap(distance)
 
         # 0. make sure the vehicle is behind the ego vehicle
         if angle >= 80:

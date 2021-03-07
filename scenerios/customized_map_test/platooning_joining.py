@@ -21,7 +21,7 @@ from scenerios.customized_map_test.load_customized_world import load_customized_
 def arg_parse():
     parser = argparse.ArgumentParser(description="Platooning Joining Settings")
     parser.add_argument("--joining_method",
-                        default='back_joining', type=str, help='cut_in_joining, back_joining, or frontal_joining')
+                        default='frontal_joining', type=str, help='cut_in_joining, back_joining, or frontal_joining')
     parser.add_argument("--bg_traffic", action='store_true', help='whether to create pre-defined background traffic')
 
     opt = parser.parse_args()
@@ -67,7 +67,7 @@ def main():
 
         # the merging vehicle initial position is decided by the joining method
         if opt.joining_method == 'back_joining':
-            start_pos = 0.45
+            start_pos = 0.43
         elif opt.joining_method == 'frontal_joining':
             start_pos = 0.51
         elif opt.joining_method == 'cut_in_joining':
