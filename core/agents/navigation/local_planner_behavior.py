@@ -259,7 +259,7 @@ class LocalPlanner(object):
         # check if the vehicle is in lane change based on lane id and lateral offset
         self.lane_change = (future_wpt.lane_id != current_wpt.lane_id
                             or previous_wpt.lane_id != future_wpt.lane_id) \
-                            or is_lateral_within_range
+                           or is_lateral_within_range
 
         _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location, current_location, current_yaw)
 
@@ -438,6 +438,61 @@ class LocalPlanner(object):
             if max_index >= 0:
                 for i in range(max_index + 1):
                     self._trajectory_buffer.popleft()
+
+    def run_step_naive(self, target_loc, target_speed):
+        """
+        Execute on step to involve the longitudinal and lateral pid controller. This method
+        DOES NOT consider trajectory, it is single target point based.
+        :param target_loc:
+        :param target_speed:
+        :return:
+        """
+        if target_speed is not None:
+            self._target_speed = target_speed
+        else:
+            self._target_speed = self._vehicle.get_speed_limit()
+
+        if len(self.waypoints_queue) == 0:
+            control = carla.VehicleControl()
+            control.steer = 0.0
+            control.throttle = 0.0
+            control.brake = 1.0
+            control.hand_brake = False
+            control.manual_gear_shift = False
+            return control
+
+        # Buffering the waypoints. Always keep the waypoint buffer alive
+        if len(self._waypoint_buffer) < 5:
+            for i in range(self._buffer_size):
+                if self.waypoints_queue:
+                    self._waypoint_buffer.append(
+                        self.waypoints_queue.popleft())
+                else:
+                    break
+
+        if self.dynamic_pid:
+            args_lat, args_long = compute_pid(self)
+
+        elif self._target_speed > 50:
+            args_lat = self.args_lat_hw_dict
+            args_long = self.args_long_hw_dict
+
+        else:
+            args_lat = self.args_lat_city_dict
+            args_long = self.args_long_city_dict
+
+        self._pid_controller = CustomizedVehiclePIDController(self._vehicle,
+                                                              args_lateral=args_lat,
+                                                              args_longitudinal=args_long,
+                                                              max_brake=self.max_break,
+                                                              max_throttle=self.max_throttle)
+
+        control = self._pid_controller.run_step(self._target_speed, target_loc)
+
+        vehicle_transform = self._vehicle.get_transform()
+        self.pop_buffer(vehicle_transform)
+
+        return control
 
     def run_step(self, rx, ry, rk, target_speed=None, trajectory=None, following=False):
         """

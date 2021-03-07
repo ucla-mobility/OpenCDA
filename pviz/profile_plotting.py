@@ -118,7 +118,7 @@ def dump_data(data):
     :param data: dictionary containing all stats
     :return:
     """
-    with open("platooning_2.json", "w") as outfile:
+    with open("platooning.json", "w") as outfile:
         json.dump(data, outfile)
 
 

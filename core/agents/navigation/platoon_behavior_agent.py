@@ -127,6 +127,33 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
             return self._local_planner.run_step([], [], [], trajectory=ego_trajetory)
 
+    def platooning_following_manager_naive(self, inter_gap):
+        """
+        Naive car following behavior in platooning without gap regulation
+        :param inter_gap:
+        :return: control: carla.VehicleControl
+        """
+        ego_vehicle_speed = get_speed(self.vehicle, True)
+        front_vehicle_speed = get_speed(self.frontal_vehicle.vehicle)
+        front_vehicle_loc = self.frontal_vehicle.vehicle.get_location()
+
+        distance = compute_distance(self.vehicle.get_location(), front_vehicle_loc)
+        time_gap = distance / ego_vehicle_speed
+
+        # too close to the frontal vehicle, slow down
+        if inter_gap > time_gap > 0.0:
+            print("too close!")
+            control = self._local_planner.run_step_naive(front_vehicle_loc, front_vehicle_speed * 0.8)
+
+        # in the safe following area
+        elif 1.5 * inter_gap > time_gap > inter_gap:
+            control = self._local_planner.run_step_naive(front_vehicle_loc, front_vehicle_speed * 1.0)
+
+        # too far, tailgating
+        else:
+            control = self._local_planner.run_step_naive(front_vehicle_loc, front_vehicle_speed * 1.2)
+        return control
+
     def platooning_merge_management(self, frontal_vehicle_vm):
         """
         Merge the vehicle into the platooning
