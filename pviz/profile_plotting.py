@@ -5,9 +5,10 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+import json
 import math
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pylab
 
 
@@ -50,7 +51,7 @@ def draw_velocity_profile_single_plot(velocity_list, ids, title):
 
     for i, v in enumerate(velocity_list):
         x_s = np.arange(len(v)) * 0.05
-        label = 'Leading Vehicle, id: %d' % ids[i] if i == 0 else 'Following Vehicle, id: %d' % ids[i]
+        label = 'Vehicle, id: %d' % ids[i]
         pylab.plot(x_s, v, label=label)
 
     pylab.title(title)
@@ -72,10 +73,10 @@ def draw_intergap_profile_singel_plot(gap_list, ids, title):
     for i, v in enumerate(gap_list):
         if len(v) < max_len:
             x_s = np.arange(max_len - len(v), max_len) * 0.05
-            label = 'Merging Vehicle, id: %d' % (ids[i] + 1)
         else:
             x_s = np.arange(len(v)) * 0.05
-            label = 'Following Vehicle, id: %d' % (ids[i] + 1)
+
+        label = 'Vehicle, id: %d' % (ids[i] + 1)
         pylab.plot(x_s, v, label=label)
 
     pylab.title(title)
@@ -109,6 +110,16 @@ def draw_intergap_profile_separately(gap_list, ids):
         ax.label_outer()
 
     plt.show()
+
+
+def dump_data(data):
+    """
+    Dump data to json file
+    :param data: dictionary containing all stats
+    :return:
+    """
+    with open("platooning_2.json", "w") as outfile:
+        json.dump(data, outfile)
 
 
 if __name__ == '__main__':
