@@ -111,9 +111,8 @@ class VehicleManager(object):
         Quantitive way to judge the peroformance of the system
         :return:
         """
-        index = 100 if len(self.agent.time_gap_list) > 100 else 0
-        time_gap_list = self.agent.time_gap_list[index:-10]
-        velocity_list = self.agent.velocity_list
+        time_gap_list = self.agent.time_gap_list[60:]
+        velocity_list = self.agent.velocity_list[60:]
 
         print(len(time_gap_list))
         print("the mean of the time gap is %f and std is %f" % (statistics.mean(time_gap_list),
@@ -127,7 +126,12 @@ class VehicleManager(object):
         :return:
         """
         # get current speed
-        self.agent.velocity_list.append(get_speed(self.vehicle))
+        self.agent.velocity_list.append(get_speed(self.vehicle, True))
+        # acceleration list
+        if len(self.agent.velocity_list) > 1:
+            self.agent.acceleration_list.append((self.agent.velocity_list[-1] - self.agent.velocity_list[-2])/0.05)
+        else:
+            self.agent.acceleration_list.append(self.agent.velocity_list[-1] / 0.05)
 
         # TODO: Right now take lead is not in consideration
         if not self._platooning_plugin.in_platooning:

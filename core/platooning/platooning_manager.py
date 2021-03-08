@@ -8,8 +8,7 @@
 
 import numpy as np
 
-from core.vehicle.vehicle_manager import VehicleManager
-from pviz.profile_plotting import draw_velocity_profile, draw_intergap_profile
+from pviz.profile_plotting import draw_velocity_profile_single_plot, draw_intergap_profile_singel_plot, dump_data
 
 
 class PlatooningManager(object):
@@ -76,6 +75,16 @@ class PlatooningManager(object):
         self.vehicle_manager_list.insert(index, vehicle_manager)
         vehicle_manager.set_platooning(self, self.pmid, index, lead)
 
+    def set_controller_longitudinal(self, max_throttle, max_brake):
+        """
+        Set controller statistics
+        :param max_throttle:
+        :param max_brake:
+        :return:
+        """
+        for vm in self.vehicle_manager_list:
+            vm.agent.set_controller_longitudinal(max_throttle, max_brake)
+
     def reset_speed(self):
         """
         Reset the leader speed to old state
@@ -138,20 +147,40 @@ class PlatooningManager(object):
         for (i, control) in enumerate(control_list):
             self.vehicle_manager_list[i].vehicle.apply_control(control)
 
+        return control_list
+
     def destroy(self):
         """
-        TODO: Only destroy vehicles for now
+        Destroy vehicles and record all stats
         :return:
         """
         # for evaluation purpose
         velocity_list = []
-        gap_list = []
+        acceleration_list = []
+        time_gap_list = []
+        distance_gap_list = []
+
+        # we don't want to skip the first 100 data points of time gap for merging vehicle
+        max_len = max(len(self.vehicle_manager_list[0].agent.time_gap_list),
+                      len(self.vehicle_manager_list[-1].agent.time_gap_list))
+
         for i in range(len(self.vehicle_manager_list)):
             self.vehicle_manager_list[i].vehicle.destroy()
-            if i > 0:
+            if len(self.vehicle_manager_list[i].agent.time_gap_list) > 0:
                 self.vehicle_manager_list[i].cal_performance()
-                gap_list.append(self.vehicle_manager_list[i].agent.time_gap_list[100:-10])
-            velocity_list.append(self.vehicle_manager_list[i].agent.velocity_list)
+                start_index = 0 if len(self.vehicle_manager_list[i].agent.time_gap_list) < max_len else 100
 
-        draw_velocity_profile(velocity_list, np.arange(0, len(velocity_list)))
-        draw_intergap_profile(gap_list, np.arange(0, len(gap_list)))
+                time_gap_list.append(self.vehicle_manager_list[i].agent.time_gap_list[start_index:-10])
+                distance_gap_list.append(self.vehicle_manager_list[i].agent.distance_gap_list[start_index:-10])
+
+            velocity_list.append(self.vehicle_manager_list[i].agent.velocity_list[100:-10])
+            acceleration_list.append(self.vehicle_manager_list[i].agent.acceleration_list[100:-10])
+
+        draw_velocity_profile_single_plot(velocity_list, np.arange(0, len(velocity_list)), 'Speed')
+        draw_velocity_profile_single_plot(acceleration_list, np.arange(0, len(acceleration_list)), 'Acceleration')
+        draw_intergap_profile_singel_plot(time_gap_list, np.arange(0, len(time_gap_list)), 'Time Gap')
+        draw_intergap_profile_singel_plot(distance_gap_list, np.arange(0, len(distance_gap_list)), 'Distance Gap')
+
+        data_dict = {'velocity_profile': velocity_list, 'acceleration_profile': acceleration_list,
+                     'time_gap_profile': time_gap_list, 'distance_gap_profile': distance_gap_list}
+        dump_data(data_dict)

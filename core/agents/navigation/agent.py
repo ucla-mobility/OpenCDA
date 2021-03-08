@@ -104,9 +104,9 @@ class Agent(object):
                                         self._vehicle.get_transform(),
                                         self._proximity_tlight_threshold):
                 if traffic_light.state == carla.TrafficLightState.Red:
-                    return (True, traffic_light)
+                    return True, traffic_light
 
-        return (False, None)
+        return False, None
 
     def _get_trafficlight_trigger_location(self, traffic_light):  # pylint: disable=no-self-use
         """
@@ -214,9 +214,9 @@ class Agent(object):
             if is_within_distance_ahead(target_vehicle.get_transform(),
                                         self._vehicle.get_transform(),
                                         self._proximity_vehicle_threshold):
-                return (True, target_vehicle)
+                return True, target_vehicle
 
-        return (False, None)
+        return False, None
 
     @staticmethod
     def emergency_stop():

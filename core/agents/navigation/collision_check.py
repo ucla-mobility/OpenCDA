@@ -15,7 +15,7 @@ from core.agents.navigation.spline import Spline2D
 
 
 class CollisionChecker:
-    def __init__(self, time_ahead=2.0, circle_radius=1.3, circle_offsets=None):
+    def __init__(self, time_ahead=1.2, circle_radius=1.3, circle_offsets=None):
         """
         Construction method
         :param time_ahead: how many seconds we look ahead in advance for collision check

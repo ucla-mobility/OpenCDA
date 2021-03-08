@@ -161,6 +161,15 @@ class BehaviorAgent(Agent):
         """
         return self._local_planner
 
+    def set_controller_longitudinal(self, max_throttle, max_brake):
+        """
+        Set the max throttle and brake for controller
+        :param max_throttle:
+        :param max_brake:
+        :return:
+        """
+        self._local_planner.set_controller_longitudinal(max_throttle, max_brake)
+
     def reroute(self, spawn_points):
         """
         This method implements re-routing for vehicles approaching its destination.
@@ -378,10 +387,11 @@ class BehaviorAgent(Agent):
         # 2: generated plan path first
         rx, ry, rk, ryaw = self._local_planner.generate_path()
 
+        # TODO: Hard-coded, revise it later
         if self.get_local_planner().lane_change:
             self._collision_check.time_ahead = 0.5
         else:
-            self._collision_check.time_ahead = 1.1
+            self._collision_check.time_ahead = 1.2
 
         # 3: collision check
         is_hazard = False

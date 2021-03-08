@@ -25,7 +25,7 @@ class Normal(object):
     warm_up_speed = max_speed / 1.5
     speed_lim_dist = 3
     speed_decrease = 15
-    inter_gap = 0.62
+    inter_gap = 0.70
     open_gap = inter_gap * 2.3
     safety_time = 4
     min_proximity_threshold = 10
