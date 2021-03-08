@@ -32,7 +32,7 @@ class GFSController(object):
     A class controller to estimate proper platooning position and speed
     """
 
-    def __init__(self, gfs_pl_score, gfs_pl_speed, gfs_m_speed, platooning_manager, sensor_range, dt):
+    def __init__(self, gfs_pl_score, gfs_pl_speed, gfs_m_speed, sensor_range, dt):
         """
         Construct class
         :param gfs_pl_score: Fuzzy model for calculating platooning joining position score
@@ -44,7 +44,6 @@ class GFSController(object):
         self.gfs_pl_score = gfs_pl_score
         self.gfs_pl_speed = gfs_pl_speed
         self.gfs_m_speed = gfs_m_speed
-        self.platooning_manager = platooning_manager
         self.sensor_range = sensor_range
         self.dt = dt
 
@@ -54,6 +53,9 @@ class GFSController(object):
         # check y coordinates to make sure vehicle is in middle lane
         platoon_vehicles = [manager.vehicle for manager in vehicle_managers if
                             abs(manager.vehicle.get_location().y - 7.5) < 1.5]
+        platoon_vehicle_managers = [manager for manager in vehicle_managers if
+                                    abs(manager.vehicle.get_location().y - 7.5) < 1.5]
+
         platoon_length = len(platoon_vehicles)
         # name should be vID
         veh_name = merge_veh.id
@@ -65,7 +67,7 @@ class GFSController(object):
         inputs = self.getInputs2FIS(veh_all)
         # start defuzz
         all_scores = []
-        for j in range(platoon_length + 1):  # Number of gaps in platoon where vehicle can merge
+        for j in range(platoon_length + 1):
 
             if j == 0:
                 leadPos = [500, 500]
@@ -97,16 +99,16 @@ class GFSController(object):
 
         best_id = all_scores.index(max(all_scores))  # ID of the best position to merge into the platoon
         if best_id == 0:
-            leadVeh = -1
-            rearVeh = platoon_vehicles[best_id]
+            leadVeh = None
+            rearVeh = platoon_vehicle_managers[best_id]
         elif best_id == platoon_length:
-            leadVeh = platoon_vehicles[best_id - 1]
-            rearVeh = -1
+            leadVeh = platoon_vehicle_managers[best_id - 1]
+            rearVeh = None
         else:
-            leadVeh = platoon_vehicles[best_id - 1]
-            rearVeh = platoon_vehicles[best_id]
+            leadVeh = platoon_vehicle_managers[best_id - 1]
+            rearVeh = platoon_vehicle_managers[best_id]
 
-        return leadVeh, rearVeh
+        return leadVeh, rearVeh, best_id
 
     def getDesiredSpeed_pl(self, vehicle):
 
@@ -144,7 +146,8 @@ class GFSController(object):
         Y_ML = [-10.5, -7.5, -4.5]  # carla y coordinates for lane centers
 
         veh_name = veh[1]
-        veh_edge = veh[2][veh_name][81]
+        # veh_edge = veh[2][veh_name][81]
+        veh_edge = 'gneE4_0'
         veh_speed = veh[2][veh_name][64]  # 66 is the key for position
         veh_pos = veh[2][veh_name][66]  # 66 is the key for position
 
@@ -197,6 +200,7 @@ class GFSController(object):
                 v_y = -4.5
             # find veh lane
             # veh_lane = Y_ML.index(veh_pos[1])
+            v_y = -10.5
             veh_lane = Y_ML.index(v_y)
 
             lanes_cons = [Y_ML[a] for a in [veh_lane - 1, veh_lane, veh_lane + 1] if -1 < a < 3]
@@ -205,12 +209,12 @@ class GFSController(object):
             DISTx = [[b[0] - veh_pos[0], b[1]] for b in pos_all_vehs]
             for y in lanes_cons:
                 try:
-                    dist_ahead = min([c[0] for c in DISTx if c[0] > 0 and c[1] == y])
+                    dist_ahead = min([c[0] for c in DISTx if c[0] > 0 and abs(c[1] - y) < 0.1])
                 except:
                     dist_ahead = []
 
                 try:
-                    dist_behind = max([c[0] for c in DISTx if c[0] < 0 and c[1] == y])
+                    dist_behind = max([c[0] for c in DISTx if c[0] < 0 and abs(c[1] - y) < 0.1])
                 except:
                     dist_behind = []
 

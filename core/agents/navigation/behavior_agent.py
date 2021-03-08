@@ -9,8 +9,10 @@ waypoints and avoiding other vehicles. The agent also responds to traffic lights
 traffic signs, and has different possible configurations. """
 
 import random
+
 import numpy as np
 import carla
+import traci
 
 from core.agents.navigation.collision_check import CollisionChecker
 from core.agents.navigation.agent import Agent
@@ -29,7 +31,7 @@ class BehaviorAgent(Agent):
 
     def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal', overtake_allowed=False,
                  sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, debug_trajectory=False,
-                 debug=False, update_freq=15, time_ahead=2.0):
+                 debug=False, update_freq=15, time_ahead=1.5):
         """
         Construct class
         :param vehicle: actor
@@ -62,8 +64,11 @@ class BehaviorAgent(Agent):
         self.speed_limit = 0
         self.direction = None
 
+        # used for judging whether intersection is ahead
         self.incoming_direction = None
         self.incoming_waypoint = None
+
+        # save the vehicle's start and end point of the trip
         self.start_waypoint = None
         self.end_waypoint = None
 
@@ -84,6 +89,9 @@ class BehaviorAgent(Agent):
 
         # car following flag
         self.car_following_flag = False
+
+        # this is only for co-simulation
+        self.sumo2carla_dict = {}
 
         # Parameters for agent behavior
         if behavior == 'cautious':
@@ -278,18 +286,33 @@ class BehaviorAgent(Agent):
         if not target_speed:
             target_speed = self.behavior.max_speed - self.behavior.speed_lim_dist
 
-        vehicle_speed = get_speed(vehicle)
+        # for co-simulation scene. Sumo created vehicles don't have speed saved in carla side
+        if self._platooning_world.sumo2carla_ids:
+            vehicle_sumo_name = None
+            for key, value in self._platooning_world.sumo2carla_ids.items():
+                if int(value) == vehicle.id:
+                    vehicle_sumo_name = key
+            vehicle_speed = traci.vehicle.getSpeed(vehicle_sumo_name) * 3.6 \
+                if vehicle_sumo_name else get_speed(vehicle)
+
+        else:
+            vehicle_speed = get_speed(vehicle)
+
         delta_v = max(1, (self.speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / np.nextafter(0., 1.)
         # Under safety time distance, slow down.
         if self.behavior.safety_time > ttc > 0.0:
             target_speed = min(positive(vehicle_speed - self.behavior.speed_decrease),
                                target_speed)
+            print("vehicle id %d: car following decreasing speed mode, target speed %f"
+                  % (self.vehicle.id, target_speed))
 
         # Actual safety distance area, try to follow the speed of the vehicle in front.
         elif 3 * self.behavior.safety_time > ttc >= self.behavior.safety_time:
             target_speed = min(max(self.min_speed, vehicle_speed),
                               target_speed)
+            print("vehicle id %d: car following keep speed mode, target speed %f"
+                  % (self.vehicle.id, target_speed))
         return target_speed
 
     def overtake_management(self, obstacle_vehicle):
@@ -406,7 +429,6 @@ class BehaviorAgent(Agent):
         if not car_following_flag:
             self.car_following_flag = False
         else:
-            print("vehicle id %d: car following mode!" % self.vehicle.id)
             self.car_following_flag = True
 
             if distance < self.behavior.braking_distance:
