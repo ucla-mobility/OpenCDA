@@ -4,7 +4,9 @@
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
+import os
 import sys
+
 import carla
 
 from core.platooning.platooning_world import PlatooningWorld
@@ -19,8 +21,10 @@ def main():
         client.set_timeout(2.0)
 
         # Retrieve the world that is currently running
-        xodr_path = '../../customized_map_output/map_v7.4_smooth_curve.xodr'
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        xodr_path = os.path.join(dir_path, '../../customized_map_output/map_v7.4_smooth_curve.xodr')
         world = load_customized_world(xodr_path, client)
+
         if not world:
             sys.exit()
 
@@ -44,9 +48,7 @@ def main():
         transform_point.location.y = transform_point.location.y + \
                                      0.45 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
         # destination
-        # transform_destination = all_deafault_spawn[4]  # left lane
         transform_destination = all_deafault_spawn[5]  # middle lane
-        # transform_destination = all_deafault_spawn[5] # acceleration lane
 
         # create the leading vehicle
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
@@ -68,7 +70,6 @@ def main():
 
         # set destination TODO: the spawn point may have conflict
         destination = transform_destination.location + carla.Location(x=-160)
-        # destination = carla.Location(x=319.547150, y=-82.862183, z=0.033884)
 
         platooning_manager.set_destination(destination)
 
@@ -79,7 +80,7 @@ def main():
             transform = vehicle_1.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
                                                     carla.Rotation(pitch=-90)))
-            # print(get_speed(vehicle_1))
+
             platooning_manager.update_information(platooning_world)
             platooning_manager.run_step()
 

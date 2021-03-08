@@ -8,14 +8,13 @@
 """
 Script to integrate CARLA and SUMO simulations
 
-@authors: Yi Guo, Jiaqi Ma
+@authors: Yi Guo, Jiaqi Ma, Runsheng Xu
 """
 import argparse
 import logging
 import os
 import sys
 import time
-import pickle
 
 import carla
 
@@ -24,6 +23,7 @@ from co_simulation.sumo_integration.carla_simulation import CarlaSimulation
 from co_simulation.sumo_integration.constants import INVALID_ACTOR_ID
 from co_simulation.sumo_integration.sumo_simulation import SumoSimulation
 from co_simulation.sumo_src.simulationmanager import SimulationManager
+
 from core.platooning.platooning_world import PlatooningWorld
 from core.platooning.platooning_manager import PlatooningManager
 from core.platooning.platooning_plugin import FSM
@@ -216,10 +216,16 @@ def synchronization_loop(args):
     """
     Entry point for sumo-carla co-simulation.
     """
-    sumo_simulation = SumoSimulation(args.sumo_cfg_file, args.step_length, args.sumo_host,
+    # map file path
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    sumo_cfg_file = os.path.join(dir_path, '../../customized_map_output/map_v7.4_smooth_curve.sumocfg')
+    xodr_path = os.path.join(dir_path, '../../customized_map_output/map_v7.4_smooth_curve.xodr')
+
+    sumo_simulation = SumoSimulation(sumo_cfg_file, args.step_length, args.sumo_host,
                                      args.sumo_port, args.sumo_gui, args.client_order)
+
     carla_simulation = CarlaSimulation(args.carla_host, args.carla_port, args.step_length,
-                                       '../../customized_map_output/map_v7.4_smooth_curve.xodr')
+                                       xodr_path)
 
     synchronization = SimulationSynchronization(sumo_simulation, carla_simulation, args.tls_manager,
                                                 args.sync_vehicle_color, args.sync_vehicle_lights)
@@ -229,11 +235,23 @@ def synchronization_loop(args):
     # get all spawn points
     all_deafault_spawn = carla_simulation.world.get_map().get_spawn_points()
     transform_point = all_deafault_spawn[11]
+
+    # the merging vehicle initial position is decided by the joining method
+    if args.joining_method == 'back_joining':
+        start_pos = 0.43
+    elif args.joining_method == 'frontal_joining':
+        start_pos = 0.51
+    elif args.joining_method == 'cut_in_joining':
+        start_pos = 0.50
+    else:
+        print('only back_joining, frontal_joining, cut_in_joining are supported')
+        sys.exit()
+
     # move forward along acceleration lane 0.50 for cut-in-joining, 623 for back joining
     transform_point.location.x = transform_point.location.x + \
-                                 0.45 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+                                 start_pos * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
     transform_point.location.y = transform_point.location.y + \
-                                 0.45 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+                                 start_pos * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
 
     # setup spawn points
     transform_1 = carla.Transform(carla.Location(x=-650.722836, y=7.500000, z=3.000000),
@@ -243,6 +261,9 @@ def synchronization_loop(args):
     transform_3 = carla.Transform(carla.Location(x=-670.722836, y=7.500000, z=3.000000),
                                   carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
     transform_4 = transform_point
+
+    transform_5 = carla.Transform(carla.Location(x=-680.722836, y=7.500000, z=3.000000),
+                                  carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
 
     transform_destination_1 = carla.Transform(carla.Location(x=700.372955, y=7.500000, z=3.000000),
                                               carla.Rotation(pitch=0.000000, yaw=0, roll=0.000000))
@@ -264,13 +285,16 @@ def synchronization_loop(args):
     ego_vehicle_bp.set_attribute('color', '255, 255, 255')
     vehicle_4 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_4)
 
+    ego_vehicle_bp.set_attribute('color', '255, 255, 255')
+    vehicle_5 = carla_simulation.world.spawn_actor(ego_vehicle_bp, transform_5)
+
     carla_simulation.world.tick()
 
     # create platooning world
     platooning_world = PlatooningWorld()
 
     # setup managers
-    vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=6.0, buffer_size=8,
+    vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
                                        debug_trajectory=True, debug=False, ignore_traffic_light=True)
     vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, debug_trajectory=False, debug=False)
     vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=False, debug=False)
@@ -278,6 +302,7 @@ def synchronization_loop(args):
     vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, status=FSM.SEARCHING, sample_resolution=4.5,
                                        buffer_size=8, debug_trajectory=True, debug=True, update_freq=15,
                                        overtake_allowed=True)
+    vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world, debug_trajectory=False, debug=False)
 
     platooning_manager = PlatooningManager(platooning_world)
 
@@ -286,6 +311,7 @@ def synchronization_loop(args):
     # add member
     platooning_manager.add_member(vehicle_manager_2)
     platooning_manager.add_member(vehicle_manager_3)
+    platooning_manager.add_member(vehicle_manager_5)
 
     # set destination
     platooning_manager.set_destination(transform_destination_1.location)
@@ -336,8 +362,6 @@ def synchronization_loop(args):
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description=__doc__)
-    argparser.add_argument('--sumo_cfg_file', type=str, help='sumo configuration file',
-                           default='../../customized_map_output/OpenDriveMap73.sumocfg')
     argparser.add_argument('--carla-host',
                            metavar='H',
                            default='127.0.0.1',
@@ -380,6 +404,10 @@ if __name__ == '__main__':
                            choices=['none', 'sumo', 'carla'],
                            help="select traffic light manager (default: none)",
                            default='none')
+    argparser.add_argument("--joining_method",
+                           default='back_joining',
+                           type=str,
+                           help='cut_in_joining, back_joining, or frontal_joining')
     argparser.add_argument('--debug', action='store_true', help='enable debug messages')
     arguments = argparser.parse_args()
 
