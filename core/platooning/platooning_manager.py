@@ -161,7 +161,7 @@ class PlatooningManager(object):
         distance_gap_list = []
 
         # we don't want to skip the first 100 data points of time gap for merging vehicle
-        max_len = max(len(self.vehicle_manager_list[0].agent.time_gap_list),
+        max_len = max(len(self.vehicle_manager_list[1].agent.time_gap_list),
                       len(self.vehicle_manager_list[-1].agent.time_gap_list))
 
         for i in range(len(self.vehicle_manager_list)):
