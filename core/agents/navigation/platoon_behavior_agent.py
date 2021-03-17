@@ -324,6 +324,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         :param frontal_vehicle_vm: the vehicle that ego is trying to catch up
         :return: control command and whether back joining finished
         """
+        # reset lane change flag every step
+        self.lane_change_allowed = True
+
         # get necessary information of the ego vehicle and target vehicle in the platooning
         frontal_vehicle = frontal_vehicle_vm.vehicle
         frontal_lane = self._map.get_waypoint(frontal_vehicle.get_location()).lane_id
@@ -345,9 +348,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         self.calculate_gap(distance)
 
         # 0. make sure the vehicle is behind the ego vehicle
-        if angle >= 80:
+        if angle >= 60 or distance < get_speed(self.vehicle, True) * 0.5:
             self.overtake_allowed = False
             print("angle is too large, wait")
+            self.lane_change_allowed = False
             return self.run_step(get_speed(frontal_vehicle) * 0.95), False
 
         else:
