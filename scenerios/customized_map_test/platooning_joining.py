@@ -180,8 +180,8 @@ def main():
         while True:
             world.tick()
             # use spectator to keep following merging vehicle position
-            transform = vehicle_5.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
+            transform = vehicle_3.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
                                                     carla.Rotation(pitch=-90)))
 
             # update world info to each vehicle

@@ -59,7 +59,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         veh_length = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
 
         delta_v = get_speed(self.vehicle, True)
-        time_gap = (distance - veh_length) / delta_v
+        time_gap = distance / delta_v
         self.time_gap_list.append(time_gap)
         self.distance_gap_list.append(distance - veh_length)
 
