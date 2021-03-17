@@ -242,7 +242,7 @@ def synchronization_loop(args):
     elif args.joining_method == 'frontal_joining':
         start_pos = 0.51
     elif args.joining_method == 'cut_in_joining':
-        start_pos = 0.50
+        start_pos = 0.45
     else:
         print('only back_joining, frontal_joining, cut_in_joining are supported')
         sys.exit()
@@ -294,14 +294,14 @@ def synchronization_loop(args):
     platooning_world = PlatooningWorld()
 
     # setup managers
-    vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=8,
+    vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=12,
                                        debug_trajectory=True, debug=False, ignore_traffic_light=True)
     vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, debug_trajectory=False, debug=False)
     vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=False, debug=False)
 
     vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, status=FSM.SEARCHING, sample_resolution=4.5,
-                                       buffer_size=8, debug_trajectory=True, debug=True, update_freq=15,
-                                       overtake_allowed=True)
+                                       buffer_size=12, debug_trajectory=True, debug=True, update_freq=15,
+                                       communication_range=35, overtake_allowed=True)
     vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world, debug_trajectory=False, debug=False)
 
     platooning_manager = PlatooningManager(platooning_world)
