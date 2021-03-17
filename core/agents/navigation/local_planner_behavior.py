@@ -370,9 +370,15 @@ class LocalPlanner(object):
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
         target_speed = min(target_speed, np.sqrt(7.2 / mean_k) * 3.6)
         print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
-        # TODO: This may need to be tuned more(for instance, use history speed)
-        acceleration = max(min(4.5,
-                               (target_speed / 3.6 - current_speed) / dt), -3.5)
+
+        # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
+        if self._pid_controller:
+            max_acc = 3.5 if self._pid_controller.max_throttle >= 0.9 else 2.5
+        else:
+            max_acc = 3.5
+
+        acceleration = max(min(max_acc,
+                               (target_speed / 3.6 - current_speed) / dt), -6.5)
 
         for i in range(1, int(sample_num) + 1):
             sample_resolution += current_speed * dt + 0.5 * acceleration * dt ** 2
