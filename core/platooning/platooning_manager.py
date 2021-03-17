@@ -8,7 +8,7 @@
 
 import numpy as np
 
-from pviz.profile_plotting import draw_velocity_profile_single_plot, draw_intergap_profile_singel_plot, dump_data
+from pviz.profile_plotting import draw_sub_plot
 
 
 class PlatooningManager(object):
@@ -161,7 +161,7 @@ class PlatooningManager(object):
         distance_gap_list = []
 
         # we don't want to skip the first 100 data points of time gap for merging vehicle
-        max_len = max(len(self.vehicle_manager_list[0].agent.time_gap_list),
+        max_len = max(len(self.vehicle_manager_list[1].agent.time_gap_list),
                       len(self.vehicle_manager_list[-1].agent.time_gap_list))
 
         for i in range(len(self.vehicle_manager_list)):
@@ -172,15 +172,11 @@ class PlatooningManager(object):
 
                 time_gap_list.append(self.vehicle_manager_list[i].agent.time_gap_list[start_index:-10])
                 distance_gap_list.append(self.vehicle_manager_list[i].agent.distance_gap_list[start_index:-10])
+            else:
+                time_gap_list.append((len(self.vehicle_manager_list[i].agent.velocity_list) - 100) * [200])
+                distance_gap_list.append((len(self.vehicle_manager_list[i].agent.velocity_list) - 100) * [200])
 
             velocity_list.append(self.vehicle_manager_list[i].agent.velocity_list[100:-10])
             acceleration_list.append(self.vehicle_manager_list[i].agent.acceleration_list[100:-10])
 
-        draw_velocity_profile_single_plot(velocity_list, np.arange(0, len(velocity_list)), 'Speed')
-        draw_velocity_profile_single_plot(acceleration_list, np.arange(0, len(acceleration_list)), 'Acceleration')
-        draw_intergap_profile_singel_plot(time_gap_list, np.arange(0, len(time_gap_list)), 'Time Gap')
-        draw_intergap_profile_singel_plot(distance_gap_list, np.arange(0, len(distance_gap_list)), 'Distance Gap')
-
-        data_dict = {'velocity_profile': velocity_list, 'acceleration_profile': acceleration_list,
-                     'time_gap_profile': time_gap_list, 'distance_gap_profile': distance_gap_list}
-        dump_data(data_dict)
+        draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list)

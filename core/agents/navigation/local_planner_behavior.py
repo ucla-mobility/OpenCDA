@@ -94,6 +94,8 @@ class LocalPlanner(object):
 
         # lane change flag
         self.lane_change = False
+        # In some corner cases, the id is not changed but we regard it as lane change due to large lateral diff
+        self.lane_id_change = False
 
         # controller param
         self.max_throttle = 1.0
@@ -257,9 +259,8 @@ class LocalPlanner(object):
 
         is_lateral_within_range = veh_width < lateral_diff < 2 * lane_width
         # check if the vehicle is in lane change based on lane id and lateral offset
-        self.lane_change = (future_wpt.lane_id != current_wpt.lane_id
-                            or previous_wpt.lane_id != future_wpt.lane_id) \
-                           or is_lateral_within_range
+        self.lane_id_change = (future_wpt.lane_id != current_wpt.lane_id or previous_wpt.lane_id != future_wpt.lane_id)
+        self.lane_change = self.lane_id_change or is_lateral_within_range
 
         _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location, current_location, current_yaw)
 
@@ -296,8 +297,8 @@ class LocalPlanner(object):
                 y.append(current_location.y)
 
         # used to filter the waypoints that are too close
-        prev_x = 0 if self.lane_change else x[index]
-        prev_y = 0 if self.lane_change else y[index]
+        prev_x = x[max(0, index-1)] if self.lane_change else x[index]
+        prev_y = y[max(0,index-1)] if self.lane_change else y[index]
         for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
@@ -370,9 +371,15 @@ class LocalPlanner(object):
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
         target_speed = min(target_speed, np.sqrt(7.2 / mean_k) * 3.6)
         print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
-        # TODO: This may need to be tuned more(for instance, use history speed)
-        acceleration = max(min(4.5,
-                               (target_speed / 3.6 - current_speed) / dt), -3.5)
+
+        # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
+        if self._pid_controller:
+            max_acc = 3.5 if self._pid_controller.max_throttle >= 0.9 else 2.5
+        else:
+            max_acc = 3.5
+
+        acceleration = max(min(max_acc,
+                               (target_speed / 3.6 - current_speed) / dt), -6.5)
 
         for i in range(1, int(sample_num) + 1):
             sample_resolution += current_speed * dt + 0.5 * acceleration * dt ** 2
@@ -525,8 +532,8 @@ class LocalPlanner(object):
             return control
 
         # Buffering the waypoints. Always keep the waypoint buffer alive
-        if len(self._waypoint_buffer) < 5:
-            for i in range(self._buffer_size):
+        if len(self._waypoint_buffer) < 9:
+            for i in range(self._buffer_size - len(self._waypoint_buffer)):
                 if self.waypoints_queue:
                     self._waypoint_buffer.append(
                         self.waypoints_queue.popleft())

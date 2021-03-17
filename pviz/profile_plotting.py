@@ -6,108 +6,151 @@
 # License: MIT
 
 import json
-import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pylab
 
 
-def draw_velocity_profile_separately(velocity_list, ids):
-    """
-    draw velocity profile for all vehicle
-    :param velocity_list: a list of velocity list
-    :param ids: a list of string recording each vehicle's id
-    :return:
-    """
-    cols = 3
-    rows = math.ceil(len(velocity_list) / cols)
-
-    fig, axs = plt.subplots(rows + 1, cols)
-
-    for i in range(len(velocity_list)):
-        col = i % cols
-        row = i // cols
-
-        axs[row, col].plot(velocity_list[i])
-        axs[row, col].set_title('ID: %d' % ids[i])
-
-    for ax in axs.flat:
-        ax.set(xlabel='time per 0.1 s', ylabel='speed km/h')
-
-    for ax in axs.flat:
-        ax.label_outer()
-
-    plt.show()
-
-
-def draw_velocity_profile_single_plot(velocity_list, ids, title):
+def draw_velocity_profile_single_plot(velocity_list, show=False):
     """
     Draw velocity profiles in a single plot
-    :param title:
+    :param show:
     :param velocity_list:
-    :param ids:
     :return:
     """
+
+    label = []
 
     for i, v in enumerate(velocity_list):
         x_s = np.arange(len(v)) * 0.05
-        label = 'Vehicle, id: %d' % ids[i]
-        pylab.plot(x_s, v, label=label)
+        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
+        plt.plot(x_s, v)
 
-    pylab.title(title)
-    pylab.legend(loc=0)
-    pylab.show()
+    plt.ylim([10, 34])
+
+    plt.xlabel("Time (s)")
+    plt.ylabel("Speed (m/s)")
+    fig = plt.gcf()
+    fig.set_size_inches(11, 5)
+
+    if show:
+        plt.legend(label)
+        plt.show()
 
 
-def draw_intergap_profile_singel_plot(gap_list, ids, title):
+def draw_acceleration_profile_single_plot(acceleration, show=False):
+    """
+    Draw velocity profiles in a single plot
+    :param show:
+    :param acceleration:
+    :return:
+    """
+
+    label = []
+
+    for i, v in enumerate(acceleration):
+        x_s = np.arange(len(v)) * 0.05
+        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
+        plt.plot(x_s, v)
+
+    plt.ylim([-8, 5])
+
+    plt.xlabel("Time (s)")
+    plt.ylabel("Acceleration (m^2/s)")
+    fig = plt.gcf()
+    fig.set_size_inches(11, 5)
+
+    if show:
+        plt.legend(label)
+        plt.show()
+
+
+def draw_time_gap_profile_singel_plot(gap_list, show=False):
     """
     Draw inter gap profiles in a single plot
-    :param title:
-    :param gap_list:
-    :param ids:
+    :param gap_list: time gap
     :return:
     """
     # this is used to find the merging vehicle position since its inter gap length is always smaller
     max_len = max(len(gap_list[0]), len(gap_list[-1]))
+    label = []
 
     for i, v in enumerate(gap_list):
         if len(v) < max_len:
             x_s = np.arange(max_len - len(v), max_len) * 0.05
         else:
             x_s = np.arange(len(v)) * 0.05
+        plt.plot(x_s, v)
+        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
 
-        label = 'Vehicle, id: %d' % (ids[i] + 1)
-        pylab.plot(x_s, v, label=label)
+    plt.xlabel("Time (s)")
+    plt.ylabel("Time Gap (s)")
+    plt.ylim([0.0, 1.8])
+    fig = plt.gcf()
+    fig.set_size_inches(11, 5)
 
-    pylab.title(title)
-    pylab.legend(loc=0)
-    pylab.show()
+    if show:
+        plt.legend(label)
+        plt.show()
 
 
-def draw_intergap_profile_separately(gap_list, ids):
+def draw_dist_gap_profile_singel_plot(gap_list, show=False):
     """
-    draw velocity profile for all vehicle
-    :param gap_list: a list of velocity list
-    :param ids: a list of string recording each vehicle's id
+    Draw distance gap profiles in a single plot
+    :param gap_list: time gap
     :return:
     """
-    cols = 3
-    rows = math.ceil(len(gap_list) / cols)
+    # this is used to find the merging vehicle position since its inter gap length is always smaller
+    max_len = max(len(gap_list[0]), len(gap_list[-1]))
+    label = []
 
-    fig, axs = plt.subplots(rows + 1, cols)
+    for i, v in enumerate(gap_list):
+        if len(v) < max_len:
+            x_s = np.arange(max_len - len(v), max_len) * 0.05
+        else:
+            x_s = np.arange(len(v)) * 0.05
+        plt.plot(x_s, v)
+        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
 
-    for i in range(len(gap_list)):
-        col = i % cols
-        row = i // cols
+    plt.xlabel("Time (s)")
+    plt.ylabel("Distance Gap (m)")
+    plt.ylim([5, 45])
+    fig = plt.gcf()
+    fig.set_size_inches(11, 5)
 
-        axs[row, col].plot(gap_list[i])
-        axs[row, col].set_title('ID: %d' % ids[i])
+    if show:
+        plt.legend(label)
+        plt.show()
 
-    for ax in axs.flat:
-        ax.set(xlabel='time per 0.1 s', ylabel='time gap')
 
-    for ax in axs.flat:
-        ax.label_outer()
+def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list):
+    """
+    This is a specific function that draws 4 in 1 images for trajectory following task
+    :param distance_gap_list:
+    :param time_gap_list:
+    :param acceleration_list:
+    :param velocity_list:
+    :return:
+    """
+    fig = plt.figure(figsize=[2200,1000])
+    plt.subplot(411)
+    draw_velocity_profile_single_plot(velocity_list)
+
+    plt.subplot(412)
+    draw_acceleration_profile_single_plot(acceleration_list)
+
+    plt.subplot(413)
+    draw_time_gap_profile_singel_plot(time_gap_list)
+
+    plt.subplot(414)
+    draw_dist_gap_profile_singel_plot(distance_gap_list)
+
+    label = []
+    for i in range(1, len(velocity_list)+1):
+        label.append('Leading Vehicle, id: %d' % int(i - 1) if i == 1 else 'Following Vehicle, id: %d' % int(i - 1))
+
+    fig.legend(label, loc='upper right')
+    plt.get_current_fig_manager().window.showMaximized()
 
     plt.show()
 

@@ -89,6 +89,10 @@ class BehaviorAgent(Agent):
 
         # car following flag
         self.car_following_flag = False
+        # lane change allowed flag
+        self.lane_change_allowed = True
+        # destination temp push flag
+        self.destination_push_flag = False
 
         # this is only for co-simulation
         self.sumo2carla_dict = {}
@@ -135,11 +139,12 @@ class BehaviorAgent(Agent):
 
         self._platooning_world = world
 
-    def set_destination(self, start_location, end_location, clean=False):
+    def set_destination(self, start_location, end_location, clean=False, end_reset=True):
         """
         This method creates a list of waypoints from agent's position to destination location
         based on the route returned by the global router.
 
+            :param end_reset:
             :param start_location: initial position
             :param end_location: final position
             :param clean: boolean to clean the waypoint queue
@@ -150,9 +155,11 @@ class BehaviorAgent(Agent):
             self._local_planner._waypoint_buffer.clear()
 
         self.start_waypoint = self._map.get_waypoint(start_location)
-        self.end_waypoint = self._map.get_waypoint(end_location)
+        end_waypoint = self._map.get_waypoint(end_location)
+        if end_reset:
+            self.end_waypoint = end_waypoint
 
-        route_trace = self._trace_route(self.start_waypoint, self.end_waypoint)
+        route_trace = self._trace_route(self.start_waypoint, end_waypoint)
 
         self._local_planner.set_global_plan(route_trace, clean)
 
@@ -308,9 +315,9 @@ class BehaviorAgent(Agent):
                   % (self.vehicle.id, target_speed))
 
         # Actual safety distance area, try to follow the speed of the vehicle in front.
-        elif 3 * self.behavior.safety_time > ttc >= self.behavior.safety_time:
-            target_speed = min(max(self.min_speed, vehicle_speed),
-                              target_speed)
+        else:
+            target_speed = min(max(self.min_speed, vehicle_speed + 1),
+                               target_speed)
             print("vehicle id %d: car following keep speed mode, target speed %f"
                   % (self.vehicle.id, target_speed))
         return target_speed
@@ -380,6 +387,11 @@ class BehaviorAgent(Agent):
         ego_vehicle_loc = self.vehicle.get_location()
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
 
+        # destination temporary push to avoid collision during lane change
+        if self.destination_push_flag and len(self.get_local_planner().waypoints_queue) < 8:
+            self.set_destination(ego_vehicle_loc, self.end_waypoint.transform.location, clean=True)
+            self.destination_push_flag = False
+
         # 1: Red lights and stops behavior
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             return self.emergency_stop()
@@ -403,14 +415,18 @@ class BehaviorAgent(Agent):
         self.hazard_flag = True if is_hazard else False
 
         # the case that the vehicle is doing lane change as planned but found vehicle blocking on the other lane
-        if is_hazard \
-                and self.get_local_planner().lane_change \
-                and self.behavior.overtake_counter <= 0 \
-                and self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id != ego_vehicle_wp.lane_id:
+        if (is_hazard and self.get_local_planner().lane_change and self.behavior.overtake_counter <= 0
+            and self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id != ego_vehicle_wp.lane_id) \
+                or (not self.lane_change_allowed and self.get_local_planner().lane_id_change
+                    and not self.destination_push_flag):
 
-            reset_target = ego_vehicle_wp.next(get_speed(self.vehicle, True))[0]
+            reset_target = ego_vehicle_wp.next(get_speed(self.vehicle, True) * 3)[0]
             print('destination pushed forward because of potential collision')
-            self.set_destination(reset_target.transform.location, self.end_waypoint.transform.location, clean=True)
+
+            self.destination_push_flag = True
+            self.set_destination(ego_vehicle_loc, reset_target.transform.location, clean=True,
+                                 end_reset=False)
+
             rx, ry, rk, ryaw = self._local_planner.generate_path()
 
         # the case that vehicle is blocing in front and overtake not allowed or it is doing overtaking

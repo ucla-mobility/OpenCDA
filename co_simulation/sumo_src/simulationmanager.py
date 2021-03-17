@@ -291,7 +291,8 @@ class SimulationManager():
         """
         # TODO: This is a temp solution for adding vehicles in front of open platooning
         if 18.975 < time < 19.025:
-            traci.vehicle.moveToXY('flow_1.0', "-63.0.00", 0, 900, 450)
+            traci.vehicle.moveToXY('flow_1.0', "-63.0.00", 0, 900, 447)
+            traci.vehicle.setSpeed('flow_1.0', 26)
 
         allVehicles = traci.vehicle.getIDList()
         # Check mark vehicles as in-active if they are outside the map
