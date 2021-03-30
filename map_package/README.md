@@ -30,8 +30,6 @@ Locate the ```File``` tab at main toolbar in UE4 editor and select ```File → O
 
 ![image](https://user-images.githubusercontent.com/74442573/113051729-4ed8d880-9174-11eb-9753-dcfb87fd90f6.png)
 
-**Step four**
-
 Navigate the to the directory: ```Content/map_package/maps/<your_map_name>.umap```, and double click the ```.umap``` file to import the map. 
 
 
