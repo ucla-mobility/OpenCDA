@@ -203,8 +203,6 @@ class GFSController(object):
             elif -1.5 - 1.5 < veh_pos[1] < -1.5 + 1.5:
                 v_y = -1.5
             # find veh lane
-            # veh_lane = Y_ML.index(veh_pos[1])
-            v_y = -7.5
             veh_lane = Y_ML.index(v_y)
 
             lanes_cons = [Y_ML[a] for a in [veh_lane - 1, veh_lane, veh_lane + 1] if -1 < a < 3]
