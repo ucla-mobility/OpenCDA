@@ -56,9 +56,9 @@ class GFSController(object):
         vehicle_managers = [v_manager for v_manager in platooning_manager.vehicle_manager_list]
         # check y coordinates to make sure vehicle is in middle lane
         platoon_vehicles = [manager.vehicle for manager in vehicle_managers if
-                            abs(manager.vehicle.get_location().y - 7.5) < 1.5]
+                            abs(manager.vehicle.get_location().y - 4.5) < 1.5]
         platoon_vehicle_managers = [manager for manager in vehicle_managers if
-                                    abs(manager.vehicle.get_location().y - 7.5) < 1.5]
+                                    abs(manager.vehicle.get_location().y - 4.5) < 1.5]
 
         platoon_length = len(platoon_vehicles)
         # name should be vID
@@ -147,7 +147,7 @@ class GFSController(object):
     def getInputs2FIS(self, veh):
         # the Y_ML need to be more modular based on simulator difference
         # Y_ML = [-8.0,-4.8,-1.6] # these are the y-coordinates for mainline vehicles (3 lanes)
-        Y_ML = [-10.5, -7.5, -4.5]  # carla y coordinates for lane centers
+        Y_ML = [-7.5, -4.5, -1.5]  # carla y coordinates for lane centers
 
         veh_name = veh[1]
         # veh_edge = veh[2][veh_name][81]
@@ -195,16 +195,16 @@ class GFSController(object):
             # add more tolerance for y veh_pos
             # acc lane
             if -7.5 - 1.5 < veh_pos[1] < -7.5 + 1.5:
-                v_y = -10.5
+                v_y = -7.5
             # mid lane 
             elif -4.5 - 1.5 < veh_pos[1] < -4.5 + 1.5:
-                v_y = -7.5
+                v_y = -4.5
             # left lane 
             elif -1.5 - 1.5 < veh_pos[1] < -1.5 + 1.5:
-                v_y = -4.5
+                v_y = -1.5
             # find veh lane
             # veh_lane = Y_ML.index(veh_pos[1])
-            v_y = -10.5
+            v_y = -7.5
             veh_lane = Y_ML.index(v_y)
 
             lanes_cons = [Y_ML[a] for a in [veh_lane - 1, veh_lane, veh_lane + 1] if -1 < a < 3]
