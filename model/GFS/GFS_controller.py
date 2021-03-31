@@ -17,9 +17,9 @@ gfs_pl_speed output:
 4. des_speed_mg
 
 *** revision note: 
-1. Update all OpenDrive road ID to match with SUMO edge name
-2. UPdate all OpenDrive lane ID to match with SUMO lane ID 
-3. Update all OpenDrive y coordinate (for each lane) to match with SUMO. (CARLA and SUMO has reversed Y axis!)
+1. Update OpenDrive road ID to match with SUMO edge name
+2. UPdate OpenDrive lane ID to match with SUMO lane ID 
+3. Update OpenDrive y coordinate (for each lane) to match with SUMO. (CARLA and SUMO has reversed Y direction)
 
 """
 # Author: Xu Han <hanxu417@ucla.edu>
@@ -339,17 +339,17 @@ class GFSController(object):
             # vanished lane (-1 --> 0)
             output_ln = carla_ln + 1
         elif carla_edge == 29:
+        	# mainline two lanes (-1, -2 --> 2, 1)
             edge_name = ':gneJ6_0'  # this junction uses the same name in SUMO
-            # main two lanes (-1, -2 --> 2, 1)
             output_ln = carla_ln + 3
 
         # up-stream connector between upstream/merge and controlled area 
-        # merging lane (only one lane), mark as 0 (lane -1 in CARLA)
         elif carla_edge == 14:
+        	# merging lane (only one lane), mark as 0 (lane -1 in CARLA)
             edge_name = ':gneJ1_0'
             output_ln = 0 
-        # main two lanes (-1, -2 --> 1, 0)
         elif carla_edge == 19:
+        	# mainline two lanes (-1, -2 --> 1, 0)
             edge_name = ':gneJ1_1'
             output_ln = carla_ln + 2
         else:
@@ -395,8 +395,8 @@ class GFSController(object):
             # main two lanes (-2, -3 --> 1, 0)
             output_ln = carla_ln + 2
 
+        # prevent Null datatype
         else:
-            # prevent Null datatype
             output_ln = 0
         return output_ln
 
