@@ -4,19 +4,23 @@ gfs_pl_speed model included:
 1.  frontVeh, rearVeh = self.getBestMergePosition(vehicle,possiblePlatoon,fisMergeLoc) --> merger (mg)
 2.  des_speed = self.getDesiredSpeed(v,gfs_pl_speed_pl_speed) --> platoon leader (pl)
 3.  des_speed = self.getDesiredSpeed(v,gfs_pl_speed_m) --> merger 
-
 gfs_pl_speed input:
 1. controlled vehicle (pl, mg)
 2. possibleplatoon --> a possible platoon to join (platoon need to have all vehicle information)
 3. fisMergeLoc --> gfs_pl_speed model weight 
 4. gfs_pl_speed_pl_speed --> gfs_pl_speed model weight 
 5. gfs_pl_speed_m --> gfs_pl_speed model weight 
-
 gfs_pl_speed output:
 1. frontVeh_mg
 2. rearVeh_mg
 3. des_speed_pl
 4. des_speed_mg
+
+*** revision note: 
+1. Update OpenDrive road ID to match with SUMO edge name
+2. UPdate OpenDrive lane ID to match with SUMO lane ID 
+3. Update OpenDrive y coordinate (for each lane) to match with SUMO. (CARLA and SUMO has reversed Y direction)
+
 """
 # Author: Xu Han <hanxu417@ucla.edu>
 # License: MIT
@@ -52,9 +56,9 @@ class GFSController(object):
         vehicle_managers = [v_manager for v_manager in platooning_manager.vehicle_manager_list]
         # check y coordinates to make sure vehicle is in middle lane
         platoon_vehicles = [manager.vehicle for manager in vehicle_managers if
-                            abs(manager.vehicle.get_location().y - 7.5) < 1.5]
+                            abs(manager.vehicle.get_location().y - 4.5) < 1.5]
         platoon_vehicle_managers = [manager for manager in vehicle_managers if
-                                    abs(manager.vehicle.get_location().y - 7.5) < 1.5]
+                                    abs(manager.vehicle.get_location().y - 4.5) < 1.5]
 
         platoon_length = len(platoon_vehicles)
         # name should be vID
@@ -143,7 +147,7 @@ class GFSController(object):
     def getInputs2FIS(self, veh):
         # the Y_ML need to be more modular based on simulator difference
         # Y_ML = [-8.0,-4.8,-1.6] # these are the y-coordinates for mainline vehicles (3 lanes)
-        Y_ML = [-10.5, -7.5, -4.5]  # carla y coordinates for lane centers
+        Y_ML = [-7.5, -4.5, -1.5]  # carla y coordinates for lane centers
 
         veh_name = veh[1]
         # veh_edge = veh[2][veh_name][81]
@@ -188,19 +192,17 @@ class GFSController(object):
                 signals[3] = veh[2][veh_id_behind[0]][91]
 
         else:
-            # add more tolerance for veh_pos
-            if -10.5 - 1.5 < veh_pos[1] < -10.5 + 1.5:
-                # acc lane
-                v_y = -10.5
-            elif -7.5 - 1.5 < veh_pos[1] < -7.5 + 1.5:
-                # mid lane
+            # add more tolerance for y veh_pos
+            # acc lane
+            if -7.5 - 1.5 < veh_pos[1] < -7.5 + 1.5:
                 v_y = -7.5
+            # mid lane 
             elif -4.5 - 1.5 < veh_pos[1] < -4.5 + 1.5:
-                # left lane
                 v_y = -4.5
+            # left lane 
+            elif -1.5 - 1.5 < veh_pos[1] < -1.5 + 1.5:
+                v_y = -1.5
             # find veh lane
-            # veh_lane = Y_ML.index(veh_pos[1])
-            v_y = -10.5
             veh_lane = Y_ML.index(v_y)
 
             lanes_cons = [Y_ML[a] for a in [veh_lane - 1, veh_lane, veh_lane + 1] if -1 < a < 3]
@@ -299,52 +301,59 @@ class GFSController(object):
         return context
 
     def getLane(self, vehicle):
-        # cala: -1,-2,-3 vs SUMO: gneE0_0,gneE0_1,gneE0_2
+        '''
+        lane ID: cala: -1,-2,-3 vs SUMO: gneE0_0,gneE0_1,gneE0_2
+        CARLA count highway shoulder as lane -1, hence all CARLA lane ID need to addd -1
+        '''
         curr_map = vehicle.get_world().get_map()
         current_waypoint = curr_map.get_waypoint(vehicle.get_location())
         carla_ln = current_waypoint.lane_id
         carla_edge = current_waypoint.road_id
 
         # edges
-        if carla_edge == 63:
+        # upstream, including connectors at the beginning of the route
+        if carla_edge == 10 or carla_edge == 5 or carla_edge == 3:
             edge_name = 'gneE0'
-            # upstream (sumo: 0,1 --> carla: -2,-1)
-            output_ln = carla_ln + 2
-        elif carla_edge == 61:
+            # lane ID: sumo: 0,1 --> carla: -3,-2 
+            output_ln = carla_ln + 3
+        # merge lane, including connectors at the beginning of the route
+        elif carla_edge == 2 or carla_edge == 12 or carla_edge == 11:
             edge_name = 'gneE1'
-            # merge lane (sumo: 0 --> carla: -1)
-            output_ln = carla_ln + 1
-        elif carla_edge == 60:
-            edge_name = 'gneE4'
-            # merging area (sumo: 0,1,2 --> carla: -3,-2,-1)
-            output_ln = carla_ln + 3
-        elif carla_edge == 62:
-            edge_name = 'gneE5'
-            # down stream (sumo: 0,1 --> carla: -2,-1)
+            # merge lane: sumo: 0 --> carla: -2
             output_ln = carla_ln + 2
-        elif carla_edge == 64:
-            edge_name = 'gneE2'
-            output_lane = 0
-
-        # junctions
-        elif carla_edge == 65:
-            edge_name = ':gneJ6_0'
-            # (-1 --> 0)
-            output_ln = carla_ln + 1
-        elif carla_edge == 66:
-            edge_name = ':gneJ6_0'  # this junction uses the same name in SUMO
-            # (-1, -2 --> 2, 1)
+        # controlled area has one road with ID 1
+        elif carla_edge == 1:
+            edge_name = 'gneE4'
+            # merging area (sumo: 0,1,2 --> carla: -4,-3,-2)
+            output_ln = carla_ln + 4
+        # downstream, including connectors at the end of the route
+        elif carla_edge == 8 or carla_edge == 0 or carla_edge == 9:
+            edge_name = 'gneE5'
+            # down stream (sumo: 0,1 --> carla: -3,-2)
             output_ln = carla_ln + 3
-        elif carla_edge == 67:
-            edge_name = ':gneJ1_0'
-            # (-1 --> 0)
+
+        # junctions (connectors)
+        # down-stream connector between controlled area and downstream 
+        elif carla_edge == 25:
+            edge_name = ':gneJ6_0'
+            # vanished lane (-1 --> 0)
             output_ln = carla_ln + 1
-        elif carla_edge == 68:
+        elif carla_edge == 29:
+        	# mainline two lanes (-1, -2 --> 2, 1)
+            edge_name = ':gneJ6_0'  # this junction uses the same name in SUMO
+            output_ln = carla_ln + 3
+
+        # up-stream connector between upstream/merge and controlled area 
+        elif carla_edge == 14:
+        	# merging lane (only one lane), mark as 0 (lane -1 in CARLA)
+            edge_name = ':gneJ1_0'
+            output_ln = 0 
+        elif carla_edge == 19:
+        	# mainline two lanes (-1, -2 --> 1, 0)
             edge_name = ':gneJ1_1'
-            # (-1, -2 --> 1, 0)
             output_ln = carla_ln + 2
         else:
-            # extra edge to block acceleration lane (sumo: 0 --> carla: -1)
+            # prevent Null datatype
             output_ln = 0
             edge_name = 'None'
         lane_ID = edge_name + '_' + str(output_ln)
@@ -352,25 +361,43 @@ class GFSController(object):
 
     def getLaneIndex(self, vehicle):
         # carla: -1,-2,-3 vs SUMO: gneE0_0,gneE0_1,gneE0_2
+        # roads
         curr_map = vehicle.get_world().get_map()
         current_waypoint = curr_map.get_waypoint(vehicle.get_location())
         carla_ln = current_waypoint.lane_id
         carla_edge = current_waypoint.road_id
-        if carla_edge == 'gneE0':
-            # upstream (sumo: 0,1 --> carla: -2,-1)
-            output_ln = carla_ln + 2
-        elif carla_edge == 'gneE1':
-            # merge lane (sumo: 0 --> carla: -1)
-            output_ln = carla_ln + 1
-        elif carla_edge == 'gneE4':
-            # merging area (sumo: 0,1,2 --> carla: -3,-2,-1)
+        if carla_edge == 7 or carla_edge == 16 or carla_edge == 2: 
+            # upstream (sumo: 0,1 --> carla: -3,-2)
             output_ln = carla_ln + 3
-        elif carla_edge == 'gneE5':
-            # down stream (sumo: 0,1 --> carla: -2,-1)
+        elif carla_edge == 1 or carla_edge == 39 or carla_edge == 8:
+            # merge lane (sumo: 0 --> carla: -1)
             output_ln = carla_ln + 2
-        else:
-            # extra edge to block acceleration lane (sumo: 0 --> carla: -1)
+        elif carla_edge == 0:
+            # merging area (sumo: 0,1,2 --> carla: -3,-2,-1)
+            output_ln = carla_ln + 4
+        elif carla_edge == 5 or carla_edge == 46 or carla_edge == 6:
+            # down stream (sumo: 0,1 --> carla: -2,-1)
+            output_ln = carla_ln + 3
+
+        # junctions downstream 
+        elif carla_edge == 30:
+            # vanished lane (-1 --> 0)
             output_ln = carla_ln + 1
+        elif carla_edge == 34:
+            # main two lanes (-1, -2 --> 2, 1)
+            output_ln = carla_ln + 3
+
+        # junction upstream
+        elif carla_edge == 21 or carla_edge == 3:
+            # merging lane only one lane, mark as 0 (lane -2 or -4 in CARLA)
+            output_ln = 0 
+        elif carla_edge == 25 or carla_edge == 4:
+            # main two lanes (-2, -3 --> 1, 0)
+            output_ln = carla_ln + 2
+
+        # prevent Null datatype
+        else:
+            output_ln = 0
         return output_ln
 
     def getSignal(self, vehicle):
