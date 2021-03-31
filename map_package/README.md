@@ -6,7 +6,7 @@ This is the map package that contains all necessary files for RoadRunner customi
 
 Copy the entire "map_package" file to the following directory 
 ``` directory
-../carla/import/map_package
+../carla/import
 ```
 
 **Step two** 
