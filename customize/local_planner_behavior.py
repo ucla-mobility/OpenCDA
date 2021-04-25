@@ -5,7 +5,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-from core.agents.navigation.local_planner_behavior import LocalPlanner
+from core.plan.local_planner_behavior import LocalPlanner
 
 
 class CustomizedLocalPlanner(LocalPlanner):
