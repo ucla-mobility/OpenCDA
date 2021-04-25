@@ -38,7 +38,7 @@ def main():
 
         # Retrieve the world that is currently running
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        xodr_path = os.path.join(dir_path, '../../../assets/2lane_freeway_complete/map_v7.4_smooth_curve.xodr')
+        xodr_path = os.path.join(dir_path, '../../../assets/2lane_freeway_simplified/map_v7.4_smooth_curve.xodr')
 
         # load the world with our customized map
         world = load_customized_world(xodr_path, client)

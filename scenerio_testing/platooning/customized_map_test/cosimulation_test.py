@@ -218,8 +218,8 @@ def synchronization_loop(args):
     """
     # map file path
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    sumo_cfg_file = os.path.join(dir_path, '../../../assets/2lane_freeway_complete/map_v7.4_smooth_curve.sumocfg')
-    xodr_path = os.path.join(dir_path, '../../../assets/2lane_freeway_complete/map_v7.4_smooth_curve.xodr')
+    sumo_cfg_file = os.path.join(dir_path, '../../../assets/2lane_freeway_simplified/map_v7.4_smooth_curve.sumocfg')
+    xodr_path = os.path.join(dir_path, '../../../assets/2lane_freeway_simplified/map_v7.4_smooth_curve.xodr')
 
     sumo_simulation = SumoSimulation(sumo_cfg_file, args.step_length, args.sumo_host,
                                      args.sumo_port, args.sumo_gui, args.client_order)
