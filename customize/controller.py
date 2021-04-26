@@ -5,9 +5,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import carla
-
-from core.agents.navigation.controller import VehiclePIDController, PIDLongitudinalController, PIDLateralController
+from core.actuation.pid_controller import VehiclePIDController, PIDLongitudinalController, PIDLateralController
 
 
 def compute_pid(local_planner):

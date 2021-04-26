@@ -16,7 +16,7 @@ import logging
 import carla  # pylint: disable=import-error
 
 from co_simulation.sumo_integration.constants import INVALID_ACTOR_ID, SPAWN_OFFSET_Z
-from scenerios.customized_map_test.load_customized_world import load_customized_world
+from scenerio_testing.platooning.customized_map_test.load_customized_world import load_customized_world
 
 # ==================================================================================================
 # -- carla simulation ------------------------------------------------------------------------------
