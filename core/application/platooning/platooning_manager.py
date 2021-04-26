@@ -6,7 +6,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-from scenerio_testing.evaluation.profile_plotting import draw_sub_plot
+from scenerio_testing.utils.profile_plotting import draw_sub_plot
 
 
 class PlatooningManager(object):

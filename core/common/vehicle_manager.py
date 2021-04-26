@@ -20,14 +20,14 @@ class VehicleManager(object):
     A class manager to embed different modules with vehicle together
     """
 
-    def __init__(self, vehicle, world, behavior='normal', communication_range=35, update_freq=15,
+    def __init__(self, vehicle, world, behavior, communication_range=35, update_freq=15,
                  buffer_size=8, sample_resolution=4.5, cda_enabled=True, status=FSM.MAINTINING, time_ahead=1.1,
                  ignore_traffic_light=False, overtake_allowed=False, debug_trajectory=False, debug=False):
         """
         Construct class
         :param vehicle: carla Actor
         :param world: platooning world object
-        :param behavior: driving style.
+        :param behavior: behavior planning param, a dictionary
         :param communication_range:
         :param buffer_size: queue size for behavior planning
         :param sample_resolution: the minimum distance between any waypoint in the routing

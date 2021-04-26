@@ -8,6 +8,7 @@
 waypoints and avoiding other vehicles. The agent also responds to traffic lights,
 traffic signs, and has different possible configurations. """
 
+import collections
 import random
 
 import numpy as np
@@ -29,7 +30,7 @@ class BehaviorAgent(Agent):
     A modulized version of BehaviorAgent
     """
 
-    def __init__(self, vehicle, ignore_traffic_light=False, behavior='normal', overtake_allowed=False,
+    def __init__(self, vehicle, behavior, ignore_traffic_light=False, overtake_allowed=False,
                  sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, debug_trajectory=False,
                  debug=False, update_freq=15, time_ahead=1.5):
         """
@@ -77,7 +78,6 @@ class BehaviorAgent(Agent):
         self.light_id_to_ignore = -1
 
         self.min_speed = 5
-        self.behavior = None
         self._sampling_resolution = sampling_resolution
 
         # collision checker
@@ -98,14 +98,7 @@ class BehaviorAgent(Agent):
         self.sumo2carla_dict = {}
 
         # Parameters for agent behavior
-        if behavior == 'cautious':
-            self.behavior = Cautious()
-
-        elif behavior == 'normal':
-            self.behavior = Normal()
-
-        elif behavior == 'aggressive':
-            self.behavior = Aggressive()
+        self.behavior = collections.namedtuple("behavior", behavior.keys())(*behavior.values())
 
     def update_information(self, world, frontal_vehicle=None):
         """

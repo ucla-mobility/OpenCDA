@@ -15,8 +15,8 @@ from core.application.platooning.platooning_world import PlatooningWorld
 from core.application.platooning.platooning_manager import PlatooningManager
 from core.common.vehicle_manager import VehicleManager
 from core.application.platooning.fsm import FSM
-from scenerio_testing.platooning.customized_map_test import load_customized_world
-
+from scenerio_testing.utils.load_customized_world import load_customized_world
+from scenerio_testing.utils.yaml_utils import load_yaml
 
 def arg_parse():
     parser = argparse.ArgumentParser(description="Platooning Joining Settings")
@@ -44,6 +44,9 @@ def main():
         world = load_customized_world(xodr_path, client)
         if not world:
             sys.exit()
+
+        # load vehicle and platoon configuration
+        vehicle_params = load_yaml(os.path.join(dir_path,'../../yaml/vehicle_manager.yaml'))
 
         # used to recover the world back to async mode when the testing is done
         origin_settings = world.get_settings()
@@ -152,13 +155,18 @@ def main():
         platooning_world = PlatooningWorld()
 
         # setup managers
-        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, sample_resolution=4.5, buffer_size=12,
-                                           debug_trajectory=True, debug=False, ignore_traffic_light=True)
-        vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world, debug_trajectory=False, debug=False)
-        vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world, debug_trajectory=False, debug=False)
-        vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world, debug_trajectory=False, debug=False)
+        vehicle_manager_1 = VehicleManager(vehicle_1, platooning_world, behavior=vehicle_params['behavior'],
+                                           sample_resolution=4.5, buffer_size=12, debug_trajectory=True,
+                                           debug=False, ignore_traffic_light=True)
+        vehicle_manager_2 = VehicleManager(vehicle_2, platooning_world,  behavior=vehicle_params['behavior'],
+                                           debug_trajectory=False, debug=False)
+        vehicle_manager_3 = VehicleManager(vehicle_3, platooning_world,  behavior=vehicle_params['behavior'],
+                                           debug_trajectory=False, debug=False)
+        vehicle_manager_4 = VehicleManager(vehicle_4, platooning_world,  behavior=vehicle_params['behavior'],
+                                           debug_trajectory=False, debug=False)
 
-        vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world, status=FSM.SEARCHING, sample_resolution=4.5,
+        vehicle_manager_5 = VehicleManager(vehicle_5, platooning_world,  behavior=vehicle_params['behavior'],
+                                           status=FSM.SEARCHING, sample_resolution=4.5,
                                            buffer_size=12, debug_trajectory=True, debug=True, update_freq=15,
                                            overtake_allowed=True)
 

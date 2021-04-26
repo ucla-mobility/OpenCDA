@@ -12,7 +12,7 @@ import carla
 from core.application.platooning.platooning_world import PlatooningWorld
 from core.application.platooning.platooning_manager import PlatooningManager
 from core.common.vehicle_manager import VehicleManager
-from scenerio_testing.platooning.customized_map_test import load_customized_world
+from scenerio_testing.utils import load_customized_world
 
 
 def main():

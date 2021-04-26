@@ -10,15 +10,13 @@ import os
 import yaml
 
 
-def load_yaml(file, opt):
+def load_yaml(file):
     """
     load yaml file and return a dictionary
-    :param opt: parser options, we will need it if we are continue trainning a model
     :param file: yaml file path
-    :return: a dictionary that contains defined parmaters
+    :return: a dictionary that contains defined parameters
     """
-    if opt.model_dir:
-        file = os.path.join(opt.model_dir, 'config.yaml')
+
     stream = open(file, 'r')
     loader = yaml.SafeLoader
     loader.add_implicit_resolver(
