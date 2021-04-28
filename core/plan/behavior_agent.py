@@ -17,11 +17,10 @@ import traci
 
 from core.plan.collision_check import CollisionChecker
 from core.plan.agent import Agent
-from core.plan.local_planner_behavior import RoadOption
+from core.plan.local_planner_behavior import LocalPlanner, RoadOption
 from core.plan.global_route_planner import GlobalRoutePlanner
 from core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from core.common.misc import get_speed, positive
-from customize.local_planner_behavior import CustomizedLocalPlanner
 
 
 class BehaviorAgent(Agent):
@@ -29,75 +28,63 @@ class BehaviorAgent(Agent):
     A modulized version of BehaviorAgent
     """
 
-    def __init__(self, vehicle, behavior, ignore_traffic_light=False, overtake_allowed=False,
-                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, debug_trajectory=False,
-                 debug=False, update_freq=15, time_ahead=1.5):
+    def __init__(self, vehicle, config_yaml):
         """
         Construct class
-        :param vehicle: actor
-        :param ignore_traffic_light: whether to ignore certain traffic light
-        :param behavior: driving style
-        :param overtake_allowed: whether overtaking is allowed
-        :param sampling_resolution: the minimum distance between each waypoint
-        :param buffer_size: buffer size for local route
-        :param dynamic_pid; whether to use dynamic pid params generation. Set to true will require users
+        :param vehicle: carla actor
+        :param config_yaml: a dictionary containing all initialization params
         provide customized function under customize/controller
         """
 
         super(BehaviorAgent, self).__init__(vehicle)
 
         self.vehicle = vehicle
-        # the frontal vehicle manager in the platooning
+        # the frontal vehicle manager in the platooning TODO: Move this to platoon behavior agent
         self.frontal_vehicle = None
         self._platooning_world = None
 
-        self.ignore_traffic_light = ignore_traffic_light
+        # speed related, check yaml file to see the meaning
+        self.max_speed = config_yaml['max_speed']
+        self.tailgate_speed = config_yaml['tailgate_speed']
+        self.speed_lim_dist = config_yaml['speed_lim_dist']
+        self.speed_decrease = config_yaml['speed_decrease']
+        self.min_speed = 5
+
+        # safety related
+        self.safety_time = config_yaml['safety_time']
+        self.emergency_param = config_yaml['emergency_param']
+        self._collision_check = CollisionChecker(time_ahead=config_yaml['collision_time_ahead'])
+        self.ignore_traffic_light = config_yaml['ignore_traffic_light']
+        self.overtake_allowed = config_yaml['overtake_allowed']
+        self.overtake_counter = 0 #TODO: MODIFY THIS LATER
+        # used to indicate whether a vehicle is on the planned path
+        self.hazard_flag = False
+
+        # route planner related
         self.look_ahead_steps = 0
-
-        self._local_planner = CustomizedLocalPlanner(self, buffer_size=buffer_size, dynamic_pid=dynamic_pid,
-                                                     debug_trajectory=debug_trajectory, debug=debug,
-                                                     update_freq=update_freq)
         self._global_planner = None
-
-        # Vehicle information
-        self.speed = 0
-        self.speed_limit = 0
-        self.direction = None
-
-        # used for judging whether intersection is ahead
-        self.incoming_direction = None
-        self.incoming_waypoint = None
-
-        # save the vehicle's start and end point of the trip
         self.start_waypoint = None
         self.end_waypoint = None
+        self._sampling_resolution = config_yaml['sample_resolution']
 
-        self.is_at_traffic_light = 0
+        # intersection agent related
+        self.incoming_direction = None
+        self.incoming_waypoint = None
         self.light_state = "Green"
         self.light_id_to_ignore = -1
 
-        self.min_speed = 5
-        self._sampling_resolution = sampling_resolution
+        # trajectory planner
+        self._local_planner = LocalPlanner(self, config_yaml['local_planner'])
 
-        # collision checker
-        self._collision_check = CollisionChecker(time_ahead=time_ahead)
-        self.overtake_allowed = overtake_allowed
-
-        # emergency stop flag
-        self.hazard_flag = False
-
-        # car following flag
+        # special behavior rlated
         self.car_following_flag = False
         # lane change allowed flag
         self.lane_change_allowed = True
         # destination temp push flag
         self.destination_push_flag = False
 
-        # this is only for co-simulation
+        # this is only for co-simulation TODO: very hacky, modify it later
         self.sumo2carla_dict = {}
-
-        # Parameters for agent behavior
-        self.behavior = collections.namedtuple("behavior", behavior.keys())(*behavior.values())
 
     def update_information(self, world, frontal_vehicle=None):
         """
@@ -110,9 +97,6 @@ class BehaviorAgent(Agent):
         self.speed = get_speed(self.vehicle)
         self.speed_limit = self.vehicle.get_speed_limit()
         self._local_planner.set_speed(self.speed_limit)
-        self.direction = self._local_planner.target_road_option
-        if self.direction is None:
-            self.direction = RoadOption.LANEFOLLOW
 
         self.frontal_vehicle = frontal_vehicle
         self.look_ahead_steps = int(self.speed_limit / 10)
@@ -283,7 +267,7 @@ class BehaviorAgent(Agent):
             :return control: carla.VehicleControl
         """
         if not target_speed:
-            target_speed = self.behavior.max_speed - self.behavior.speed_lim_dist
+            target_speed = self.max_speed - self.speed_lim_dist
 
         # for co-simulation scene. Sumo created vehicles don't have speed saved in carla side
         if self._platooning_world.sumo2carla_ids:
@@ -300,8 +284,8 @@ class BehaviorAgent(Agent):
         delta_v = max(1, (self.speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / np.nextafter(0., 1.)
         # Under safety time distance, slow down.
-        if self.behavior.safety_time > ttc > 0.0:
-            target_speed = min(positive(vehicle_speed - self.behavior.speed_decrease),
+        if self.safety_time > ttc > 0.0:
+            target_speed = min(positive(vehicle_speed - self.speed_decrease),
                                target_speed)
             print("vehicle id %d: car following decreasing speed mode, target speed %f"
                   % (self.vehicle.id, target_speed))
@@ -345,7 +329,7 @@ class BehaviorAgent(Agent):
                                                          True)
             if not vehicle_state:
                 print("left overtake is operated")
-                self.behavior.overtake_counter = 35
+                self.overtake_counter = 35
                 self.set_destination(left_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
                 return vehicle_state
 
@@ -360,7 +344,7 @@ class BehaviorAgent(Agent):
                                                          True)
             if not vehicle_state:
                 print("right overtake is operated")
-                self.behavior.overtake_counter = 35
+                self.overtake_counter = 35
                 self.set_destination(right_wpt.transform.location, self.end_waypoint.transform.location, clean=True)
                 return vehicle_state
 
@@ -373,8 +357,8 @@ class BehaviorAgent(Agent):
         :param target_speed:  a manual order to achieve certain speed
         :return: control: carla.VehicleControl
         """
-        if self.behavior.overtake_counter > 0:
-            self.behavior.overtake_counter -= 1
+        if self.overtake_counter > 0:
+            self.overtake_counter -= 1
 
         ego_vehicle_loc = self.vehicle.get_location()
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
@@ -407,7 +391,7 @@ class BehaviorAgent(Agent):
         self.hazard_flag = True if is_hazard else False
 
         # the case that the vehicle is doing lane change as planned but found vehicle blocking on the other lane
-        if (is_hazard and self.get_local_planner().lane_change and self.behavior.overtake_counter <= 0
+        if (is_hazard and self.get_local_planner().lane_change and self.overtake_counter <= 0
             and self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id != ego_vehicle_wp.lane_id) \
                 or (not self.lane_change_allowed and self.get_local_planner().lane_id_change
                     and not self.destination_push_flag):
@@ -423,10 +407,10 @@ class BehaviorAgent(Agent):
 
         # the case that vehicle is blocing in front and overtake not allowed or it is doing overtaking
         # the second condistion is to prevent successive overtaking
-        elif is_hazard and (not self.overtake_allowed or self.behavior.overtake_counter > 0):
+        elif is_hazard and (not self.overtake_allowed or self.overtake_counter > 0):
             car_following_flag = True
 
-        elif is_hazard and self.overtake_allowed and self.behavior.overtake_counter <= 0:
+        elif is_hazard and self.overtake_allowed and self.overtake_counter <= 0:
             obstacle_speed = get_speed(obstacle_vehicle)
             # overtake the vehicle
             if get_speed(self.vehicle) > obstacle_speed:
@@ -439,7 +423,7 @@ class BehaviorAgent(Agent):
         else:
             self.car_following_flag = True
 
-            if distance < self.behavior.braking_distance:
+            if distance < self.braking_distance:
                 return self.emergency_stop()
 
             target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
@@ -450,12 +434,12 @@ class BehaviorAgent(Agent):
         if self.incoming_waypoint.is_junction and (
                 self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
             control = self._local_planner.run_step(rx, ry, rk,
-                                                   target_speed=min(self.behavior.max_speed, 24))
+                                                   target_speed=min(self.max_speed, 24))
             return control
 
         # 5. normal behavior
         control = self._local_planner.run_step(rx, ry, rk,
-                                               target_speed=self.behavior.max_speed - self.behavior.speed_lim_dist
+                                               target_speed=self.max_speed - self.speed_lim_dist
                                                if not target_speed else target_speed)
 
         return control

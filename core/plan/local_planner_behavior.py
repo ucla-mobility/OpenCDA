@@ -50,60 +50,51 @@ class LocalPlanner(object):
     # FPS used for dt
     FPS = 10
 
-    def __init__(self, agent, buffer_size=5, dynamic_pid=False, debug=False, debug_trajectory=False, update_freq=15):
+    def __init__(self, agent, config_yaml):
         """
         :param agent: agent that regulates the vehicle
-        :param buffer_size: the buffer size for waypoint
-        :param dynamic_pid: all pid parameters are dynamic based on surroundings,
-        which will require customized function supplied to compute
+        :param config_yaml: local planner configuration file
         """
-        # ego _vehicle
+        # ego_vehicle
         self._vehicle = agent.vehicle
-        # leading vehicle
-        self._frontal_vehicle = agent.frontal_vehicle
         self._map = agent.vehicle.get_world().get_map()
 
-        self.sampling_radius = None
-        self.target_waypoint = None
-        self.target_road_option = None
-
-        self._min_distance = None
+        # waypoint pop out thresholding
+        self._min_distance = config_yaml['min_dist']
+        self._buffer_size = config_yaml['buffer_size']
+        # TODO: Redudant, remove later
         self._current_waypoint = None
         self._target_speed = None
-        self._next_waypoints = None
-        self._vehicle_controller = None
-        self._global_plan = None
+
+        # TODO: pid controller should be outside
         self._pid_controller = None
 
         # global route
         self.waypoints_queue = deque(maxlen=20000)
-        self._buffer_size = buffer_size
-        # local route
+        # waypoint route
         self._waypoint_buffer = deque(maxlen=self._buffer_size)
-        # platooning following route
-        self._following_buffer = deque(maxlen=1000)
-
-        self._init_controller()
-        self.dynamic_pid = dynamic_pid
-
-        # trajectory point buffer
+        # trajectory buffer
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
-        self.update_freq = update_freq
+        self.trajectory_update_freq = config_yaml['trajectory_update_freq']
 
-        # lane change flag
+        # TODO: remove this later
+        self._init_controller()
+        self.dynamic_pid = False
+
+        # used to identify whether lane change is operated
         self.lane_change = False
         # In some corner cases, the id is not changed but we regard it as lane change due to large lateral diff
         self.lane_id_change = False
 
-        # controller param
+        # controller param TODO: remove this later
         self.max_throttle = 1.0
         self.max_break = 1.0
 
         # debug option
-        self.debug = debug
-        self.debug_trajectory = debug_trajectory
+        self.debug = config_yaml['debug']
+        self.debug_trajectory = config_yaml['debug_trajectory']
 
     def reset_vehicle(self):
         """Reset the ego-vehicle"""
@@ -152,8 +143,6 @@ class LocalPlanner(object):
 
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
 
-        self._global_plan = False
-
         self._target_speed = self._vehicle.get_speed_limit()
 
         self._min_distance = 3
@@ -185,8 +174,6 @@ class LocalPlanner(object):
                         self.waypoints_queue.popleft())
                 else:
                     break
-
-        self._global_plan = True
 
     def get_incoming_waypoint_and_direction(self, steps=3):
         """
@@ -427,16 +414,6 @@ class LocalPlanner(object):
                 else:
                     self._history_buffer.append(self._waypoint_buffer.popleft())
 
-        if self._following_buffer:
-            max_index = -1
-            for i, (waypoint, _) in enumerate(self._following_buffer):
-                if distance_vehicle(
-                        waypoint, vehicle_transform) < self._min_distance:
-                    max_index = i
-            if max_index >= 0:
-                for i in range(max_index + 1):
-                    self._following_buffer.popleft()
-
         if self._trajectory_buffer:
             max_index = -1
             for i, (waypoint, _, _, _) in enumerate(self._trajectory_buffer):
@@ -541,7 +518,7 @@ class LocalPlanner(object):
                     break
 
         # we will generate the trajectory only if it is not a following vehicle in the platooning
-        if not trajectory and len(self._trajectory_buffer) < self.update_freq and not following:
+        if not trajectory and len(self._trajectory_buffer) < self.trajectory_update_freq and not following:
             self._trajectory_buffer.clear()
             self.generate_trajectory(rx, ry, rk)
         elif trajectory:
@@ -586,7 +563,7 @@ class LocalPlanner(object):
                                   size=0.05,
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._trajectory_buffer, z=0.1, lt=0.05)
+                                  self._trajectory_buffer, z=0.1, lt=0.1)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),
