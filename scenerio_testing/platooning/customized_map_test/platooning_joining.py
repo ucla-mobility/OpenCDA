@@ -46,7 +46,7 @@ def main():
             sys.exit()
 
         # load vehicle and platoon configuration
-        vehicle_params = load_yaml(os.path.join(dir_path,'../../yaml/vehicle_manager.yaml'))
+        vehicle_params = load_yaml(os.path.join(dir_path,'../../yaml/platoon_joining_2lanefree_carla.yaml'))
 
         # used to recover the world back to async mode when the testing is done
         origin_settings = world.get_settings()

@@ -6,7 +6,6 @@ Used to load and write yaml files
 # License: MIT
 
 import re
-import os
 import yaml
 
 

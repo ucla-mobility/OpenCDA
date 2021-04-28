@@ -20,7 +20,6 @@ from core.plan.agent import Agent
 from core.plan.local_planner_behavior import RoadOption
 from core.plan.global_route_planner import GlobalRoutePlanner
 from core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
-from core.plan.types_behavior import Cautious, Aggressive, Normal
 from core.common.misc import get_speed, positive
 from customize.local_planner_behavior import CustomizedLocalPlanner
 
