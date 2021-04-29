@@ -91,7 +91,7 @@ def main():
                                                     carla.Rotation(pitch=-90)))
             for vm in vehicle_manager_list:
                 # TODO: Move this to vm instead of agent!
-                vm.agent.update_information(platooning_world)
+                vm.update_info(platooning_world)
                 control = vm.run_step()
                 # TODO: Embede apply control inside vm!
                 vm.vehicle.apply_control(control)

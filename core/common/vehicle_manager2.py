@@ -7,10 +7,9 @@ Basic class of CAV
 
 import uuid
 import weakref
-import statistics
 
-from core.application.platooning.platoon_behavior_agent import PlatooningBehaviorAgent
 from core.plan.behavior_agent import BehaviorAgent
+from core.actuation.pid_controller import VehiclePIDController
 
 
 class VehicleManager(object):
@@ -41,6 +40,9 @@ class VehicleManager(object):
         if application == 'single':
             self.agent = BehaviorAgent(vehicle, behavior_config)
 
+        # controller TODO: Add a wrapper class for all controller types
+        self.controller = VehiclePIDController(control_config['args'])
+
         # TODO: remove this later
         world.update_vehicle_manager(self)
         self.world = weakref.ref(world)()
@@ -53,6 +55,8 @@ class VehicleManager(object):
         :return:
         """
         self.agent.update_information(world, frontal_vehicle)
+        # TODO: should give output from localization module
+        self.controller.update_info(self.vehicle)
 
     def run_step(self, target_speed=None):
         """
@@ -60,7 +64,8 @@ class VehicleManager(object):
         :return:
         """
         # TODO: use a safer way to pass target speed
-        control = self.agent.run_step(target_speed)
+        target_speed, target_pos = self.agent.run_step(target_speed)
+        control = self.controller.run_step(target_speed, target_pos)
         return control
 
     def destroy(self):

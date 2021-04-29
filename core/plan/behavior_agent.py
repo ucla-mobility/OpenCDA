@@ -56,7 +56,7 @@ class BehaviorAgent(Agent):
         self._collision_check = CollisionChecker(time_ahead=config_yaml['collision_time_ahead'])
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
         self.overtake_allowed = config_yaml['overtake_allowed']
-        self.overtake_counter = 0 #TODO: MODIFY THIS LATER
+        self.overtake_counter = 0 # TODO: MODIFY THIS LATER
         # used to indicate whether a vehicle is on the planned path
         self.hazard_flag = False
 
