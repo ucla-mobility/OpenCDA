@@ -13,7 +13,6 @@ from core.sensing.localization.localization_manager import LocalizationManager
 from core.plan.behavior_agent import BehaviorAgent
 
 
-
 class VehicleManager(object):
     """
     A class manager to embed different modules with vehicle together

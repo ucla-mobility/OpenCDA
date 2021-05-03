@@ -20,33 +20,36 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     The behavior agent for platooning
     """
 
-    def __init__(self, vehicle, behavior, ignore_traffic_light=True, overtake_allowed=False,
-                 sampling_resolution=4.5, buffer_size=5, dynamic_pid=False, time_ahead=1.2,
-                 update_freq=15, debug_trajectory=True, debug=True):
+    def __init__(self, vehicle, v2x_manager, behavior_yaml, platoon_yaml):
         """
         Construct class
-        :param vehicle: actor
-        :param ignore_traffic_light: whether to ignore certain traffic light
-        :param behavior: driving style
-        :param sampling_resolution: the minimum distance between each waypoint
-        :param buffer_size: buffer size for local route
-        :param dynamic_pid; whether to use dynamic pid params generation. Set to true will require users
-        provide customized function under customize/controller
+        :param vehicle: carla actor
+        :param v2x_manager: communication manager
+        :param behavior_yaml: configure yaml file for normal behavior agent
+        :param platoon_yaml:  configure yaml file for platoon behavior agent
+        :return
         """
 
-        super(PlatooningBehaviorAgent, self).__init__(vehicle, behavior,ignore_traffic_light, overtake_allowed,
-                                                      sampling_resolution, buffer_size, dynamic_pid,
-                                                      debug_trajectory, debug, update_freq, time_ahead)
-        # used for control open gap gradually
-        self.current_gap = self.behavior.inter_gap
+        super(PlatooningBehaviorAgent, self).__init__(vehicle, behavior_yaml)
 
-        # used to see the average time gap between ego and frontal vehicle
+        self.v2x_manager = v2x_manager
+
+        # used for gap keeping
+        self.inter_gap = platoon_yaml['inter_gap']
+        # this is used to control gap opening during cooperative joining
+        self.current_gap = self.inter_gap
+
+        # used for merging vehicle
+        self.destination_changed = False
+
+        # merging vehicle needs to reach this speed before cooperative merge
+        self.warm_up_speed = platoon_yaml['warm_up_speed']
+
+        # used to calculate performance
         self.time_gap_list = []
         self.distance_gap_list = []
         self.velocity_list = []
         self.acceleration_list = []
-
-        self.destination_changed = False
 
     def calculate_gap(self, distance):
         """
