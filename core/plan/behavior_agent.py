@@ -61,7 +61,7 @@ class BehaviorAgent(Agent):
         self.hazard_flag = False
 
         # route planner related
-        self.look_ahead_steps = 0
+        self.look_ahead_steps = 3  # todo: hard coded
         self._global_planner = None
         self.start_waypoint = None
         self.end_waypoint = None
@@ -95,11 +95,7 @@ class BehaviorAgent(Agent):
             :param world: platooning world object
         """
         self.speed = get_speed(self.vehicle)
-        self.speed_limit = self.vehicle.get_speed_limit()
-        self._local_planner.set_speed(self.speed_limit)
-
         self.frontal_vehicle = frontal_vehicle
-        self.look_ahead_steps = int(self.speed_limit / 10)
 
         self.incoming_waypoint, self.incoming_direction = self._local_planner.get_incoming_waypoint_and_direction(
             steps=self.look_ahead_steps)

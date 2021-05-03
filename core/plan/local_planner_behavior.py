@@ -15,7 +15,6 @@ import numpy as np
 
 from core.common.misc import distance_vehicle, draw_trajetory_points, get_speed, cal_distance_angle
 from core.plan.spline import Spline2D
-from customize.controller import compute_pid, CustomizedVehiclePIDController
 
 
 class RoadOption(Enum):
@@ -64,7 +63,6 @@ class LocalPlanner(object):
         self._buffer_size = config_yaml['buffer_size']
         # TODO: Redudant, remove later
         self._current_waypoint = None
-        self._target_speed = None
 
         # TODO: pid controller should be outside
         self._pid_controller = None
@@ -96,15 +94,6 @@ class LocalPlanner(object):
         """Reset the ego-vehicle"""
         self._vehicle = None
         print("Resetting ego-vehicle!")
-
-    def set_speed(self, speed):
-        """
-        Request new target speed.
-
-            :param speed: new target speed in km/h
-        """
-
-        self._target_speed = speed
 
     def set_global_plan(self, current_plan, clean=False):
         """
@@ -234,8 +223,8 @@ class LocalPlanner(object):
                 y.append(current_location.y)
 
         # used to filter the waypoints that are too close
-        prev_x = x[max(0, index-1)] if self.lane_change else x[index]
-        prev_y = y[max(0,index-1)] if self.lane_change else y[index]
+        prev_x = x[max(0, index - 1)] if self.lane_change else x[index]
+        prev_y = y[max(0, index - 1)] if self.lane_change else y[index]
         for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
@@ -389,10 +378,7 @@ class LocalPlanner(object):
             :return: control
         """
 
-        if target_speed is not None:
-            self._target_speed = target_speed
-        else:
-            self._target_speed = self._vehicle.get_speed_limit()
+        self._target_speed = target_speed
 
         if len(self.waypoints_queue) == 0:
             control = carla.VehicleControl()

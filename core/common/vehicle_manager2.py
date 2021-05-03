@@ -8,8 +8,10 @@ Basic class of CAV
 import uuid
 import weakref
 
-from core.plan.behavior_agent import BehaviorAgent
 from core.actuation.pid_controller import VehiclePIDController
+from core.sensing.localization.localization_manager import LocalizationManager
+from core.plan.behavior_agent import BehaviorAgent
+
 
 
 class VehicleManager(object):
@@ -19,7 +21,7 @@ class VehicleManager(object):
 
     def __init__(self, vehicle, config_yaml, application, world):
         """
-        Construction class
+        Construction class todo: multiple application can be activated at the same time
         :param vehicle: carla actor
         :param config_yaml: a dictionary that contains the parameters of the vehicle
         :param application: application category, support:['single','platoon'] currently
@@ -35,9 +37,13 @@ class VehicleManager(object):
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
 
+        # localization module
+        self.localizer = LocalizationManager(vehicle, sensing_config['localization'])
+
         # behavior agent
         self.agent = None
         if application == 'single':
+            # todo: remove the vehicle
             self.agent = BehaviorAgent(vehicle, behavior_config)
 
         # controller TODO: Add a wrapper class for all controller types
@@ -49,18 +55,23 @@ class VehicleManager(object):
 
     def update_info(self, world, frontal_vehicle=None):
         """
-        Update the world and platooning information
+        Call perception and localization module to retrieve surrounding info an ego position.
         :param world:
         :param frontal_vehicle:
         :return:
         """
+        # localization
+        self.localizer.localize()
+        ego_pos = self.localizer.get_ego_pos()
+        ego_spd = self.localizer.get_ego_spd()
+
         self.agent.update_information(world, frontal_vehicle)
         # TODO: should give output from localization module
-        self.controller.update_info(self.vehicle)
+        self.controller.update_info(ego_pos, ego_spd)
 
     def run_step(self, target_speed=None):
         """
-        Execute one step of navigation based on platooning status
+        Execute one step of navigation.
         :return:
         """
         # TODO: use a safer way to pass target speed

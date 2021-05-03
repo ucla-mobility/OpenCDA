@@ -2,9 +2,12 @@
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
-  sensing: &base_sensing # perception realted
-    activate: false
-  behavior: &base_behavior # behavior related
+  sensing: &base_sensing
+    perception: &base_perception
+      activate: false # perception module is not necessary
+    localization: &base_localize
+      activate: false # localization module is not necessary
+  behavior: &base_behavior
     max_speed: 111 # maximum speed, km/h
     tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
@@ -23,7 +26,7 @@ vehicle_base: &vehicle_base
       min_dist: 3 # used to pop out the waypoints too close to current location
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
-  controller: &base_controller # control related
+  controller: &base_controller
     type: pid_controller # this has to be exactly the same name as the controller py file
     args:
       lat:

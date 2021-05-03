@@ -65,15 +65,15 @@ class VehiclePIDController:
         """
         pass
 
-    def update_info(self, vehicle):
+    def update_info(self, ego_pos, ego_spd):
         """
         TODO: Use Localization module later
-        :param vehicle:
+        :param ego_pos: ego position, carla.transform
+        :param ego_spd: ego speed, km/h
         :return:
         """
-        self.current_transform = vehicle.get_transform()
-        self.current_speed = get_speed(vehicle)
-        self.past_steering = vehicle.get_control().steer
+        self.current_transform = ego_pos
+        self.current_speed = ego_spd
         if self.dynamic:
             self.dynamic_pid()
 
