@@ -60,7 +60,10 @@ class PlatooningManager(object):
         :return:
         """
         self.vehicle_manager_list.append(vehicle_manager)
-        vehicle_manager.set_platooning(self, self.pmid, len(self.vehicle_manager_list)-1, False)
+        vehicle_manager.v2x_manager.set_platoon(len(self.vehicle_manager_list)-1,
+                                                platooning_object=self,
+                                                platooning_id=self.pmid,
+                                                leader=False)
 
     def set_member(self, vehicle_manager, index, lead=False):
         """
@@ -71,7 +74,22 @@ class PlatooningManager(object):
         :return:
         """
         self.vehicle_manager_list.insert(index, vehicle_manager)
-        vehicle_manager.set_platooning(self, self.pmid, index, lead)
+        vehicle_manager.v2x_manager.set_platoon(index,
+                                                platooning_object=self,
+                                                platooning_id=self.pmid,
+                                                leader=lead)
+
+    def update_member_order(self):
+        """
+        Update the members' front and rear vehicle.
+        This should be called whenever new member added to the platoon list
+        :return:
+        """
+        for i, vm in enumerate(self.vehicle_manager_list):
+            if i != 0:
+                vm.v2x_manager.set_platoon_front(self.vehicle_manager_list[i-1])
+            if i != len(self.vehicle_manager_list)-1:
+                vm.v2x_manager.set_platoon_rear(self.vehicle_manager_list[i+1])
 
     def set_controller_longitudinal(self, max_throttle, max_brake):
         """
