@@ -51,6 +51,7 @@ vehicle_base: &vehicle_base
 platoon_base: &platoon_base
   max_capacity: 10
   inter_gap: 0.6 # desired time gap
+  open_gap: 1.8 # open gap
   warm_up_speed: 75 # required speed before cooperative merging
 
 # define carla simulation setting
@@ -68,6 +69,8 @@ scenario:
       members: # the first one is regarded as leader by default
         - <<: *vehicle_base
           spawn_position: [-650, 7.5, 0.3] # please refer to assets to see the coordinates
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
           behavior:
             local_planner:
               <<: *base_local_planner
@@ -75,10 +78,16 @@ scenario:
               debug: true
         - <<: *vehicle_base
           spawn_position: [-660, 7.5, 0.3]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
         - <<: *vehicle_base
           spawn_position: [-670, 7.5, 0.3]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
         - <<: *vehicle_base
           spawn_position: [-680, 7.5, 0.3]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
       spawn_position: [-720, 7.5, 0.3]
@@ -86,6 +95,8 @@ scenario:
       v2x:
         <<: *base_v2x
         communication_range: 45
+      platoon: # we need to add platoon specific params
+        <<: *platoon_base
       behavior:
         local_planner:
           <<: *base_local_planner
