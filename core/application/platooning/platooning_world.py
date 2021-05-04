@@ -3,6 +3,7 @@
 """Platooning World Object to save all platooning-related object
 """
 
+
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
@@ -50,10 +51,16 @@ class PlatooningWorld(object):
         """
         self.sumo2carla_ids = sumo2carla_ids
 
-
     def get_vehicle_managers(self):
         """
         Return vehicle manager dictionary
         :return:
         """
         return self._vehicle_manager_dict
+
+    def get_platoon_dict(self):
+        """
+        Return existing platoons
+        :return:
+        """
+        return self._platooning_dict
