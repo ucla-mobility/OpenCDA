@@ -9,9 +9,9 @@ import uuid
 import weakref
 
 from core.actuation.pid_controller import VehiclePIDController
+from core.common.v2x_manager import V2XManager
 from core.sensing.localization.localization_manager import LocalizationManager
 from core.plan.behavior_agent import BehaviorAgent
-
 
 class VehicleManager(object):
     """
@@ -36,11 +36,13 @@ class VehicleManager(object):
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
 
+        # v2x module
+        self.v2x_manager = V2XManager(v2x_config)
         # localization module
         self.localizer = LocalizationManager(vehicle, sensing_config['localization'])
-
         # behavior agent
         self.agent = None
+
         if application == 'single':
             # todo: remove the vehicle
             self.agent = BehaviorAgent(vehicle, behavior_config)
@@ -48,7 +50,7 @@ class VehicleManager(object):
         # controller TODO: Add a wrapper class for all controller types
         self.controller = VehiclePIDController(control_config['args'])
 
-        # TODO: remove this later
+        # TODO: remove this later. This is a wrong implmentation, cda disabled shouldn't be added to it
         world.update_vehicle_manager(self)
         self.world = weakref.ref(world)()
 
@@ -65,7 +67,7 @@ class VehicleManager(object):
         ego_spd = self.localizer.get_ego_spd()
 
         self.agent.update_information(world, frontal_vehicle)
-        # TODO: should give output from localization module
+        # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
 
     def run_step(self, target_speed=None):
