@@ -34,6 +34,27 @@ class PlatooningPlugin(object):
         self.in_id = None
         self.status = None
 
+        # ego speed and position
+        self.ego_pos = None
+        self.ego_spd = None
+
+        # the platoon in the black list won't be considered again
+        self.platooning_blacklist = []
+
+        # used to label the front and rear vehicle position
+        self.front_vehicle = None
+        self.rear_vechile = None
+
+    def update_info(self, ego_pos, ego_spd):
+        """
+        Update the ego position and speed
+        :param ego_pos: ego position, carla.Transform
+        :param ego_spd: ego speed, km/h
+        :return:
+        """
+        self.ego_pos = ego_pos
+        self.ego_spd = ego_spd
+
     def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
         """
         Set platooning status
@@ -50,8 +71,12 @@ class PlatooningPlugin(object):
             else:
                 self.set_status(FSM.SEARCHING)
 
-        self.platooning_object = platooning_object
-        self.platooning_id = platooning_id
+        # the case where platoon stays the same but member position changed
+        if platooning_object:
+            self.platooning_object = platooning_object
+        if platooning_id:
+            self.platooning_id = platooning_id
+
         self.in_id = in_id
         if leader:
             self.leader = leader
@@ -66,3 +91,62 @@ class PlatooningPlugin(object):
         :return:
         """
         self.status = status
+
+    def search_platoon(self, ego_pos, platooning_world):
+        """
+        Search platoon candidate in the range
+        :param ego_pos:
+        :param platooning_world:
+        :return: the uuid of platoon member, platoon object
+        """
+        platoon_manager_dict = platooning_world.get_vehicle_managers()
+        for pmid, pm in platoon_manager_dict.items():
+            distance = compute_distance(ego_pos, pm.center_loc)
+            if distance < self.search_range:
+                return pmid, pm
+        return None, None
+
+    def match_platoon(self, platooning_world):
+        """
+        A naive way to find the best position to join a platoon
+        :param platooning_world: an object containing all existing platoons
+        :return: platoon found or not, closest platoon member team id
+        """
+
+        cur_loc = self.ego_pos.get_location()
+        cur_yaw = self.ego_pos.get_transform().rotation.yaw
+
+        pmid, pm = self.search_platoon(cur_loc, platooning_world)
+
+        if not pmid or pmid in self.platooning_blacklist:
+            return False, -1
+
+        # used to search the closest platoon member in the searched platoon
+        min_distance = float('inf')
+        min_index = -1
+        min_angle = 0
+
+        # if the platooning is not open to joining
+        if not pm.response_joining_request():
+            return False, -1
+
+        for (i, vehicle_manager) in enumerate(pm.vehicle_manager_list):
+            distance, angle = cal_distance_angle(vehicle_manager.vehicle.get_location(),
+                                                 cur_loc, cur_yaw)
+            if distance < min_distance:
+                min_distance = distance
+                min_index = i
+                min_angle = angle
+
+        # if the ego is in front of the platooning
+        if min_index == 0 and min_angle > 90:
+            self.front_vehicle = None
+            self.rear_vechile = pm.vehicle_manager_list[0]
+            return True, min_index
+
+        self.front_vehicle = pm.vehicle_manager_list[min_index]
+
+        if min_index < len(pm.vehicle_manager_list) - 1:
+            self.rear_vechile = pm.vehicle_manager_list[min_index + 1]
+
+        return True, min_index
