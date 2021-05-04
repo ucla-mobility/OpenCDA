@@ -375,21 +375,15 @@ class LocalPlanner(object):
             :param following: whether the vehicle is under following status
             :param trajectory: pre-generated trajectory only for following vehicles in the platooning
             :param target_speed: desired speed
-            :return: control
+            :return: next trajectory point's target speed and waypoint
         """
 
         self._target_speed = target_speed
 
         if len(self.waypoints_queue) == 0:
-            control = carla.VehicleControl()
-            control.steer = 0.0
-            control.throttle = 0.0
-            control.brake = 1.0
-            control.hand_brake = False
-            control.manual_gear_shift = False
-            return control
+            return 0, None
 
-        # Buffering the waypoints. Always keep the waypoint buffer alive
+        # Buffering the waypoints. Always keep the waypoint buffer alive todo:remove the hard coded
         if len(self._waypoint_buffer) < 9:
             for i in range(self._buffer_size - len(self._waypoint_buffer)):
                 if self.waypoints_queue:
