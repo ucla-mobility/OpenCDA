@@ -53,10 +53,12 @@ class BehaviorAgent(Agent):
         # safety related
         self.safety_time = config_yaml['safety_time']
         self.emergency_param = config_yaml['emergency_param']
+        self.break_distance = 0
+        # collision checker
         self._collision_check = CollisionChecker(time_ahead=config_yaml['collision_time_ahead'])
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
         self.overtake_allowed = config_yaml['overtake_allowed']
-        self.overtake_counter = 0 # TODO: MODIFY THIS LATER
+        self.overtake_counter = 0  # TODO: MODIFY THIS LATER
         # used to indicate whether a vehicle is on the planned path
         self.hazard_flag = False
 
@@ -92,9 +94,11 @@ class BehaviorAgent(Agent):
         vehicle based on the surrounding world.
 
             :param frontal_vehicle: the vehicle manager in front in the platooning
-            :param world: platooning world object
+            :param world: platooning world object todo:remove this later
         """
         self.speed = get_speed(self.vehicle)
+        self.break_distance = self.speed/3.6 * self.emergency_param
+
         self.frontal_vehicle = frontal_vehicle
 
         self.incoming_waypoint, self.incoming_direction = self._local_planner.get_incoming_waypoint_and_direction(
@@ -364,9 +368,9 @@ class BehaviorAgent(Agent):
             self.set_destination(ego_vehicle_loc, self.end_waypoint.transform.location, clean=True)
             self.destination_push_flag = False
 
-        # 1: Red lights and stops behavior
+        # 1: Red lights and stops behavior todo:modify this
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
-            return self.emergency_stop()
+            return 0, None
 
         # 2: generated plan path first
         rx, ry, rk, ryaw = self._local_planner.generate_path()
@@ -419,23 +423,23 @@ class BehaviorAgent(Agent):
         else:
             self.car_following_flag = True
 
-            if distance < self.braking_distance:
-                return self.emergency_stop()
+            if distance < self.break_distance:
+                return 0, None
 
             target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
-            control = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
-            return control
+            target_speed, target_loc = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
+            return target_speed, target_loc
 
         # 4. Checking if there's a junction nearby to slow down TODO: This is a very ROUGH WAY for now
         if self.incoming_waypoint.is_junction and (
                 self.incoming_direction == RoadOption.LEFT or self.incoming_direction == RoadOption.RIGHT):
-            control = self._local_planner.run_step(rx, ry, rk,
+            target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
                                                    target_speed=min(self.max_speed, 24))
-            return control
+            return target_speed, target_loc
 
         # 5. normal behavior
-        control = self._local_planner.run_step(rx, ry, rk,
+        target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
                                                target_speed=self.max_speed - self.speed_lim_dist
                                                if not target_speed else target_speed)
 
-        return control
+        return target_speed, target_loc
