@@ -40,7 +40,6 @@ class BehaviorAgent(Agent):
 
         self.vehicle = vehicle
         # the frontal vehicle manager in the platooning TODO: Move this to platoon behavior agent
-        self.frontal_vehicle = None
         self._platooning_world = None
 
         # speed related, check yaml file to see the meaning
@@ -88,18 +87,14 @@ class BehaviorAgent(Agent):
         # this is only for co-simulation TODO: very hacky, modify it later
         self.sumo2carla_dict = {}
 
-    def update_information(self, world, frontal_vehicle=None):
+    def update_information(self, world):
         """
         This method updates the information regarding the ego
         vehicle based on the surrounding world.
-
-            :param frontal_vehicle: the vehicle manager in front in the platooning
             :param world: platooning world object todo:remove this later
         """
         self.speed = get_speed(self.vehicle)
         self.break_distance = self.speed/3.6 * self.emergency_param
-
-        self.frontal_vehicle = frontal_vehicle
 
         self.incoming_waypoint, self.incoming_direction = self._local_planner.get_incoming_waypoint_and_direction(
             steps=self.look_ahead_steps)

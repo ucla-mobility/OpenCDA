@@ -64,12 +64,13 @@ class PlatooningPlugin(object):
         :param leader: indicate whether this cav is a leader in platoon
         :return:
         """
-        if not in_id:
+        if in_id is None:
             if not self.cda_enabled:
                 self.set_status(FSM.DISABLE)
                 warnings.warn("CDA feature is disabled, can not activate platooning application ")
             else:
                 self.set_status(FSM.SEARCHING)
+            return
 
         # the case where platoon stays the same but member position changed
         if platooning_object:
@@ -99,7 +100,7 @@ class PlatooningPlugin(object):
         :param platooning_world:
         :return: the uuid of platoon member, platoon object
         """
-        platoon_manager_dict = platooning_world.get_vehicle_managers()
+        platoon_manager_dict = platooning_world.get_platoon_dict()
         for pmid, pm in platoon_manager_dict.items():
             distance = compute_distance(ego_pos, pm.center_loc)
             if distance < self.search_range:
@@ -116,8 +117,8 @@ class PlatooningPlugin(object):
         self.front_vehicle = None
         self.rear_vechile = None
 
-        cur_loc = self.ego_pos.get_location()
-        cur_yaw = self.ego_pos.get_transform().rotation.yaw
+        cur_loc = self.ego_pos.location
+        cur_yaw = self.ego_pos.rotation.yaw
 
         pmid, pm = self.search_platoon(cur_loc, platooning_world)
 

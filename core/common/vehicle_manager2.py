@@ -9,16 +9,18 @@ import uuid
 import weakref
 
 from core.actuation.pid_controller import VehiclePIDController
+from core.application.platooning.platoon_behavior_agent import PlatooningBehaviorAgent
 from core.common.v2x_manager import V2XManager
 from core.sensing.localization.localization_manager import LocalizationManager
 from core.plan.behavior_agent import BehaviorAgent
+
 
 class VehicleManager(object):
     """
     A class manager to embed different modules with vehicle together
     """
 
-    def __init__(self, vehicle, config_yaml, application, world):
+    def __init__(self, vehicle, config_yaml, application, world=None):
         """
         Construction class todo: multiple application can be activated at the same time
         :param vehicle: carla actor
@@ -43,7 +45,11 @@ class VehicleManager(object):
         # behavior agent
         self.agent = None
 
-        if application == 'single':
+        if 'platooning' in application:
+            platoon_config = config_yaml['platoon']
+            self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
+                                                 behavior_config, platoon_config, world)
+        else:
             # todo: remove the vehicle
             self.agent = BehaviorAgent(vehicle, behavior_config)
 
@@ -54,7 +60,7 @@ class VehicleManager(object):
         world.update_vehicle_manager(self)
         self.world = weakref.ref(world)()
 
-    def update_info(self, world, frontal_vehicle=None):
+    def update_info(self, world):
         """
         Call perception and localization module to retrieve surrounding info an ego position.
         :param world:
@@ -66,7 +72,8 @@ class VehicleManager(object):
         ego_pos = self.localizer.get_ego_pos()
         ego_spd = self.localizer.get_ego_spd()
 
-        self.agent.update_information(world, frontal_vehicle)
+        self.v2x_manager.update_info(ego_pos, ego_spd)
+        self.agent.update_information(world)
         # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
 

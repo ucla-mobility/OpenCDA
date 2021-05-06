@@ -21,7 +21,7 @@ class V2XManager(object):
         :param config_yaml: configuration yaml file
         """
         # if disabled, no cooperation will be operated
-        self.cda_enabled = config_yaml['cda_enabled']
+        self.cda_enabled = config_yaml['enabled']
         self.communication_range = config_yaml['communication_range']
 
         # used for cooperative perception.

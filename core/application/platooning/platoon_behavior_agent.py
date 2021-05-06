@@ -132,6 +132,14 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
             return target_speed, target_waypoint
 
+        # case 6: leading vehicle behavior
+        if status == FSM.LEADING_MODE:
+            return super().run_step(target_speed, collision_detector_enabled)
+
+        # case7: maintaining status
+        if status == FSM.MAINTINING:
+            return self.run_step_maintaining()
+
     def joining_finish_manager(self, insert_vehicle='front'):
         """
         Called when a joining is finish to update the platoon manager list.
@@ -460,6 +468,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return v.get_location().distance(ego_vehicle_loc)
 
         # only consider vehicles in 45 meters, not in the platooning as the candidate of collision
+        # todo: this is ugly
         vehicle_list = [v for v in vehicle_list if dist(v) < 60 and
                         v.id != self.vehicle.id and
                         v.id not in self._platooning_world.vehicle_id_set]
