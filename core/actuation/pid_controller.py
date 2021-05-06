@@ -135,12 +135,19 @@ class VehiclePIDController:
             :param waypoint: target location encoded as a waypoint
             :return: control command
         """
+        # control class for carla vehicle
+        control = carla.VehicleControl()
+
+        # emergency stop
+        if target_speed==0 or waypoint==None:
+            control.steer = 0.0
+            control.throttle = 0.0
+            control.brake = 1.0
+            control.hand_brake = False
+            return control
 
         acceleration = self.lon_run_step(target_speed)
         current_steering = self.lat_run_step(waypoint)
-
-        # control class for carla vehicle
-        control = carla.VehicleControl()
 
         if acceleration >= 0.0:
             control.throttle = min(acceleration, self.max_throttle)
