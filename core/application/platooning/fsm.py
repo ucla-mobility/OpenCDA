@@ -20,4 +20,5 @@ class FSM(Enum):
     FRONT_JOINING = 7
     JOINING_FINISHED = 8
     LEADING_MODE = 9
-    DISABLE = 10
+    ABONDON = 10
+    DISABLE = 11

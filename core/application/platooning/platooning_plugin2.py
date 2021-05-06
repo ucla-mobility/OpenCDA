@@ -112,6 +112,9 @@ class PlatooningPlugin(object):
         :param platooning_world: an object containing all existing platoons
         :return: platoon found or not, closest platoon member team id
         """
+        # make sure the previous status won't influence current one
+        self.front_vehicle = None
+        self.rear_vechile = None
 
         cur_loc = self.ego_pos.get_location()
         cur_yaw = self.ego_pos.get_transform().rotation.yaw
