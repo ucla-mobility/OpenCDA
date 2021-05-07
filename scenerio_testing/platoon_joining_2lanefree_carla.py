@@ -11,8 +11,9 @@ import sys
 
 import carla
 
-from core.common.vehicle_manager2 import VehicleManager
+from core.application.platooning.platooning_manager import PlatooningManager
 from core.application.platooning.platooning_world import PlatooningWorld
+from core.common.vehicle_manager2 import VehicleManager
 from scenerio_testing.utils.yaml_utils import load_yaml
 from scenerio_testing.utils.load_customized_world import load_customized_world
 
@@ -54,52 +55,54 @@ def main():
 
         cav_vehicle_bp = world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
 
-        vehicle_manager_list = []
-        # TODO: Remove this later
+        platoon_list = []
+        single_cav_list = []
         platooning_world = PlatooningWorld()
 
-        # create corresponding vehicle managers
-        for i, cav in enumerate(scenario_params['scenario']['single_cav_list']):
-            spawn_transform = carla.Transform(carla.Location(x=cav['spawn_position'][0],
-                                                             y=cav['spawn_position'][1],
-                                                             z=cav['spawn_position'][2]),
-                                              carla.Rotation(pitch=0, yaw=0, roll=0))
-            destination = carla.Transform(carla.Location(x=cav['destination'][0],
-                                                         y=cav['destination'][1],
-                                                         z=cav['destination'][2]),
-                                          carla.Rotation(pitch=0, yaw=0, roll=0))
+        # create platoons
+        for i, platoon in enumerate(scenario_params['scenario']['platoon_list']):
+            platoon_manager = PlatooningManager(platoon, platooning_world)
+            for j, cav in enumerate(platoon['members']):
+                spawn_transform = carla.Transform(carla.Location(x=cav['spawn_position'][0],
+                                                                 y=cav['spawn_position'][1],
+                                                                 z=cav['spawn_position'][2]),
+                                                  carla.Rotation(pitch=0, yaw=0, roll=0))
+                cav_vehicle_bp.set_attribute('color', '0, 0, 0')
+                vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
-            cav_vehicle_bp.set_attribute('color', '0, 0, 0')
-            vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
-            # create the vehicle manager
-            vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)
-            vehicle_manager.v2x_manager.set_platoon(None)
+                # create vehicle manager for each cav
+                vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)
+                # add the vehicle manager to platoon
+                if j == 0:
+                    platoon_manager.set_lead(vehicle_manager)
+                else:
+                    platoon_manager.add_member(vehicle_manager, leader=False)
 
-            # this is important to update the vehicle position into server
             world.tick()
-            vehicle_manager.agent.set_destination(vehicle_manager.vehicle.get_location(),
-                                                  destination.location,
-                                                  clean=True)
-            vehicle_manager_list.append(vehicle_manager)
+            destination = carla.Location(x=platoon['destination'][0],
+                                         y=platoon['destination'][1],
+                                         z=platoon['destination'][2])
+
+            platoon_manager.set_destination(destination)
+            platoon_manager.update_member_order()
+            platoon_list.append(platoon_manager)
 
         spectator = world.get_spectator()
         # run steps
         while True:
             # TODO: Consider aysnc mode later
             world.tick()
-            transform = vehicle_manager_list[0].vehicle.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=40),
+            transform = platoon_list[0].vehicle_manager_list[2].vehicle.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
                                                     carla.Rotation(pitch=-90)))
-            for vm in vehicle_manager_list:
-                vm.update_info(platooning_world)
-                control = vm.run_step()
-                # TODO: Embede apply control inside vm!
-                vm.vehicle.apply_control(control)
+            for platoon in platoon_list:
+                platoon.update_information(platooning_world)
+                platoon.run_step()
 
     finally:
         world.apply_settings(origin_settings)
-        for v in vehicle_manager_list:
-            v.destroy()
+        for platoon in platoon_list:
+            platoon.destroy()
 
 
 if __name__ == '__main__':

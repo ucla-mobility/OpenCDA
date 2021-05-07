@@ -180,6 +180,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
 
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
+        frontal_front_vehicle_manger, _ = frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
+
         # must match leading vehicle's trajectory unit time
         t_origin = 0
 
@@ -195,11 +197,11 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             ego_trajetory = deque(maxlen=30)
             ego_loc_x, ego_loc_y, ego_loc_z = self.vehicle.get_location().x, \
                                               self.vehicle.get_location().y, self.vehicle.get_location().z
-            tracked_length = len(frontal_trajectory) - 1 if not self.frontal_vehicle.agent.frontal_vehicle \
+            tracked_length = len(frontal_trajectory) - 1 if not frontal_front_vehicle_manger \
                 else len(frontal_trajectory)
             # todo: current not working well on curve
             for i in range(tracked_length):
-                delta_t = 0.25
+                delta_t = 0.25  # todo: this is harded coded
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \

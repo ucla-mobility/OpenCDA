@@ -64,14 +64,14 @@ world:
 scenario:
   platoon_list:
     - <<: *platoon_base
-      id: 0
-      destination: [1000.372955, 7.5]
+      destination: [1000.372955, 7.5, 0.3]
       members: # the first one is regarded as leader by default
         - <<: *vehicle_base
           spawn_position: [-650, 7.5, 0.3] # please refer to assets to see the coordinates
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           behavior:
+            <<: *base_behavior
             local_planner:
               <<: *base_local_planner
               debug_trajectory: true
