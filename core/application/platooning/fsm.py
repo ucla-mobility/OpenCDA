@@ -19,3 +19,6 @@ class FSM(Enum):
     CUT_IN_TO_BACK = 6
     FRONT_JOINING = 7
     JOINING_FINISHED = 8
+    LEADING_MODE = 9
+    ABONDON = 10
+    DISABLE = 11

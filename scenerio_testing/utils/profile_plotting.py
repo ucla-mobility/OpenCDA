@@ -8,7 +8,6 @@
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-import pylab
 
 
 def draw_velocity_profile_single_plot(velocity_list, show=False):

@@ -1,0 +1,108 @@
+# This is the scenario testing configuration file for platooning joining and cooperative merge
+# at the customized 2 lane freeway with carla only.
+
+# First define the basic parameters of the vehicles
+vehicle_base: &vehicle_base
+  sensing: &base_sensing
+    perception: &base_perception
+      activate: false # perception module is not necessary
+    localization: &base_localize
+      activate: false # localization module is not necessary
+  behavior: &base_behavior
+    max_speed: 111 # maximum speed, km/h
+    tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
+    speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
+    speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
+    safety_time: 4 # ttc safety thresholding for decreasing speed
+    emergency_param: 0.4 # used to identify whether a emergency stop needed
+    ignore_traffic_light: true # whether to ignore traffic light
+    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
+    collision_time_ahead: 1.1 # used for collision checking
+    overtake_counter_recover: 35 # used to avoid successive overtaking
+    sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
+    local_planner: &base_local_planner # trajectory planning related
+      buffer_size: 12 # waypoint buffer size
+      trajectory_update_freq: 15 # used to control trajectory points updating frequency
+      waypoint_update_freq: 12 # used to control waypoint updating frequency
+      min_dist: 3 # used to pop out the waypoints too close to current location
+      debug: false # whether to draw future/history waypoints
+      debug_trajectory: false # whether to draw the trajectory points and path
+  controller: &base_controller
+    type: pid_controller # this has to be exactly the same name as the controller py file
+    args:
+      lat:
+        k_p: 0.75
+        k_d: 0.02
+        k_i: 0.4
+      lon:
+        k_p: 0.37
+        k_d: 0.024
+        k_i: 0.032
+      dynamic: false # whether use dynamic pid setting
+      dt: 0.05 # this should be equal to your simulation time-step
+      max_brake: 1.0
+      max_throttle: 1.0
+      max_steering: 0.3
+  v2x: &base_v2x # comminuation related
+    enabled: true
+    communication_range: 35
+
+# define the platoon basic characteristics
+platoon_base: &platoon_base
+  max_capacity: 10
+  inter_gap: 0.6 # desired time gap
+  open_gap: 1.5 # open gap
+  warm_up_speed: 75 # required speed before cooperative merging
+
+# define carla simulation setting
+world:
+  sync_mode: true
+  client_port: 2000
+  fixed_delta_seconds: 0.05
+
+# define scenario. In this scenario, a 4-vehicle platoon already exists.
+scenario:
+  platoon_list:
+    - <<: *platoon_base
+      destination: [1000.372955, 7.5, 0.3]
+      members: # the first one is regarded as leader by default
+        - <<: *vehicle_base
+          spawn_position: [-650, 7.5, 0.3] # please refer to assets to see the coordinates
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+          behavior:
+            <<: *base_behavior
+            local_planner:
+              <<: *base_local_planner
+              debug_trajectory: true
+              debug: true
+        - <<: *vehicle_base
+          spawn_position: [-660, 7.5, 0.3]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+        - <<: *vehicle_base
+          spawn_position: [-670, 7.5, 0.3]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+        - <<: *vehicle_base
+          spawn_position: [-680, 7.5, 0.3]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+  single_cav_list: # this is for merging vehicle or single cav without v2x
+    - <<: *vehicle_base
+      spawn_position: [-710, 4.5, 0.3]
+      destination: [300, 10.5, 0]
+      v2x:
+        <<: *base_v2x
+        communication_range: 45
+      platoon: # we need to add platoon specific params
+        <<: *platoon_base
+      behavior:
+        <<: *base_behavior
+        overtake_allowed: true
+        local_planner:
+          <<: *base_local_planner
+          debug_trajectory: true
+          debug: true
+
+

@@ -1,0 +1,19 @@
+# This yaml file is a base file to define single vehicles' basic parameters.
+test: false
+behavior: &behavior
+  max_speed: 111 # maximum speed, km/h
+  tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
+  speed_lim_dist: 3 # max_speed - spped_lim_dist = target speed
+  speed_decrease: 15 # used in car following mode
+  safety_time: 4 # ttc safety thresholding for decreasing speed
+  emergency_param: 0.4 # used to calculate when emergency stop required
+  ignore_traffic_light: true # whether to ingore traffic light
+  overtake_allowed: false # if overtake allowed
+  # need to clean below
+  overtake_counter: 0
+  overtake_counter_recover: 35 # used to avoid successive overtakes for safety
+  inter_gap: 0.6
+  following_braking_distance: 2
+  warm_up_speed: 75
+
+

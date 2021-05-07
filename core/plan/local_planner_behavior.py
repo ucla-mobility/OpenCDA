@@ -15,7 +15,6 @@ import numpy as np
 
 from core.common.misc import distance_vehicle, draw_trajetory_points, get_speed, cal_distance_angle
 from core.plan.spline import Spline2D
-from customize.controller import compute_pid, CustomizedVehiclePIDController
 
 
 class RoadOption(Enum):
@@ -50,122 +49,47 @@ class LocalPlanner(object):
     # FPS used for dt
     FPS = 10
 
-    def __init__(self, agent, buffer_size=5, dynamic_pid=False, debug=False, debug_trajectory=False, update_freq=15):
+    def __init__(self, agent, config_yaml):
         """
         :param agent: agent that regulates the vehicle
-        :param buffer_size: the buffer size for waypoint
-        :param dynamic_pid: all pid parameters are dynamic based on surroundings,
-        which will require customized function supplied to compute
+        :param config_yaml: local planner configuration file
         """
-        # ego _vehicle
+        # ego_vehicle
         self._vehicle = agent.vehicle
-        # leading vehicle
-        self._frontal_vehicle = agent.frontal_vehicle
         self._map = agent.vehicle.get_world().get_map()
 
-        self.sampling_radius = None
-        self.target_waypoint = None
-        self.target_road_option = None
-
-        self._min_distance = None
+        # waypoint pop out thresholding
+        self._min_distance = config_yaml['min_dist']
+        self._buffer_size = config_yaml['buffer_size']
+        # TODO: Redudant, remove later
         self._current_waypoint = None
-        self._target_speed = None
-        self._next_waypoints = None
-        self._vehicle_controller = None
-        self._global_plan = None
+
+        # TODO: pid controller should be outside
         self._pid_controller = None
 
         # global route
         self.waypoints_queue = deque(maxlen=20000)
-        self._buffer_size = buffer_size
-        # local route
+        # waypoint route
         self._waypoint_buffer = deque(maxlen=self._buffer_size)
-        # platooning following route
-        self._following_buffer = deque(maxlen=1000)
-
-        self._init_controller()
-        self.dynamic_pid = dynamic_pid
-
-        # trajectory point buffer
+        # trajectory buffer
         self._long_plan_debug = []
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
-        self.update_freq = update_freq
+        self.trajectory_update_freq = config_yaml['trajectory_update_freq']
 
-        # lane change flag
+        # used to identify whether lane change is operated
         self.lane_change = False
         # In some corner cases, the id is not changed but we regard it as lane change due to large lateral diff
         self.lane_id_change = False
 
-        # controller param
-        self.max_throttle = 1.0
-        self.max_break = 1.0
-
         # debug option
-        self.debug = debug
-        self.debug_trajectory = debug_trajectory
+        self.debug = config_yaml['debug']
+        self.debug_trajectory = config_yaml['debug_trajectory']
 
     def reset_vehicle(self):
         """Reset the ego-vehicle"""
         self._vehicle = None
         print("Resetting ego-vehicle!")
-
-    def _init_controller(self):
-        """
-        Controller initialization.
-
-        dt -- time difference between physics control in seconds.
-        This is can be fixed from server side
-        using the arguments -benchmark -fps=F, since dt = 1/F
-
-        target_speed -- desired cruise speed in km/h
-
-        min_distance -- minimum distance to remove waypoint from queue
-
-        lateral_dict -- dictionary of arguments to setup the lateral PID controller
-                            {'K_P':, 'K_D':, 'K_I':, 'dt'}
-
-        longitudinal_dict -- dictionary of arguments to setup the longitudinal PID controller
-                            {'K_P':, 'K_D':, 'K_I':, 'dt'}
-        """
-        # Default parameters
-        self.args_lat_hw_dict = {
-            'K_P': 0.75,
-            'K_D': 0.02,
-            'K_I': 0.4,
-            'dt': 1.0 / self.FPS}
-        self.args_lat_city_dict = {
-            'K_P': 0.58,
-            'K_D': 0.02,
-            'K_I': 0.5,
-            'dt': 1.0 / self.FPS}
-        self.args_long_hw_dict = {
-            'K_P': 0.37,
-            'K_D': 0.024,
-            'K_I': 0.032,
-            'dt': 1.0 / self.FPS}
-        self.args_long_city_dict = {
-            'K_P': 0.15,
-            'K_D': 0.05,
-            'K_I': 0.07,
-            'dt': 1.0 / self.FPS}
-
-        self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
-
-        self._global_plan = False
-
-        self._target_speed = self._vehicle.get_speed_limit()
-
-        self._min_distance = 3
-
-    def set_speed(self, speed):
-        """
-        Request new target speed.
-
-            :param speed: new target speed in km/h
-        """
-
-        self._target_speed = speed
 
     def set_global_plan(self, current_plan, clean=False):
         """
@@ -185,8 +109,6 @@ class LocalPlanner(object):
                         self.waypoints_queue.popleft())
                 else:
                     break
-
-        self._global_plan = True
 
     def get_incoming_waypoint_and_direction(self, steps=3):
         """
@@ -212,14 +134,6 @@ class LocalPlanner(object):
         :return:
         """
         return self._trajectory_buffer
-
-    def set_controller_longitudinal(self, max_throttle, max_break):
-        """
-        Change the parameters of controller
-        :return:
-        """
-        self.max_throttle = max_throttle
-        self.max_break = max_break
 
     def generate_path(self):
         """
@@ -297,8 +211,8 @@ class LocalPlanner(object):
                 y.append(current_location.y)
 
         # used to filter the waypoints that are too close
-        prev_x = x[max(0, index-1)] if self.lane_change else x[index]
-        prev_y = y[max(0,index-1)] if self.lane_change else y[index]
+        prev_x = x[max(0, index - 1)] if self.lane_change else x[index]
+        prev_y = y[max(0, index - 1)] if self.lane_change else y[index]
         for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
@@ -427,16 +341,6 @@ class LocalPlanner(object):
                 else:
                     self._history_buffer.append(self._waypoint_buffer.popleft())
 
-        if self._following_buffer:
-            max_index = -1
-            for i, (waypoint, _) in enumerate(self._following_buffer):
-                if distance_vehicle(
-                        waypoint, vehicle_transform) < self._min_distance:
-                    max_index = i
-            if max_index >= 0:
-                for i in range(max_index + 1):
-                    self._following_buffer.popleft()
-
         if self._trajectory_buffer:
             max_index = -1
             for i, (waypoint, _, _, _) in enumerate(self._trajectory_buffer):
@@ -446,61 +350,6 @@ class LocalPlanner(object):
             if max_index >= 0:
                 for i in range(max_index + 1):
                     self._trajectory_buffer.popleft()
-
-    def run_step_naive(self, target_loc, target_speed):
-        """
-        Execute on step to involve the longitudinal and lateral pid controller. This method
-        DOES NOT consider trajectory, it is single target point based.
-        :param target_loc:
-        :param target_speed:
-        :return:
-        """
-        if target_speed is not None:
-            self._target_speed = target_speed
-        else:
-            self._target_speed = self._vehicle.get_speed_limit()
-
-        if len(self.waypoints_queue) == 0:
-            control = carla.VehicleControl()
-            control.steer = 0.0
-            control.throttle = 0.0
-            control.brake = 1.0
-            control.hand_brake = False
-            control.manual_gear_shift = False
-            return control
-
-        # Buffering the waypoints. Always keep the waypoint buffer alive
-        if len(self._waypoint_buffer) < 5:
-            for i in range(self._buffer_size):
-                if self.waypoints_queue:
-                    self._waypoint_buffer.append(
-                        self.waypoints_queue.popleft())
-                else:
-                    break
-
-        if self.dynamic_pid:
-            args_lat, args_long = compute_pid(self)
-
-        elif self._target_speed > 50:
-            args_lat = self.args_lat_hw_dict
-            args_long = self.args_long_hw_dict
-
-        else:
-            args_lat = self.args_lat_city_dict
-            args_long = self.args_long_city_dict
-
-        self._pid_controller = CustomizedVehiclePIDController(self._vehicle,
-                                                              args_lateral=args_lat,
-                                                              args_longitudinal=args_long,
-                                                              max_brake=self.max_break,
-                                                              max_throttle=self.max_throttle)
-
-        control = self._pid_controller.run_step(self._target_speed, target_loc)
-
-        vehicle_transform = self._vehicle.get_transform()
-        self.pop_buffer(vehicle_transform)
-
-        return control
 
     def run_step(self, rx, ry, rk, target_speed=None, trajectory=None, following=False):
         """
@@ -514,24 +363,15 @@ class LocalPlanner(object):
             :param following: whether the vehicle is under following status
             :param trajectory: pre-generated trajectory only for following vehicles in the platooning
             :param target_speed: desired speed
-            :return: control
+            :return: next trajectory point's target speed and waypoint
         """
 
-        if target_speed is not None:
-            self._target_speed = target_speed
-        else:
-            self._target_speed = self._vehicle.get_speed_limit()
+        self._target_speed = target_speed
 
         if len(self.waypoints_queue) == 0:
-            control = carla.VehicleControl()
-            control.steer = 0.0
-            control.throttle = 0.0
-            control.brake = 1.0
-            control.hand_brake = False
-            control.manual_gear_shift = False
-            return control
+            return 0, None
 
-        # Buffering the waypoints. Always keep the waypoint buffer alive
+        # Buffering the waypoints. Always keep the waypoint buffer alive todo:remove the hard coded
         if len(self._waypoint_buffer) < 9:
             for i in range(self._buffer_size - len(self._waypoint_buffer)):
                 if self.waypoints_queue:
@@ -541,7 +381,7 @@ class LocalPlanner(object):
                     break
 
         # we will generate the trajectory only if it is not a following vehicle in the platooning
-        if not trajectory and len(self._trajectory_buffer) < self.update_freq and not following:
+        if not trajectory and len(self._trajectory_buffer) < self.trajectory_update_freq and not following:
             self._trajectory_buffer.clear()
             self.generate_trajectory(rx, ry, rk)
         elif trajectory:
@@ -550,30 +390,9 @@ class LocalPlanner(object):
         # Current vehicle waypoint
         self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
 
-        # Target waypoint
+        # Target waypoint TODO: dt is never used
         self.target_waypoint, self.target_road_option, self._target_speed, dt = \
             self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
-
-        if self.dynamic_pid:
-            args_lat, args_long = compute_pid(self)
-
-        elif self._target_speed > 50:
-            args_lat = self.args_lat_hw_dict
-            args_long = self.args_long_hw_dict
-
-        else:
-            args_lat = self.args_lat_city_dict
-            args_long = self.args_long_city_dict
-
-        self._pid_controller = CustomizedVehiclePIDController(self._vehicle,
-                                                              args_lateral=args_lat,
-                                                              args_longitudinal=args_long,
-                                                              max_brake=self.max_break,
-                                                              max_throttle=self.max_throttle)
-
-        control = self._pid_controller.run_step(self._target_speed, self.target_waypoint.transform.location
-        if hasattr(self.target_waypoint, 'is_junction')
-        else self.target_waypoint.location)
 
         # Purge the queue of obsolete waypoints
         vehicle_transform = self._vehicle.get_transform()
@@ -586,7 +405,7 @@ class LocalPlanner(object):
                                   size=0.05,
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
-                                  self._trajectory_buffer, z=0.1, lt=0.05)
+                                  self._trajectory_buffer, z=0.1, lt=0.1)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),
@@ -602,4 +421,5 @@ class LocalPlanner(object):
                                   color=carla.Color(255, 0, 255),
                                   lt=0.2)
 
-        return control
+        return self._target_speed, self.target_waypoint.transform.location \
+            if hasattr(self.target_waypoint, 'is_junction') else self.target_waypoint.location

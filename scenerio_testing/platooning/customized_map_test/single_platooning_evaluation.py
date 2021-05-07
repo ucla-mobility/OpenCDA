@@ -17,7 +17,7 @@ from core.application.platooning.platooning_world import PlatooningWorld
 from core.application.platooning.platooning_manager import PlatooningManager
 from core.common.vehicle_manager import VehicleManager
 from core.common.misc import get_speed
-from scenerio_testing.platooning.customized_map_test.load_customized_world import load_customized_world
+from scenerio_testing.utils.load_customized_world import load_customized_world
 
 
 def arg_parse():
