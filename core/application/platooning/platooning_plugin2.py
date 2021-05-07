@@ -55,6 +55,19 @@ class PlatooningPlugin(object):
         self.ego_pos = ego_pos
         self.ego_spd = ego_spd
 
+    def reset(self):
+        """
+        Reset to the origin status
+        :return:
+        """
+        self.front_vehicle = None
+        self.rear_vechile = None
+
+        self.leader = False
+        self.platooning_object = None
+        self.platooning_id = None
+        self.in_id = None
+
     def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
         """
         Set platooning status
@@ -114,8 +127,7 @@ class PlatooningPlugin(object):
         :return: platoon found or not, closest platoon member team id
         """
         # make sure the previous status won't influence current one
-        self.front_vehicle = None
-        self.rear_vechile = None
+        self.reset()
 
         cur_loc = self.ego_pos.location
         cur_yaw = self.ego_pos.rotation.yaw
