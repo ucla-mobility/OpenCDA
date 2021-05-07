@@ -82,10 +82,6 @@ class LocalPlanner(object):
         # In some corner cases, the id is not changed but we regard it as lane change due to large lateral diff
         self.lane_id_change = False
 
-        # controller param TODO: remove this later
-        self.max_throttle = 1.0
-        self.max_break = 1.0
-
         # debug option
         self.debug = config_yaml['debug']
         self.debug_trajectory = config_yaml['debug_trajectory']
@@ -138,14 +134,6 @@ class LocalPlanner(object):
         :return:
         """
         return self._trajectory_buffer
-
-    def set_controller_longitudinal(self, max_throttle, max_break):
-        """
-        Change the parameters of controller
-        :return:
-        """
-        self.max_throttle = max_throttle
-        self.max_break = max_break
 
     def generate_path(self):
         """

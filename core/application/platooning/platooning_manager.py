@@ -6,6 +6,8 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+import uuid
+
 from scenerio_testing.utils.profile_plotting import draw_sub_plot
 
 
@@ -14,21 +16,18 @@ class PlatooningManager(object):
     Platooning manager for vehicle managers
     """
 
-    def __init__(self, world, maximum_capcity=10, pmid=1):
+    def __init__(self, config_yaml, world):
         """
         Construct class
+        :param config_yaml:
         :param world: platooning world object
-        :param maximum_capcity:
         """
         # TODO: Find a better way to give id
-        self.pmid = pmid
+        self.pmid = str(uuid.uuid1())
 
-        # TODO: Use a more stable data structure
         self.vehicle_manager_list = []
-        self.maximum_capacity = maximum_capcity
+        self.maximum_capacity = config_yaml['max_capacity']
 
-        self.leader_uuid = None
-        self.agent = None
         self.destination = None
 
         # this is used to control platooning speed during joining
@@ -44,18 +43,15 @@ class PlatooningManager(object):
         :param vehicle_manager:
         :return:
         """
-        self.leader_uuid = vehicle_manager.vid
-        self.vehicle_manager_list.append(vehicle_manager)
+        self.add_member(vehicle_manager, leader=True)
 
-        leader_behavior = vehicle_manager.agent.behavior
-        self.origin_leader_target_speed = leader_behavior.max_speed - leader_behavior.speed_lim_dist
+        # this variable is used to control leader speed
+        self.origin_leader_target_speed = vehicle_manager.agent.max_speed - vehicle_manager.agent.speed_lim_dist
 
-        vehicle_manager.set_platooning(self, self.pmid, 0, True)
-
-    def add_member(self, vehicle_manager):
+    def add_member(self, vehicle_manager, leader=False):
         """
         Add memeber to the current platooning
-        TODO: This very naive and temp solution. We need strictly follow FSM to add member into a platooning
+        :param leader: whether this cav is a leader
         :param vehicle_manager:
         :return:
         """
@@ -63,7 +59,7 @@ class PlatooningManager(object):
         vehicle_manager.v2x_manager.set_platoon(len(self.vehicle_manager_list)-1,
                                                 platooning_object=self,
                                                 platooning_id=self.pmid,
-                                                leader=False)
+                                                leader=leader)
 
     def set_member(self, vehicle_manager, index, lead=False):
         """
@@ -91,19 +87,9 @@ class PlatooningManager(object):
             if i != len(self.vehicle_manager_list)-1:
                 vm.v2x_manager.set_platoon_rear(self.vehicle_manager_list[i+1])
 
-    def set_controller_longitudinal(self, max_throttle, max_brake):
-        """
-        Set controller statistics
-        :param max_throttle:
-        :param max_brake:
-        :return:
-        """
-        for vm in self.vehicle_manager_list:
-            vm.agent.set_controller_longitudinal(max_throttle, max_brake)
-
     def reset_speed(self):
         """
-        Reset the leader speed to old state
+        After joining request accepted for certain steps, the platoon will return to the origin speed.
         :return:
         """
         if self.recover_speed_counter <= 0:
@@ -120,20 +106,21 @@ class PlatooningManager(object):
         if len(self.vehicle_manager_list) >= self.maximum_capacity:
             return False
         else:
-            # TODO: USE GFS Model to do this
+            # when the platoon accept a joining request,by default it will decrease the speed
+            # so the merging vehicle can better catch up with
             self.leader_target_speed = self.origin_leader_target_speed - 10
             self.recover_speed_counter = 200
             return True
 
     def set_destination(self, destination):
         """
-        Set desination of the vehicle managers
-        TODO: Right now all the vehicles have the same destination, change it later
+        Set desination of the vehicle managers in the platoon.
+        TODO: Currently we assume all vehicles in a platoon will have the same destination
         :return:
         """
         self.destination = destination
         for i in range(len(self.vehicle_manager_list)):
-            self.vehicle_manager_list[i].agent.set_destination(
+            self.vehicle_manager_list[i].set_destination(
                 self.vehicle_manager_list[i].vehicle.get_location(), destination, clean=True)
 
     def update_information(self, world):
@@ -144,11 +131,7 @@ class PlatooningManager(object):
         """
         self.reset_speed()
         for i in range(len(self.vehicle_manager_list)):
-            if i == 0:
-                self.vehicle_manager_list[i].update_info(world)
-            else:
-                self.vehicle_manager_list[i].update_info(world,
-                                                         self.vehicle_manager_list[i - 1])
+            self.vehicle_manager_list[i].update_info(world)
 
     def run_step(self):
         """
@@ -167,32 +150,8 @@ class PlatooningManager(object):
 
     def destroy(self):
         """
-        Destroy vehicles and record all stats
+        Destroy vehicles
         :return:
         """
-        # for evaluation purpose
-        velocity_list = []
-        acceleration_list = []
-        time_gap_list = []
-        distance_gap_list = []
-
-        # we don't want to skip the first 100 data points of time gap for merging vehicle
-        max_len = max(len(self.vehicle_manager_list[1].agent.time_gap_list),
-                      len(self.vehicle_manager_list[-1].agent.time_gap_list))
-
         for i in range(len(self.vehicle_manager_list)):
             self.vehicle_manager_list[i].vehicle.destroy()
-            if len(self.vehicle_manager_list[i].agent.time_gap_list) > 0:
-                self.vehicle_manager_list[i].cal_performance()
-                start_index = 0 if len(self.vehicle_manager_list[i].agent.time_gap_list) < max_len else 100
-
-                time_gap_list.append(self.vehicle_manager_list[i].agent.time_gap_list[start_index:-10])
-                distance_gap_list.append(self.vehicle_manager_list[i].agent.distance_gap_list[start_index:-10])
-            else:
-                time_gap_list.append((len(self.vehicle_manager_list[i].agent.velocity_list) - 100) * [200])
-                distance_gap_list.append((len(self.vehicle_manager_list[i].agent.velocity_list) - 100) * [200])
-
-            velocity_list.append(self.vehicle_manager_list[i].agent.velocity_list[100:-10])
-            acceleration_list.append(self.vehicle_manager_list[i].agent.acceleration_list[100:-10])
-
-        draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list)

@@ -115,7 +115,7 @@ class BehaviorAgent(Agent):
         This method creates a list of waypoints from agent's position to destination location
         based on the route returned by the global router.
 
-            :param end_reset:
+            :param end_reset: indicates whether the new destination is a temporary destination
             :param start_location: initial position
             :param end_location: final position
             :param clean: boolean to clean the waypoint queue
@@ -138,15 +138,6 @@ class BehaviorAgent(Agent):
         """return the local planner
         """
         return self._local_planner
-
-    def set_controller_longitudinal(self, max_throttle, max_brake):
-        """
-        Set the max throttle and brake for controller
-        :param max_throttle:
-        :param max_brake:
-        :return:
-        """
-        self._local_planner.set_controller_longitudinal(max_throttle, max_brake)
 
     def reroute(self, spawn_points):
         """

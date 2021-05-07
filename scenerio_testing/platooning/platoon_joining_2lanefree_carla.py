@@ -72,13 +72,14 @@ def main():
             cav_vehicle_bp.set_attribute('color', '0, 0, 0')
             vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
             # create the vehicle manager
-            vehicle_manager = VehicleManager(vehicle, cav, ['single'], platooning_world)
+            vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)
+            vehicle_manager.v2x_manager.set_platoon(None)
 
             # this is important to update the vehicle position into server
             world.tick()
-            vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),
-                                            destination.location,
-                                            clean=True)
+            vehicle_manager.agent.set_destination(vehicle_manager.vehicle.get_location(),
+                                                  destination.location,
+                                                  clean=True)
             vehicle_manager_list.append(vehicle_manager)
 
         spectator = world.get_spectator()

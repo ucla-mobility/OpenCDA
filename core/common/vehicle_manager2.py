@@ -60,11 +60,22 @@ class VehicleManager(object):
         world.update_vehicle_manager(self)
         self.world = weakref.ref(world)()
 
+    def set_destination(self, start_location, end_location, clean=False, end_reset=True):
+        """
+        Wrapper function to set global route
+        :param start_location:
+        :param end_location:
+        :param clean:
+        :param end_reset:
+        :return:
+        """
+        self.agent.set_destination(start_location, end_location, clean, end_reset)
+
+
     def update_info(self, world):
         """
         Call perception and localization module to retrieve surrounding info an ego position.
-        :param world:
-        :param frontal_vehicle:
+        :param world: # todo: only vm with platoon application should have this
         :return:
         """
         # localization
