@@ -7,7 +7,7 @@
 
 import carla
 
-from core.application.platooning.platooning_plugin2 import PlatooningPlugin
+from core.application.platooning.platooning_plugin import PlatooningPlugin
 
 
 class V2XManager(object):

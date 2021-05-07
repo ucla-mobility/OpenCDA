@@ -11,7 +11,7 @@ import sys
 
 import carla
 
-from core.common.vehicle_manager2 import VehicleManager
+from core.common.vehicle_manager import VehicleManager
 from core.application.platooning.platooning_world import PlatooningWorld
 from scenerio_testing.utils.yaml_utils import load_yaml
 from scenerio_testing.utils.load_customized_world import load_customized_world
