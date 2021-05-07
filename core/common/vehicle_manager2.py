@@ -71,7 +71,6 @@ class VehicleManager(object):
         """
         self.agent.set_destination(start_location, end_location, clean, end_reset)
 
-
     def update_info(self, world):
         """
         Call perception and localization module to retrieve surrounding info an ego position.

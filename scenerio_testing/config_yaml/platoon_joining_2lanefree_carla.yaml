@@ -89,19 +89,20 @@ scenario:
           platoon: # we need to add platoon specific params
             <<: *platoon_base
   single_cav_list: # this is for merging vehicle or single cav without v2x
-#    - <<: *vehicle_base
-#      spawn_position: [-720, 7.5, 0.3]
-#      destination: [1000.372955, 7.5]
-#      v2x:
-#        <<: *base_v2x
-#        communication_range: 45
-#      platoon: # we need to add platoon specific params
-#        <<: *platoon_base
-#      behavior:
-#        overtake_allowed: true
-#        local_planner:
-#          <<: *base_local_planner
-#          debug_trajectory: true
-#          debug: true
+    - <<: *vehicle_base
+      spawn_position: [-710, 4.5, 0.3]
+      destination: [1000.372955, 7.5, 0]
+      v2x:
+        <<: *base_v2x
+        communication_range: 45
+      platoon: # we need to add platoon specific params
+        <<: *platoon_base
+      behavior:
+        <<: *base_behavior
+        overtake_allowed: true
+        local_planner:
+          <<: *base_local_planner
+          debug_trajectory: true
+          debug: true
 
 

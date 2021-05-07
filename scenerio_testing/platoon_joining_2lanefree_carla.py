@@ -87,22 +87,57 @@ def main():
             platoon_manager.update_member_order()
             platoon_list.append(platoon_manager)
 
+        for i, cav in enumerate(scenario_params['scenario']['single_cav_list']):
+            spawn_transform = carla.Transform(carla.Location(x=cav['spawn_position'][0],
+                                                             y=cav['spawn_position'][1],
+                                                             z=cav['spawn_position'][2]),
+                                              carla.Rotation(pitch=0, yaw=0, roll=0))
+            cav_vehicle_bp.set_attribute('color', '0, 0, 0')
+            vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
+
+            # create vehicle manager for each cav
+            vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)
+            vehicle_manager.v2x_manager.set_platoon(None)
+
+            world.tick()
+
+            destination = carla.Location(x=cav['destination'][0],
+                                         y=cav['destination'][1],
+                                         z=cav['destination'][2])
+            vehicle_manager.update_info(platooning_world)
+            vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),
+                                            destination,
+                                            clean=True)
+
+            single_cav_list.append(vehicle_manager)
+
         spectator = world.get_spectator()
         # run steps
         while True:
             # TODO: Consider aysnc mode later
             world.tick()
-            transform = platoon_list[0].vehicle_manager_list[2].vehicle.get_transform()
+            transform = platoon_list[0].vehicle_manager_list[-1].vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
                                                     carla.Rotation(pitch=-90)))
             for platoon in platoon_list:
                 platoon.update_information(platooning_world)
                 platoon.run_step()
 
+            for i, single_cav in enumerate(single_cav_list):
+                # this function should be added in wrapper
+                if single_cav.v2x_manager.in_platoon():
+                    single_cav_list.pop(i)
+                else:
+                    single_cav.update_info(platooning_world)
+                    control = single_cav.run_step()
+                    single_cav.vehicle.apply_control(control)
+
     finally:
         world.apply_settings(origin_settings)
         for platoon in platoon_list:
             platoon.destroy()
+        for cav in single_cav_list:
+            cav.destroy()
 
 
 if __name__ == '__main__':

@@ -91,6 +91,13 @@ class V2XManager(object):
         """
         return self.platooning_plugin.match_platoon(platoon_world)
 
+    def in_platoon(self):
+        """
+        Check whether the vehicle is inside the platoon
+        :return: bool, flag indication whether in a platoon
+        """
+        return False if self.platooning_plugin.in_id is None else True
+
     def get_platoon_manager(self):
         """
         Retrieve the platoon manager the cav belongs to and the corresponding id
