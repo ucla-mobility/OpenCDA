@@ -44,6 +44,14 @@ def main():
         if not world:
             sys.exit()
 
+        # TODO: Temporary testing, we need to add a helper function for this
+        all_deafault_spawn = world.get_map().get_spawn_points()
+        transform_point = all_deafault_spawn[11]
+        transform_point.location.x = transform_point.location.x + \
+                                     0.49 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+        transform_point.location.y = transform_point.location.y + \
+                                     0.49 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+
         # used to recover the world back to async mode when the testing is done
         origin_settings = world.get_settings()
         new_settings = world.get_settings()
@@ -93,7 +101,7 @@ def main():
                                                              z=cav['spawn_position'][2]),
                                               carla.Rotation(pitch=0, yaw=0, roll=0))
             cav_vehicle_bp.set_attribute('color', '0, 0, 0')
-            vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
+            vehicle = world.spawn_actor(cav_vehicle_bp, transform_point)
 
             # create vehicle manager for each cav
             vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)

@@ -51,7 +51,7 @@ vehicle_base: &vehicle_base
 platoon_base: &platoon_base
   max_capacity: 10
   inter_gap: 0.6 # desired time gap
-  open_gap: 1.8 # open gap
+  open_gap: 1.5 # open gap
   warm_up_speed: 75 # required speed before cooperative merging
 
 # define carla simulation setting
@@ -91,7 +91,7 @@ scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
       spawn_position: [-710, 4.5, 0.3]
-      destination: [1000.372955, 7.5, 0]
+      destination: [300, 10.5, 0]
       v2x:
         <<: *base_v2x
         communication_range: 45
