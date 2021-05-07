@@ -7,6 +7,7 @@
 # License: MIT
 
 import uuid
+import carla
 
 from scenerio_testing.utils.profile_plotting import draw_sub_plot
 
@@ -29,6 +30,7 @@ class PlatooningManager(object):
         self.maximum_capacity = config_yaml['max_capacity']
 
         self.destination = None
+        self.center_loc = None
 
         # this is used to control platooning speed during joining
         self.leader_target_speed = 0
@@ -74,6 +76,18 @@ class PlatooningManager(object):
                                                 platooning_object=self,
                                                 platooning_id=self.pmid,
                                                 leader=lead)
+
+    def cal_center_loc(self):
+        """
+        Calculate center location of the platoon
+        :return:
+        """
+        v1_ego_transform = self.vehicle_manager_list[0].localizer.get_ego_pos()
+        v2_ego_transform = self.vehicle_manager_list[-1].localizer.get_ego_pos()
+
+        self.center_loc = carla.Location(x=(v1_ego_transform.location.x + v2_ego_transform.location.x)/2,
+                                         y=(v1_ego_transform.location.y + v2_ego_transform.location.y)/2,
+                                         z=(v1_ego_transform.location.z + v2_ego_transform.location.z)/2)
 
     def update_member_order(self):
         """
@@ -132,6 +146,8 @@ class PlatooningManager(object):
         self.reset_speed()
         for i in range(len(self.vehicle_manager_list)):
             self.vehicle_manager_list[i].update_info(world)
+        # update the center location of the platoon
+        self.cal_center_loc()
 
     def run_step(self):
         """
