@@ -87,11 +87,11 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             # if front vehicle and rear vehicle both exist
             if front_vehicle and rear_vehicle:
                 print("merging vehicle chooses cut-in joining")
-                self.v2x_manager.get_platoon_status(FSM.MOVE_TO_POINT)
+                self.v2x_manager.set_platoon_status(FSM.MOVE_TO_POINT)
             # if only front vehicle exits
             if front_vehicle and not rear_vehicle:
                 print("merging vehicle chooses back joining")
-                self.v2x_manager.get_platoon_status(FSM.BACK_JOINING)
+                self.v2x_manager.set_platoon_status(FSM.BACK_JOINING)
 
             return super().run_step(target_speed, collision_detector_enabled)
 
@@ -126,7 +126,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             if new_status == FSM.ABONDON:
                 self.v2x_manager.set_platoon_status(FSM.SEARCHING)
                 _, rear_vehicle_manager = self.v2x_manager.get_platoon_front_rear()
-                self.v2x_manager.add_platoon_blacklist(rear_vehicle_manager.v2x_manager.get_platoon_manager().pmid)
+                self.v2x_manager.add_platoon_blacklist(rear_vehicle_manager.v2x_manager.get_platoon_manager()[0].pmid)
             if new_status == FSM.JOINING_FINISHED:
                 self.joining_finish_manager('rear')
 
@@ -329,22 +329,22 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.v2x_manager.set_platoon_rear(None)
 
             # slow down to join back
-            return super().run_step(self.max_speed / 2), FSM.BACK_JOINING
+            return (*super().run_step(self.max_speed / 2), FSM.BACK_JOINING)
 
         # the vehicle needs to warm up first. But if the platooning is in car following state, then we should ignore
         if get_speed(self.vehicle) <= self.warm_up_speed and not frontal_vehicle_manager.agent.car_following_flag:
             print("warming up speed")
-            return super().run_step(self.tailgate_speed), FSM.MOVE_TO_POINT
+            return (*super().run_step(self.tailgate_speed), FSM.MOVE_TO_POINT)
 
         # if the ego vehicle is still too far away from the front vehicle
         if distance > get_speed(self.vehicle, True) * (self.inter_gap + 0.5) and angle <= 80:
             print('trying to get the vehicle')
-            return super().run_step(2.0 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT
+            return (*super().run_step(2.0 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT)
 
         # if the ego vehicle is too close or exceed the frontal vehicle
         if distance < get_speed(self.vehicle, True) * self.inter_gap / 1.5 or angle >= 80:
             print('too close, step back!')
-            return super().run_step(0.9 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT
+            return (*super().run_step(0.9 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT)
 
         # communicate to the rear vehicle for open gap if rear vehicle exists
         if not rear_vehicle_vm:
@@ -359,7 +359,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             # force the rear vehicle open gap for self
             print("too close to rear vehicle!")
             rear_vehicle_vm.v2x_manager.set_platoon_status(FSM.OPEN_GAP)
-            return super().run_step(1.5 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT
+            return (*super().run_step(1.5 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT)
 
         return self.platooning_merge_management(frontal_vehicle_manager), FSM.JOINING
 
@@ -390,8 +390,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 rear_vehicle_vm.v2x_manager.set_platoon_status(FSM.MAINTINING)
             return self.run_step_maintaining(frontal_vehicle_manager), FSM.JOINING_FINISHED
 
-        return super().run_step(target_speed=get_speed(frontal_vehicle),
-                                collision_detector_enabled=False), FSM.JOINING
+        return (*super().run_step(target_speed=get_speed(frontal_vehicle),
+                                  collision_detector_enabled=False), FSM.JOINING)
 
     def run_step_open_gap(self):
         """
@@ -428,7 +428,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_lane = self._map.get_waypoint(frontal_vehicle.get_location()).lane_id
 
         # retrieve the platooning's destination
-        platooning_manager = frontal_vehicle_manager.v2x_manager.get_platoon_manager()
+        platooning_manager, _ = frontal_vehicle_manager.v2x_manager.get_platoon_manager()
         frontal_destination = platooning_manager.destination
 
         # retrieve ego vehicle info todo: remove this later
@@ -448,7 +448,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.overtake_allowed = False
             print("angle is too large, wait")
             self.lane_change_allowed = False
-            return super().run_step(get_speed(frontal_vehicle) * 0.95), FSM.BACK_JOINING
+            return (*super().run_step(get_speed(frontal_vehicle) * 0.95), FSM.BACK_JOINING)
 
         else:
             self.overtake_allowed = True
@@ -456,7 +456,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # 1. make sure the speed is warmed up first. Also we don't want to reset destination during lane change
         if get_speed(self.vehicle) < self.warm_up_speed or self.get_local_planner().lane_change:
             print('warm up speed')
-            return super().run_step(self.tailgate_speed), FSM.BACK_JOINING
+            return (*super().run_step(self.tailgate_speed), FSM.BACK_JOINING)
 
         if not self.destination_changed:
             print('destination reset!!!!')
@@ -488,7 +488,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 and not vehicle_blocking_status \
                 and distance < 1.0 * get_speed(self.vehicle, True):
             print('joining finished !')
-            return self.run_step_maintaining(), FSM.JOINING_FINISHED
+            return (*self.run_step_maintaining(), FSM.JOINING_FINISHED)
 
         # 4. If vehicle is not blocked, make ego back to the frontal vehicle's lane
         if not vehicle_blocking_status:
@@ -499,15 +499,23 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
                 if not left_wpt and not right_wpt:
                     pass
+                # if no right lane
+                elif not right_wpt:
+                    print('take left lane')
+                    self.set_destination(left_wpt.transform.location, frontal_destination, clean=True)
+                # if no left lane available
+                elif not left_wpt:
+                    print('take right lane')
+                    self.set_destination(right_wpt.transform.location, frontal_destination, clean=True)
                 # check which lane is closer to the platooning
-                elif not right_wpt or abs(left_wpt.lane_id - frontal_lane) < abs(right_wpt.lane_id - frontal_lane):
+                elif abs(left_wpt.lane_id - frontal_lane) < abs(right_wpt.lane_id - frontal_lane):
                     print('take left lane')
                     self.set_destination(left_wpt.transform.location, frontal_destination, clean=True)
                 else:
                     print('take right lane')
                     self.set_destination(right_wpt.transform.location, frontal_destination, clean=True)
 
-        return super().run_step(self.tailgate_speed), FSM.BACK_JOINING
+        return (*super().run_step(self.tailgate_speed), FSM.BACK_JOINING)
 
     def run_step_front_joining(self):
         """
@@ -552,12 +560,12 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # if vehicle blocking between ego and platooning, then abandon this joining
         if vehicle_blocking_status:
             print('abandon front joining')
-            return super().run_step(self.max_speed - self.speed_lim_dist), FSM.ABONDON
+            return (*super().run_step(self.max_speed - self.speed_lim_dist), FSM.ABONDON)
 
         # if the ego vehilce is already behind the platooning
         if angle <= 90:
             print('transition to other joining')
-            return super().run_step(self.tailgate_speed), FSM.SEARCHING
+            return (*super().run_step(self.tailgate_speed), FSM.SEARCHING)
 
         # if vehicle is already in the same lane with the platooning
         if ego_vehicle_lane == rear_lane:
@@ -568,9 +576,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 self.set_destination(ego_wpt.next(4.5)[0].transform.location, rear_destination)
             if distance < get_speed(self.vehicle, True) * self.inter_gap * 1.5:
                 print('joining finished')
-                return super().run_step(self.max_speed - self.speed_lim_dist), FSM.JOINING_FINISHED
+                return (*super().run_step(self.max_speed - self.speed_lim_dist), FSM.JOINING_FINISHED)
             else:
-                return super().run_step(get_speed(rear_vehicle) * 0.95), FSM.FRONT_JOINING
+                return (*super().run_step(get_speed(rear_vehicle) * 0.95), FSM.FRONT_JOINING)
 
         # if the ego is too close to the platooning or speed is too slow
         if distance < get_speed(self.vehicle, True) * self.inter_gap \
@@ -578,7 +586,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 or angle <= 90 or get_speed(rear_vehicle) > get_speed(self.vehicle) \
                 or self.get_local_planner().lane_change:
             print('need to speed up before change lane')
-            return super().run_step(self.tailgate_speed), FSM.FRONT_JOINING
+            return (*super().run_step(self.tailgate_speed), FSM.FRONT_JOINING)
 
         # set destination same as platooning
         if not self.destination_changed:
@@ -600,4 +608,4 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             print('take right lane')
             self.set_destination(right_wpt.transform.location, rear_destination, clean=True)
 
-        return super().run_step(self.tailgate_speed), FSM.FRONT_JOINING
+        return (*super().run_step(self.tailgate_speed), FSM.FRONT_JOINING)
