@@ -42,3 +42,22 @@ def load_customized_world(xodr_path, client):
     else:
         print('file not found.')
         return None
+
+
+def spawn_helper_2lanefree(carla_map, coefficient):
+    """
+    A helper function to locate the valid spawn point on the merge lane.
+    :param carla_map: the 2lanefreeway map
+    :param coefficient: a single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position
+    is in the middle of the merge lane
+    :return: carla transform
+    """
+
+    all_deafault_spawn = carla_map.get_spawn_points()
+    transform_point = all_deafault_spawn[11]
+    transform_point.location.x = transform_point.location.x + \
+                             coefficient * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+    transform_point.location.y = transform_point.location.y + \
+                             coefficient * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+
+    return transform_point
