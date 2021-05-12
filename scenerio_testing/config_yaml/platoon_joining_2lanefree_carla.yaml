@@ -67,7 +67,7 @@ scenario:
       destination: [1000.372955, 7.5, 0.3]
       members: # the first one is regarded as leader by default
         - <<: *vehicle_base
-          spawn_position: [-650, 7.5, 0.3] # please refer to assets to see the coordinates
+          spawn_position: [-650, 7.5, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           behavior:
@@ -77,24 +77,27 @@ scenario:
               debug_trajectory: true
               debug: true
         - <<: *vehicle_base
-          spawn_position: [-660, 7.5, 0.3]
+          spawn_position: [-660, 7.5, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
         - <<: *vehicle_base
-          spawn_position: [-670, 7.5, 0.3]
+          spawn_position: [-670, 7.5, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
         - <<: *vehicle_base
-          spawn_position: [-680, 7.5, 0.3]
+          spawn_position: [-680, 7.5, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-710, 4.5, 0.3]
+      spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
+      # when this is defined, the above parameter will be ignored, and a special map function will
+      # be used to define the spawn position based on the argument
+      spawn_special: [0.5]
       destination: [300, 10.5, 0]
       v2x:
         <<: *base_v2x
-        communication_range: 45
+        communication_range: 35
       platoon: # we need to add platoon specific params
         <<: *platoon_base
       behavior:

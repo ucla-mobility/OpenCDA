@@ -11,11 +11,10 @@ import sys
 
 import carla
 
-from core.application.platooning.platooning_manager import PlatooningManager
-from core.application.platooning.platooning_world import PlatooningWorld
-from core.common.vehicle_manager import VehicleManager
+import scenerio_testing.utils.sim_api as sim_api
+import scenerio_testing.utils.customized_map_api as map_api
+
 from scenerio_testing.utils.yaml_utils import load_yaml
-from scenerio_testing.utils.load_customized_world import load_customized_world
 
 
 def arg_parse():
@@ -28,96 +27,22 @@ def arg_parse():
 
 def main():
     try:
+        # first define the path of the yaml file and 2lanefreemap file
         opt = arg_parse()
         scenario_params = load_yaml(opt.config_yaml)
-        # set simulation
-        simulation_config = scenario_params['world']
-
-        client = carla.Client('localhost', simulation_config['client_port'])
-        client.set_timeout(2.0)
-
-        # Retrieve the customized map
         current_path = os.path.dirname(os.path.realpath(__file__))
         xodr_path = os.path.join(current_path,
                                  '../assets/2lane_freeway_simplified/map_v7.4_smooth_curve.xodr')
-        world = load_customized_world(xodr_path, client)
-        if not world:
-            sys.exit()
 
-        # TODO: Temporary testing, we need to add a helper function for this
-        all_deafault_spawn = world.get_map().get_spawn_points()
-        transform_point = all_deafault_spawn[11]
-        transform_point.location.x = transform_point.location.x + \
-                                     0.49 * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
-        transform_point.location.y = transform_point.location.y + \
-                                     0.49 * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+        # create simulation world
+        simulation_config = scenario_params['world']
+        world, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
 
-        # used to recover the world back to async mode when the testing is done
-        origin_settings = world.get_settings()
-        new_settings = world.get_settings()
-
-        if simulation_config['sync_mode']:
-            new_settings.synchronous_mode = True
-            new_settings.fixed_delta_seconds = simulation_config['fixed_delta_seconds']
-        world.apply_settings(new_settings)
-
-        cav_vehicle_bp = world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
-
-        platoon_list = []
-        single_cav_list = []
-        platooning_world = PlatooningWorld()
-
-        # create platoons
-        for i, platoon in enumerate(scenario_params['scenario']['platoon_list']):
-            platoon_manager = PlatooningManager(platoon, platooning_world)
-            for j, cav in enumerate(platoon['members']):
-                spawn_transform = carla.Transform(carla.Location(x=cav['spawn_position'][0],
-                                                                 y=cav['spawn_position'][1],
-                                                                 z=cav['spawn_position'][2]),
-                                                  carla.Rotation(pitch=0, yaw=0, roll=0))
-                cav_vehicle_bp.set_attribute('color', '0, 0, 0')
-                vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
-
-                # create vehicle manager for each cav
-                vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)
-                # add the vehicle manager to platoon
-                if j == 0:
-                    platoon_manager.set_lead(vehicle_manager)
-                else:
-                    platoon_manager.add_member(vehicle_manager, leader=False)
-
-            world.tick()
-            destination = carla.Location(x=platoon['destination'][0],
-                                         y=platoon['destination'][1],
-                                         z=platoon['destination'][2])
-
-            platoon_manager.set_destination(destination)
-            platoon_manager.update_member_order()
-            platoon_list.append(platoon_manager)
-
-        for i, cav in enumerate(scenario_params['scenario']['single_cav_list']):
-            spawn_transform = carla.Transform(carla.Location(x=cav['spawn_position'][0],
-                                                             y=cav['spawn_position'][1],
-                                                             z=cav['spawn_position'][2]),
-                                              carla.Rotation(pitch=0, yaw=0, roll=0))
-            cav_vehicle_bp.set_attribute('color', '0, 0, 0')
-            vehicle = world.spawn_actor(cav_vehicle_bp, transform_point)
-
-            # create vehicle manager for each cav
-            vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)
-            vehicle_manager.v2x_manager.set_platoon(None)
-
-            world.tick()
-
-            destination = carla.Location(x=cav['destination'][0],
-                                         y=cav['destination'][1],
-                                         z=cav['destination'][2])
-            vehicle_manager.update_info(platooning_world)
-            vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),
-                                            destination,
-                                            clean=True)
-
-            single_cav_list.append(vehicle_manager)
+        # create platoon members
+        platoon_list, platooning_world = sim_api.createPlatoonManagers(world, scenario_params)
+        # create single cavs
+        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], platooning_world,
+                                                       map_api.spawn_helper_2lanefree)
 
         spectator = world.get_spectator()
         # run steps
