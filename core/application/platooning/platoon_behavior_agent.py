@@ -291,7 +291,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.vehicle.bounding_box.extent.y, self.vehicle.bounding_box.extent.x)
 
         # safe control for car following todo: make the coefficient controllable
-        if distance <= get_speed(self.vehicle, True) * 0.1:
+        if distance <= get_speed(self.vehicle, True) * 0.01:
             print("emergency stop!")
             return 0, None
 

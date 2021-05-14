@@ -37,17 +37,18 @@ def main():
 
         # create simulation world
         simulation_config = scenario_params['world']
-        world, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
+        client, world, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
+        # create background traffic in carla
+        traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
+                                                                    scenario_params['carla_traffic_manager'])
 
         # todo: temporary
         platooning_world = PlatooningWorld()
-
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['single'], platooning_world)
 
         spectator = world.get_spectator()
         # run steps
         while True:
-            # TODO: Consider aysnc mode later
             world.tick()
             transform = single_cav_list[0].vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=50),
@@ -61,6 +62,8 @@ def main():
     finally:
         world.apply_settings(origin_settings)
         for v in single_cav_list:
+            v.destroy()
+        for v in bg_veh_list:
             v.destroy()
 
 
