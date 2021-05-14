@@ -31,7 +31,7 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     elif town:
         world = client.load_world(town)
     else:
-        sys.exit('User have to define either customized map path or default town name')
+        world = client.get_world()
 
     if not world:
         sys.exit('World loading failed')

@@ -76,6 +76,7 @@ def main():
         for v in bg_veh_list:
             v.destroy()
 
+
 if __name__ == '__main__':
     try:
         main()
