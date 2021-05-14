@@ -7,7 +7,6 @@ Scenario testing: merging vehicle joining a platoon in the customized 2-lane fre
 
 import argparse
 import os
-import sys
 
 import carla
 
@@ -43,7 +42,7 @@ def main():
         # create single cavs
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], platooning_world,
                                                        map_api.spawn_helper_2lanefree)
-
+        # todo spectator wrapper
         spectator = world.get_spectator()
         # run steps
         while True:
