@@ -7,7 +7,6 @@ Scenario testing: merging vehicle joining a platoon in the customized 2-lane fre
 
 import argparse
 import os
-import sys
 
 import carla
 
@@ -36,20 +35,23 @@ def main():
 
         # create simulation world
         simulation_config = scenario_params['world']
-        world, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
+        client, world, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
+        # create background traffic in carla
+        traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
+                                                                    scenario_params['carla_traffic_manager'])
 
         # create platoon members
         platoon_list, platooning_world = sim_api.createPlatoonManagers(world, scenario_params)
         # create single cavs
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], platooning_world,
                                                        map_api.spawn_helper_2lanefree)
-
+        # todo spectator wrapper
         spectator = world.get_spectator()
         # run steps
         while True:
             # TODO: Consider aysnc mode later
             world.tick()
-            transform = platoon_list[0].vehicle_manager_list[-1].vehicle.get_transform()
+            transform = platoon_list[0].vehicle_manager_list[1].vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
                                                     carla.Rotation(pitch=-90)))
             for platoon in platoon_list:
@@ -71,6 +73,8 @@ def main():
             platoon.destroy()
         for cav in single_cav_list:
             cav.destroy()
+        for v in bg_veh_list:
+            v.destroy()
 
 
 if __name__ == '__main__':

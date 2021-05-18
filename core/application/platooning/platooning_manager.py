@@ -122,7 +122,7 @@ class PlatooningManager(object):
         else:
             # when the platoon accept a joining request,by default it will decrease the speed
             # so the merging vehicle can better catch up with
-            self.leader_target_speed = self.origin_leader_target_speed - 10
+            self.leader_target_speed = self.origin_leader_target_speed - 5
             self.recover_speed_counter = 200
             return True
 

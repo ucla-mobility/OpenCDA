@@ -243,7 +243,7 @@ class LocalPlanner(object):
                 continue
             rx.append(ix)
             ry.append(iy)
-            rk.append(sp.calc_curvature(i_s))
+            rk.append(max(min(sp.calc_curvature(i_s), 0.2), -0.2))
             ryaw.append(sp.calc_yaw(i_s))
 
         # debug purpose
@@ -291,7 +291,7 @@ class LocalPlanner(object):
             max_acc = 3.5 if self._pid_controller.max_throttle >= 0.9 else 2.5
         else:
             max_acc = 3.5
-
+        # todo: hard-coded, need to be tuned
         acceleration = max(min(max_acc,
                                (target_speed / 3.6 - current_speed) / dt), -6.5)
 

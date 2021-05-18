@@ -14,20 +14,27 @@ from core.application.platooning.platooning_world import PlatooningWorld
 from scenerio_testing.utils.customized_map_api import load_customized_world
 
 
-def createSimulationWorld(simulation_config, xodr_path=None):
+def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     """
     Create client and simulation world
     :param simulation_config: configuration dictionary for simulation
     :param xodr_path: optional, used only when customized map needed
-    :return: simulation world, origin setting
+    :param town: default town name if not using customized map, eg. 'Town06'
+    :return: client, simulation world, origin setting
     """
 
     client = carla.Client('localhost', simulation_config['client_port'])
     client.set_timeout(2.0)
-    world = load_customized_world(xodr_path, client)
+
+    if xodr_path:
+        world = load_customized_world(xodr_path, client)
+    elif town:
+        world = client.load_world(town)
+    else:
+        world = client.get_world()
 
     if not world:
-        sys.exit()
+        sys.exit('World loading failed')
 
     origin_settings = world.get_settings()
     new_settings = world.get_settings()
@@ -40,7 +47,49 @@ def createSimulationWorld(simulation_config, xodr_path=None):
 
     world.apply_settings(new_settings)
 
-    return world, origin_settings
+    return client, world, origin_settings
+
+
+def createTrafficManager(client, world, traffic_config):
+    """
+    Create background traffic
+    :param client:
+    :param world:
+    :param traffic_config:
+    :return:
+    """
+
+    tm = client.get_trafficmanager()
+
+    tm.set_global_distance_to_leading_vehicle(traffic_config['global_distance'])
+    tm.set_synchronous_mode(traffic_config['sync_mode'])
+    tm.set_osm_mode(traffic_config['set_osm_mode'])
+    tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
+
+    bg_list = []
+
+    blueprint_library = world.get_blueprint_library()
+    # todo: traffic model should be random
+    ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
+
+    for i, vehicle_config in enumerate(traffic_config['vehicle_list']):
+        spawn_transform = carla.Transform(carla.Location(x=vehicle_config['spawn_position'][0],
+                                                         y=vehicle_config['spawn_position'][1],
+                                                         z=vehicle_config['spawn_position'][2]),
+                                          carla.Rotation(pitch=vehicle_config['spawn_position'][5],
+                                                         yaw=vehicle_config['spawn_position'][4],
+                                                         roll=vehicle_config['spawn_position'][3]))
+        ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+        vehicle = world.spawn_actor(ego_vehicle_bp, spawn_transform)
+        vehicle.set_autopilot(True, 8000)
+
+        if 'vehicle_speed_perc' in vehicle_config:
+            tm.vehicle_percentage_speed_difference(vehicle, vehicle_config['vehicle_speed_perc'])
+        tm.auto_lane_change(vehicle, traffic_config['auto_lane_change'])
+
+        bg_list.append(vehicle)
+
+    return tm, bg_list
 
 
 def createPlatoonManagers(world, scenario_params, map_helper=None):
