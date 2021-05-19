@@ -198,7 +198,10 @@ class LocalPlanner(object):
             _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location,
                                           current_location, current_yaw)
             print('lane change')
-            pass
+            # if the vehicle starts lane change at the very start
+            if len(x) == 0 or len(y) == 0:
+                x.append(current_location.x)
+                y.append(current_location.y)
         else:
             _, angle = cal_distance_angle(current_wpt_loc, current_location, current_yaw)
             # we prefer to use waypoint as the current position for path generation if the waypoint is
@@ -236,22 +239,17 @@ class LocalPlanner(object):
 
         # calculate interpolation points
         rx, ry, ryaw, rk = [], [], [], []
+        self._long_plan_debug = []
         # we only need the interpolation points until next waypoint
         for i_s in s:
             ix, iy = sp.calc_position(i_s)
             if abs(ix - x[index]) <= ds and abs(iy - y[index]) <= ds:
                 continue
+            self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
             rx.append(ix)
             ry.append(iy)
             rk.append(max(min(sp.calc_curvature(i_s), 0.2), -0.2))
             ryaw.append(sp.calc_yaw(i_s))
-
-        # debug purpose
-        self._long_plan_debug = []
-        s = np.arange(sp.s[0], sp.s[-1], ds)
-        for i_s in s:
-            ix, iy = sp.calc_position(i_s)
-            self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         return rx, ry, rk, ryaw
 
@@ -283,7 +281,7 @@ class LocalPlanner(object):
 
         mean_k = 0.0001 if len(rk) < 2 else abs(statistics.mean(rk))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
-        target_speed = min(target_speed, np.sqrt(7.2 / mean_k) * 3.6)
+        target_speed = min(target_speed, np.sqrt(6.0 / mean_k) * 3.6)
         print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
 
         # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
@@ -403,7 +401,7 @@ class LocalPlanner(object):
                                   self._long_plan_debug,
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
-                                  lt=0.2)
+                                  lt=0.1)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._trajectory_buffer, z=0.1, lt=0.1)
 

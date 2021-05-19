@@ -20,6 +20,7 @@ from scenerio_testing.utils.yaml_utils import load_yaml
 def arg_parse():
     parser = argparse.ArgumentParser(description="Platooning Joining Settings")
     parser.add_argument("--config_yaml", required=True, type=str, help='corresponding yaml file of the testing')
+    parser.add_argument("--record", action='store_true', help='whether to record playfile')
 
     opt = parser.parse_args()
     return opt
@@ -33,7 +34,10 @@ def main():
 
         # create simulation world
         simulation_config = scenario_params['world']
-        client, world, origin_settings = sim_api.createSimulationWorld(simulation_config)
+        client, world, origin_settings = sim_api.createSimulationWorld(simulation_config, town='Town06')
+
+        if opt.record:
+            client.start_recorder("platoon_joining_town06_carla.log", True)
         # create background traffic in carla
         traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
                                                                     scenario_params['carla_traffic_manager'])
@@ -43,14 +47,15 @@ def main():
         # create single cavs
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], platooning_world,
                                                        map_api.spawn_helper_2lanefree_complete)
-        # todo spectator wrapper
         spectator = world.get_spectator()
-        # run steps
+        # fix the spectator on a certain car
+        spectator_vehicle = single_cav_list[0].vehicle
+
         while True:
             # TODO: Consider aysnc mode later
             world.tick()
-            transform = platoon_list[0].vehicle_manager_list[1].vehicle.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
+            transform = spectator_vehicle.get_transform()
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=60),
                                                     carla.Rotation(pitch=-90)))
             for platoon in platoon_list:
                 platoon.update_information(platooning_world)
@@ -66,7 +71,11 @@ def main():
                     single_cav.vehicle.apply_control(control)
 
     finally:
+        if opt.record:
+            client.stop_recorder()
+
         world.apply_settings(origin_settings)
+
         for v in bg_veh_list:
             v.destroy()
         for cav in single_cav_list:

@@ -6,7 +6,12 @@ vehicle_base: &vehicle_base
     perception: &base_perception
       activate: false # perception module is not necessary
     localization: &base_localize
-      activate: false # localization module is not necessary
+      activate: true # localization module is not necessary
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.0
+        noise_lat_stddev: 0.0
+        noise_lon_stddev: 0.0
+
   behavior: &base_behavior
     max_speed: 111 # maximum speed, km/h
     tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
@@ -26,6 +31,7 @@ vehicle_base: &vehicle_base
       min_dist: 3 # used to pop out the waypoints too close to current location
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
+
   controller: &base_controller
     type: pid_controller # this has to be exactly the same name as the controller py file
     args:
@@ -64,7 +70,7 @@ carla_traffic_manager:
   auto_lane_change: false
   vehicle_list:
     - spawn_position: [-300, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-300, 4.5, 0.3, 0, 0, 0]
+    - spawn_position: [-280, 4.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -100
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
@@ -72,13 +78,13 @@ scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
       spawn_position: [-320, 7.5, 0.3, 0, 0, 0]
-      destination: [500, 7.5, 0.3]
+      spawn_special: [0.34]
+      destination: [1000, 7.5, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
       behavior:
         <<: *base_behavior
-        max_speed: 80
         local_planner:
           <<: *base_local_planner
           debug_trajectory: true

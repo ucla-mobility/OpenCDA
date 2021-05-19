@@ -7,7 +7,12 @@ vehicle_base: &vehicle_base
     perception: &base_perception
       activate: false # perception module is not necessary
     localization: &base_localize
-      activate: false # localization module is not necessary
+      activate: true # localization module is not necessary
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.0
+        noise_lat_stddev: 0.0
+        noise_lon_stddev: 0.0
+
   behavior: &base_behavior
     max_speed: 95 # maximum speed, km/h
     tailgate_speed: 105 # when a vehicles needs to be close to another vehicle asap
@@ -27,6 +32,7 @@ vehicle_base: &vehicle_base
       min_dist: 3 # used to pop out the waypoints too close to current location
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
+
   controller: &base_controller
     type: pid_controller # this has to be exactly the same name as the controller py file
     args: &control_args
@@ -43,6 +49,7 @@ vehicle_base: &vehicle_base
       max_brake: 1.0
       max_throttle: 1.0
       max_steering: 0.3
+
   v2x: &base_v2x # comminuation related
     enabled: true
     communication_range: 35
@@ -74,13 +81,13 @@ carla_traffic_manager:
     - spawn_position: [-585, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-610, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-625, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-690, 7.5, 0.3, 0, 0, 0 ]
+    - spawn_position: [-690, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-620, 4.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
     - spawn_position: [-635, 4.5, 0.3, 0, 0, 0]
     - spawn_position: [-660, 4.5, 0.3, 0, 0, 0]
     - spawn_position: [-700, 4.5, 0.3, 0, 0, 0]
-    - spawn_position: [-710, 4.5, 0.3, 0, 0, 0 ]
+    - spawn_position: [-710, 4.5, 0.3, 0, 0, 0]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:

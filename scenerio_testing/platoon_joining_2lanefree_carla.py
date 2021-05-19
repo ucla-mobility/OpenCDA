@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway sorely with carla
+Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway simplified map sorely with carla
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
@@ -49,7 +49,6 @@ def main():
         spectator = world.get_spectator()
         # run steps
         while True:
-            # TODO: Consider aysnc mode later
             world.tick()
             transform = platoon_list[0].vehicle_manager_list[1].vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),

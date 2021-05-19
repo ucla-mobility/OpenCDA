@@ -103,11 +103,11 @@ class CollisionChecker:
             debug_tmp.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # TODO: Remove this after debugging
-        draw_trajetory_points(world,
-                              debug_tmp,
-                              color=carla.Color(255, 255, 0),
-                              size=0.05,
-                              lt=0.1)
+        # draw_trajetory_points(world,
+        #                       debug_tmp,
+        #                       color=carla.Color(255, 255, 0),
+        #                       size=0.05,
+        #                       lt=0.1)
 
         return rx, ry, ryaw
 

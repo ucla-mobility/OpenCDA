@@ -83,7 +83,7 @@ class VehicleManager(object):
         ego_spd = self.localizer.get_ego_spd()
 
         self.v2x_manager.update_info(ego_pos, ego_spd)
-        self.agent.update_information(world)
+        self.agent.update_information(world, ego_pos, ego_spd)
         # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
 
