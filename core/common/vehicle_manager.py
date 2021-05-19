@@ -20,17 +20,19 @@ class VehicleManager(object):
     A class manager to embed different modules with vehicle together
     """
 
-    def __init__(self, vehicle, config_yaml, application, world=None):
+    def __init__(self, vehicle, config_yaml, application, carla_map, world=None):
         """
         Construction class todo: multiple application can be activated at the same time
         :param vehicle: carla actor
         :param config_yaml: a dictionary that contains the parameters of the vehicle
         :param application: application category, support:['single','platoon'] currently
+        :param carla_map: Carla HD Map
         :param world: TODO: Temprory, remove it step by step
         """
         # an unique uuid for this vehicle
         self.vid = str(uuid.uuid1())
         self.vehicle = vehicle
+        self.carla_map = carla_map
 
         # retrieve the configure for different modules
         sensing_config = config_yaml['sensing']
@@ -41,17 +43,17 @@ class VehicleManager(object):
         # v2x module
         self.v2x_manager = V2XManager(v2x_config)
         # localization module
-        self.localizer = LocalizationManager(vehicle, sensing_config['localization'])
+        self.localizer = LocalizationManager(vehicle, sensing_config['localization'], carla_map)
         # behavior agent
         self.agent = None
 
         if 'platooning' in application:
             platoon_config = config_yaml['platoon']
             self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
-                                                 behavior_config, platoon_config, world)
+                                                 behavior_config, platoon_config, world, carla_map)
         else:
             # todo: remove the vehicle
-            self.agent = BehaviorAgent(vehicle, behavior_config)
+            self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
 
         # controller TODO: Add a wrapper class for all controller types
         self.controller = VehiclePIDController(control_config['args'])
