@@ -198,7 +198,10 @@ class LocalPlanner(object):
             _, angle = cal_distance_angle(self._waypoint_buffer[0][0].transform.location,
                                           current_location, current_yaw)
             print('lane change')
-            pass
+            # if the vehicle starts lane change at the very start
+            if len(x) == 0 or len(y) == 0:
+                x.append(current_location.x)
+                y.append(current_location.y)
         else:
             _, angle = cal_distance_angle(current_wpt_loc, current_location, current_yaw)
             # we prefer to use waypoint as the current position for path generation if the waypoint is

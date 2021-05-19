@@ -33,7 +33,7 @@ class GnssSensor(object):
         blueprint.set_attribute('noise_lat_stddev', str(config['noise_lat_stddev']))
         blueprint.set_attribute('noise_lon_stddev', str(config['noise_lon_stddev']))
         # spawn the sensor
-        self.sensor = world.spawn_actor(blueprint, carla.Transform(carla.Location(x=1.0, y=0, z=2.8)),
+        self.sensor = world.spawn_actor(blueprint, carla.Transform(carla.Location(x=0.0, y=0.0, z=2.8)),
                                         attach_to=vehicle, attachment_type=carla.AttachmentType.Rigid)
 
         # coordinates at current timestamp
@@ -56,8 +56,8 @@ class GnssSensor(object):
         self.timestamp = event.timestamp
 
         # map origin in WG84 system #todo currently hard-coded
-        lat_0 = 49.0
-        lon_0 = 8.0
+        lat_0 = 0.0
+        lon_0 = 0.0
         alt_0 = 2.8
 
         enu_cordinates = pm.geodetic2enu(self.lat, self.lon, self.alt, lat_0, lon_0, alt_0)
