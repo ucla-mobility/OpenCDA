@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Localization module TODO: Will add more content next version
+Localization module
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
@@ -9,9 +9,9 @@ import weakref
 from collections import deque
 
 import carla
-import pymap3d as pm
 
 from core.common.misc import get_speed
+from core.sensing.localization.coordinate_transform import geo_to_transform
 
 
 class GnssSensor(object):
@@ -36,10 +36,8 @@ class GnssSensor(object):
         self.sensor = world.spawn_actor(blueprint, carla.Transform(carla.Location(x=0.0, y=0.0, z=2.8)),
                                         attach_to=vehicle, attachment_type=carla.AttachmentType.Rigid)
 
-        # coordinates at current timestamp
-        self.x, self.y, self.z, self.timestamp = 0.0, 0.0, 0.0, 0.0
         # latitude and longitude at current timestamp
-        self.lat, self.lon, self.alt = 0.0, 0.0, 0.0
+        self.lat, self.lon, self.alt, self.timestamp = 0.0, 0.0, 0.0, 0.0
         # create weak reference to avoid circular reference
         weak_self = weakref.ref(self)
         self.sensor.listen(lambda event: GnssSensor._on_gnss_event(weak_self, event))
@@ -55,21 +53,13 @@ class GnssSensor(object):
         self.alt = event.altitude
         self.timestamp = event.timestamp
 
-        # map origin in WG84 system #todo currently hard-coded
-        lat_0 = 0.0
-        lon_0 = 0.0
-        alt_0 = 2.8
-
-        enu_cordinates = pm.geodetic2enu(self.lat, self.lon, self.alt, lat_0, lon_0, alt_0)
-        self.x, self.y, self.z = enu_cordinates[0], enu_cordinates[1], enu_cordinates[2]
-
 
 class LocalizationManager(object):
     """
     The core class that manages localization estimation.
     """
 
-    def __init__(self, vehicle, config_yaml):
+    def __init__(self, vehicle, config_yaml, carla_map):
         """
         Construction class
         :param vehicle: carla actor
@@ -77,6 +67,8 @@ class LocalizationManager(object):
         """
         self.vehicle = vehicle
         self.activate = config_yaml['activate']
+        self.map = carla_map
+        self.geo_ref = self.map.transform_to_geolocation(carla.Location(x=0, y=0, z=0))
 
         # speed and transform and current timestamp
         self._ego_pos = None
@@ -90,7 +82,7 @@ class LocalizationManager(object):
 
     def localize(self):
         """
-        Currently implemented in a naive way. todo: will add more contents next version
+        Currently implemented in a naive way.
         :return:
         """
 
@@ -98,8 +90,12 @@ class LocalizationManager(object):
             self._ego_pos = self.vehicle.get_transform()
             self._speed = get_speed(self.vehicle)
         else:
+
             # carla is ESU, while we convert the coordinates to ENU
-            x, y, z = self.gnss.x, -self.gnss.y, self.gnss.z
+            # map origin in WG84 system #todo currently hard-coded
+
+            x, y, z = geo_to_transform(self.gnss.lat, self.gnss.lon, self.gnss.alt,
+                                       self.geo_ref.latitude, self.geo_ref.longitude, 2.8)
 
             # in real world, it is very easy and accurate to get the vehicle yaw angle
             # hence here we retrieve the "groundtruth" directly from the server
@@ -113,7 +109,7 @@ class LocalizationManager(object):
 
             # for simplicity, we directly retrieve the true speed
             self._speed = get_speed(self.vehicle)
-
+            # save the track for future use
             self._ego_pos_history.append(self._ego_pos)
             self._timestamp_history.append(self.gnss.timestamp)
 

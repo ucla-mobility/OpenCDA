@@ -20,7 +20,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     The behavior agent for platooning
     """
 
-    def __init__(self, vehicle, vehicle_manager, v2x_manager, behavior_yaml, platoon_yaml, platoon_world):
+    def __init__(self, vehicle, vehicle_manager, v2x_manager, behavior_yaml, platoon_yaml, platoon_world, carla_map):
         """
         Construct class
         :param vehicle: carla actor todo:remove this later
@@ -29,10 +29,11 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         :param behavior_yaml: configure yaml file for normal behavior agent
         :param platoon_yaml:  configure yaml file for platoon behavior agent
         :param platoon_world: platoon world object that contains all existing cavs
+        :param carla_map: Carla HD Map
         :return
         """
 
-        super(PlatooningBehaviorAgent, self).__init__(vehicle, behavior_yaml)
+        super(PlatooningBehaviorAgent, self).__init__(vehicle, carla_map, behavior_yaml)
 
         self.vehicle_manager = vehicle_manager
         # communication manager

@@ -49,14 +49,14 @@ class LocalPlanner(object):
     # FPS used for dt
     FPS = 10
 
-    def __init__(self, agent, config_yaml):
+    def __init__(self, agent, carla_map, config_yaml):
         """
         :param agent: agent that regulates the vehicle
         :param config_yaml: local planner configuration file
         """
         # ego_vehicle
         self._vehicle = agent.vehicle
-        self._map = agent.vehicle.get_world().get_map()
+        self._map = carla_map
 
         # waypoint pop out thresholding
         self._min_distance = config_yaml['min_dist']

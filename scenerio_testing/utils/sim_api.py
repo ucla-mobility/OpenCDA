@@ -48,7 +48,7 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
 
     world.apply_settings(new_settings)
 
-    return client, world, origin_settings
+    return client, world, world.get_map(), origin_settings
 
 
 def car_blueprint_filter(blueprints):
@@ -109,10 +109,11 @@ def createTrafficManager(client, world, traffic_config):
     return tm, bg_list
 
 
-def createPlatoonManagers(world, scenario_params, map_helper=None):
+def createPlatoonManagers(world, carla_map, scenario_params, map_helper=None):
     """
     Create platoon managers based on the yaml file
     :param world: simulation world
+    :param carla_map: Carla HD Map, we try to just call get_map() one time in the whole program
     :param scenario_params: configuration of scenario
     :param map_helper: A function used for conveniently set the spawn position depending on different maps
     :return: a list of platoon managers, platoon world
@@ -136,13 +137,13 @@ def createPlatoonManagers(world, scenario_params, map_helper=None):
                                                                  yaw=cav['spawn_position'][4],
                                                                  roll=cav['spawn_position'][3]))
             else:
-                spawn_transform = map_helper(world.get_map(), *cav['spawn_special'])
+                spawn_transform = map_helper(carla_map, *cav['spawn_special'])
 
             cav_vehicle_bp.set_attribute('color', '0, 0, 0')
             vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
             # create vehicle manager for each cav
-            vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], platooning_world)
+            vehicle_manager = VehicleManager(vehicle, cav, ['platooning'], carla_map, platooning_world)
             # add the vehicle manager to platoon
             if j == 0:
                 platoon_manager.set_lead(vehicle_manager)
@@ -161,13 +162,14 @@ def createPlatoonManagers(world, scenario_params, map_helper=None):
         return platoon_list, platooning_world
 
 
-def createVehicleManager(world, scenario_params, application, platooning_world, map_helper=None):
+def createVehicleManager(world, scenario_params, application, platooning_world, carla_map, map_helper=None):
     """
     Create single CAV manager
     :param world: simulation world
     :param scenario_params: scenario configuration
     :param application: the application purpose, a list, eg. ['single']
     :param platooning_world: object containing all platoon info
+    :param carla_map: carla HD Map
     :param map_helper: A function used for conveniently set the spawn position depending on different maps
     :return: a list of vehicle managers
     """
@@ -186,13 +188,13 @@ def createVehicleManager(world, scenario_params, application, platooning_world, 
                                                              yaw=cav['spawn_position'][4],
                                                              roll=cav['spawn_position'][3]))
         else:
-            spawn_transform = map_helper(world.get_map(), *cav['spawn_special'])
+            spawn_transform = map_helper(carla_map, *cav['spawn_special'])
 
         cav_vehicle_bp.set_attribute('color', '0, 0, 0')
         vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
         # create vehicle manager for each cav
-        vehicle_manager = VehicleManager(vehicle, cav, application, platooning_world)
+        vehicle_manager = VehicleManager(vehicle, cav, application, carla_map, platooning_world)
         world.tick()
 
         vehicle_manager.v2x_manager.set_platoon(None)

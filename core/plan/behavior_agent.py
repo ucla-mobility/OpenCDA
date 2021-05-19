@@ -28,7 +28,7 @@ class BehaviorAgent(Agent):
     A modulized version of BehaviorAgent
     """
 
-    def __init__(self, vehicle, config_yaml):
+    def __init__(self, vehicle, carla_map, config_yaml):
         """
         Construct class
         :param vehicle: carla actor
@@ -36,7 +36,7 @@ class BehaviorAgent(Agent):
         provide customized function under customize/controller
         """
 
-        super(BehaviorAgent, self).__init__(vehicle)
+        super(BehaviorAgent, self).__init__(vehicle, carla_map)
 
         self.vehicle = vehicle
         # ego pos(transform) and speed(km/h) retrieved from localization module
@@ -79,7 +79,7 @@ class BehaviorAgent(Agent):
         self.light_id_to_ignore = -1
 
         # trajectory planner
-        self._local_planner = LocalPlanner(self, config_yaml['local_planner'])
+        self._local_planner = LocalPlanner(self, carla_map, config_yaml['local_planner'])
 
         # special behavior rlated
         self.car_following_flag = False

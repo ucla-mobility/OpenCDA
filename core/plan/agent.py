@@ -28,7 +28,7 @@ class AgentState(Enum):
 class Agent(object):
     """Base class to define agents in CARLA"""
 
-    def __init__(self, vehicle):
+    def __init__(self, vehicle, carla_map):
         """
         Constructor method.
 
@@ -39,13 +39,9 @@ class Agent(object):
         self._proximity_vehicle_threshold = 10.0  # meters
         self._local_planner = None
         self._world = self._vehicle.get_world()
-        try:
-            self._map = self._world.get_map()
-        except RuntimeError as error:
-            print('RuntimeError: {}'.format(error))
-            print('  The server could not send the OpenDRIVE (.xodr) file:')
-            print('  Make sure it exists, has the same name of your town, and is correct.')
-            sys.exit(1)
+
+        self._map = carla_map
+
         self._last_traffic_light = None
 
     def get_local_planner(self):
