@@ -13,8 +13,8 @@ vehicle_base: &vehicle_base
         noise_lat_stddev: 0.0
         noise_lon_stddev: 0.0
   behavior: &base_behavior
-    max_speed: 95 # maximum speed, km/h
-    tailgate_speed: 105 # when a vehicles needs to be close to another vehicle asap
+    max_speed: 70 # maximum speed, km/h
+    tailgate_speed: 80 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
     safety_time: 4 # ttc safety thresholding for decreasing speed
@@ -56,7 +56,7 @@ platoon_base: &platoon_base
   max_capacity: 10
   inter_gap: 0.6 # desired time gap
   open_gap: 1.2 # open gap
-  warm_up_speed: 55 # required speed before cooperative merging
+  warm_up_speed: 30 # required speed before cooperative merging
 
 # define carla simulation setting
 world:
@@ -71,30 +71,26 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -300
+  global_speed_perc: -50
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   vehicle_list:
-    - spawn_position: [-580, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-605, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-625, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-700, 7.5, 0.3, 0, 0, 0 ]
-    - spawn_position: [-620, 4.5, 0.3, 0, 0, 0]
+    - spawn_position: [101.7194, 136.51, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
-    - spawn_position: [-635, 4.5, 0.3, 0, 0, 0]
-    - spawn_position: [-660, 4.5, 0.3, 0, 0, 0]
-    - spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
-    - spawn_position: [-700, 4.5, 0.3, 0, 0, 0]
-    - spawn_position: [-710, 4.5, 0.3, 0, 0, 0 ]
+    - spawn_position: [57.7194, 143.51, 0.3, 0, 0, 0]
+    - spawn_position: [75.7194, 139.51, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [161.7194, 139.51, 0.3, 0, 0, 0]
+      vehicle_speed_perc: -300
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   platoon_list:
     - <<: *platoon_base
-      destination: [1000.372955, 7.5, 0.3]
+      destination: [630, 141.39, 0.3]
       members: # the first one is regarded as leader by default
         - <<: *vehicle_base
-          spawn_position: [-650, 7.5, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
+          spawn_position: [121.7194, 139.51, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           behavior:
@@ -104,7 +100,7 @@ scenario:
               debug_trajectory: true
               debug: false
         - <<: *vehicle_base
-          spawn_position: [-660, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [111.7194, 139.51, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           controller:
@@ -113,33 +109,26 @@ scenario:
               <<: *control_args
               max_throttle: 1.0
         - <<: *vehicle_base
-          spawn_position: [-670, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [101.7194, 139.51, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
             args:
               <<: *control_args
               max_throttle: 1.0
         - <<: *vehicle_base
-          spawn_position: [-680, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [91.7194, 139.51, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
             args:
               <<: *control_args
               max_throttle: 1.0
-        - <<: *vehicle_base
-          spawn_position: [ -690, 7.5, 0.3, 0, 0, 0 ]
-          platoon: # we need to add platoon specific params
-            <<: *platoon_base
-            args:
-              <<: *control_args
-              max_throttle: 1.0
+
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
+      spawn_position: [27.7194, 143.51, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
-      spawn_special: [0.34]
-      destination: [300, 10.5, 0]
+      destination: [606.87, 145.39, 0]
       v2x:
         <<: *base_v2x
         communication_range: 35
@@ -147,6 +136,8 @@ scenario:
         <<: *platoon_base
       behavior:
         <<: *base_behavior
+        max_speed: 70 # maximum speed, km/h
+        tailgate_speed: 80
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner

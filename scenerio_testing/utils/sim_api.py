@@ -4,6 +4,7 @@ Simulation API for create simulation world, vehicle manager and so on
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
+import random
 import sys
 
 import carla
@@ -24,7 +25,7 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     """
 
     client = carla.Client('localhost', simulation_config['client_port'])
-    client.set_timeout(2.0)
+    client.set_timeout(10.0)
 
     if xodr_path:
         world = load_customized_world(xodr_path, client)
@@ -48,6 +49,22 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     world.apply_settings(new_settings)
 
     return client, world, origin_settings
+
+
+def car_blueprint_filter(blueprints):
+    """
+    Filter out the uncommon vehicles
+    :return:
+    """
+    blueprints = [x for x in blueprints if int(x.get_attribute('number_of_wheels')) == 4]
+    blueprints = [x for x in blueprints if not x.id.endswith('isetta')]
+    blueprints = [x for x in blueprints if not x.id.endswith('carlacola')]
+    blueprints = [x for x in blueprints if not x.id.endswith('cybertruck')]
+    blueprints = [x for x in blueprints if not x.id.endswith('t2')]
+
+    blueprints = sorted(blueprints, key=lambda bp: bp.id)
+
+    return blueprints
 
 
 def createTrafficManager(client, world, traffic_config):

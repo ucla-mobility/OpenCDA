@@ -106,7 +106,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             # if joining is finished
             if new_status == FSM.JOINING_FINISHED:
                 self.joining_finish_manager()
-
             return target_speed, target_waypoint
 
         # case 4: the merging vehicle selects back joining
@@ -159,6 +158,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             platoon_manger.set_member(self.vehicle_manager, index, lead=True)
 
         platoon_manger.update_member_order()
+        self._local_planner.debug_trajectory = False
 
     def calculate_gap(self, distance):
         """
@@ -460,7 +460,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.overtake_allowed = True
 
         # 1. make sure the speed is warmed up first. Also we don't want to reset destination during lane change
-        if self._ego_speed / 3.6  < self.warm_up_speed or self.get_local_planner().lane_change:
+        if self._ego_speed < self.warm_up_speed or self.get_local_planner().lane_change:
             print('warm up speed')
             return (*super().run_step(self.tailgate_speed), FSM.BACK_JOINING)
 
