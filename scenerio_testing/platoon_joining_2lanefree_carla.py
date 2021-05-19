@@ -19,6 +19,7 @@ from scenerio_testing.utils.yaml_utils import load_yaml
 def arg_parse():
     parser = argparse.ArgumentParser(description="Platooning Joining Settings")
     parser.add_argument("--config_yaml", required=True, type=str, help='corresponding yaml file of the testing')
+    parser.add_argument("--record", action='store_true', help='whether to record playfile')
 
     opt = parser.parse_args()
     return opt
@@ -36,6 +37,10 @@ def main():
         # create simulation world
         simulation_config = scenario_params['world']
         client, world, carla_map, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
+
+        if opt.record:
+            client.start_recorder("platoon_joining_town06_carla.log", True)
+
         # create background traffic in carla
         traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
                                                                     scenario_params['carla_traffic_manager'])
@@ -67,6 +72,9 @@ def main():
                     single_cav.vehicle.apply_control(control)
 
     finally:
+        if opt.record:
+            client.stop_recorder()
+            
         world.apply_settings(origin_settings)
         for platoon in platoon_list:
             platoon.destroy()
