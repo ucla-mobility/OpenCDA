@@ -35,16 +35,16 @@ def main():
 
         # create simulation world
         simulation_config = scenario_params['world']
-        client, world, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
+        client, world, carla_map, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
         # create background traffic in carla
         traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
                                                                     scenario_params['carla_traffic_manager'])
 
         # create platoon members
-        platoon_list, platooning_world = sim_api.createPlatoonManagers(world, scenario_params)
+        platoon_list, platooning_world = sim_api.createPlatoonManagers(world, carla_map, scenario_params)
         # create single cavs
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], platooning_world,
-                                                       map_api.spawn_helper_2lanefree)
+                                                       carla_map, map_api.spawn_helper_2lanefree)
         # todo spectator wrapper
         spectator = world.get_spectator()
         # run steps

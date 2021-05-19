@@ -7,7 +7,7 @@ vehicle_base: &vehicle_base
     perception: &base_perception
       activate: false # perception module is not necessary
     localization: &base_localize
-      activate: false # localization module is not necessary
+      activate: true # localization module is not necessary
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.0
         noise_lat_stddev: 0.0
