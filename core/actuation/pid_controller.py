@@ -171,5 +171,4 @@ class VehiclePIDController:
         control.hand_brake = False
         control.manual_gear_shift = False
         self.past_steering = steering
-
         return control

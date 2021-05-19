@@ -49,7 +49,6 @@ def main():
         spectator = world.get_spectator()
         # run steps
         while True:
-            # TODO: Consider aysnc mode later
             world.tick()
             transform = platoon_list[0].vehicle_manager_list[1].vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),

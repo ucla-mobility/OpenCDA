@@ -31,6 +31,7 @@ vehicle_base: &vehicle_base
       min_dist: 3 # used to pop out the waypoints too close to current location
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
+
   controller: &base_controller
     type: pid_controller # this has to be exactly the same name as the controller py file
     args:
@@ -77,13 +78,13 @@ scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
       spawn_position: [-320, 7.5, 0.3, 0, 0, 0]
+      spawn_special: [0.34]
       destination: [1000, 7.5, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
       behavior:
         <<: *base_behavior
-        max_speed: 80
         local_planner:
           <<: *base_local_planner
           debug_trajectory: true

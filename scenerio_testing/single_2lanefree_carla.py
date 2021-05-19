@@ -44,7 +44,8 @@ def main():
 
         # todo: temporary
         platooning_world = PlatooningWorld()
-        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['single'], platooning_world)
+        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['single'], platooning_world,
+                                                       map_api.spawn_helper_2lanefree)
 
         spectator = world.get_spectator()
         # run steps
