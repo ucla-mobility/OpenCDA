@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway sorely with carla
+Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway simplified map sorely with carla
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
@@ -37,7 +37,7 @@ def main():
 
         # create simulation world
         simulation_config = scenario_params['world']
-        client, world, origin_settings = sim_api.createSimulationWorld(simulation_config, None)
+        client, world, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
         # create background traffic in carla
         traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
                                                                     scenario_params['carla_traffic_manager'])

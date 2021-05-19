@@ -176,9 +176,9 @@ def createVehicleManager(world, scenario_params, application, platooning_world, 
 
         # create vehicle manager for each cav
         vehicle_manager = VehicleManager(vehicle, cav, application, platooning_world)
-        vehicle_manager.v2x_manager.set_platoon(None)
-
         world.tick()
+
+        vehicle_manager.v2x_manager.set_platoon(None)
 
         destination = carla.Location(x=cav['destination'][0],
                                      y=cav['destination'][1],
