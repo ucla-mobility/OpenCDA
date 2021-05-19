@@ -8,6 +8,10 @@ vehicle_base: &vehicle_base
       activate: false # perception module is not necessary
     localization: &base_localize
       activate: false # localization module is not necessary
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.0
+        noise_lat_stddev: 0.0
+        noise_lon_stddev: 0.0
   behavior: &base_behavior
     max_speed: 95 # maximum speed, km/h
     tailgate_speed: 105 # when a vehicles needs to be close to another vehicle asap
@@ -71,10 +75,10 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   vehicle_list:
-    - spawn_position: [-585, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-610, 7.5, 0.3, 0, 0, 0]
+    - spawn_position: [-580, 7.5, 0.3, 0, 0, 0]
+    - spawn_position: [-605, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-625, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-690, 7.5, 0.3, 0, 0, 0 ]
+    - spawn_position: [-700, 7.5, 0.3, 0, 0, 0 ]
     - spawn_position: [-620, 4.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
     - spawn_position: [-635, 4.5, 0.3, 0, 0, 0]
@@ -116,6 +120,13 @@ scenario:
               max_throttle: 1.0
         - <<: *vehicle_base
           spawn_position: [-680, 7.5, 0.3, 0, 0, 0]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+            args:
+              <<: *control_args
+              max_throttle: 1.0
+        - <<: *vehicle_base
+          spawn_position: [ -690, 7.5, 0.3, 0, 0, 0 ]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
             args:

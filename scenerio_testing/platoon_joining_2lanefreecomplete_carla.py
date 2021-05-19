@@ -49,7 +49,7 @@ def main():
         while True:
             # TODO: Consider aysnc mode later
             world.tick()
-            transform = platoon_list[0].vehicle_manager_list[0].vehicle.get_transform()
+            transform = platoon_list[0].vehicle_manager_list[1].vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
                                                     carla.Rotation(pitch=-90)))
             for platoon in platoon_list:

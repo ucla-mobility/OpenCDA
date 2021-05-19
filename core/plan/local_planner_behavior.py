@@ -236,22 +236,17 @@ class LocalPlanner(object):
 
         # calculate interpolation points
         rx, ry, ryaw, rk = [], [], [], []
+        self._long_plan_debug = []
         # we only need the interpolation points until next waypoint
         for i_s in s:
             ix, iy = sp.calc_position(i_s)
             if abs(ix - x[index]) <= ds and abs(iy - y[index]) <= ds:
                 continue
+            self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
             rx.append(ix)
             ry.append(iy)
             rk.append(max(min(sp.calc_curvature(i_s), 0.2), -0.2))
             ryaw.append(sp.calc_yaw(i_s))
-
-        # debug purpose
-        self._long_plan_debug = []
-        s = np.arange(sp.s[0], sp.s[-1], ds)
-        for i_s in s:
-            ix, iy = sp.calc_position(i_s)
-            self._long_plan_debug.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         return rx, ry, rk, ryaw
 
@@ -403,7 +398,7 @@ class LocalPlanner(object):
                                   self._long_plan_debug,
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
-                                  lt=0.2)
+                                  lt=0.1)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._trajectory_buffer, z=0.1, lt=0.1)
 
