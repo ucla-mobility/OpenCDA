@@ -54,6 +54,43 @@ class GnssSensor(object):
         self.timestamp = event.timestamp
 
 
+class ImuSensor(object):
+    """
+    IMU Sensor
+    """
+    def __init__(self, vehicle):
+        """
+        Construct class
+        :param vehicle: Carla Actor
+        """
+        world = vehicle.get_world()
+        blueprint = world.get_blueprint_library().find('sensor.other.imu')
+        self.sensor = world.spawn_actor(
+            blueprint, carla.Transform(), attach_to=vehicle)
+
+        weak_self = weakref.ref(self)
+        self.sensor.listen(
+            lambda sensor_data: ImuSensor._IMU_callback(weak_self, sensor_data))
+
+    @staticmethod
+    def _IMU_callback(weak_self, sensor_data):
+        self = weak_self()
+        if not self:
+            return
+        limits = (-99.9, 99.9)
+        # m/s^2
+        self.accelerometer = (
+            max(limits[0], min(limits[1], sensor_data.accelerometer.x)),
+            max(limits[0], min(limits[1], sensor_data.accelerometer.y)),
+            max(limits[0], min(limits[1], sensor_data.accelerometer.z)))
+        # rad/s
+        self.gyroscope = (
+            max(limits[0], min(limits[1], sensor_data.gyroscope.x)),
+            max(limits[0], min(limits[1], sensor_data.gyroscope.y)),
+            max(limits[0], min(limits[1], sensor_data.gyroscope.z)))
+        self.compass = sensor_data.compass
+
+
 class LocalizationManager(object):
     """
     The core class that manages localization estimation.
@@ -90,19 +127,14 @@ class LocalizationManager(object):
             self._ego_pos = self.vehicle.get_transform()
             self._speed = get_speed(self.vehicle)
         else:
-
-            # carla is ESU, while we convert the coordinates to ENU
-            # map origin in WG84 system #todo currently hard-coded
-
             x, y, z = geo_to_transform(self.gnss.lat, self.gnss.lon, self.gnss.alt,
                                        self.geo_ref.latitude, self.geo_ref.longitude, 2.8)
-
-            # in real world, it is very easy and accurate to get the vehicle yaw angle
-            # hence here we retrieve the "groundtruth" directly from the server
             location = self.vehicle.get_transform().location  # todo remove this later
             print('ground truth location: %f, %f' % (location.x, location.y))
             print('gnss location: %f, %f' % (x, y))
 
+            # in real world, it is very easy and accurate to get the vehicle yaw angle
+            # hence here we retrieve the "groundtruth" directly from the server
             rotation = self.vehicle.get_transform().rotation
             self._ego_pos = carla.Transform(carla.Location(x=x, y=y, z=z),
                                             rotation)
