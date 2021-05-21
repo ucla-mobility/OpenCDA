@@ -1,5 +1,8 @@
-# This is the scenario testing configuration file for platooning joining and cooperative merge
-# at the customized 2 lane freeway with carla only.
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for platooning joining and cooperative merge
+           at the customized 2lanefree simple version.
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
@@ -12,6 +15,7 @@ vehicle_base: &vehicle_base
         noise_alt_stddev: 0.0
         noise_lat_stddev: 0.0
         noise_lon_stddev: 0.0
+      heading_direction_stddev: 0.5 # degree
 
   behavior: &base_behavior
     max_speed: 95 # maximum speed, km/h

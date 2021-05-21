@@ -9,6 +9,7 @@ import weakref
 from collections import deque
 
 import carla
+import numpy as np
 
 from core.common.misc import get_speed
 from core.sensing.localization.coordinate_transform import geo_to_transform
@@ -116,6 +117,8 @@ class LocalizationManager(object):
         self._timestamp_history = deque(maxlen=100)
 
         self.gnss = GnssSensor(vehicle, config_yaml['gnss'])
+        # heading direction noise
+        self.heading_noise_std = config_yaml['heading_direction_stddev']
 
     def localize(self):
         """
@@ -127,23 +130,39 @@ class LocalizationManager(object):
             self._ego_pos = self.vehicle.get_transform()
             self._speed = get_speed(self.vehicle)
         else:
-            x, y, z = geo_to_transform(self.gnss.lat, self.gnss.lon, self.gnss.alt,
-                                       self.geo_ref.latitude, self.geo_ref.longitude, 2.8)
-            location = self.vehicle.get_transform().location  # todo remove this later
-            print('ground truth location: %f, %f' % (location.x, location.y))
-            print('gnss location: %f, %f' % (x, y))
+            if len(self._ego_pos_history) == 0:
+                # assume initialization is accurate
+                self._ego_pos = self.vehicle.get_transform()
+            else:
+                x, y, z = geo_to_transform(self.gnss.lat, self.gnss.lon, self.gnss.alt,
+                                           self.geo_ref.latitude, self.geo_ref.longitude, 2.8)
+                location = self.vehicle.get_transform().location  # todo debug purpose
 
-            # in real world, it is very easy and accurate to get the vehicle yaw angle
-            # hence here we retrieve the "groundtruth" directly from the server
-            rotation = self.vehicle.get_transform().rotation
-            self._ego_pos = carla.Transform(carla.Location(x=x, y=y, z=z),
-                                            rotation)
+                # We add synthetic noise to the heading direction
+                rotation = self.vehicle.get_transform().rotation
+                heading_angle = self.add_heading_direction_noise(rotation.yaw)
+
+                print('-------------------------------------------------------------------')
+                print('ground truth location: x: %f, y: %f, yaw: %f' % (location.x, location.y, rotation.yaw))
+                print('gnss location: x: %f, y: %f, yaw: %f' % (x, y, heading_angle))
+
+                self._ego_pos = carla.Transform(carla.Location(x=x, y=y, z=z),
+                                                carla.Rotation(pitch=0, yaw=heading_angle, roll=0))
 
             # for simplicity, we directly retrieve the true speed
             self._speed = get_speed(self.vehicle)
             # save the track for future use
             self._ego_pos_history.append(self._ego_pos)
             self._timestamp_history.append(self.gnss.timestamp)
+
+    def add_heading_direction_noise(self, heading_direction):
+        """
+        Add synthetic noise to heading direction
+        :param heading_direction: groundtruth heading_direction obtained from the server
+        :return: heading direction with noise
+        """
+        noise = np.random.normal(0, self.heading_noise_std)
+        return heading_direction + noise
 
     def get_ego_pos(self):
         """

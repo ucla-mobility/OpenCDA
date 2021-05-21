@@ -27,4 +27,5 @@ def geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0):
     # combining these two methods can get position with less error
     delta_north = np.deg2rad(lat - lat_0) * north_curvature_radius
 
+    # carla is ESU
     return enu_cordinates[0], -delta_north, enu_cordinates[2]
