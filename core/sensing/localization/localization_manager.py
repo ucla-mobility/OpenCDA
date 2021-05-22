@@ -12,6 +12,7 @@ import carla
 import numpy as np
 
 from core.common.misc import get_speed
+from core.sensing.localization.kalman_filter import KalmanFilter
 from core.sensing.localization.coordinate_transform import geo_to_transform
 
 
@@ -73,6 +74,7 @@ class ImuSensor(object):
         weak_self = weakref.ref(self)
         self.sensor.listen(
             lambda sensor_data: ImuSensor._IMU_callback(weak_self, sensor_data))
+        self.gyroscope = None
 
     @staticmethod
     def _IMU_callback(weak_self, sensor_data):
@@ -118,8 +120,12 @@ class LocalizationManager(object):
         self._timestamp_history = deque(maxlen=100)
 
         self.gnss = GnssSensor(vehicle, config_yaml['gnss'])
+        self.imu = ImuSensor(vehicle)
+
+        # Kalman Filter
+        self.KF = KalmanFilter()
         # heading direction noise
-        self.heading_noise_std = config_yaml['heading_direction_stddev']
+        self.heading_noise_std = config_yaml['gnss']['heading_direction_stddev']
 
     def localize(self):
         """
@@ -134,25 +140,33 @@ class LocalizationManager(object):
             if len(self._ego_pos_history) == 0:
                 # assume initialization is accurate
                 self._ego_pos = self.vehicle.get_transform()
+                self.KF.run_step_init(self._ego_pos.location.x,
+                                      self._ego_pos.location.y,
+                                      np.deg2rad(self._ego_pos.rotation.yaw))
             else:
+                # for simplicity, we directly retrieve the true speed
+                self._speed = get_speed(self.vehicle)
+
                 x, y, z = geo_to_transform(self.gnss.lat, self.gnss.lon, self.gnss.alt,
                                            self.geo_ref.latitude, self.geo_ref.longitude, 0.0)
 
                 location = self.vehicle.get_transform().location  # todo debug purpose
-
                 # We add synthetic noise to the heading direction
                 rotation = self.vehicle.get_transform().rotation
                 heading_angle = self.add_heading_direction_noise(rotation.yaw)
 
+                x_kf, y_kf, heading_angle_kf = self.KF.run_step(x, y, heading_angle,
+                                                                self._speed, self.imu.gyroscope[2])
+                heading_angle_kf = np.rad2deg(heading_angle_kf)
+
                 print('-------------------------------------------------------------------')
                 print('ground truth location: x: %f, y: %f, yaw: %f' % (location.x, location.y, rotation.yaw))
                 print('gnss location: x: %f, y: %f, yaw: %f' % (x, y, heading_angle))
+                print('kf location: x: %f, y: %f, yaw: %f' % (x_kf, y_kf, heading_angle_kf))
 
-                self._ego_pos = carla.Transform(carla.Location(x=x, y=y, z=z),
-                                                carla.Rotation(pitch=0, yaw=heading_angle, roll=0))
+                self._ego_pos = carla.Transform(carla.Location(x=x_kf, y=y_kf, z=z),
+                                                carla.Rotation(pitch=0, yaw=heading_angle_kf, roll=0))
 
-            # for simplicity, we directly retrieve the true speed
-            self._speed = get_speed(self.vehicle)
             # save the track for future use
             self._ego_pos_history.append(self._ego_pos)
             self._timestamp_history.append(self.gnss.timestamp)
@@ -179,3 +193,11 @@ class LocalizationManager(object):
         :return:
         """
         return self._speed
+
+    def destroy(self):
+        """
+        Destroy the sensors
+        :return:
+        """
+        self.gnss.sensor.destroy()
+        self.imu.sensor.destroy()

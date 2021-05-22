@@ -15,7 +15,7 @@ vehicle_base: &vehicle_base
         noise_alt_stddev: 0.005
         noise_lat_stddev: 1e-5
         noise_lon_stddev: 1e-5
-      heading_direction_stddev: 0.5 # degree
+        heading_direction_stddev: 0.5 # degree
 
   behavior: &base_behavior
     max_speed: 111 # maximum speed, km/h

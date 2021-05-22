@@ -105,3 +105,4 @@ class VehicleManager(object):
         :return:
         """
         self.vehicle.destroy()
+        self.localizer.destroy()
