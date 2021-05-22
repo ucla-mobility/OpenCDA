@@ -34,7 +34,7 @@ class GnssSensor(object):
         blueprint.set_attribute('noise_lat_stddev', str(config['noise_lat_stddev']))
         blueprint.set_attribute('noise_lon_stddev', str(config['noise_lon_stddev']))
         # spawn the sensor
-        self.sensor = world.spawn_actor(blueprint, carla.Transform(carla.Location(x=0.0, y=0.0, z=2.8)),
+        self.sensor = world.spawn_actor(blueprint, carla.Transform(carla.Location(x=0.0, y=0.0, z=0.0)),
                                         attach_to=vehicle, attachment_type=carla.AttachmentType.Rigid)
 
         # latitude and longitude at current timestamp
@@ -59,6 +59,7 @@ class ImuSensor(object):
     """
     IMU Sensor
     """
+
     def __init__(self, vehicle):
         """
         Construct class
@@ -135,7 +136,8 @@ class LocalizationManager(object):
                 self._ego_pos = self.vehicle.get_transform()
             else:
                 x, y, z = geo_to_transform(self.gnss.lat, self.gnss.lon, self.gnss.alt,
-                                           self.geo_ref.latitude, self.geo_ref.longitude, 2.8)
+                                           self.geo_ref.latitude, self.geo_ref.longitude, 0.0)
+
                 location = self.vehicle.get_transform().location  # todo debug purpose
 
                 # We add synthetic noise to the heading direction

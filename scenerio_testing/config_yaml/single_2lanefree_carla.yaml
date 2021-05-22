@@ -12,9 +12,9 @@ vehicle_base: &vehicle_base
     localization: &base_localize
       activate: true # localization module is not necessary
       gnss: # gnss sensor configuration
-        noise_alt_stddev: 0.0
-        noise_lat_stddev: 0.0
-        noise_lon_stddev: 0.0
+        noise_alt_stddev: 0.005
+        noise_lat_stddev: 1e-5
+        noise_lon_stddev: 1e-5
       heading_direction_stddev: 0.5 # degree
 
   behavior: &base_behavior

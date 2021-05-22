@@ -5,12 +5,12 @@ Functions to transfer coordinates under different coordinate system
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 import numpy as np
-import pymap3d as pm
 
 
 def geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0):
     """
     Convert WG84 to ENU. The origin of the ENU should pass the geo reference.
+    Note this function is a writen by reversing the official API transform_to_geo.
     :param lat: current latitude
     :param lon: current longitude
     :param alt: current altitude
@@ -19,13 +19,17 @@ def geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0):
     :param alt_0: geo_ref altitude
     :return:
     """
-    north_curvature_radius = 6371848.628169
+    EARTH_RADIUS_EQUA = 6378137.0
+    scale = np.cos(np.deg2rad(lat_0))
 
-    ell = pm.Ellipsoid('wgs84')
-    enu_cordinates = pm.geodetic2enu(lat, lon, alt, lat_0, lon_0, alt_0, ell=ell)
+    mx = lon * np.pi * EARTH_RADIUS_EQUA * scale / 180
+    mx_0 = scale * np.deg2rad(lon_0) * EARTH_RADIUS_EQUA
+    x = mx - mx_0
 
-    # combining these two methods can get position with less error
-    delta_north = np.deg2rad(lat - lat_0) * north_curvature_radius
+    my = np.log(np.tan((lat + 90) * np.pi / 360)) * EARTH_RADIUS_EQUA * scale
+    my_0 = scale * EARTH_RADIUS_EQUA * np.log(np.tan((90 + lat_0) * np.pi / 360))
+    y = -(my - my_0)
 
-    # carla is ESU
-    return enu_cordinates[0], -delta_north, enu_cordinates[2]
+    z = alt - alt_0
+
+    return x, y, z
