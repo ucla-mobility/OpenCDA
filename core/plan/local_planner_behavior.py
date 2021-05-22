@@ -268,7 +268,7 @@ class LocalPlanner(object):
         dt = 0.25
 
         target_speed = self._target_speed
-        current_speed = get_speed(self._vehicle)
+        current_speed = get_speed(self._vehicle) # todo: remove this
 
         # sample the trajectory by 0.1 second
         sample_num = 2.0 // dt
