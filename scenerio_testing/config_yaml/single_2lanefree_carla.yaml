@@ -8,9 +8,10 @@ description: |-
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: false # perception module is not necessary
+      activate: false # when not activated, objects positions will be retrieved from server directly
+
     localization: &base_localize
-      activate: true # localization module is not necessary
+      activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
         noise_lat_stddev: 3e-6

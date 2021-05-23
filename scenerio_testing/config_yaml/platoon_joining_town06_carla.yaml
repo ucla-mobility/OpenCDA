@@ -8,14 +8,20 @@ description: |-
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: false # perception module is not necessary
+      activate: false # when not activated, objects positions will be retrieved from server directly
+
     localization: &base_localize
-      activate: true # localization module is not necessary
+      activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
-        noise_alt_stddev: 0.0
-        noise_lat_stddev: 0.0
-        noise_lon_stddev: 0.0
-      heading_direction_stddev: 2.0 # degree
+        noise_alt_stddev: 0.005
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
+        heading_direction_stddev: 0.5 # degree
+        speed_stddev: 0.2
+      debug_helper: &loc_debug_helper
+        show_animation: false # whether to show real-time trajectory plotting
+        show_plotting: false # whether to show loc data plotting after simulation
+        scale: 10.0 # used to multiply with the x, y coordinate to make the error clearer
 
   behavior: &base_behavior
     max_speed: 70 # maximum speed, km/h
