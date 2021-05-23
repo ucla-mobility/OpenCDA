@@ -212,7 +212,7 @@ def createVehicleManager(world, scenario_params, application, platooning_world, 
     return single_cav_list
 
 
-def DestroyActors(world):
+def destroyActors(world):
     """
     Destroy all actors in the world
     :param world:

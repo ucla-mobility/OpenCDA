@@ -9,13 +9,19 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # perception module is not necessary
+
     localization: &base_localize
       activate: true # localization module is not necessary
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
-        noise_lat_stddev: 1e-5
-        noise_lon_stddev: 1e-5
-      heading_direction_stddev: 0.5 # degree
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
+        heading_direction_stddev: 0.5 # degree
+        speed_stddev: 0.2
+      debug_helper: &loc_debug_helper
+        show_animation: false # whether to show real-time trajectory plotting
+        show_plotting: false # whether to show loc data plotting after simulation
+        scale: 10.0 # used to multiply with the x, y coordinate to make the error clearer
 
   behavior: &base_behavior
     max_speed: 95 # maximum speed, km/h
