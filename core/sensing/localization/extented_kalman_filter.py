@@ -34,10 +34,14 @@ class ExtentedKalmanFilter(object):
 
     def motion_model(self, x, u):
         """
-        X_pred = FX + Bu
-        :param x: previous [x, y, yaw in rad, v]
-        :param u: current [velocity, imu yaw rate]
-        :return:
+        Predict current position and yaw based on previous result.
+        X = F * X_prev + B * u
+        Args:
+            x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
+            u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
+
+        Returns:
+          np.array: predicted state.
         """
         F = np.array([[1.0, 0, 0, 0],
                       [0, 1.0, 0, 0],
@@ -78,9 +82,13 @@ class ExtentedKalmanFilter(object):
 
     def observation_model(self, x):
         """
-        projection from prediction to sensor measurements.
-        :param x:
-        :return:
+        Project the state matrix to sensor measurement matrix.
+        Args:
+            x (np.array): [x, y, yaw, v], shape: (4. 1).
+
+        Returns:
+            np.array: predicted measurement.
+
         """
         H = np.array([
             [1, 0, 0, 0],

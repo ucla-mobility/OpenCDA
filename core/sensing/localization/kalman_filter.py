@@ -21,35 +21,82 @@ class KalmanFilter(object):
         """
         Construct class
         """
-        # state at previous timestamp
-        self.state_prev = np.zeros((3, 1))
-        # covariance matrix at previous timstamp
-        self.P_prev = np.identity(3)
 
-        # time step todo: currently hardcoded
-        self.time_step = 0.05
-
-        # system error matrix
         self.Q = np.diag([
-            0.20,  # variance of location on x-axis
-            0.20,  # variance of location on y-axis
-            np.deg2rad(1.0),  # variance of yaw angle
-        ])  # predict state covariance
+            0.1,  # variance of location on x-axis
+            0.2,  # variance of location on y-axis
+            np.deg2rad(0.1),  # variance of yaw angle
+            0.001  # variance of velocity
+        ]) ** 2  # predict state covariance
 
-        # noise matrix for measurement
         self.R = np.diag([1.0, 2.0, 0.5]) ** 2  # Observation x,y position covariance
 
-    def run_step_init(self, x, y, heading):
+        self.time_step = 0.05
+
+        self.xEst = np.zeros((4, 1))
+        self.PEst = np.eye(4)
+
+    def motion_model(self, x, u):
         """
-        Initialization run step
-        :param x:
-        :param y:
-        :param heading:
-        :return:
+        Predict current position and yaw based on previous result.
+        X = F * X_prev + B * u
+        Args:
+            x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
+            u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
+
+        Returns:
+          np.array: predicted state.
         """
-        self.state_prev[0] = x
-        self.state_prev[1] = y
-        self.state_prev[2] = heading
+        F = np.array([[1.0, 0, 0, 0],
+                      [0, 1.0, 0, 0],
+                      [0, 0, 1.0, 0],
+                      [0, 0, 0, 0]])
+
+        B = np.array([[self.time_step * math.cos(x[2, 0]), 0],
+                      [self.time_step * math.sin(x[2, 0]), 0],
+                      [0.0, self.time_step],
+                      [1.0, 0.0]])
+
+        x = F @ x + B @ u
+
+        return x
+
+    def observation_model(self, x):
+        """
+        Project the state matrix to sensor measurement matrix.
+        Args:
+            x (np.array): [x, y, yaw, v], shape: (4. 1).
+
+        Returns:
+            np.array: predicted measurement.
+
+        """
+        H = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0]
+        ])
+
+        z = H @ x
+
+        return z
+
+    def run_step_init(self, x, y, heading, velocity):
+        """
+        Initial state filling.
+        Args:
+            x ():
+            y ():
+            heading ():
+            velocity ():
+
+        Returns:
+
+        """
+        self.xEst[0] = x
+        self.xEst[1] = y
+        self.xEst[2] = heading
+        self.xEst[3] = velocity
 
     def run_step(self, x, y, heading, velocity, yaw_rate_imu):
         """
@@ -61,45 +108,35 @@ class KalmanFilter(object):
         :param yaw_rate_imu: yaw rate rad/s from IMU sensor
         :return: corrected x, y, heading
         """
-        # Identity transformation matrix between sensor measurement and target
-        H = np.identity(3)
-        z = np.array([x, y, np.deg2rad(heading)]).reshape(3, 1)
+        # gps observation
+        z = np.array([x, y, heading]).reshape(3, 1)
+        # velocity and imu yaw rate
+        u = np.array([velocity, yaw_rate_imu]).reshape(2, 1)
 
-        # velocity on east and south computation
-        ve = velocity * np.cos(np.rad2deg(self.state_prev[2][0]))
-        vn = velocity * np.sin(np.rad2deg(self.state_prev[2][0]))
+        # state prediction
+        xPred = self.motion_model(self.xEst, u)
+        # sensor measurement prediction
+        zPred = self.observation_model(xPred)
+        y = z - zPred
 
-        # system input vector
-        u = np.array([ve, vn, yaw_rate_imu]).reshape(3, 1)
-        # control matrix
-        B = np.identity(3)
+        # projection matrix
+        H = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0]
+        ])
+
         # prediction matrix
-        A = np.identity(3)
+        F = np.array([[1.0, 0, 0, 0],
+                      [0, 1.0, 0, 0],
+                      [0, 0, 1.0, 0],
+                      [0, 0, 0, 0]])
 
-        # KF algorithm begins
-        state_predict = np.matmul(A, self.state_prev) + np.matmul(B, u) * self.time_step
-        inovation = z - np.matmul(H, state_predict)
+        PPred = F @ self.PEst @ F.T + self.Q
+        S = np.linalg.inv(H @ PPred @ H.T + self.R)
+        K = PPred @ H.T @ S
 
-        if inovation[2] > 1.5 * np.pi:
-            inovation[2] = inovation[2] - 2 * np.pi
-        elif inovation[2] < -1.5 * np.pi:
-            inovation[2] = inovation[2] + 2 * np.pi
+        self.xEst = xPred + K @ y
+        self.PEst = K @ H @ PPred
 
-        # practical setting
-        # Q = self.Q * self.time_step + self.time_step ^ 2 / 2 * (self.Q.dot(A.transpose()) +
-        #                                                         A.dot(self.Q))
-        Q = self.Q
-        P = reduce(np.dot, [A, self.P_prev, A.transpose()]) + Q
-        inv = np.linalg.inv(reduce(np.dot, [H, P, H.transpose()]) + self.R)
-        K = reduce(np.dot, [P, H.transpose(), inv])
-        state_final = state_predict + K.dot(inovation)
-
-        if state_final[2] > np.pi:
-            state_final[2] = state_final[2] - np.pi
-        elif state_final[2] < -np.pi:
-            state_final[2] = state_final[2] + np.pi
-
-        self.P_prev = P - reduce(np.dot, [K, H, P])
-        self.state_prev = state_final
-
-        return state_final[0][0], state_final[1][0], state_final[2][0]
+        return self.xEst[0][0], self.xEst[1][0], self.xEst[2][0], self.xEst[3][0]

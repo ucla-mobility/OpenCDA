@@ -185,8 +185,12 @@ class DebugHelper(object):
         print("--------------Localization Module Performance on Actor %d" % self.actor_id)
         x_error_mean = np.mean(np.abs(np.array(self.gt_x) - np.array(self.gnss_x)))
         y_error_mean = np.mean(np.abs(np.array(self.gt_y) - np.array(self.gnss_y)))
-        print('mean error for gnss x: %f m, gnss y: %f m' % (x_error_mean, y_error_mean))
+        yaw_error_mean = np.mean(np.abs(np.array(self.gt_yaw) - np.array(self.gnss_yaw)))
+        print('mean error for gnss x: %f m, gnss y: %f m, gnss yaw: %f degree'
+              % (x_error_mean, y_error_mean, yaw_error_mean))
 
         x_error_mean = np.mean(np.abs(np.array(self.gt_x) - np.array(self.filter_x)))
         y_error_mean = np.mean(np.abs(np.array(self.gt_y) - np.array(self.filter_y)))
-        print('mean error for filtered x: %f m, filtered y: %f m' % (x_error_mean, y_error_mean))
+        yaw_error_mean = np.mean(np.abs(np.array(self.gt_yaw) - np.array(self.filter_yaw)))
+        print('mean error for filtered x: %f m, filtered y: %f m filter yaw: %f degree'
+              % (x_error_mean, y_error_mean, yaw_error_mean))

@@ -14,6 +14,7 @@ import statistics
 
 from core.common.misc import get_speed
 from core.sensing.localization.localization_debug_helper import DebugHelper
+from core.sensing.localization.kalman_filter import KalmanFilter
 from core.sensing.localization.extented_kalman_filter import ExtentedKalmanFilter
 from core.sensing.localization.coordinate_transform import geo_to_transform
 
@@ -129,7 +130,7 @@ class LocalizationManager(object):
         self.speed_noise_std = config_yaml['gnss']['speed_stddev']
 
         # Kalman Filter
-        self.EKF = ExtentedKalmanFilter()
+        self.EKF = KalmanFilter()
 
         # DebugHelper
         self.debug_helper = DebugHelper(config_yaml['debug_helper'], self.vehicle.id)
