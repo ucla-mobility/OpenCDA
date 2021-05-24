@@ -50,7 +50,8 @@ class VehicleManager(object):
         if 'platooning' in application:
             platoon_config = config_yaml['platoon']
             self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
-                                                 behavior_config, platoon_config, world, carla_map)
+                                                 behavior_config, platoon_config,
+                                                 world, carla_map)
         else:
             # todo: remove the vehicle
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)

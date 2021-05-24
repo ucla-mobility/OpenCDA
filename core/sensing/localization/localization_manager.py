@@ -10,7 +10,6 @@ from collections import deque
 
 import carla
 import numpy as np
-import statistics
 
 from core.common.misc import get_speed
 from core.sensing.localization.localization_debug_helper import DebugHelper

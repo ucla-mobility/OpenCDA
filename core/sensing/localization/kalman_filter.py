@@ -29,7 +29,7 @@ class KalmanFilter(object):
             0.001  # variance of velocity
         ]) ** 2  # predict state covariance
 
-        self.R = np.diag([1.0, 2.0, 0.5]) ** 2  # Observation x,y position covariance
+        self.R = np.diag([1.0, 2.0, 0.1]) ** 2  # Observation x,y position covariance
 
         self.time_step = 0.05
 
