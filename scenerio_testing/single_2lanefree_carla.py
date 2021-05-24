@@ -70,6 +70,7 @@ def main():
             client.stop_recorder()
 
         world.apply_settings(origin_settings)
+
         for v in single_cav_list:
             v.destroy()
         for v in bg_veh_list:

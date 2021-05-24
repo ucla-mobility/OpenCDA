@@ -1,17 +1,29 @@
-# This is the scenario testing configuration file for platooning joining and cooperative merge
-# at the customized 2 lane freeway with carla only.
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for platooning joining and cooperative merge
+           at the Town06 using  CARLA only.
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: false # perception module is not necessary
+      activate: false # when not activated, objects positions will be retrieved from server directly
+
     localization: &base_localize
-      activate: true # localization module is not necessary
+      activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
-        noise_alt_stddev: 0.0
-        noise_lat_stddev: 0.0
-        noise_lon_stddev: 0.0
+        noise_alt_stddev: 0.005
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
+        heading_direction_stddev: 0.1 # degree
+        speed_stddev: 0.2
+      debug_helper: &loc_debug_helper
+        show_animation: false # whether to show real-time trajectory plotting
+        show_plotting: false # whether to show loc data plotting after simulation
+        x_scale: 10.0 # used to multiply with the x coordinate to make the error on x axis clearer
+        y_scale: 10.0 # used to multiply with the y coordinate to make the error on y axis clearer
+
   behavior: &base_behavior
     max_speed: 70 # maximum speed, km/h
     tailgate_speed: 80 # when a vehicles needs to be close to another vehicle asap
@@ -99,29 +111,22 @@ scenario:
               <<: *base_local_planner
               debug_trajectory: true
               debug: false
+              
         - <<: *vehicle_base
           spawn_position: [111.7194, 139.51, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
-          controller:
-            <<: *base_controller
-            args:
-              <<: *control_args
-              max_throttle: 1.0
+
         - <<: *vehicle_base
           spawn_position: [101.7194, 139.51, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
-            args:
-              <<: *control_args
-              max_throttle: 1.0
+
         - <<: *vehicle_base
           spawn_position: [91.7194, 139.51, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
-            args:
-              <<: *control_args
-              max_throttle: 1.0
+
 
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
@@ -129,6 +134,14 @@ scenario:
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
       destination: [606.87, 145.39, 0]
+
+      sensing:
+        <<: *base_sensing
+        localization:
+          <<: *base_localize
+          debug_helper:
+            <<: *loc_debug_helper
+            show_plotting: true
       v2x:
         <<: *base_v2x
         communication_range: 35

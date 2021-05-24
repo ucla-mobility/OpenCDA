@@ -52,10 +52,12 @@ def main():
                                                        carla_map, map_api.spawn_helper_2lanefree)
         # todo spectator wrapper
         spectator = world.get_spectator()
+        spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle
+
         # run steps
         while True:
             world.tick()
-            transform = platoon_list[0].vehicle_manager_list[1].vehicle.get_transform()
+            transform = spectator_vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
                                                     carla.Rotation(pitch=-90)))
             for platoon in platoon_list:
@@ -74,14 +76,16 @@ def main():
     finally:
         if opt.record:
             client.stop_recorder()
-            
+
         world.apply_settings(origin_settings)
+
         for platoon in platoon_list:
             platoon.destroy()
         for cav in single_cav_list:
             cav.destroy()
         for v in bg_veh_list:
             v.destroy()
+
 
 
 if __name__ == '__main__':

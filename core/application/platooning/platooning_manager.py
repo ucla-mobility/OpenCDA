@@ -169,5 +169,5 @@ class PlatooningManager(object):
         Destroy vehicles
         :return:
         """
-        for i in range(len(self.vehicle_manager_list)):
-            self.vehicle_manager_list[i].vehicle.destroy()
+        for vm in self.vehicle_manager_list:
+            vm.destroy()

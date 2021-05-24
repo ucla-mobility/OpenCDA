@@ -210,3 +210,15 @@ def createVehicleManager(world, scenario_params, application, platooning_world, 
         single_cav_list.append(vehicle_manager)
 
     return single_cav_list
+
+
+def destroyActors(world):
+    """
+    Destroy all actors in the world
+    :param world:
+    :return:
+    """
+
+    actor_list = world.get_actors()
+    for actor in actor_list:
+        actor.destroy()
