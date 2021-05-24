@@ -21,11 +21,11 @@ class ExtentedKalmanFilter(object):
         self.Q = np.diag([
             0.1,  # variance of location on x-axis
             0.2,  # variance of location on y-axis
-            np.deg2rad(1.0),  # variance of yaw angle
+            np.deg2rad(0.1),  # variance of yaw angle
             0.001  # variance of velocity
         ]) ** 2  # predict state covariance
 
-        self.R = np.diag([1.0, 2.0, 0.75]) ** 2  # Observation x,y position covariance
+        self.R = np.diag([1.0, 2.0, 0.5]) ** 2  # Observation x,y position covariance
 
         self.time_step = 0.05
 

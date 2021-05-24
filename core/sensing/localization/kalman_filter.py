@@ -37,7 +37,7 @@ class KalmanFilter(object):
         ])  # predict state covariance
 
         # noise matrix for measurement
-        self.R = np.identity(3) * np.array([1.0, 1.0, 0.1]).transpose()
+        self.R = np.diag([1.0, 2.0, 0.5]) ** 2  # Observation x,y position covariance
 
     def run_step_init(self, x, y, heading):
         """

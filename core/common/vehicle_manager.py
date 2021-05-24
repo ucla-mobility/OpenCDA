@@ -104,5 +104,5 @@ class VehicleManager(object):
         Destroy the actor vehicle
         :return:
         """
-        self.vehicle.destroy()
         self.localizer.destroy()
+        self.vehicle.destroy()

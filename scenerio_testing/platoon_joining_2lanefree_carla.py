@@ -77,14 +77,14 @@ def main():
         if opt.record:
             client.stop_recorder()
 
+        world.apply_settings(origin_settings)
+
         for platoon in platoon_list:
             platoon.destroy()
         for cav in single_cav_list:
             cav.destroy()
         for v in bg_veh_list:
             v.destroy()
-
-        world.apply_settings(origin_settings)
 
 
 

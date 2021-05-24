@@ -132,7 +132,7 @@ class LocalizationManager(object):
         self.EKF = ExtentedKalmanFilter()
 
         # DebugHelper
-        self.debug_helper = DebugHelper(config_yaml['debug_helper'])
+        self.debug_helper = DebugHelper(config_yaml['debug_helper'], self.vehicle.id)
 
     def localize(self):
         """
@@ -223,3 +223,5 @@ class LocalizationManager(object):
         """
         self.gnss.sensor.destroy()
         self.imu.sensor.destroy()
+        if self.debug_helper.show_plotting:
+            self.debug_helper.plot()
