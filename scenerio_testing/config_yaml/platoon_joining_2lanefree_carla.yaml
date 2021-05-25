@@ -144,7 +144,7 @@ scenario:
       spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
-      spawn_special: [0.35]
+      spawn_special: [0.305]
       destination: [300, 10.5, 0]
       v2x:
         <<: *base_v2x

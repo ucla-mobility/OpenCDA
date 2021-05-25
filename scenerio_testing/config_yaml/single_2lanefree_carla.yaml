@@ -77,13 +77,13 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -200
+  global_speed_perc: -100
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   vehicle_list:
     - spawn_position: [-300, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-280, 4.5, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -100
+      vehicle_speed_perc: -70
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
