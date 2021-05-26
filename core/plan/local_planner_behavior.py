@@ -46,17 +46,17 @@ class LocalPlanner(object):
     # Minimum distance to target waypoint as a percentage
     # (e.g. within 80% of total distance)
 
-    # FPS used for dt
-    FPS = 10
-
     def __init__(self, agent, carla_map, config_yaml):
         """
         :param agent: agent that regulates the vehicle
         :param config_yaml: local planner configuration file
         """
-        # ego_vehicle
+        # ego_vehicle todo:remove vehicle
         self._vehicle = agent.vehicle
         self._map = carla_map
+
+        self._ego_pos = None
+        self._ego_speed = None
 
         # waypoint pop out thresholding
         self._min_distance = config_yaml['min_dist']
@@ -110,6 +110,19 @@ class LocalPlanner(object):
                 else:
                     break
 
+    def update_information(self, ego_pos, ego_speed):
+        """
+        Update the ego position and speed for trajectory planner.
+        Args:
+            ego_pos (carla.Transform): Ego position from localization module.
+            ego_speed (float): Ego speed(km/h) from localization module.
+
+        Returns:
+
+        """
+        self._ego_pos = ego_pos
+        self._ego_speed = ego_speed
+
     def get_incoming_waypoint_and_direction(self, steps=3):
         """
         Returns direction and waypoint at a distance ahead defined by the user.
@@ -126,7 +139,6 @@ class LocalPlanner(object):
             except IndexError as i:
                 print(i)
                 return None, RoadOption.VOID
-        return None, RoadOption.VOID
 
     def get_trajetory(self):
         """
@@ -148,9 +160,9 @@ class LocalPlanner(object):
         # [m] distance of each interpolated points
         ds = 0.1
 
-        # retrieve current location, yaw angle
-        current_location = self._vehicle.get_location()
-        current_yaw = self._vehicle.get_transform().rotation.yaw
+        # retrieve current location, yaw angle todo: this should comes from self._egopos
+        current_location = self._ego_pos.location
+        current_yaw = self._ego_pos.rotation.yaw
 
         # retrieve the corresponding waypoint of the current location
         current_wpt = self._map.get_waypoint(current_location).next(1)[0]
@@ -268,7 +280,7 @@ class LocalPlanner(object):
         dt = 0.25
 
         target_speed = self._target_speed
-        current_speed = get_speed(self._vehicle) # todo: remove this
+        current_speed = self._ego_speed
 
         # sample the trajectory by 0.1 second
         sample_num = 2.0 // dt
@@ -366,9 +378,6 @@ class LocalPlanner(object):
 
         self._target_speed = target_speed
 
-        if len(self.waypoints_queue) == 0:
-            return 0, None
-
         # Buffering the waypoints. Always keep the waypoint buffer alive todo:remove the hard coded
         if len(self._waypoint_buffer) < 9:
             for i in range(self._buffer_size - len(self._waypoint_buffer)):
@@ -386,14 +395,14 @@ class LocalPlanner(object):
             self._trajectory_buffer = trajectory.copy()
 
         # Current vehicle waypoint
-        self._current_waypoint = self._map.get_waypoint(self._vehicle.get_location())
+        self._current_waypoint = self._map.get_waypoint(self._ego_pos.location)
 
         # Target waypoint TODO: dt is never used
         self.target_waypoint, self.target_road_option, self._target_speed, dt = \
             self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
 
         # Purge the queue of obsolete waypoints
-        vehicle_transform = self._vehicle.get_transform()
+        vehicle_transform = self._ego_pos
         self.pop_buffer(vehicle_transform)
 
         if self.debug_trajectory:

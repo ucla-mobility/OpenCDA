@@ -75,7 +75,7 @@ class CollisionChecker:
         :return:
         """
         # we first need to consider the vehicle on the other lane in front
-        target_wpt_next = target_wpt.next(10)[0]
+        target_wpt_next = target_wpt.next(6)[0]
 
         # Next we consider the vehicle behind us
         diff_x = target_wpt_next.transform.location.x - ego_loc.x
@@ -103,11 +103,11 @@ class CollisionChecker:
             debug_tmp.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # TODO: Remove this after debugging
-        # draw_trajetory_points(world,
-        #                       debug_tmp,
-        #                       color=carla.Color(255, 255, 0),
-        #                       size=0.05,
-        #                       lt=0.1)
+        draw_trajetory_points(world,
+                              debug_tmp,
+                              color=carla.Color(255, 255, 0),
+                              size=0.05,
+                              lt=0.1)
 
         return rx, ry, ryaw
 
