@@ -82,13 +82,13 @@ carla_traffic_manager:
   auto_lane_change: false
   vehicle_list:
     - spawn_position: [-330, 7.5, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -80
+      vehicle_speed_perc: 0
     - spawn_position: [-320, 4.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
     - spawn_position: [-300, 7.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -100
     - spawn_position: [-280, 4.5, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -70
+      vehicle_speed_perc: -200
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:

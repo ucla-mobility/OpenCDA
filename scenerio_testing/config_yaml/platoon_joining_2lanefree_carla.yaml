@@ -69,7 +69,7 @@ vehicle_base: &vehicle_base
 platoon_base: &platoon_base
   max_capacity: 10
   inter_gap: 0.6 # desired time gap
-  open_gap: 1.2 # open gap
+  open_gap: 1.5 # open gap
   warm_up_speed: 55 # required speed before cooperative merging
 
 # define carla simulation setting
@@ -144,7 +144,7 @@ scenario:
       spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
-      spawn_special: [0.355]
+      spawn_special: [0.325]
       destination: [300, 10.5, 0]
       v2x:
         <<: *base_v2x

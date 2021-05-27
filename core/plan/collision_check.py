@@ -66,16 +66,26 @@ class CollisionChecker:
 
         return True if angle <= 3 else False
 
-    def overtake_collision_path(self, ego_loc, target_wpt, world):
+    def adjacent_lane_collision_check(self, ego_loc, target_wpt, overtake, world):
         """
-        Generate a rough path to be used for collicion check for overtaking
-        :param world: carla world
-        :param ego_loc:
-        :param target_wpt:
-        :return:
+        Generate a straight line in the adjacent lane for collision detection during
+        overtake/lane change. Todo: current version may not work well on curved lane
+        Args:
+            ego_loc (carla.Location): Ego Location.
+            target_wpt (carla.Waypoint): the check point in the adjacent at a far distance.
+            overtake (bool): indicate whether this is an overtake or normal lane change behavior.
+            world (carla.World): CARLA Simulation world, used to draw debug lines.
+
+        Returns:
+            list: the x coordinates of the collision check line in the adjacent lane
+            list: the y coordinates of the collision check line in the adjacent lane
+            list: the yaw angle of the the collision check line in the adjacent lane
         """
         # we first need to consider the vehicle on the other lane in front
-        target_wpt_next = target_wpt.next(6)[0]
+        if overtake:
+            target_wpt_next = target_wpt.next(6)[0]
+        else:
+            target_wpt_next = target_wpt
 
         # Next we consider the vehicle behind us
         diff_x = target_wpt_next.transform.location.x - ego_loc.x
@@ -102,19 +112,19 @@ class CollisionChecker:
             ryaw.append(sp.calc_yaw(i_s))
             debug_tmp.append(carla.Transform(carla.Location(ix, iy, 0)))
 
-        # TODO: Remove this after debugging
+        # draw yellow line for overtaking, white line for lane change
         draw_trajetory_points(world,
                               debug_tmp,
-                              color=carla.Color(255, 255, 0),
+                              color=carla.Color(255, 255, 0) if overtake else carla.Color(255, 255, 255),
                               size=0.05,
                               lt=0.1)
 
         return rx, ry, ryaw
 
-    def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle, speed, overtake_check=False):
+    def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle, speed, adjacent_check=False):
         """
         Use circled collision check to see whether potential hazard on the forwarding path
-        :param overtake_check: always give full path for overtaking check
+        :param adjacent_check: always give full path for adjacent lane check
         :param speed: ego vehicle speed in m/s
         :param path_yaw: a list of yaw angles
         :param path_x: a list of x coordinates
@@ -124,7 +134,7 @@ class CollisionChecker:
         """
         collision_free = True
         # detect 2 second ahead
-        distance_check = min(int(self.time_ahead * speed / 0.1), len(path_x)) if not overtake_check else len(path_x)
+        distance_check = min(int(self.time_ahead * speed / 0.1), len(path_x)) if not adjacent_check else len(path_x)
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
         
         # every step is 0.1m, so we check every 10 points

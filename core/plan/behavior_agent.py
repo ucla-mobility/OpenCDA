@@ -224,10 +224,10 @@ class BehaviorAgent(Agent):
             self.light_id_to_ignore = -1
         return 0
 
-    def collision_manager(self, rx, ry, ryaw, waypoint, overtake_check=False):
+    def collision_manager(self, rx, ry, ryaw, waypoint, adjacent_check=False):
         """
         This module is in charge of warning in case of a collision
-        :param overtake_check: whether it is a check for overtaking
+        :param adjacent_check: whether it is a check for adjacent lane
         :param rx: x coordinates of plan path
         :param ry: y coordinates of plan path
         :param ryaw: yaw angle
@@ -254,7 +254,7 @@ class BehaviorAgent(Agent):
         for vehicle in vehicle_list:
             collision_free = self._collision_check.collision_circle_check(rx, ry, ryaw, vehicle,
                                                                           self._ego_speed / 3.6,
-                                                                          overtake_check=overtake_check)
+                                                                          adjacent_check=adjacent_check)
             if not collision_free:
                 vehicle_state = True
                 distance = dist(vehicle)
@@ -263,6 +263,91 @@ class BehaviorAgent(Agent):
                     target_vehicle = vehicle
 
         return vehicle_state, target_vehicle, min_distance
+
+    def overtake_management(self, obstacle_vehicle):
+        """
+        Overtake behavior for back_joining car
+        :param obstacle_vehicle: the vehicle
+        :return:
+        """
+        # obstacle vehicle's location
+        obstacle_vehicle_loc = obstacle_vehicle.get_location()
+        obstacle_vehicle_wpt = self._map.get_waypoint(obstacle_vehicle_loc)
+
+        # whether a lane change is allowed
+        left_turn = obstacle_vehicle_wpt.left_lane_marking.lane_change
+        right_turn = obstacle_vehicle_wpt.right_lane_marking.lane_change
+
+        # left and right waypoint of the obstacle vehicle
+        left_wpt = obstacle_vehicle_wpt.get_left_lane()
+        right_wpt = obstacle_vehicle_wpt.get_right_lane()
+
+        # if the vehicle is able to operate left overtake
+        if (left_turn == carla.LaneChange.Left or left_turn ==
+            carla.LaneChange.Both) and left_wpt and obstacle_vehicle_wpt.lane_id * left_wpt.lane_id > 0 \
+                and left_wpt.lane_type == carla.LaneType.Driving:
+            # this not the real plan path, but just a quick path to check collision
+            rx, ry, ryaw = self._collision_check.adjacent_lane_collision_check(ego_loc=self._ego_pos.location,
+                                                                               target_wpt=left_wpt,
+                                                                               overtake=True,
+                                                                               world=self.vehicle.get_world())
+            vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
+                                                         self._map.get_waypoint(self._ego_pos.location),
+                                                         True)
+            if not vehicle_state:
+                print("left overtake is operated")
+                self.overtake_counter = 100
+                next_wpt = left_wpt.next(self._ego_speed / 3.6 * 6)[0]
+                self.set_destination(left_wpt.transform.location, next_wpt.transform.location,
+                                     clean=True, end_reset=False)
+                return vehicle_state
+
+        if (right_turn == carla.LaneChange.Right or right_turn ==
+            carla.LaneChange.Both) and right_wpt and obstacle_vehicle_wpt.lane_id * right_wpt.lane_id > 0 \
+                and right_wpt.lane_type == carla.LaneType.Driving:
+            rx, ry, ryaw = self._collision_check.adjacent_lane_collision_check(ego_loc=self._ego_pos.location,
+                                                                               target_wpt=right_wpt,
+                                                                               overtake=True,
+                                                                               world=self.vehicle.get_world())
+            vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
+                                                         self._map.get_waypoint(self._ego_pos.location),
+                                                         True)
+            if not vehicle_state:
+                print("right overtake is operated")
+                self.overtake_counter = 100
+                next_wpt = right_wpt.next(self._ego_speed / 3.6 * 6)[0]
+                self.set_destination(right_wpt.transform.location, next_wpt.transform.location,
+                                     clean=True, end_reset=False)
+                return vehicle_state
+
+        return True
+
+    def lane_change_management(self):
+        """
+        Identify whether a potential hazard exits if operating lane change.
+        Returns:
+            bool: whether the lane change is dangerous
+        """
+        ego_wpt = self._map.get_waypoint(self._ego_pos.location)
+        ego_lane_id = ego_wpt.lane_id
+        target_wpt = None
+
+        # check the closest waypoint on the adjacent lane
+        for wpt in self.get_local_planner()._waypoint_buffer:
+            if wpt[0].lane_id != ego_lane_id:
+                target_wpt = wpt[0]
+                break
+        if not target_wpt:
+            return False
+
+        rx, ry, ryaw = self._collision_check.adjacent_lane_collision_check(ego_loc=self._ego_pos.location,
+                                                                           target_wpt=target_wpt,
+                                                                           overtake=False,
+                                                                           world=self.vehicle.get_world())
+        vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
+                                                     self._map.get_waypoint(self._ego_pos.location),
+                                                     adjacent_check=True)
+        return not vehicle_state
 
     def car_following_manager(self, vehicle, distance, target_speed=None):
         """
@@ -306,97 +391,51 @@ class BehaviorAgent(Agent):
                   % (self.vehicle.id, target_speed))
         return target_speed
 
-    def overtake_management(self, obstacle_vehicle):
+    def run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True):
         """
-        Overtake behavior for back_joining car
-        :param obstacle_vehicle: the vehicle
-        :return:
-        """
-        # obstacle vehicle's location
-        obstacle_vehicle_loc = obstacle_vehicle.get_location()
-        obstacle_vehicle_wpt = self._map.get_waypoint(obstacle_vehicle_loc)
-
-        # whether a lane change is allowed
-        left_turn = obstacle_vehicle_wpt.left_lane_marking.lane_change
-        right_turn = obstacle_vehicle_wpt.right_lane_marking.lane_change
-
-        # left and right waypoint of the obstacle vehicle
-        left_wpt = obstacle_vehicle_wpt.get_left_lane()
-        right_wpt = obstacle_vehicle_wpt.get_right_lane()
-
-        # if the vehicle is able to operate left overtake
-        if (left_turn == carla.LaneChange.Left or left_turn ==
-            carla.LaneChange.Both) and left_wpt and obstacle_vehicle_wpt.lane_id * left_wpt.lane_id > 0 \
-                and left_wpt.lane_type == carla.LaneType.Driving:
-            # this not the real plan path, but just a quick path to check collision
-            rx, ry, ryaw = self._collision_check.overtake_collision_path(ego_loc=self._ego_pos.location,
-                                                                         target_wpt=left_wpt,
-                                                                         world=self.vehicle.get_world())
-            vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
-                                                         self._map.get_waypoint(self._ego_pos.location),
-                                                         True)
-            if not vehicle_state:
-                print("left overtake is operated")
-                self.overtake_counter = 100
-                next_wpt = left_wpt.next(self._ego_speed / 3.6 * 6)[0]
-                self.set_destination(left_wpt.transform.location, next_wpt.transform.location,
-                                     clean=True, end_reset=False)
-                return vehicle_state
-
-        if (right_turn == carla.LaneChange.Right or right_turn ==
-            carla.LaneChange.Both) and right_wpt and obstacle_vehicle_wpt.lane_id * right_wpt.lane_id > 0 \
-                and right_wpt.lane_type == carla.LaneType.Driving:
-            rx, ry, ryaw = self._collision_check.overtake_collision_path(ego_loc=self._ego_pos.location,
-                                                                         target_wpt=right_wpt,
-                                                                         world=self.vehicle.get_world())
-            vehicle_state, _, _ = self.collision_manager(rx, ry, ryaw,
-                                                         self._map.get_waypoint(self._ego_pos.location),
-                                                         True)
-            if not vehicle_state:
-                print("right overtake is operated")
-                self.overtake_counter = 100
-                next_wpt = right_wpt.next(self._ego_speed / 3.6 * 6)[0]
-                self.set_destination(right_wpt.transform.location, next_wpt.transform.location,
-                                     clean=True, end_reset=False)
-                return vehicle_state
-
-        return True
-
-    def run_step(self, target_speed=None, collision_detector_enabled=True):
-        """
-        Excute one step of naviation
-        :param collision_detector_enabled: whether to enable collision detection
-        :param target_speed:  a manual order to achieve certain speed
+        Execute one step of navigation
+        :param collision_detector_enabled: whether to enable collision detection.
+        :param target_speed:  a manual order to achieve certain speed.
+        :param lane_change_allowed: whether lane change is allowed. This is passed from platoon behavior agent.
         :return: control: carla.VehicleControl
         """
-
+        # retrieve ego location
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
 
-        if self.overtake_counter > 0:
-            self.overtake_counter -= 1
-
-        if len(self.get_local_planner().waypoints_queue) == 0 \
-                and len(self.get_local_planner()._waypoint_buffer) <= 2:
-            print('Destination Reset!')
-            self.set_destination(ego_vehicle_loc, self.end_waypoint.transform.location, clean=True, clean_history=True)
-
+        # simulation ends condition
         if abs(self._ego_pos.location.x - self.end_waypoint.transform.location.x) <= 10 and \
                 abs(self._ego_pos.location.y - self.end_waypoint.transform.location.y) <= 10:
             print('Simulation is Over')
             sys.exit(0)
 
-        # destination temporary push to avoid collision during lane change
-        if self.destination_push_flag and len(self.get_local_planner().waypoints_queue) < 8:
-            self.set_destination(ego_vehicle_loc, self.end_waypoint.transform.location, clean=True)
-            self.destination_push_flag = False
+        # when overtake_counter > 0, another overtake/lane change is forbidden
+        if self.overtake_counter > 0:
+            self.overtake_counter -= 1
 
-        # 1: Red lights and stops behavior todo:modify this
+        # 1: Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             return 0, None
 
-        # 2: generated plan path first
+        # when the temporary route is finished, we return to the global route
+        if len(self.get_local_planner().waypoints_queue) == 0 \
+                and len(self.get_local_planner()._waypoint_buffer) <= 2:
+            print('Destination Reset!')
+            self.overtake_allowed = True
+            self.destination_push_flag = False
+            self.set_destination(ego_vehicle_loc, self.end_waypoint.transform.location, clean=True, clean_history=True)
+
+        # 2: Path generation based on the global route
         rx, ry, rk, ryaw = self._local_planner.generate_path()
+
+        # check whether lane change is allowed
+        if collision_detector_enabled and \
+                self.get_local_planner().lane_id_change and \
+                self.overtake_counter <= 0 and \
+                not self.destination_push_flag:
+            self.lane_change_allowed = lane_change_allowed and self.lane_change_management()
+            if not self.lane_change_allowed:
+                print("Lane change is forbidden!")
 
         # TODO: Hard-coded, revise it later
         if self.get_local_planner().lane_change:
@@ -404,7 +443,7 @@ class BehaviorAgent(Agent):
         else:
             self._collision_check.time_ahead = 1.2
 
-        # 3: collision check
+        # 3: Collision check
         is_hazard = False
         if collision_detector_enabled:
             is_hazard, obstacle_vehicle, distance = self.collision_manager(rx, ry, ryaw, ego_vehicle_wp)
@@ -417,8 +456,8 @@ class BehaviorAgent(Agent):
         if (is_hazard and self.get_local_planner().lane_change and self.overtake_counter <= 0
             and self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id != ego_vehicle_wp.lane_id) \
                 or (not self.lane_change_allowed and self.get_local_planner().lane_id_change
-                    and not self.destination_push_flag):
-
+                    and not self.destination_push_flag and self.overtake_counter <= 0):
+            self.overtake_allowed = False
             reset_target = ego_vehicle_wp.next(self._ego_speed / 3.6 * 3)[0]
             print('destination pushed forward because of potential collision')
 
@@ -442,10 +481,7 @@ class BehaviorAgent(Agent):
             else:
                 car_following_flag = True
 
-        if not car_following_flag:
-            self.car_following_flag = False
-        else:
-            self.car_following_flag = True
+        if car_following_flag:
 
             if distance < self.break_distance:
                 return 0, None
