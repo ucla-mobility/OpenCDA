@@ -154,12 +154,12 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if insert_vehicle == 'front':
             platoon_manger, index = frontal_vehicle_manager.v2x_manager.get_platoon_manager()
             platoon_manger.set_member(self.vehicle_manager, index + 1)
+            self._local_planner.debug_trajectory = False
         else:
             platoon_manger, index = rear_vehicle_manager.v2x_manager.get_platoon_manager()
             platoon_manger.set_member(self.vehicle_manager, index, lead=True)
 
         platoon_manger.update_member_order()
-        self._local_planner.debug_trajectory = False
 
     def calculate_gap(self, distance):
         """
@@ -188,10 +188,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # must match leading vehicle's trajectory unit time
         t_origin = 0
-
-        # check whether the platooning is in car following mode
-        if frontal_vehicle_manager.agent.car_following_flag:
-            self.car_following_flag = True
 
         if len(self._local_planner.get_trajetory()) > 7:
             return self._local_planner.run_step([], [], [], following=True)
@@ -251,6 +247,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         :return:
         """
         print("start merging !")
+        self.lane_change_allowed = True
         frontal_vehicle_loc = frontal_vehicle_vm.vehicle.get_location()
 
         # we choose next waypoint of the frontal vehicle as starting point to have smooth speed
@@ -428,7 +425,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
         # reset lane change flag every step
-        self.lane_change_allowed = True
 
         # get necessary information of the ego vehicle and target vehicle in the platooning
         frontal_vehicle = frontal_vehicle_manager.vehicle
@@ -454,8 +450,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if angle >= 60 or distance < self._ego_speed / 3.6 * 0.5:
             self.overtake_allowed = False
             print("angle is too large, wait")
-            self.lane_change_allowed = False
-            return (*super().run_step(get_speed(frontal_vehicle) * 0.95), FSM.BACK_JOINING)
+            return (*super().run_step(get_speed(frontal_vehicle) * 0.95, lane_change_allowed=False), FSM.BACK_JOINING)
 
         else:
             self.overtake_allowed = True

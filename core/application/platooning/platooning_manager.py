@@ -97,8 +97,11 @@ class PlatooningManager(object):
         """
         for i, vm in enumerate(self.vehicle_manager_list):
             if i != 0:
+                vm.v2x_manager.set_platoon(i, leader=False)
                 vm.v2x_manager.set_platoon_front(self.vehicle_manager_list[i-1])
             if i != len(self.vehicle_manager_list)-1:
+                leader = True if i == 0 else False
+                vm.v2x_manager.set_platoon(i, leader=leader)
                 vm.v2x_manager.set_platoon_rear(self.vehicle_manager_list[i+1])
 
     def reset_speed(self):

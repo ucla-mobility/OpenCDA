@@ -14,8 +14,8 @@ vehicle_base: &vehicle_base
       activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
-        noise_lat_stddev: 3e-6
-        noise_lon_stddev: 3e-6
+        noise_lat_stddev: 2e-6
+        noise_lon_stddev: 2e-6
         heading_direction_stddev: 0.1 # degree
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
@@ -58,7 +58,7 @@ vehicle_base: &vehicle_base
       dynamic: false # whether use dynamic pid setting
       dt: 0.05 # this should be equal to your simulation time-step
       max_brake: 1.0
-      max_throttle: 0.85
+      max_throttle: 1.0
       max_steering: 0.3
   v2x: &base_v2x # communication related
     enabled: true
@@ -77,21 +77,26 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -200
+  global_speed_perc: -100
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   vehicle_list:
+    - spawn_position: [-330, 7.5, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-320, 4.5, 0.3, 0, 0, 0]
+      vehicle_speed_perc: -200
     - spawn_position: [-300, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-280, 4.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -100
+    - spawn_position: [-280, 4.5, 0.3, 0, 0, 0]
+      vehicle_speed_perc: -200
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-320, 7.5, 0.3, 0, 0, 0]
+      spawn_position: [-370, 7.5, 0.3, 0, 0, 0]
       # spawn_special: [0.34]
-      destination: [1000, 7.5, 0.3]
+      destination: [700, 7.5, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45

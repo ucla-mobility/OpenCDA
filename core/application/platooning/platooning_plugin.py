@@ -85,7 +85,6 @@ class PlatooningPlugin(object):
                 self.set_status(FSM.SEARCHING)
             return
 
-        # the case where platoon stays the same but member position changed
         if platooning_object:
             self.platooning_object = platooning_object
         if platooning_id:

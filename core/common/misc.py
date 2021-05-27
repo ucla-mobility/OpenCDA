@@ -116,7 +116,7 @@ def cal_distance_angle(target_location, current_location, orientation):
     :return: distance and angle
     """
     target_vector = np.array([target_location.x - current_location.x, target_location.y - current_location.y])
-    norm_target = np.linalg.norm(target_vector)
+    norm_target = np.linalg.norm(target_vector) + 1e-10
 
     forward_vector = np.array(
         [math.cos(math.radians(orientation)), math.sin(math.radians(orientation))])

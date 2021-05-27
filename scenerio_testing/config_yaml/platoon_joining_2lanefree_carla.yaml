@@ -14,8 +14,8 @@ vehicle_base: &vehicle_base
       activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
-        noise_lat_stddev: 3e-6
-        noise_lon_stddev: 3e-6
+        noise_lat_stddev: 2e-6
+        noise_lon_stddev: 2e-6
         heading_direction_stddev: 0.1 # degree
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
@@ -144,7 +144,7 @@ scenario:
       spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
-      spawn_special: [0.35]
+      spawn_special: [0.325]
       destination: [300, 10.5, 0]
       v2x:
         <<: *base_v2x
