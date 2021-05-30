@@ -105,14 +105,14 @@ class PlatooningPlugin(object):
         """
         self.status = status
 
-    def search_platoon(self, ego_pos, platooning_world):
+    def search_platoon(self, ego_pos, cav_world):
         """
         Search platoon candidate in the range
         :param ego_pos:
-        :param platooning_world:
+        :param cav_world:
         :return: the uuid of platoon member, platoon object
         """
-        platoon_manager_dict = platooning_world.get_platoon_dict()
+        platoon_manager_dict = cav_world.get_platoon_dict()
         for pmid, pm in platoon_manager_dict.items():
             for vm in pm.vehicle_manager_list:
                 distance = compute_distance(ego_pos, vm.localizer.get_ego_pos().location)
@@ -120,11 +120,11 @@ class PlatooningPlugin(object):
                     return pmid, pm
         return None, None
 
-    def match_platoon(self, platooning_world):
+    def match_platoon(self, cav_world):
         """
         A naive way to find the best position to join a platoon
-        :param platooning_world: an object containing all existing platoons
-        :return: platoon found or not, closest platoon member team id
+        :param cav_world: an object containing all existing platoons
+        :return: platoon found or not, closest platoon member team id, and a list containing the vehicle managers
         """
         # make sure the previous status won't influence current one
         self.reset()
@@ -132,10 +132,10 @@ class PlatooningPlugin(object):
         cur_loc = self.ego_pos.location
         cur_yaw = self.ego_pos.rotation.yaw
 
-        pmid, pm = self.search_platoon(cur_loc, platooning_world)
+        pmid, pm = self.search_platoon(cur_loc, cav_world)
 
         if not pmid or pmid in self.platooning_blacklist:
-            return False, -1
+            return False, -1, []
 
         # used to search the closest platoon member in the searched platoon
         min_distance = float('inf')
@@ -143,12 +143,16 @@ class PlatooningPlugin(object):
         min_angle = 0
 
         # if the platooning is not open to joining
-        if not pm.response_joining_request():
-            return False, -1
+        if not pm.response_joining_request(self.ego_pos.location):
+            return False, -1, []
+
+        platoon_vehicle_list = []
 
         for (i, vehicle_manager) in enumerate(pm.vehicle_manager_list):
             distance, angle = cal_distance_angle(vehicle_manager.vehicle.get_location(),
                                                  cur_loc, cur_yaw)
+            platoon_vehicle_list.append(vehicle_manager)
+
             if distance < min_distance:
                 min_distance = distance
                 min_index = i
@@ -158,11 +162,11 @@ class PlatooningPlugin(object):
         if min_index == 0 and min_angle > 90:
             self.front_vehicle = None
             self.rear_vechile = pm.vehicle_manager_list[0]
-            return True, min_index
+            return True, min_index, platoon_vehicle_list
 
         self.front_vehicle = pm.vehicle_manager_list[min_index]
 
         if min_index < len(pm.vehicle_manager_list) - 1:
             self.rear_vechile = pm.vehicle_manager_list[min_index + 1]
 
-        return True, min_index
+        return True, min_index, platoon_vehicle_list

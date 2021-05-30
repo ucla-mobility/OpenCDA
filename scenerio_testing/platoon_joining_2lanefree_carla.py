@@ -46,9 +46,9 @@ def main():
                                                                     scenario_params['carla_traffic_manager'])
 
         # create platoon members
-        platoon_list, platooning_world = sim_api.createPlatoonManagers(world, carla_map, scenario_params)
+        platoon_list, cav_world = sim_api.createPlatoonManagers(world, carla_map, scenario_params)
         # create single cavs
-        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], platooning_world,
+        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], cav_world,
                                                        carla_map, map_api.spawn_helper_2lanefree)
         # todo spectator wrapper
         spectator = world.get_spectator()
@@ -61,7 +61,7 @@ def main():
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
                                                     carla.Rotation(pitch=-90)))
             for platoon in platoon_list:
-                platoon.update_information(platooning_world)
+                platoon.update_information()
                 platoon.run_step()
 
             for i, single_cav in enumerate(single_cav_list):
@@ -69,7 +69,7 @@ def main():
                 if single_cav.v2x_manager.in_platoon():
                     single_cav_list.pop(i)
                 else:
-                    single_cav.update_info(platooning_world)
+                    single_cav.update_info()
                     control = single_cav.run_step()
                     single_cav.vehicle.apply_control(control)
 

@@ -14,7 +14,7 @@ import scenerio_testing.utils.sim_api as sim_api
 import scenerio_testing.utils.customized_map_api as map_api
 
 # todo: PlatoonWorld is ugly
-from core.application.platooning.platooning_world import PlatooningWorld
+from core.common.cav_world import CavWorld
 from scenerio_testing.utils.yaml_utils import load_yaml
 
 
@@ -47,9 +47,9 @@ def main():
         traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
                                                                     scenario_params['carla_traffic_manager'])
 
-        # todo: temporary
-        platooning_world = PlatooningWorld()
-        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['single'], platooning_world,
+        # create CAV world
+        cav_world = CavWorld()
+        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['single'], cav_world,
                                                        carla_map, map_api.spawn_helper_2lanefree)
 
         spectator = world.get_spectator()
@@ -61,7 +61,7 @@ def main():
                                                     carla.Rotation(pitch=-90)))
 
             for i, single_cav in enumerate(single_cav_list):
-                single_cav.update_info(platooning_world)
+                single_cav.update_info()
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
 

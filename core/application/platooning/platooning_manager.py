@@ -7,6 +7,8 @@
 # License: MIT
 
 import uuid
+import weakref
+
 import carla
 
 from scenerio_testing.utils.profile_plotting import draw_sub_plot
@@ -17,13 +19,12 @@ class PlatooningManager(object):
     Platooning manager for vehicle managers
     """
 
-    def __init__(self, config_yaml, world):
+    def __init__(self, config_yaml, cav_world):
         """
         Construct class
         :param config_yaml:
-        :param world: platooning world object
+        :param cav_world: CAV world object
         """
-        # TODO: Find a better way to give id
         self.pmid = str(uuid.uuid1())
 
         self.vehicle_manager_list = []
@@ -37,7 +38,8 @@ class PlatooningManager(object):
         self.origin_leader_target_speed = 0
         self.recover_speed_counter = 0
 
-        world.update_platooning(self)
+        cav_world.update_platooning(self)
+        self.cav_world = weakref.ref(cav_world)()
 
     def set_lead(self, vehicle_manager):
         """
@@ -114,11 +116,14 @@ class PlatooningManager(object):
         else:
             self.recover_speed_counter -= 1
 
-    def response_joining_request(self):
+    def response_joining_request(self, request_loc):
         """
-        Check whether to accept joining
-        TODO: Consider platooning status as well, etc. changinglane, collision status
-        :return:
+        Identify whether to accept the joining request based on capacity.
+        Args:
+            request_loc (carla.Location): request vehicle location.
+
+        Returns:
+
         """
         if len(self.vehicle_manager_list) >= self.maximum_capacity:
             return False
@@ -127,6 +132,11 @@ class PlatooningManager(object):
             # so the merging vehicle can better catch up with
             self.leader_target_speed = self.origin_leader_target_speed - 5
             self.recover_speed_counter = 200
+
+            # find the corresponding vehicle manager and add it to the leader's whitelist
+            request_vm = self.cav_world.locate_vehicle_manager(request_loc)
+            self.vehicle_manager_list[0].agent.add_white_list(request_vm)
+
             return True
 
     def set_destination(self, destination):
@@ -140,15 +150,14 @@ class PlatooningManager(object):
             self.vehicle_manager_list[i].set_destination(
                 self.vehicle_manager_list[i].vehicle.get_location(), destination, clean=True)
 
-    def update_information(self, world):
+    def update_information(self):
         """
-        Update world information for every member in the list
-        :param world:
+        Update CAV world information for every member in the list
         :return:
         """
         self.reset_speed()
         for i in range(len(self.vehicle_manager_list)):
-            self.vehicle_manager_list[i].update_info(world)
+            self.vehicle_manager_list[i].update_info()
         # update the center location of the platoon
         self.cal_center_loc()
 
