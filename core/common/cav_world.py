@@ -8,9 +8,9 @@
 # License: MIT
 
 
-class PlatooningWorld(object):
+class CavWorld(object):
     """
-    A customized world object to save all platooning and CDA vehicle information
+    A customized world object to save all CDA vehicle information
     :return:
     """
 
@@ -23,12 +23,10 @@ class PlatooningWorld(object):
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
-        # for co-simulation only, save the carla-sumo dictionary
-        self.sumo2carla_ids = {}
 
     def update_vehicle_manager(self, vehicle_manager):
         """
-        Update created vehicle manager to the world
+        Update created CAV manager to the world
         :param vehicle_manager:
         :return:
         """
@@ -43,14 +41,6 @@ class PlatooningWorld(object):
         """
         self._platooning_dict.update({platooning_manger.pmid: platooning_manger})
 
-    def update_sumo_vehicles(self, sumo2carla_ids):
-        """
-        Update the sumo-carla id hash map for co-simulation
-        :param sumo2carla_ids: {'sumo_id': 'carla_id'}
-        :return:
-        """
-        self.sumo2carla_ids = sumo2carla_ids
-
     def get_vehicle_managers(self):
         """
         Return vehicle manager dictionary
@@ -64,3 +54,24 @@ class PlatooningWorld(object):
         :return:
         """
         return self._platooning_dict
+
+    def locate_vehicle_manager(self, loc):
+        """
+        Locate the vehicle manager based on the given location.
+        Args:
+            loc (carla.Location): vehicle location.
+
+        Returns:
+            (VehicleManager): The vehicle manager at the give location.
+        """
+
+        target_vm = None
+        for key, vm in self._vehicle_manager_dict.items():
+            x = vm.localizer.get_ego_pos().location.x
+            y = vm.localizer.get_ego_pos().location.y
+
+            if loc.x == x and loc.y == y:
+                target_vm = vm
+                break
+
+        return target_vm

@@ -43,9 +43,6 @@ class BehaviorAgent(Agent):
         self._ego_pos = None
         self._ego_speed = 0.0
 
-        # the frontal vehicle manager in the platooning TODO: Move this to platoon behavior agent
-        self._platooning_world = None
-
         # speed related, check yaml file to see the meaning
         self.max_speed = config_yaml['max_speed']
         self.tailgate_speed = config_yaml['tailgate_speed']
@@ -88,23 +85,30 @@ class BehaviorAgent(Agent):
         # destination temp push flag
         self.destination_push_flag = False
 
-        # this is only for co-simulation TODO: very hacky, modify it later
-        self.sumo2carla_dict = {}
+        # white list of vehicle managers that the cav does not consider as obstacles
+        self.white_list = []
+        self.obstacle_vehicles = []
 
-    def update_information(self, platoon_world, ego_pos, ego_speed):
+    def update_information(self, ego_pos, ego_speed, objects):
         """
-        This method updates the information regarding the ego
-        vehicle based on the surrounding world.
-        :param platoon_world: platooning world object todo:remove this later
-        :param ego_pos: ego position passed from localization module
-        :param ego_speed:  ego speed(km/h) passed from localization module
+        Update the perception and localization information to the behavior agent.
+        Args:
+            ego_pos (carla.Transform): ego position from localization module.
+            ego_speed (float): km/h, ego speed.
+            objects (dictionary): Objects detection results from perception module.
         """
+        # update localization information
         self._ego_speed = ego_speed
         self._ego_pos = ego_pos
         self.break_distance = self._ego_speed / 3.6 * self.emergency_param
-
+        # update the localization info to trajectory planner
         self.get_local_planner().update_information(ego_pos, ego_speed)
 
+        # current version only consider about vehicles
+        obstacle_vehicles = objects['vehicles']
+        self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
+
+        # todo: delete this later
         self.incoming_waypoint, self.incoming_direction = self._local_planner.get_incoming_waypoint_and_direction(
             steps=self.look_ahead_steps)
         if self.incoming_direction is None:
@@ -116,7 +120,45 @@ class BehaviorAgent(Agent):
             # This method also includes stop signs and intersections.
             self.light_state = str(self.vehicle.get_traffic_light_state())
 
-        self._platooning_world = platoon_world
+    def add_white_list(self, vm):
+        """
+        Add vehicle manager to
+        Args:
+            vm ():
+
+        Returns:
+
+        """
+        self.white_list.append(vm)
+
+    def white_list_match(self, obstacles):
+        """
+        Match the detected obstacles with the white list. Remove the obstacles that are in white list.
+        Args:
+            obstacles (list):  a list of carla.Vehicle or ObstacleVehicle
+
+        Returns:
+            (list): the new list of obstacles.
+        """
+        new_obstacle_list = []
+
+        for o in obstacles:
+            flag = False
+            o_x = o.get_location().x
+            o_y = o.get_location().y
+
+            for vm in self.white_list:
+                pos = vm.localizer.get_ego_pos()
+                vm_x = pos.location.x
+                vm_y = pos.location.y
+
+                if abs(vm_x - o_x) <= 0.5 and abs(vm_y - o_y) <= 0.5:
+                    flag = True
+                    break
+            if not flag:
+                new_obstacle_list.append(o)
+
+        return new_obstacle_list
 
     def set_destination(self, start_location, end_location, clean=False, end_reset=True, clean_history=False):
         """
@@ -236,22 +278,14 @@ class BehaviorAgent(Agent):
         :return vehicle: nearby vehicle
         :return distance: distance to nearby vehicle
         """
-
-        vehicle_list = self._world.get_actors().filter("*vehicle*")
-
         def dist(v):
             return v.get_location().distance(waypoint.transform.location)
-
-        # only consider vehicles in 45 meters, not in the platooning as the candidate of collision
-        vehicle_list = [v for v in vehicle_list if dist(v) < 60 and
-                        v.id != self.vehicle.id and
-                        v.id not in self._platooning_world.vehicle_id_set]
 
         vehicle_state = False
         min_distance = 100000
         target_vehicle = None
 
-        for vehicle in vehicle_list:
+        for vehicle in self.obstacle_vehicles:
             collision_free = self._collision_check.collision_circle_check(rx, ry, ryaw, vehicle,
                                                                           self._ego_speed / 3.6,
                                                                           adjacent_check=adjacent_check)
@@ -362,17 +396,7 @@ class BehaviorAgent(Agent):
         if not target_speed:
             target_speed = self.max_speed - self.speed_lim_dist
 
-        # for co-simulation scene. Sumo created vehicles don't have speed saved in carla side
-        if self._platooning_world.sumo2carla_ids:
-            vehicle_sumo_name = None
-            for key, value in self._platooning_world.sumo2carla_ids.items():
-                if int(value) == vehicle.id:
-                    vehicle_sumo_name = key
-            vehicle_speed = traci.vehicle.getSpeed(vehicle_sumo_name) * 3.6 \
-                if vehicle_sumo_name else get_speed(vehicle)
-
-        else:
-            vehicle_speed = get_speed(vehicle)
+        vehicle_speed = get_speed(vehicle)
 
         delta_v = max(1, (self._ego_speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / np.nextafter(0., 1.)
@@ -434,14 +458,6 @@ class BehaviorAgent(Agent):
                 self.overtake_counter <= 0 and \
                 not self.destination_push_flag:
             self.lane_change_allowed = lane_change_allowed and self.lane_change_management()
-            if not self.lane_change_allowed:
-                print("Lane change is forbidden!")
-
-        # TODO: Hard-coded, revise it later
-        if self.get_local_planner().lane_change:
-            self._collision_check.time_ahead = 0.5
-        else:
-            self._collision_check.time_ahead = 1.2
 
         # 3: Collision check
         is_hazard = False
@@ -467,8 +483,8 @@ class BehaviorAgent(Agent):
 
             rx, ry, rk, ryaw = self._local_planner.generate_path()
 
-        # the case that vehicle is blocing in front and overtake not allowed or it is doing overtaking
-        # the second condistion is to prevent successive overtaking
+        # the case that vehicle is blocking in front and overtake not allowed or it is doing overtaking
+        # the second condition is to prevent successive overtaking
         elif is_hazard and (not self.overtake_allowed or self.overtake_counter > 0
                             or self.get_local_planner().lane_change):
             car_following_flag = True
@@ -481,6 +497,7 @@ class BehaviorAgent(Agent):
             else:
                 car_following_flag = True
 
+        # 4. Car following behavior
         if car_following_flag:
 
             if distance < self.break_distance:
@@ -490,7 +507,7 @@ class BehaviorAgent(Agent):
             target_speed, target_loc = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
             return target_speed, target_loc
 
-        # 4. normal behavior
+        # 5. Normal behavior
         target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
                                                                 target_speed=self.max_speed - self.speed_lim_dist
                                                                 if not target_speed else target_speed)

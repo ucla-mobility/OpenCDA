@@ -13,7 +13,7 @@ import sys
 
 import carla
 
-from core.application.platooning.platooning_world import PlatooningWorld
+from core.common.platooning_world import PlatooningWorld
 from core.application.platooning.platooning_manager import PlatooningManager
 from core.common.vehicle_manager import VehicleManager
 from core.common.misc import get_speed

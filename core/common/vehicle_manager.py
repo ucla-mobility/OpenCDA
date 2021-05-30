@@ -6,12 +6,12 @@ Basic class of CAV
 # License: MIT
 
 import uuid
-import weakref
 
 from core.actuation.pid_controller import VehiclePIDController
 from core.application.platooning.platoon_behavior_agent import PlatooningBehaviorAgent
 from core.common.v2x_manager import V2XManager
 from core.sensing.localization.localization_manager import LocalizationManager
+from core.sensing.perception.perception_manager import PerceptionManager
 from core.plan.behavior_agent import BehaviorAgent
 
 
@@ -20,14 +20,14 @@ class VehicleManager(object):
     A class manager to embed different modules with vehicle together
     """
 
-    def __init__(self, vehicle, config_yaml, application, carla_map, world=None):
+    def __init__(self, vehicle, config_yaml, application, carla_map, cav_world):
         """
-        Construction class todo: multiple application can be activated at the same time
+        Construction class
         :param vehicle: carla actor
         :param config_yaml: a dictionary that contains the parameters of the vehicle
         :param application: application category, support:['single','platoon'] currently
         :param carla_map: Carla HD Map
-        :param world: TODO: Temprory, remove it step by step
+        :param cav_world: CAV world object
         """
         # an unique uuid for this vehicle
         self.vid = str(uuid.uuid1())
@@ -41,17 +41,18 @@ class VehicleManager(object):
         v2x_config = config_yaml['v2x']
 
         # v2x module
-        self.v2x_manager = V2XManager(v2x_config)
+        self.v2x_manager = V2XManager(cav_world, v2x_config)
         # localization module
         self.localizer = LocalizationManager(vehicle, sensing_config['localization'], carla_map)
+        # perception module
+        self.perception_manager = PerceptionManager(vehicle, sensing_config['perception'])
         # behavior agent
         self.agent = None
 
         if 'platooning' in application:
             platoon_config = config_yaml['platoon']
             self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
-                                                 behavior_config, platoon_config,
-                                                 world, carla_map)
+                                                 behavior_config, platoon_config, carla_map)
         else:
             # todo: remove the vehicle
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
@@ -59,9 +60,7 @@ class VehicleManager(object):
         # controller TODO: Add a wrapper class for all controller types
         self.controller = VehiclePIDController(control_config['args'])
 
-        # TODO: remove this later. This is a wrong implmentation, cda disabled shouldn't be added to it
-        world.update_vehicle_manager(self)
-        self.world = weakref.ref(world)()
+        cav_world.update_vehicle_manager(self)
 
     def set_destination(self, start_location, end_location, clean=False, end_reset=True):
         """
@@ -74,10 +73,9 @@ class VehicleManager(object):
         """
         self.agent.set_destination(start_location, end_location, clean, end_reset)
 
-    def update_info(self, world):
+    def update_info(self):
         """
         Call perception and localization module to retrieve surrounding info an ego position.
-        :param world: # todo: only vm with platoon application should have this
         :return:
         """
         # localization
@@ -85,8 +83,11 @@ class VehicleManager(object):
         ego_pos = self.localizer.get_ego_pos()
         ego_spd = self.localizer.get_ego_spd()
 
+        # object detection
+        objects = self.perception_manager.detect(ego_pos)
+
         self.v2x_manager.update_info(ego_pos, ego_spd)
-        self.agent.update_information(world, ego_pos, ego_spd)
+        self.agent.update_information(ego_pos, ego_spd, objects)
         # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
 

@@ -5,7 +5,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import carla
+import weakref
 
 from core.application.platooning.platooning_plugin import PlatooningPlugin
 
@@ -15,7 +15,7 @@ class V2XManager(object):
     V2X Manager for platooning, cooperative perception and so on
     """
 
-    def __init__(self, config_yaml):
+    def __init__(self, cav_world, config_yaml):
         """
         Construct class
         :param config_yaml: configuration yaml file
@@ -29,6 +29,8 @@ class V2XManager(object):
 
         # used for platooning communication
         self.platooning_plugin = PlatooningPlugin(self.communication_range, self.cda_enabled)
+
+        self.cav_world = weakref.ref(cav_world)()
 
     def update_info(self, ego_pos, ego_spd):
         """
@@ -83,13 +85,12 @@ class V2XManager(object):
         """
         self.platooning_plugin.platooning_blacklist.append(pmid)
 
-    def match_platoon(self, platoon_world):
+    def match_platoon(self):
         """
         A naive way to find the best position to join a platoon
-        :param platoon_world:
         :return:
         """
-        return self.platooning_plugin.match_platoon(platoon_world)
+        return self.platooning_plugin.match_platoon(self.cav_world)
 
     def in_platoon(self):
         """

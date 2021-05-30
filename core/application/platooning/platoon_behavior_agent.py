@@ -20,7 +20,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     The behavior agent for platooning
     """
 
-    def __init__(self, vehicle, vehicle_manager, v2x_manager, behavior_yaml, platoon_yaml, platoon_world, carla_map):
+    def __init__(self, vehicle, vehicle_manager, v2x_manager, behavior_yaml, platoon_yaml, carla_map):
         """
         Construct class
         :param vehicle: carla actor todo:remove this later
@@ -28,7 +28,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         :param v2x_manager: communication manager
         :param behavior_yaml: configure yaml file for normal behavior agent
         :param platoon_yaml:  configure yaml file for platoon behavior agent
-        :param platoon_world: platoon world object that contains all existing cavs
         :param carla_map: Carla HD Map
         :return
         """
@@ -38,7 +37,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         self.vehicle_manager = vehicle_manager
         # communication manager
         self.v2x_manager = v2x_manager
-        self.platoon_world = platoon_world
 
         # used for gap keeping
         self.inter_gap = platoon_yaml['inter_gap']
@@ -59,12 +57,16 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         self.velocity_list = []
         self.acceleration_list = []
 
-    def run_step(self, target_speed=None, collision_detector_enabled=True):
+    def run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True):
         """
-        Run a single step for naviation
-        :param target_speed:
-        :param collision_detector_enabled:
-        :return:
+        Run a single step for navigation under platooning agent.
+        Args:
+            target_speed (float): Target speed in km/h
+            collision_detector_enabled (bool): Whether collision detection enabled.
+            lane_change_allowed (bool): Whether lane change is allowed.
+
+        Returns:
+
         """
         status = self.v2x_manager.get_platoon_status()
         # case1: the vehicle is not cda enabled
@@ -73,7 +75,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # case2: single vehicle keep searching platoon to join
         if status == FSM.SEARCHING:
-            find_platoon, min_index = self.v2x_manager.match_platoon(self.platoon_world)
+            find_platoon, min_index, white_list = self.v2x_manager.match_platoon()
+            # we only ignore platoon members for collision detection during joining process
+            self.white_list = white_list
 
             # no platoon found, stay in searching status
             if not find_platoon:
@@ -308,9 +312,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_vehicle_manager, rear_vehicle_vm = self.v2x_manager.get_platoon_front_rear()
         frontal_vehicle = frontal_vehicle_manager.vehicle
 
-        # todo: use localization module later
-        ego_vehicle_loc =  self._ego_pos.location
-        ego_vehicle_yaw =  self._ego_pos.rotation.yaw
+        ego_vehicle_loc = self._ego_pos.location
+        ego_vehicle_yaw = self._ego_pos.rotation.yaw
 
         distance, angle = cal_distance_angle(frontal_vehicle.get_location(),
                                              ego_vehicle_loc, ego_vehicle_yaw)
@@ -466,19 +469,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.set_destination(ego_wpt.next(4.5)[0].transform.location, frontal_destination)
 
         # 2. check if there is any other vehicle blocking between ego and platooning
-        vehicle_list = self._world.get_actors().filter("*vehicle*")
-
         def dist(v):
             return v.get_location().distance(ego_vehicle_loc)
-
-        # only consider vehicles in 45 meters, not in the platooning as the candidate of collision
-        # todo: this is ugly
-        vehicle_list = [v for v in vehicle_list if dist(v) < 60 and
-                        v.id != self.vehicle.id and
-                        v.id not in self._platooning_world.vehicle_id_set]
-
         vehicle_blocking_status = False
-        for vehicle in vehicle_list:
+        for vehicle in self.obstacle_vehicles:
             vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self.vehicle,
                                                                                                    frontal_vehicle,
                                                                                                    vehicle,
@@ -543,18 +537,11 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                                              ego_vehicle_loc, ego_vehicle_yaw)
 
         # if there is a vehicle blocking between, then abandon this joining
-        vehicle_list = self._world.get_actors().filter("*vehicle*")
-
         def dist(v):
             return v.get_location().distance(ego_vehicle_loc)
 
-        # only consider vehicles in 60 meters, not in the platooning as the candidate of collision
-        vehicle_list = [v for v in vehicle_list if dist(v) < 60 and
-                        v.id != self.vehicle.id and
-                        v.id not in self._platooning_world.vehicle_id_set]
-
         vehicle_blocking_status = False
-        for vehicle in vehicle_list:
+        for vehicle in self.obstacle_vehicles:
             vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self.vehicle,
                                                                                                    rear_vehicle,
                                                                                                    vehicle,

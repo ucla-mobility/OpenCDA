@@ -24,7 +24,7 @@ from co_simulation.sumo_integration.constants import INVALID_ACTOR_ID
 from co_simulation.sumo_integration.sumo_simulation import SumoSimulation
 from co_simulation.sumo_src.simulationmanager import SimulationManager
 
-from core.application.platooning.platooning_world import PlatooningWorld
+from core.common.cav_world import CavWorld
 from core.application.platooning.platooning_manager import PlatooningManager
 from core.application.platooning.platooning_plugin import FSM
 from core.common.vehicle_manager import VehicleManager
