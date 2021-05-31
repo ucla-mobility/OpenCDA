@@ -9,7 +9,7 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-
+      camera_visualize: true # whether to visualize rgb camera image using cv2.imshow
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
