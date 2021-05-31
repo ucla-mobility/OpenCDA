@@ -9,6 +9,7 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
+      camera_visualize: true # whether to visualize rgb camera image using cv2.imshow
 
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
@@ -104,5 +105,5 @@ scenario:
         <<: *base_behavior
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: true
-          debug: true
+          debug_trajectory: false
+          debug: false
