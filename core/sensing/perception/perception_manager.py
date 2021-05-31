@@ -13,7 +13,9 @@ import carla
 import cv2
 import numpy as np
 
+import core.sensing.perception.sensor_transformation as st
 from core.sensing.perception.obstacle_vehicle import ObstacleVehicle
+from core.common.misc import cal_distance_angle
 
 
 class CameraSensor(object):
@@ -111,7 +113,16 @@ class PerceptionManager(object):
             objects.update({'vehicles': vehicle_list})
 
             if self.camera_visualize:
-                rgb_image = self.rgb_camera.image
+                rgb_image = np.array(self.rgb_camera.image)
+
+                for v in objects['vehicles']:
+                    # we only draw the bounding box in the fov of camera
+                    _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
+                    if angle < 30:
+                        # todo: don't use sensor transform groundtruth here
+                        bbx_camera = st.get_2d_bb(v, self.rgb_camera.sensor, self.rgb_camera.sensor.get_transform())
+                        cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
+                                      (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
 
                 # show image using cv2
                 cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)

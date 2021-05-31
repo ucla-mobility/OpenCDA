@@ -177,10 +177,16 @@ def get_bounding_box(vehicle, sensor, sensor_transform):
     # bbx coordinates in sensor coordinate system. shape: (3, 8)
     cords_x_y_z = vehicle_to_sensor(bb_cords, vehicle, sensor_transform)[:3, :]
     # refer to https://github.com/carla-simulator/carla/issues/553
-    cords_y_minus_z_x = np.concatenate([cords_x_y_z[1, :], -cords_x_y_z[2, :], cords_x_y_z[0, :]])
+    cords_y_minus_z_x = np.concatenate([cords_x_y_z[1, :].reshape(1, 8),
+                                        -cords_x_y_z[2, :].reshape(1, 8),
+                                        cords_x_y_z[0, :].reshape(1, 8)])
     # bounding box in sensor image. Shape:(8, 3)
     bbox = np.transpose(np.dot(camera_k_matrix, cords_y_minus_z_x))
-    camera_bbox = np.concatenate([bbox[:, 0] / bbox[:, 2], bbox[:, 1] / bbox[:, 2], bbox[:, 2]], axis=1)
+
+    new_x = (bbox[:, 0] / bbox[:, 2]).reshape(8, 1)
+    new_y = (bbox[:, 1] / bbox[:, 2]).reshape(8, 1)
+    new_z = bbox[:, 2].reshape(8, 1)
+    camera_bbox = np.concatenate([new_x, new_y, new_z], axis=1)
 
     return camera_bbox
 
