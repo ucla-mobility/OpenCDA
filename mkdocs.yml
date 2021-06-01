@@ -1,0 +1,12 @@
+site_name: OpenCDA
+
+nav:
+    - Home: index.md
+    - Introduction: OpenCDA_introduction.md
+    - Installation: OpenCDA_installation.md
+    - Framework Structure: OpenCDA_structure.md
+    - Examples: OpenCDA_examples.md
+    - Benchmarks: OpenCDA_benchmark.md
+    - Python API: python_api.md
+    - About: about.md
+theme: readthedocs
