@@ -1,4 +1,8 @@
 site_name: OpenCDA
+repo_url: https://github.com/xuhan417/OpenCDA-Documents
+docs_dir: docs
+theme: readthedocs
+extra_css: [extra.css]
 
 nav:
     - Home: index.md
@@ -9,4 +13,4 @@ nav:
     - Benchmarks: OpenCDA_benchmark.md
     - Python API: python_api.md
     - About: about.md
-theme: readthedocs
+
