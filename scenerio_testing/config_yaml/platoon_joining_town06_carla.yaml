@@ -14,7 +14,7 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 50
-        points_per_second: 500000
+        points_per_second: 56000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 10.0
         lower_fov: -30.0
@@ -122,7 +122,7 @@ scenario:
             <<: *base_sensing
             perception:
               <<: *base_perception
-              camera_visualize: true
+              camera_visualize: false
           behavior:
             <<: *base_behavior
             local_planner:
@@ -154,6 +154,7 @@ scenario:
         perception:
           <<: *base_perception
           camera_visualize: true
+          lidar_visualize: true
         localization:
           <<: *base_localize
           debug_helper:
