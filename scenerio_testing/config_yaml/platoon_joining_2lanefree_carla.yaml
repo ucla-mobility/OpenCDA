@@ -10,6 +10,18 @@ vehicle_base: &vehicle_base
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
       camera_visualize: true # whether to visualize rgb camera image using cv2.imshow
+      lidar_visualize: true # whether to visualize lidar points using open3d
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        channels: 32
+        range: 50
+        points_per_second: 500000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
@@ -23,7 +35,6 @@ vehicle_base: &vehicle_base
         show_plotting: false # whether to show loc data plotting after simulation
         x_scale: 10.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 10.0 # used to multiply with the y coordinate to make the error on y axis clearer
-
   behavior: &base_behavior
     max_speed: 95 # maximum speed, km/h
     tailgate_speed: 105 # when a vehicles needs to be close to another vehicle asap
