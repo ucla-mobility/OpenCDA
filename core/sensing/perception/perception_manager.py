@@ -64,17 +64,21 @@ class PerceptionManager(object):
     Perception manager mainly for object detection
     """
 
-    def __init__(self, vehicle, config_yaml):
+    def __init__(self, vehicle, config_yaml, ml_manager):
         """
         Construct class.
         Args:
             vehicle (carla.Actor): The carla vehicle.
-            config_yaml (dict):  The configuration yaml dictionary
+            config_yaml (dict):  The configuration yaml dictionary.
+            ml_manager(MlManager): Machine learning manager from CAV World.
         """
         self.vehicle = vehicle
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
+
+        # todo: add condition later make sure it is not a none type object
+        self.ml_manager = ml_manager
 
         self.rgb_camera = CameraSensor(vehicle)
 
@@ -111,19 +115,14 @@ class PerceptionManager(object):
             vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                             v.id != self.vehicle.id]
             objects.update({'vehicles': vehicle_list})
+            rgb_image = np.array(self.rgb_camera.image)
+
+            # todo: tmp code to test yolo here
+            result = self.ml_manager.object_detector(cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB))
 
             if self.camera_visualize:
-                rgb_image = np.array(self.rgb_camera.image)
-
-                for v in objects['vehicles']:
-                    # we only draw the bounding box in the fov of camera
-                    _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
-                    if angle < 30:
-                        # todo: don't use sensor transform groundtruth here
-                        bbx_camera = st.get_2d_bb(v, self.rgb_camera.sensor, self.rgb_camera.sensor.get_transform())
-                        cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
-                                      (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
-
+                # rgb_image = self.visualize_3d_bbx_camera(objects, rgb_image)
+                rgb_image = self.ml_manager.draw_2d_box(result, rgb_image)
                 # show image using cv2
                 cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
                 cv2.waitKey(1)
@@ -132,6 +131,27 @@ class PerceptionManager(object):
             sys.exit('Current version does not implement any perception algorithm')
 
         return objects
+
+    def visualize_3d_bbx_camera(self, objects, rgb_image):
+        """
+        Visualize the 3d bounding box on camera image.
+        Args:
+            objects (dict): a dictionary containing all detected objects.
+            rgb_image (np.ndarray):camera image.
+
+        Returns:
+
+        """
+        for v in objects['vehicles']:
+            # we only draw the bounding box in the fov of camera
+            _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
+            if angle < 30:
+                # todo: don't use sensor transform groundtruth here
+                bbx_camera = st.get_2d_bb(v, self.rgb_camera.sensor, self.rgb_camera.sensor.get_transform())
+                cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
+                              (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
+
+        return rgb_image
 
     def destroy(self):
         """

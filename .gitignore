@@ -140,3 +140,4 @@ cython_debug/
 *.csv
 output/
 outputs
+*.pt

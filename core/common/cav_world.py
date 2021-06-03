@@ -25,6 +25,7 @@ class CavWorld(object):
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
+        self.ml_manager = None
 
         if apply_ml:
             # we import in this way so the user don't need to install ml packages unless they require to
