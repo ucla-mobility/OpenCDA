@@ -45,7 +45,7 @@ class VehicleManager(object):
         # localization module
         self.localizer = LocalizationManager(vehicle, sensing_config['localization'], carla_map)
         # perception module
-        self.perception_manager = PerceptionManager(vehicle, sensing_config['perception'])
+        self.perception_manager = PerceptionManager(vehicle, sensing_config['perception'], cav_world.ml_manager)
         # behavior agent
         self.agent = None
 

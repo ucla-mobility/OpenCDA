@@ -3,26 +3,35 @@
 """Platooning World Object to save all platooning-related object
 """
 
-
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
+
+import importlib
 
 
 class CavWorld(object):
     """
-    A customized world object to save all CDA vehicle information
+    A customized world object to save all CDA vehicle information and shared ML models
     :return:
     """
 
-    def __init__(self):
+    def __init__(self, apply_ml=False):
         """
-        Consturct class
-        :param self:
-        :return:
+        Construct class.
+        Args:
+            apply_ml (bool): whether apply ml/dl models in this simulation, please make sure
+                             you have install torch/sklearn before setting this to True.
         """
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
+        self.ml_manager = None
+
+        if apply_ml:
+            # we import in this way so the user don't need to install ml packages unless they require to
+            ml_manager = getattr(importlib.import_module("customize.ml_libs.ml_manager"), 'MLManager')
+            # initialize the ml manager to load the DL/ML models into memory
+            self.ml_manager = ml_manager()
 
     def update_vehicle_manager(self, vehicle_manager):
         """

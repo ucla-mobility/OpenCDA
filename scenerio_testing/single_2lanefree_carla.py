@@ -22,6 +22,10 @@ def arg_parse():
     parser = argparse.ArgumentParser(description="Platooning Joining Settings")
     parser.add_argument("--config_yaml", required=True, type=str, help='corresponding yaml file of the testing')
     parser.add_argument("--record", action='store_true', help='whether to record playfile')
+    parser.add_argument("--apply_ml",
+                        action='store_true',
+                        help='whether ml/dl framework such as sklearn/pytorch is needed in the testing. '
+                             'Set it to true only when you have installed the pytorch/sklearn package.')
 
     opt = parser.parse_args()
     return opt
@@ -48,7 +52,7 @@ def main():
                                                                     scenario_params['carla_traffic_manager'])
 
         # create CAV world
-        cav_world = CavWorld()
+        cav_world = CavWorld(opt.apply_ml)
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['single'], cav_world,
                                                        carla_map, map_api.spawn_helper_2lanefree)
 

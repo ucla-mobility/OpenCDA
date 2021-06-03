@@ -108,18 +108,22 @@ def createTrafficManager(client, world, traffic_config):
     return tm, bg_list
 
 
-def createPlatoonManagers(world, carla_map, scenario_params, map_helper=None):
+def createPlatoonManagers(world, carla_map, scenario_params, apply_ml, map_helper=None):
     """
-    Create platoon managers based on the yaml file
-    :param world: simulation world
-    :param carla_map: Carla HD Map, we try to just call get_map() one time in the whole program
-    :param scenario_params: configuration of scenario
-    :param map_helper: A function used for conveniently set the spawn position depending on different maps
-    :return: a list of platoon managers, platoon world
+    Create Platooning Managers based on given params.
+    Args:
+        world (carla.World): World from CARLA simulator.
+        carla_map (carla.Map): Map obtained from CARLA server.
+        scenario_params (dict): Platoon paramters.
+        apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn required to install if set to true.
+        map_helper (function): Specific function to convert certain parameters to spawn position in certain map.
+
+    Returns:
+
     """
 
     platoon_list = []
-    cav_world = CavWorld()
+    cav_world = CavWorld(apply_ml)
 
     # we use lincoln as default choice since our UCLA mobility lab use the same car
     cav_vehicle_bp = world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
