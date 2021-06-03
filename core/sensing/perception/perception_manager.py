@@ -12,6 +12,7 @@ import sys
 import carla
 import cv2
 import numpy as np
+import open3d as o3d
 
 import core.sensing.perception.sensor_transformation as st
 from core.sensing.perception.obstacle_vehicle import ObstacleVehicle
@@ -59,6 +60,61 @@ class CameraSensor(object):
         self.timestamp = event.timestamp
 
 
+class LidarSensor(object):
+    """
+    Lidar sensor manager.
+    """
+    def __init__(self, vehicle, config_yaml):
+        """
+        Construct class.
+        Args:
+            vehicle (carla.Vehicle): The attached vehicle.
+            config_yaml (dict): Configuration for lidar.
+        """
+        world = vehicle.get_world()
+        blueprint = world.get_blueprint_library().find('sensor.lidar.ray_cast')
+
+        # set attribute based on the configuration
+        blueprint.set_attribute('upper_fov', str(config_yaml['upper_fov']))
+        blueprint.set_attribute('lower_fov', str(config_yaml['lower_fov']))
+        blueprint.set_attribute('channels', str(config_yaml['channels']))
+        blueprint.set_attribute('range', str(config_yaml['range']))
+        blueprint.set_attribute('points_per_second', str(config_yaml['points_per_second']))
+        blueprint.set_attribute('rotation_frequency', str(config_yaml['rotation_frequency']))
+        blueprint.set_attribute('dropoff_general_rate', str(config_yaml['dropoff_general_rate']))
+        blueprint.set_attribute('dropoff_intensity_limit', str(config_yaml['dropoff_intensity_limit']))
+        blueprint.set_attribute('dropoff_zero_intensity', str(config_yaml['dropoff_zero_intensity']))
+        blueprint.set_attribute('noise_stddev', str(config_yaml['noise_stddev']))
+
+        # spawn sensor on vehicle
+        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.8))
+        self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+
+        # lidar data
+        self.data = None
+        self.timestamp = None
+        # open3d point cloud object
+        self.o3d_pointcloud = o3d.geometry.PointCloud()
+
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: LidarSensor._on_data_event(weak_self, event))
+
+    @staticmethod
+    def _on_data_event(weak_self, event):
+        """CAMERA  method"""
+        self = weak_self()
+        if not self:
+            return
+
+        # retrieve the raw lidar data and reshape to (N, 4)
+        data = np.copy(np.frombuffer(event.raw_data, dtype=np.dtype('f4')))
+        # (x, y, z, intensity)
+        data = np.reshape(data, (int(data.shape[0] / 4), 4))
+
+        self.data = data
+        self.timestamp = event.timestamp
+
+
 class PerceptionManager(object):
     """
     Perception manager mainly for object detection
@@ -76,11 +132,21 @@ class PerceptionManager(object):
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
+        self.lidar_visualize = config_yaml['lidar_visualize']
 
         # todo: add condition later make sure it is not a none type object
         self.ml_manager = ml_manager
 
-        self.rgb_camera = CameraSensor(vehicle)
+        # we only spawn the camera when perception module is activated or camera visualization is needed
+        if self.activate or self.camera_visualize:
+            self.rgb_camera = CameraSensor(vehicle)
+
+        # we only spawn the camera when perception module is activated or lidar visualization is needed
+        if self.activate or self.lidar_visualize:
+            self.lidar = LidarSensor(vehicle, config_yaml['lidar'])
+
+        # count how many steps have been passed
+        self.count = 0
 
         self.ego_pos = None
 
@@ -105,30 +171,43 @@ class PerceptionManager(object):
         Returns:
             List of carla.Vehicle or ObstacleVehicle
         """
-        world = self.vehicle.get_world()
         self.ego_pos = ego_pos
 
         objects = {}
 
         if not self.activate:
-            vehicle_list = world.get_actors().filter("*vehicle*")
-            vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
-                            v.id != self.vehicle.id]
-            objects.update({'vehicles': vehicle_list})
-            rgb_image = np.array(self.rgb_camera.image)
-
-            # todo: tmp code to test yolo here
-            result = self.ml_manager.object_detector(cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB))
-
-            if self.camera_visualize:
-                # rgb_image = self.visualize_3d_bbx_camera(objects, rgb_image)
-                rgb_image = self.ml_manager.draw_2d_box(result, rgb_image)
-                # show image using cv2
-                cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
-                cv2.waitKey(1)
+            objects = self.deactivate_mode(objects)
 
         else:
             sys.exit('Current version does not implement any perception algorithm')
+
+        return objects
+
+    def deactivate_mode(self, objects):
+        """
+        Obstacle detection under perception deactivation mode.
+        Args:
+            objects(dict): object dictionary
+        Returns:
+
+        """
+        world = self.vehicle.get_world()
+
+        vehicle_list = world.get_actors().filter("*vehicle*")
+        vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
+                        v.id != self.vehicle.id]
+
+        objects.update({'vehicles': vehicle_list})
+
+        if self.camera_visualize:
+            rgb_image = np.array(self.rgb_camera.image)
+            # todo: tmp code to test yolo here
+            result = self.ml_manager.object_detector(cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB))
+            # rgb_image = self.visualize_3d_bbx_camera(objects, rgb_image)
+            rgb_image = self.ml_manager.draw_2d_box(result, rgb_image) # todo this should be put on activate mode
+            # show image using cv2
+            cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
+            cv2.waitKey(1)
 
         return objects
 
