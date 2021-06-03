@@ -140,10 +140,14 @@ class PerceptionManager(object):
         # we only spawn the camera when perception module is activated or camera visualization is needed
         if self.activate or self.camera_visualize:
             self.rgb_camera = CameraSensor(vehicle)
+        else:
+            self.rgb_camera = None
 
         # we only spawn the camera when perception module is activated or lidar visualization is needed
         if self.activate or self.lidar_visualize:
             self.lidar = LidarSensor(vehicle, config_yaml['lidar'])
+        else:
+            self.lidar = None
 
         # count how many steps have been passed
         self.count = 0
@@ -238,6 +242,9 @@ class PerceptionManager(object):
         Returns:
 
         """
-        self.rgb_camera.sensor.destroy()
+        if self.rgb_camera:
+            self.rgb_camera.sensor.destroy()
+        if self.lidar:
+            self.lidar.sensor.destroy()
         if self.camera_visualize:
             cv2.destroyAllWindows()

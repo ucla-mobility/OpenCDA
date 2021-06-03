@@ -118,6 +118,11 @@ scenario:
           spawn_position: [121.7194, 139.51, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
           platoon: # we need to add platoon specific params
             <<: *platoon_base
+          sensing:
+            <<: *base_sensing
+            perception:
+              <<: *base_perception
+              camera_visualize: true
           behavior:
             <<: *base_behavior
             local_planner:
@@ -148,7 +153,7 @@ scenario:
         <<: *base_sensing
         perception:
           <<: *base_perception
-          camera_visualize: false
+          camera_visualize: true
         localization:
           <<: *base_localize
           debug_helper:
@@ -166,7 +171,7 @@ scenario:
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: true
+          debug_trajectory: false
           debug: false
 
 

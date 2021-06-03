@@ -21,7 +21,7 @@ class MLManager(object):
         """
         Construction class.
         """
-        self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5s')
+        self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
 
     def draw_2d_box(self, result, rgb_image):
         """
