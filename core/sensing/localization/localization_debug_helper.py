@@ -183,6 +183,9 @@ class DebugHelper(object):
         figure.suptitle('localization plotting of actor id %d' % self.actor_id)
 
         current_path = os.path.dirname(os.path.realpath(__file__))
+        if not os.path.exists(os.path.join(current_path, '../../../evaluation_figures')):
+            os.makedirs(os.path.join(current_path, '../../../evaluation_figures'))
+
         save_file = os.path.join(current_path,
                                  '../../../evaluation_figures/%s_localization_plotting.png' % str(self.actor_id))
         plt.savefig(save_file, dpi=100)
