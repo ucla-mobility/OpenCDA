@@ -33,6 +33,7 @@ class CameraSensor(object):
         """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
+        blueprint.set_attribute('fov', '100')
 
         spawn_point = carla.Transform(carla.Location(x=2.5, z=1.0))
         self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
@@ -214,6 +215,10 @@ class PerceptionManager(object):
             result = self.ml_manager.object_detector(cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB))
             # rgb_image = self.visualize_3d_bbx_camera(objects, rgb_image)
             rgb_image = self.ml_manager.draw_2d_box(result, rgb_image) # todo this should be put on activate mode
+            # todo: only project lidar points to camera during activation mode
+            rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, self.rgb_camera.sensor,
+                                                                    self.lidar.data, rgb_image)
+
             # show image using cv2
             cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
             cv2.waitKey(1)
@@ -238,7 +243,6 @@ class PerceptionManager(object):
             # we only draw the bounding box in the fov of camera
             _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
             if angle < 30:
-                # todo: don't use sensor transform groundtruth here
                 bbx_camera = st.get_2d_bb(v, self.rgb_camera.sensor, self.rgb_camera.sensor.get_transform())
                 cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
                               (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)

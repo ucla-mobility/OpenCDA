@@ -7,8 +7,12 @@ This script contains the transformations between world and different sensors.
 # License: MIT
 
 import numpy as np
+from matplotlib import cm
 
 import carla
+
+VIRIDIS = np.array(cm.get_cmap('viridis').colors)
+VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
 
 """
 Part 1: Camera Related Transformation
@@ -221,7 +225,93 @@ def get_2d_bb(vehicle, sensor, senosr_transform):
         (np.ndarray): 2d bounding box in camera image
 
     """
-    p3d_bb = get_bounding_box(vehicle, sensor,senosr_transform)
+    p3d_bb = get_bounding_box(vehicle, sensor, senosr_transform)
     p2d_bb = p3d_to_p2d_bb(p3d_bb)
     return p2d_bb
 
+
+"""
+Part 2: Lidar Related Transformation
+"""
+
+
+def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
+    """
+    Project lidar to camera space.
+    Args:
+        lidar (carla.Sensor): Lidar sensor.
+        camera (carla.Sensor): Camera seonsor.
+        point_cloud (np.ndarray): cloud points, (x, y, z, intensity).
+        rgb_image (np.ndarray): rgb image from camera.
+
+    Returns:
+        (np.ndarray): new rgb image with lidar points projected.
+        (np.ndarray): point clouds projected to camera space.
+    """
+
+    # Lidar intensity array of shape (p_cloud_size,) but, for now, let's
+    # focus on the 3D points.
+    intensity = np.array(point_cloud[:, 3])
+
+    # Point cloud in lidar sensor space array of shape (3, p_cloud_size).
+    local_lidar_points = np.array(point_cloud[:, :3]).T
+
+    # Add an extra 1.0 at the end of each 3d point so it becomes of
+    # shape (4, p_cloud_size) and it can be multiplied by a (4, 4) matrix.
+    local_lidar_points = np.r_[
+        local_lidar_points, [np.ones(local_lidar_points.shape[1])]]
+
+    # This (4, 4) matrix transforms the points from lidar space to world space.
+    lidar_2_world = x_to_world_transformation(lidar.get_transform())
+
+    # transform lidar points from lidar space to world space
+    world_points = np.dot(lidar_2_world, local_lidar_points)
+
+    # project world points to camera space
+    sensor_points = world_to_sensor(world_points, camera.get_transform())
+
+    # (x, y ,z) -> (y, -z, x)
+    point_in_camera_coords = np.array([
+        sensor_points[1],
+        sensor_points[2] * -1,
+        sensor_points[0]])
+
+    # retrieve camera intrinsic
+    K = get_camera_intrinsic(camera)
+    # project the 3d points in camera space to image space
+    points_2d = np.dot(K, point_in_camera_coords)
+
+    # normalize x,y,z
+    points_2d = np.array([
+        points_2d[0, :] / points_2d[2, :],
+        points_2d[1, :] / points_2d[2, :],
+        points_2d[2, :]])
+
+    image_w = int(camera.attributes['image_size_x'])
+    image_h = int(camera.attributes['image_size_y'])
+
+    # remove points out the camera scope
+    points_2d = points_2d.T
+    intensity = intensity.T
+    points_in_canvas_mask = \
+        (points_2d[:, 0] > 0.0) & (points_2d[:, 0] < image_w) & \
+        (points_2d[:, 1] > 0.0) & (points_2d[:, 1] < image_h) & \
+        (points_2d[:, 2] > 0.0)
+    points_2d = points_2d[points_in_canvas_mask]
+    intensity = intensity[points_in_canvas_mask]
+
+    # Extract the screen coords (uv) as integers.
+    u_coord = points_2d[:, 0].astype(np.int)
+    v_coord = points_2d[:, 1].astype(np.int)
+
+    # Since at the time of the creation of this script, the intensity function
+    # is returning high values, these are adjusted to be nicely visualized.
+    intensity = 4 * intensity - 3
+    color_map = np.array([
+        np.interp(intensity, VID_RANGE, VIRIDIS[:, 0]) * 255.0,
+        np.interp(intensity, VID_RANGE, VIRIDIS[:, 1]) * 255.0,
+        np.interp(intensity, VID_RANGE, VIRIDIS[:, 2]) * 255.0]).astype(np.int).T
+
+    rgb_image[v_coord, u_coord] = color_map
+
+    return rgb_image, points_2d

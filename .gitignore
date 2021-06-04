@@ -141,3 +141,5 @@ cython_debug/
 output/
 outputs
 *.pt
+evaluation_figures/
+*.save
