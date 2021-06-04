@@ -167,4 +167,4 @@ def dump_data(data):
 if __name__ == '__main__':
     velocity_list = [[23, 25, 25, 44, 66], [44, 55, 25, 22, 33]]
     ids = [23, 45]
-    draw_velocity_profile_single_plot(velocity_list, ids)
+    draw_sub_plot(velocity_list, velocity_list, velocity_list, velocity_list)

@@ -13,9 +13,9 @@ vehicle_base: &vehicle_base
       camera_visualize: false # whether to visualize rgb camera image using cv2.imshow
       lidar_visualize: false # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        channels: 32
+        channels: 64
         range: 50
-        points_per_second: 500000
+        points_per_second: 200000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 10.0
         lower_fov: -30.0

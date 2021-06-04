@@ -14,9 +14,9 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 50
-        points_per_second: 56000
+        points_per_second: 200000
         rotation_frequency: 20 # the simulation is 20 fps
-        upper_fov: 10.0
+        upper_fov: 15.0
         lower_fov: -30.0
         dropoff_general_rate: 0.0
         dropoff_intensity_limit: 1.0

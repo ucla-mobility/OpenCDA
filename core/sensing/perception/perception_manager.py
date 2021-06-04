@@ -17,6 +17,7 @@ import open3d as o3d
 import core.sensing.perception.sensor_transformation as st
 from core.sensing.perception.obstacle_vehicle import ObstacleVehicle
 from core.common.misc import cal_distance_angle
+from core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show
 
 
 class CameraSensor(object):
@@ -146,8 +147,10 @@ class PerceptionManager(object):
         # we only spawn the camera when perception module is activated or lidar visualization is needed
         if self.activate or self.lidar_visualize:
             self.lidar = LidarSensor(vehicle, config_yaml['lidar'])
+            self.o3d_vis = o3d_visualizer_init(vehicle.id)
         else:
             self.lidar = None
+            self.o3d_vis = None
 
         # count how many steps have been passed
         self.count = 0
@@ -185,6 +188,8 @@ class PerceptionManager(object):
         else:
             sys.exit('Current version does not implement any perception algorithm')
 
+        self.count += 1
+
         return objects
 
     def deactivate_mode(self, objects):
@@ -212,6 +217,10 @@ class PerceptionManager(object):
             # show image using cv2
             cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
             cv2.waitKey(1)
+
+        if self.lidar_visualize:
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud)
 
         return objects
 
@@ -248,3 +257,5 @@ class PerceptionManager(object):
             self.lidar.sensor.destroy()
         if self.camera_visualize:
             cv2.destroyAllWindows()
+        if self.lidar_visualize:
+            self.o3d_vis.destroy_window()
