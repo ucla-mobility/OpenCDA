@@ -152,7 +152,7 @@ class BehaviorAgent(Agent):
                 vm_x = pos.location.x
                 vm_y = pos.location.y
 
-                if abs(vm_x - o_x) <= 0.5 and abs(vm_y - o_y) <= 0.5:
+                if abs(vm_x - o_x) <= 2.0 and abs(vm_y - o_y) <= 2.0:
                     flag = True
                     break
             if not flag:
@@ -278,6 +278,7 @@ class BehaviorAgent(Agent):
         :return vehicle: nearby vehicle
         :return distance: distance to nearby vehicle
         """
+
         def dist(v):
             return v.get_location().distance(waypoint.transform.location)
 
@@ -469,10 +470,8 @@ class BehaviorAgent(Agent):
         self.hazard_flag = is_hazard
 
         # the case that the vehicle is doing lane change as planned but found vehicle blocking on the other lane
-        if (is_hazard and self.get_local_planner().lane_change and self.overtake_counter <= 0
-            and self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id != ego_vehicle_wp.lane_id) \
-                or (not self.lane_change_allowed and self.get_local_planner().lane_id_change
-                    and not self.destination_push_flag and self.overtake_counter <= 0):
+        if not self.lane_change_allowed and self.get_local_planner().lane_id_change \
+                and not self.destination_push_flag and self.overtake_counter <= 0:
             self.overtake_allowed = False
             reset_target = ego_vehicle_wp.next(self._ego_speed / 3.6 * 3)[0]
             print('destination pushed forward because of potential collision')
