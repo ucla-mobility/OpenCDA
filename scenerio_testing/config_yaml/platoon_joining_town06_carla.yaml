@@ -153,6 +153,7 @@ scenario:
         <<: *base_sensing
         perception:
           <<: *base_perception
+          activate: true
           camera_visualize: true
           lidar_visualize: true
         localization:
@@ -167,8 +168,8 @@ scenario:
         <<: *platoon_base
       behavior:
         <<: *base_behavior
-        max_speed: 70 # maximum speed, km/h
-        tailgate_speed: 80
+        max_speed: 65 # maximum speed, km/h
+        tailgate_speed: 75
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner

@@ -71,7 +71,8 @@ def x_to_world_transformation(transform):
         transform (carla.Transform): The transform that contains location and rotation.
 
     Returns:
-        (np.ndarray): The transformation matrix
+        matrix: np.ndarray
+            The transformation matrix
     """
     rotation = transform.rotation
     location = transform.location
@@ -112,7 +113,8 @@ def bbx_to_world(cords, vehicle):
         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
 
     Returns:
-        (np.ndarray): Bounding box coordinates under word reference.
+        bb_world_cords: np.ndarray
+            Bounding box coordinates under word reference.
     """
     bb_transform = carla.Transform(vehicle.bounding_box.location)
     # bounding box to vehicle transformation matrix
@@ -137,13 +139,30 @@ def world_to_sensor(cords, sensor_transform):
         sensor_transform (carla.Transform): sensor position in the world
 
     Returns:
-        (np.ndarray): Coordinates in sensor reference.
+        sensor_cords: np.ndarray
+            Coordinates in sensor reference.
     """
     sensor_world_matrix = x_to_world_transformation(sensor_transform)
     world_sensor_matrix = np.linalg.inv(sensor_world_matrix)
     sensor_cords = np.dot(world_sensor_matrix, cords)
 
     return sensor_cords
+
+
+def sensor_to_world(cords, sensor_transform):
+    """
+    Project 
+    Args:
+        cords (np.ndarray): Coordinates under sensor reference.
+        sensor_transform (carla.Transform): sensor position in the world
+    Returns:
+        world_cords: np.ndarray
+            Coordinates projected to world space.
+    """
+    sensor_world_matrix = x_to_world_transformation(sensor_transform)
+    world_cords = np.dot(sensor_world_matrix, cords)
+
+    return world_cords
 
 
 def vehicle_to_sensor(cords, vehicle, sensor_transform):
@@ -297,21 +316,22 @@ def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
         (points_2d[:, 0] > 0.0) & (points_2d[:, 0] < image_w) & \
         (points_2d[:, 1] > 0.0) & (points_2d[:, 1] < image_h) & \
         (points_2d[:, 2] > 0.0)
-    points_2d = points_2d[points_in_canvas_mask]
-    intensity = intensity[points_in_canvas_mask]
+    new_points_2d = points_2d[points_in_canvas_mask]
+    new_intensity = intensity[points_in_canvas_mask]
 
     # Extract the screen coords (uv) as integers.
-    u_coord = points_2d[:, 0].astype(np.int)
-    v_coord = points_2d[:, 1].astype(np.int)
+    u_coord = new_points_2d[:, 0].astype(np.int)
+    v_coord = new_points_2d[:, 1].astype(np.int)
 
     # Since at the time of the creation of this script, the intensity function
     # is returning high values, these are adjusted to be nicely visualized.
-    intensity = 4 * intensity - 3
+    new_intensity = 4 * new_intensity - 3
     color_map = np.array([
-        np.interp(intensity, VID_RANGE, VIRIDIS[:, 0]) * 255.0,
-        np.interp(intensity, VID_RANGE, VIRIDIS[:, 1]) * 255.0,
-        np.interp(intensity, VID_RANGE, VIRIDIS[:, 2]) * 255.0]).astype(np.int).T
+        np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 0]) * 255.0,
+        np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 1]) * 255.0,
+        np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 2]) * 255.0]).astype(np.int).T
 
-    rgb_image[v_coord, u_coord] = color_map
+    for i in range(len(new_points_2d)):
+        rgb_image[v_coord[i] - 1: v_coord[i] + 1, u_coord[i] - 1: u_coord[i] + 1] = color_map[i]
 
     return rgb_image, points_2d

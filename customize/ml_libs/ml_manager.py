@@ -10,7 +10,8 @@ CAVs share the same model to avoid duplicate memory consumption.
 
 import cv2
 import torch
-import sklearn
+
+from core.sensing.perception.obstacle_vehicle import is_vehicle_cococlass
 
 
 class MLManager(object):
@@ -47,9 +48,9 @@ class MLManager(object):
             label = int(detection[5])
             label_name = result.names[label]
 
-            # todo: temporary, we need a filter to filter out labels.
-            if label_name == 'airplane':
-                continue
+            if is_vehicle_cococlass(label):
+                label_name = 'vehicle'
+
             x1, y1, x2, y2 = int(detection[0]), int(detection[1]), int(detection[2]), int(detection[3])
             cv2.rectangle(rgb_image, (x1,  y1), (x2, y2), (0, 255, 0), 2)
             # draw text on it

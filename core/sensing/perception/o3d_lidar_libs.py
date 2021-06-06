@@ -124,10 +124,10 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
     # # This can fix Open3D jittering issues:
     time.sleep(0.001)
 
-    # for key, object_list in objects.items():
-    #     for object_ in object_list:
-    #         aabb = object_.o3d_bbx
-    #         vis.remove_geometry(aabb)
+    for key, object_list in objects.items():
+        for object_ in object_list:
+            aabb = object_.o3d_bbx
+            vis.remove_geometry(aabb)
 
 
 def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_sensor):
@@ -187,6 +187,7 @@ def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_
         o3d_pointcloud.points = o3d.utility.Vector3dVector(select_points)
         # add o3d bounding box
         aabb = o3d_pointcloud.get_axis_aligned_bounding_box()
+        aabb.color = (0, 1, 0)
 
         # get the eight corner of the bounding boxes.
         corner = np.asarray(aabb.get_box_points())

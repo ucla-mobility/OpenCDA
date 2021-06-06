@@ -453,7 +453,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if angle >= 60 or distance < self._ego_speed / 3.6 * 0.5:
             self.overtake_allowed = False
             print("angle is too large, wait")
-            return (*super().run_step(get_speed(frontal_vehicle) * 0.95, lane_change_allowed=False), FSM.BACK_JOINING)
+            return (*super().run_step(get_speed(frontal_vehicle) * 0.80, lane_change_allowed=False), FSM.BACK_JOINING)
 
         else:
             self.overtake_allowed = True
