@@ -16,8 +16,9 @@ import open3d as o3d
 
 import core.sensing.perception.sensor_transformation as st
 from core.sensing.perception.obstacle_vehicle import ObstacleVehicle
-from core.common.misc import cal_distance_angle
-from core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show
+from core.common.misc import cal_distance_angle, get_speed
+from core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, \
+    o3d_pointcloud_encode, o3d_visualizer_show, o3d_camera_lidar_fusion
 
 
 class CameraSensor(object):
@@ -35,7 +36,8 @@ class CameraSensor(object):
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
         blueprint.set_attribute('fov', '100')
 
-        spawn_point = carla.Transform(carla.Location(x=2.5, z=1.0))
+        spawn_point = carla.Transform(carla.Location(x=2.5, z=1.0),
+                                      carla.Rotation(pitch=0, roll=0, yaw=0))
         self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
 
         self.image = None
@@ -66,6 +68,7 @@ class LidarSensor(object):
     """
     Lidar sensor manager.
     """
+
     def __init__(self, vehicle, config_yaml):
         """
         Construct class.
@@ -136,7 +139,9 @@ class PerceptionManager(object):
         self.camera_visualize = config_yaml['camera_visualize']
         self.lidar_visualize = config_yaml['lidar_visualize']
 
-        # todo: add condition later make sure it is not a none type object
+        if self.activate and not ml_manager:
+            sys.exit('If you activate the perception module, then apply_ml must be set to true in'
+                     'the argument parser to load the detection DL model.')
         self.ml_manager = ml_manager
 
         # we only spawn the camera when perception module is activated or camera visualization is needed
@@ -181,15 +186,53 @@ class PerceptionManager(object):
         """
         self.ego_pos = ego_pos
 
-        objects = {}
+        objects = {'vehicles': []}
 
         if not self.activate:
             objects = self.deactivate_mode(objects)
 
         else:
-            sys.exit('Current version does not implement any perception algorithm')
+            objects = self.activate_mode(objects)
 
         self.count += 1
+
+        return objects
+
+    def activate_mode(self, objects):
+        """
+        Use Yolov5 + Lidar fusion to detect objects.
+        Args:
+            objects(dict): object dictionary
+
+        Returns:
+            objects: dict
+                The updated object dictionary.
+        """
+        # retrieve current camera and lidar data
+        rgb_image = np.array(self.rgb_camera.image)
+
+        # yolo detection
+        yolo_detection = self.ml_manager.object_detector(cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB))
+
+        # lidar projection
+        rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, self.rgb_camera.sensor,
+                                                                self.lidar.data, rgb_image)
+
+        # camera lidar fusion
+        objects = o3d_camera_lidar_fusion(objects, yolo_detection.xyxy[0],
+                                          self.lidar.data, projected_lidar, self.lidar.sensor)
+
+        # calculate the speed. current we retrieve from the server directly.
+        self.speed_retrieve(objects)
+
+        if self.camera_visualize:
+            rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image)
+            cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
+            cv2.waitKey(1)
+
+        if self.lidar_visualize:
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
 
         return objects
 
@@ -211,13 +254,8 @@ class PerceptionManager(object):
 
         if self.camera_visualize:
             rgb_image = np.array(self.rgb_camera.image)
-            # todo: tmp code to test yolo here
-            result = self.ml_manager.object_detector(cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB))
-            # rgb_image = self.visualize_3d_bbx_camera(objects, rgb_image)
-            rgb_image = self.ml_manager.draw_2d_box(result, rgb_image) # todo this should be put on activate mode
-            # todo: only project lidar points to camera during activation mode
-            rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, self.rgb_camera.sensor,
-                                                                    self.lidar.data, rgb_image)
+            # draw the ground truth bbx on the camera image
+            rgb_image = self.visualize_3d_bbx_camera(objects, rgb_image)
 
             # show image using cv2
             cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
@@ -225,13 +263,14 @@ class PerceptionManager(object):
 
         if self.lidar_visualize:
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud)
+            # render the raw lidar
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, {})
 
         return objects
 
     def visualize_3d_bbx_camera(self, objects, rgb_image):
         """
-        Visualize the 3d bounding box on camera image.
+        Visualize the 3d bounding box on frontal camera image.
         Args:
             objects (dict): a dictionary containing all detected objects.
             rgb_image (np.ndarray):camera image.
@@ -248,6 +287,34 @@ class PerceptionManager(object):
                               (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
 
         return rgb_image
+
+    def speed_retrieve(self, objects):
+        """
+        We don't implement any obstacle speed calculation algorithm. The speed will be retrieved from
+        the server directly.
+        Args:
+            objects(dict): The dictionary contains the objects.
+
+        Returns:
+
+        """
+        if 'vehicles' not in objects:
+            return
+
+        world = self.vehicle.get_world()
+        vehicle_list = world.get_actors().filter("*vehicle*")
+        vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
+                        v.id != self.vehicle.id]
+
+        for v in vehicle_list:
+            loc = v.get_location()
+            for obstacle_vehicle in objects['vehicles']:
+                obstacle_speed = get_speed(obstacle_vehicle)
+                if obstacle_speed > 0:
+                    continue
+                obstacle_loc = obstacle_vehicle.get_location()
+                if abs(loc.x - obstacle_loc.x) <= 2.5 and abs(loc.y - obstacle_loc.y) <= 1.5:
+                    obstacle_vehicle.set_velocity(v.get_velocity())
 
     def destroy(self):
         """
