@@ -173,7 +173,7 @@ scenario:
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: false
+          debug_trajectory: true
           debug: false
 
 

@@ -498,18 +498,22 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 # if no right lane
                 elif not right_wpt:
                     print('take left lane')
-                    self.set_destination(left_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(left_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
                 # if no left lane available
                 elif not left_wpt:
                     print('take right lane')
-                    self.set_destination(right_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(right_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
                 # check which lane is closer to the platooning
                 elif abs(left_wpt.lane_id - frontal_lane) < abs(right_wpt.lane_id - frontal_lane):
                     print('take left lane')
-                    self.set_destination(left_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(left_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
                 else:
                     print('take right lane')
-                    self.set_destination(right_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(right_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
 
         return (*super().run_step(self.tailgate_speed), FSM.BACK_JOINING)
 
