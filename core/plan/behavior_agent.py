@@ -134,6 +134,7 @@ class BehaviorAgent(Agent):
     def white_list_match(self, obstacles):
         """
         Match the detected obstacles with the white list. Remove the obstacles that are in white list.
+        The white list contains all position of target platoon member for joining.
         Args:
             obstacles (list):  a list of carla.Vehicle or ObstacleVehicle
 
@@ -147,12 +148,22 @@ class BehaviorAgent(Agent):
             o_x = o.get_location().x
             o_y = o.get_location().y
 
+            o_waypoint = self._map.get_waypoint(o.get_location())
+            o_lane_id = o_waypoint.lane_id
+
             for vm in self.white_list:
                 pos = vm.localizer.get_ego_pos()
                 vm_x = pos.location.x
                 vm_y = pos.location.y
 
-                if abs(vm_x - o_x) <= 2.0 and abs(vm_y - o_y) <= 2.0:
+                w_waypoint = self._map.get_waypoint(pos.location)
+                w_lane_id = w_waypoint.lane_id
+
+                # if the id is different, then not matched for sure
+                if o_lane_id != w_lane_id:
+                    continue
+
+                if abs(vm_x - o_x) <= 3.0 and abs(vm_y - o_y) <= 3.0:
                     flag = True
                     break
             if not flag:
@@ -301,7 +312,7 @@ class BehaviorAgent(Agent):
 
     def overtake_management(self, obstacle_vehicle):
         """
-        Overtake behavior for back_joining car
+        Overtake behavior.
         :param obstacle_vehicle: the vehicle
         :return:
         """
@@ -466,8 +477,8 @@ class BehaviorAgent(Agent):
             is_hazard, obstacle_vehicle, distance = self.collision_manager(rx, ry, ryaw, ego_vehicle_wp)
         car_following_flag = False
 
-        # this flag is used for transition from cut-in joining to back joining
-        self.hazard_flag = is_hazard
+        if not is_hazard:
+            self.hazard_flag = False
 
         # the case that the vehicle is doing lane change as planned but found vehicle blocking on the other lane
         if not self.lane_change_allowed and self.get_local_planner().lane_id_change \
@@ -490,11 +501,18 @@ class BehaviorAgent(Agent):
 
         elif is_hazard and self.overtake_allowed and self.overtake_counter <= 0:
             obstacle_speed = get_speed(obstacle_vehicle)
-            # overtake the vehicle
-            if self._ego_speed > obstacle_speed:
-                car_following_flag = self.overtake_management(obstacle_vehicle)
-            else:
-                car_following_flag = True
+            obstacle_lane_id = self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id
+            ego_lane_id = self._map.get_waypoint(self._ego_pos.location).lane_id
+
+            # overtake the obstacle vehicle only when speed is bigger and the lane id is the same
+            if ego_lane_id == obstacle_lane_id:
+                # this flag is used for transition from cut-in joining to back joining
+                self.hazard_flag = is_hazard
+                # we only consider overtaking when speed is faster than the front obstacle
+                if self._ego_speed >= obstacle_speed:
+                    car_following_flag = self.overtake_management(obstacle_vehicle)
+                else:
+                    car_following_flag = True
 
         # 4. Car following behavior
         if car_following_flag:

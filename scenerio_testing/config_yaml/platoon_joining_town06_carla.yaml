@@ -122,7 +122,9 @@ scenario:
             <<: *base_sensing
             perception:
               <<: *base_perception
+              activate: false
               camera_visualize: false
+              lidar_visualize: false
           behavior:
             <<: *base_behavior
             local_planner:
@@ -154,7 +156,7 @@ scenario:
         perception:
           <<: *base_perception
           activate: true
-          camera_visualize: true
+          camera_visualize: false
           lidar_visualize: true
         localization:
           <<: *base_localize

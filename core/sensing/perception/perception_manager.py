@@ -26,18 +26,27 @@ class CameraSensor(object):
     Class for rgb camera.
     """
 
-    def __init__(self, vehicle):
+    def __init__(self, vehicle, position='front'):
         """
         Construct class.
         Args:
             vehicle (carla.Vehicle): Carla actor.
+            position (string): the camera mounted position, only front, left and right supported.
         """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
         blueprint.set_attribute('fov', '100')
 
-        spawn_point = carla.Transform(carla.Location(x=2.5, z=1.0),
-                                      carla.Rotation(pitch=0, roll=0, yaw=0))
+        if position == 'front':
+            spawn_point = carla.Transform(carla.Location(x=2.5, y=0.0, z=1.0),
+                                          carla.Rotation(pitch=0, roll=0, yaw=0))
+        elif position == 'right':
+            spawn_point = carla.Transform(carla.Location(x=0.0, y=0.3, z=1.8),
+                                          carla.Rotation(pitch=0, roll=0, yaw=100))
+        else:
+            spawn_point = carla.Transform(carla.Location(x=0.0, y=-0.3, z=1.8),
+                                          carla.Rotation(pitch=0, roll=0, yaw=-100))
+
         self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
 
         self.image = None
@@ -146,7 +155,11 @@ class PerceptionManager(object):
 
         # we only spawn the camera when perception module is activated or camera visualization is needed
         if self.activate or self.camera_visualize:
-            self.rgb_camera = CameraSensor(vehicle)
+            self.rgb_camera = []
+            self.rgb_camera.append(CameraSensor(vehicle, 'front'))
+            self.rgb_camera.append(CameraSensor(vehicle, 'right'))
+            self.rgb_camera.append(CameraSensor(vehicle, 'left'))
+
         else:
             self.rgb_camera = None
 
@@ -208,26 +221,34 @@ class PerceptionManager(object):
             objects: dict
                 The updated object dictionary.
         """
-        # retrieve current camera and lidar data
-        rgb_image = np.array(self.rgb_camera.image)
+        # retrieve current cameras and lidar data
+        rgb_images = []
+        for rgb_camera in self.rgb_camera:
+            rgb_images.append(cv2.cvtColor(np.array(rgb_camera.image), cv2.COLOR_BGR2RGB))
 
         # yolo detection
-        yolo_detection = self.ml_manager.object_detector(cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB))
+        yolo_detection = self.ml_manager.object_detector(rgb_images)
+        # rgb_images for drawing
+        rgb_draw_images = []
 
-        # lidar projection
-        rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, self.rgb_camera.sensor,
-                                                                self.lidar.data, rgb_image)
+        for (i, rgb_camera) in enumerate(self.rgb_camera):
+            # lidar projection
+            rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, rgb_camera.sensor,
+                                                                    self.lidar.data, np.array(rgb_camera.image))
+            rgb_draw_images.append(rgb_image)
 
-        # camera lidar fusion
-        objects = o3d_camera_lidar_fusion(objects, yolo_detection.xyxy[0],
-                                          self.lidar.data, projected_lidar, self.lidar.sensor)
+            # camera lidar fusion
+            objects = o3d_camera_lidar_fusion(objects, yolo_detection.xyxy[i],
+                                              self.lidar.data, projected_lidar, self.lidar.sensor)
 
-        # calculate the speed. current we retrieve from the server directly.
-        self.speed_retrieve(objects)
+            # calculate the speed. current we retrieve from the server directly.
+            self.speed_retrieve(objects)
 
         if self.camera_visualize:
-            rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image)
-            cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
+            for (i, rgb_image) in enumerate(rgb_draw_images):
+                rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
+                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+                cv2.imshow('rgb image %d of actor %d' % (i, self.vehicle.id), rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
@@ -253,9 +274,10 @@ class PerceptionManager(object):
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
-            rgb_image = np.array(self.rgb_camera.image)
+            # we only visualiz the frontal camera
+            rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
-            rgb_image = self.visualize_3d_bbx_camera(objects, rgb_image)
+            rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
 
             # show image using cv2
             cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
@@ -268,7 +290,7 @@ class PerceptionManager(object):
 
         return objects
 
-    def visualize_3d_bbx_camera(self, objects, rgb_image):
+    def visualize_3d_bbx_front_camera(self, objects, rgb_image):
         """
         Visualize the 3d bounding box on frontal camera image.
         Args:
@@ -282,7 +304,7 @@ class PerceptionManager(object):
             # we only draw the bounding box in the fov of camera
             _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
             if angle < 30:
-                bbx_camera = st.get_2d_bb(v, self.rgb_camera.sensor, self.rgb_camera.sensor.get_transform())
+                bbx_camera = st.get_2d_bb(v, self.rgb_camera[0].sensor, self.rgb_camera[0].sensor.get_transform())
                 cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
                               (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
 
@@ -313,7 +335,7 @@ class PerceptionManager(object):
                 if obstacle_speed > 0:
                     continue
                 obstacle_loc = obstacle_vehicle.get_location()
-                if abs(loc.x - obstacle_loc.x) <= 2.5 and abs(loc.y - obstacle_loc.y) <= 1.5:
+                if abs(loc.x - obstacle_loc.x) <= 3.0 and abs(loc.y - obstacle_loc.y) <= 3.0:
                     obstacle_vehicle.set_velocity(v.get_velocity())
 
     def destroy(self):
@@ -323,7 +345,8 @@ class PerceptionManager(object):
 
         """
         if self.rgb_camera:
-            self.rgb_camera.sensor.destroy()
+            for rgb_camera in self.rgb_camera:
+                rgb_camera.sensor.destroy()
         if self.lidar:
             self.lidar.sensor.destroy()
         if self.camera_visualize:

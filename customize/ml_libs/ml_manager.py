@@ -24,18 +24,19 @@ class MLManager(object):
         """
         self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
 
-    def draw_2d_box(self, result, rgb_image):
+    def draw_2d_box(self, result, rgb_image, index):
         """
         Draw 2d bounding box based on the yolo detection.
         Args:
             result (yolo.Result):Detection result from yolo 5.
             rgb_image (np.ndarray): Camera rgb image.
+            index(int): Indicate the index
 
         Returns:
             (np.ndarray): camera image with bbx drawn.
         """
         # torch.Tensor
-        bounding_box = result.xyxy[0]
+        bounding_box = result.xyxy[index]
         if bounding_box.is_cuda:
             bounding_box = bounding_box.cpu().detach().numpy()
         else:

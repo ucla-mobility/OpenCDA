@@ -115,6 +115,9 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
     vis.update_geometry(point_cloud)
 
     for key, object_list in objects.items():
+        # we only draw vehicles for now
+        if key != 'vehicles':
+            continue
         for object_ in object_list:
             aabb = object_.o3d_bbx
             vis.add_geometry(aabb)
@@ -125,6 +128,8 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
     time.sleep(0.001)
 
     for key, object_list in objects.items():
+        if key != 'vehicles':
+            continue
         for object_ in object_list:
             aabb = object_.o3d_bbx
             vis.remove_geometry(aabb)
