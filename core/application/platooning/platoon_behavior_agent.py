@@ -332,7 +332,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             # set the last member as the frontal vehicle
             self.v2x_manager.set_platoon_front(last_member)
             self.v2x_manager.set_platoon_rear(None)
-
+            print('switch to back joining!')
             # slow down to join back
             return (*super().run_step(self.max_speed / 2), FSM.BACK_JOINING)
 
@@ -453,7 +453,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if angle >= 60 or distance < self._ego_speed / 3.6 * 0.5:
             self.overtake_allowed = False
             print("angle is too large, wait")
-            return (*super().run_step(get_speed(frontal_vehicle) * 0.95, lane_change_allowed=False), FSM.BACK_JOINING)
+            return (*super().run_step(get_speed(frontal_vehicle) * 0.90, lane_change_allowed=False), FSM.BACK_JOINING)
 
         else:
             self.overtake_allowed = True
@@ -466,7 +466,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if not self.destination_changed:
             print('destination reset!!!!')
             self.destination_changed = True
-            self.set_destination(ego_wpt.next(4.5)[0].transform.location, frontal_destination)
+            self.set_destination(ego_wpt.next(4.5)[0].transform.location, frontal_destination,
+                                 clean=True, clean_history=True)
 
         # 2. check if there is any other vehicle blocking between ego and platooning
         def dist(v):
@@ -498,18 +499,22 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 # if no right lane
                 elif not right_wpt:
                     print('take left lane')
-                    self.set_destination(left_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(left_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
                 # if no left lane available
                 elif not left_wpt:
                     print('take right lane')
-                    self.set_destination(right_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(right_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
                 # check which lane is closer to the platooning
                 elif abs(left_wpt.lane_id - frontal_lane) < abs(right_wpt.lane_id - frontal_lane):
                     print('take left lane')
-                    self.set_destination(left_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(left_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
                 else:
                     print('take right lane')
-                    self.set_destination(right_wpt.transform.location, frontal_destination, clean=True)
+                    self.set_destination(right_wpt.transform.location, frontal_destination,
+                                         clean=True, clean_history=True)
 
         return (*super().run_step(self.tailgate_speed), FSM.BACK_JOINING)
 
@@ -581,7 +586,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if not self.destination_changed:
             print('destination reset!!!!')
             self.destination_changed = True
-            self.set_destination(ego_wpt.next(4.5)[0].transform.location, rear_destination)
+            self.set_destination(ego_wpt.next(4.5)[0].transform.location, rear_destination, clean=True,
+                                 clean_history=True)
 
         # check which lane is closer to operate lane change
         left_wpt = ego_wpt.next(max(1.2 * self._ego_speed / 3.6, 5))[0].get_left_lane()

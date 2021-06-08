@@ -11,8 +11,6 @@ import weakref
 
 import carla
 
-from scenerio_testing.utils.profile_plotting import draw_sub_plot
-
 
 class PlatooningManager(object):
     """

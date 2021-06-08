@@ -5,6 +5,8 @@ Visualization tools for localization
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -131,9 +133,8 @@ class DebugHelper(object):
         Returns:
 
         """
-
         figure, axis = plt.subplots(3, 2)
-
+        figure.set_size_inches(16, 12)
         # x, y coordinates
         axis[0, 0].plot(self.gnss_x, self.gnss_y, ".g", label='gnss')
         axis[0, 0].plot(self.gt_x, self.gt_y, ".b", label='gt')
@@ -180,7 +181,14 @@ class DebugHelper(object):
         axis[2, 1].set_title("error curve on yaw angle")
 
         figure.suptitle('localization plotting of actor id %d' % self.actor_id)
-        plt.show()
+
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        if not os.path.exists(os.path.join(current_path, '../../../evaluation_figures')):
+            os.makedirs(os.path.join(current_path, '../../../evaluation_figures'))
+
+        save_file = os.path.join(current_path,
+                                 '../../../evaluation_figures/%s_localization_plotting.png' % str(self.actor_id))
+        plt.savefig(save_file, dpi=100)
 
         print("--------------Localization Module Performance on Actor %d" % self.actor_id)
         x_error_mean = np.mean(np.abs(np.array(self.gt_x) - np.array(self.gnss_x)))

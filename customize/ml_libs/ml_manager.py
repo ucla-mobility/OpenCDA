@@ -10,7 +10,8 @@ CAVs share the same model to avoid duplicate memory consumption.
 
 import cv2
 import torch
-import sklearn
+
+from core.sensing.perception.obstacle_vehicle import is_vehicle_cococlass
 
 
 class MLManager(object):
@@ -23,18 +24,19 @@ class MLManager(object):
         """
         self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
 
-    def draw_2d_box(self, result, rgb_image):
+    def draw_2d_box(self, result, rgb_image, index):
         """
         Draw 2d bounding box based on the yolo detection.
         Args:
             result (yolo.Result):Detection result from yolo 5.
             rgb_image (np.ndarray): Camera rgb image.
+            index(int): Indicate the index
 
         Returns:
             (np.ndarray): camera image with bbx drawn.
         """
         # torch.Tensor
-        bounding_box = result.xyxy[0]
+        bounding_box = result.xyxy[index]
         if bounding_box.is_cuda:
             bounding_box = bounding_box.cpu().detach().numpy()
         else:
@@ -47,9 +49,9 @@ class MLManager(object):
             label = int(detection[5])
             label_name = result.names[label]
 
-            # todo: temporary, we need a filter to filter out labels.
-            if label_name == 'airplane':
-                continue
+            if is_vehicle_cococlass(label):
+                label_name = 'vehicle'
+
             x1, y1, x2, y2 = int(detection[0]), int(detection[1]), int(detection[2]), int(detection[3])
             cv2.rectangle(rgb_image, (x1,  y1), (x2, y2), (0, 255, 0), 2)
             # draw text on it

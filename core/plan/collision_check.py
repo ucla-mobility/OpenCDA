@@ -23,7 +23,7 @@ class CollisionChecker:
         :param circle_radius: The radius of the collision checking circle
         """
         self.time_ahead = time_ahead
-        self._circle_offsets = [-1.0, 1.0, -3.0, 3.0] if circle_offsets is None else circle_offsets
+        self._circle_offsets = [-1.0, 1.0] if circle_offsets is None else circle_offsets
         self._circle_radius = circle_radius
 
     def is_in_range(self, ego_vehicle, target_vehicle, candidate_vehicle, carla_map):

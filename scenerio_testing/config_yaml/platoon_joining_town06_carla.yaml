@@ -14,9 +14,9 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 50
-        points_per_second: 56000
+        points_per_second: 200000
         rotation_frequency: 20 # the simulation is 20 fps
-        upper_fov: 10.0
+        upper_fov: 15.0
         lower_fov: -30.0
         dropoff_general_rate: 0.0
         dropoff_intensity_limit: 1.0
@@ -122,7 +122,9 @@ scenario:
             <<: *base_sensing
             perception:
               <<: *base_perception
+              activate: false
               camera_visualize: false
+              lidar_visualize: false
           behavior:
             <<: *base_behavior
             local_planner:
@@ -153,6 +155,7 @@ scenario:
         <<: *base_sensing
         perception:
           <<: *base_perception
+          activate: true
           camera_visualize: true
           lidar_visualize: true
         localization:
@@ -160,6 +163,7 @@ scenario:
           debug_helper:
             <<: *loc_debug_helper
             show_plotting: true
+            show_animation: false
       v2x:
         <<: *base_v2x
         communication_range: 35
@@ -167,12 +171,12 @@ scenario:
         <<: *platoon_base
       behavior:
         <<: *base_behavior
-        max_speed: 70 # maximum speed, km/h
-        tailgate_speed: 80
+        max_speed: 65 # maximum speed, km/h
+        tailgate_speed: 75
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: false
+          debug_trajectory: true
           debug: false
 
 

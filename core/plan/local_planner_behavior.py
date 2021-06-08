@@ -51,7 +51,6 @@ class LocalPlanner(object):
         :param agent: agent that regulates the vehicle
         :param config_yaml: local planner configuration file
         """
-        # ego_vehicle todo:remove vehicle
         self._vehicle = agent.vehicle
         self._map = carla_map
 
@@ -85,11 +84,6 @@ class LocalPlanner(object):
         # debug option
         self.debug = config_yaml['debug']
         self.debug_trajectory = config_yaml['debug_trajectory']
-
-    def reset_vehicle(self):
-        """Reset the ego-vehicle"""
-        self._vehicle = None
-        print("Resetting ego-vehicle!")
 
     def set_global_plan(self, current_plan, clean=False):
         """
@@ -294,7 +288,8 @@ class LocalPlanner(object):
         mean_k = 0.0001 if len(rk) < 2 else abs(statistics.mean(rk))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
         target_speed = min(target_speed, np.sqrt(6.0 / (mean_k + 10e-6)) * 3.6)
-        # print('current speed %f and target speed is %f' % (current_speed * 3.6, target_speed))
+        print('Vehicle Id:%d, current speed %f and target speed is %f' % (self._vehicle.id,
+                                                                          current_speed * 3.6, target_speed))
 
         # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
         if self._pid_controller:
