@@ -1,5 +1,5 @@
 site_name: OpenCDA
-repo_url: https://github.com/xuhan417/OpenCDA-Documents
+repo_url: https://github.com/ucla-mobility/OpenCDA.git
 docs_dir: docs
 theme: readthedocs
 extra_css: [extra.css]
