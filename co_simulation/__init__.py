@@ -1,1 +1,3 @@
-# co-simulation related(sumo and carla)
+"""
+Co-simulation folder, will fill the contents in v0.2
+"""
