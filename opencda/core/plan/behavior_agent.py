@@ -67,8 +67,6 @@ class BehaviorAgent(object):
         self._sampling_resolution = config_yaml['sample_resolution']
 
         # intersection agent related
-        self.incoming_direction = None
-        self.incoming_waypoint = None
         self.light_state = "Green"
         self.light_id_to_ignore = -1
 
@@ -104,12 +102,6 @@ class BehaviorAgent(object):
         # current version only consider about vehicles
         obstacle_vehicles = objects['vehicles']
         self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
-
-        # todo: delete this later
-        self.incoming_waypoint, self.incoming_direction = self._local_planner.get_incoming_waypoint_and_direction(
-            steps=self.look_ahead_steps)
-        if self.incoming_direction is None:
-            self.incoming_direction = RoadOption.LANEFOLLOW
 
         if self.ignore_traffic_light:
             self.light_state = "Green"

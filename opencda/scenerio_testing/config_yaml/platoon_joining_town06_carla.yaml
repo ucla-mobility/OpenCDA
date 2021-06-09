@@ -147,7 +147,7 @@ scenario:
 
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [27.7194, 143.51, 0.3, 0, 0, 0]
+      spawn_position: [47.7194, 146.51, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
       destination: [606.87, 145.39, 0]
