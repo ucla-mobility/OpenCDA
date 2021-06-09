@@ -141,5 +141,5 @@ cython_debug/
 output/
 outputs
 *.pt
-evaluation_figures/
+opencda/evaluation_figures/
 *.save
