@@ -172,7 +172,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         :return:
         """
         # we need to count the vehicle length in to calculate the gap
-        boundingbox = self._vehicle.bounding_box
+        boundingbox = self.vehicle.bounding_box
         veh_length = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
 
         delta_v = self._ego_speed / 3.6

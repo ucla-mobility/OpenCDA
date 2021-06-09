@@ -15,14 +15,13 @@ import numpy as np
 import carla
 
 from opencda.core.plan.collision_check import CollisionChecker
-from opencda.core.plan.agent import Agent
 from opencda.core.plan.local_planner_behavior import LocalPlanner, RoadOption
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.common.misc import get_speed, positive, cal_distance_angle
 
 
-class BehaviorAgent(Agent):
+class BehaviorAgent(object):
     """
     A modulized version of BehaviorAgent
     """
@@ -35,12 +34,11 @@ class BehaviorAgent(Agent):
         provide customized function under customize/controller
         """
 
-        super(BehaviorAgent, self).__init__(vehicle, carla_map)
-
         self.vehicle = vehicle
         # ego pos(transform) and speed(km/h) retrieved from localization module
         self._ego_pos = None
         self._ego_speed = 0.0
+        self._map = carla_map
 
         # speed related, check yaml file to see the meaning
         self.max_speed = config_yaml['max_speed']
