@@ -7,7 +7,10 @@ Visualization tools for localization
 
 import os
 
+import cv2
 import numpy as np
+import matplotlib
+
 import matplotlib.pyplot as plt
 
 
@@ -101,6 +104,8 @@ class DebugHelper(object):
         self.gt_spd.append(gt_spd / 3.6)
 
         if self.show_animation:
+            # call backend setting here to solve the conflict between cv2 pyqt5 and pyplot qtagg
+            matplotlib.use('TkAgg')
             xEst = np.array([filter_x, filter_y]).reshape(2, 1)
             zTrue = np.array([gt_x, gt_y]).reshape(2, 1)
             z = np.array([gnss_x, gnss_y]).reshape(2, 1)
@@ -110,19 +115,23 @@ class DebugHelper(object):
             self.hTrue = np.hstack((self.hTrue, zTrue))
 
             plt.cla()
-            plt.title('actor id %d animation' % self.actor_id)
+            plt.title('actor id %d localization trajectory' % self.actor_id)
             # for stopping simulation with the esc key.
             plt.gcf().canvas.mpl_connect('key_release_event',
                                          lambda event: [plt.close() if event.key == 'escape' else None])
 
             plt.plot(self.hTrue[0, 1:].flatten() * self.x_scale,
-                     self.hTrue[1, 1:].flatten() * self.y_scale, "-b")
-            plt.plot(self.hz[0, 1:] * self.x_scale, self.hz[1, 1:] * self.y_scale, ".g")
+                     self.hTrue[1, 1:].flatten() * self.y_scale, "-b",
+                     label='groundtruth')
+            plt.plot(self.hz[0, 1:] * self.x_scale, self.hz[1, 1:] * self.y_scale, ".g",
+                     label='gnss noise data')
             plt.plot(self.hxEst[0, 1:].flatten() * self.x_scale,
-                     self.hxEst[1, 1:].flatten() * self.y_scale, "-r")
+                     self.hxEst[1, 1:].flatten() * self.y_scale, "-r",
+                     label='kf result')
 
             plt.axis("equal")
             plt.grid(True)
+            plt.legend()
             plt.pause(0.001)
 
     def plot(self):

@@ -31,8 +31,8 @@ vehicle_base: &vehicle_base
         heading_direction_stddev: 0.1 # degree
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
-        show_animation: false # whether to show real-time trajectory plotting
-        show_plotting: true # whether to show loc data plotting after simulation
+        show_animation: true # whether to show real-time trajectory plotting
+        show_plotting: false # whether to show loc data plotting after simulation
         x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
