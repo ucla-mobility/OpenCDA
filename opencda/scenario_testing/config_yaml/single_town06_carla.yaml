@@ -1,22 +1,22 @@
 description: |-
   Copyright 2021 <UCLA Mobility Lab>
   Author: Runsheng Xu <rxx3386@ucla.edu>
-  Content: This is the scenario testing configuration file for platooning joining and cooperative merge
-           at the Town06 using  CARLA only.
+  Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
+           testing in high speed in the customized 2lanefree simple version.
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: false # whether to visualize rgb camera image using cv2.imshow
-      lidar_visualize: false # whether to visualize lidar points using open3d
+      activate: true # when not activated, objects positions will be retrieved from server directly
+      camera_visualize: true # whether to visualize rgb camera image using cv2.imshow
+      lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 50
         points_per_second: 200000
         rotation_frequency: 20 # the simulation is 20 fps
-        upper_fov: 15.0
+        upper_fov: 10.0
         lower_fov: -30.0
         dropoff_general_rate: 0.0
         dropoff_intensity_limit: 1.0
@@ -32,19 +32,19 @@ vehicle_base: &vehicle_base
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
         show_animation: false # whether to show real-time trajectory plotting
-        show_plotting: false # whether to show loc data plotting after simulation
-        x_scale: 10.0 # used to multiply with the x coordinate to make the error on x axis clearer
-        y_scale: 10.0 # used to multiply with the y coordinate to make the error on y axis clearer
+        show_plotting: true # whether to show loc data plotting after simulation
+        x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
+        y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
-    max_speed: 70 # maximum speed, km/h
-    tailgate_speed: 80 # when a vehicles needs to be close to another vehicle asap
+    max_speed: 111 # maximum speed, km/h
+    tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
     safety_time: 4 # ttc safety thresholding for decreasing speed
     emergency_param: 0.4 # used to identify whether a emergency stop needed
     ignore_traffic_light: true # whether to ignore traffic light
-    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
-    collision_time_ahead: 1.1 # used for collision checking
+    overtake_allowed: true # whether overtake allowed, typically false for platoon leader
+    collision_time_ahead: 1.5 # used for collision checking
     overtake_counter_recover: 35 # used to avoid successive overtaking
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
     local_planner: &base_local_planner # trajectory planning related
@@ -56,7 +56,7 @@ vehicle_base: &vehicle_base
       debug_trajectory: false # whether to draw the trajectory points and path
   controller: &base_controller
     type: pid_controller # this has to be exactly the same name as the controller py file
-    args: &control_args
+    args:
       lat:
         k_p: 0.75
         k_d: 0.02
@@ -70,16 +70,9 @@ vehicle_base: &vehicle_base
       max_brake: 1.0
       max_throttle: 1.0
       max_steering: 0.3
-  v2x: &base_v2x # comminuation related
+  v2x: &base_v2x # communication related
     enabled: true
     communication_range: 35
-
-# define the platoon basic characteristics
-platoon_base: &platoon_base
-  max_capacity: 10
-  inter_gap: 0.6 # desired time gap
-  open_gap: 1.2 # open gap
-  warm_up_speed: 30 # required speed before cooperative merging
 
 # define carla simulation setting
 world:
@@ -90,11 +83,11 @@ world:
 # define the background traffic control by carla
 carla_traffic_manager:
   sync_mode: true # has to be same as the world setting
-  global_distance: 4.0 # the minimum distance in meters that vehicles have to keep with the rest
+  global_distance: 5 # the minimum distance in meters that vehicles have to keep with the rest
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -50
+  global_speed_perc: -100
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   vehicle_list:
@@ -110,73 +103,16 @@ carla_traffic_manager:
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
-  platoon_list:
-    - <<: *platoon_base
-      destination: [630, 141.39, 0.3]
-      members: # the first one is regarded as leader by default
-        - <<: *vehicle_base
-          spawn_position: [121.7194, 139.51, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
-          platoon: # we need to add platoon specific params
-            <<: *platoon_base
-          sensing:
-            <<: *base_sensing
-            perception:
-              <<: *base_perception
-              activate: false
-              camera_visualize: false
-              lidar_visualize: false
-          behavior:
-            <<: *base_behavior
-            local_planner:
-              <<: *base_local_planner
-              debug_trajectory: true
-              debug: false
-        - <<: *vehicle_base
-          spawn_position: [111.7194, 139.51, 0.3, 0, 0, 0]
-          platoon: # we need to add platoon specific params
-            <<: *platoon_base
-        - <<: *vehicle_base
-          spawn_position: [101.7194, 139.51, 0.3, 0, 0, 0]
-          platoon: # we need to add platoon specific params
-            <<: *platoon_base
-        - <<: *vehicle_base
-          spawn_position: [91.7194, 139.51, 0.3, 0, 0, 0]
-          platoon: # we need to add platoon specific params
-            <<: *platoon_base
-
-
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
       spawn_position: [47.7194, 146.51, 0.3, 0, 0, 0]
-      # when this is defined, the above parameter will be ignored, and a special map function will
-      # be used to define the spawn position based on the argument
-      destination: [606.87, 145.39, 0]
-      sensing:
-        <<: *base_sensing
-        perception:
-          <<: *base_perception
-          activate: true
-          camera_visualize: true
-          lidar_visualize: true
-        localization:
-          <<: *base_localize
-          debug_helper:
-            <<: *loc_debug_helper
-            show_plotting: true
-            show_animation: false
+      destination: [606.87, 136.39, 0]
       v2x:
         <<: *base_v2x
-        communication_range: 35
-      platoon: # we need to add platoon specific params
-        <<: *platoon_base
+        communication_range: 45
       behavior:
         <<: *base_behavior
-        max_speed: 65 # maximum speed, km/h
-        tailgate_speed: 75
-        overtake_allowed: true
         local_planner:
           <<: *base_local_planner
           debug_trajectory: true
           debug: false
-
-

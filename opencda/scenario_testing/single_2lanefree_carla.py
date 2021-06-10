@@ -10,12 +10,12 @@ import os
 
 import carla
 
-import opencda.scenerio_testing.utils.sim_api as sim_api
-import opencda.scenerio_testing.utils.customized_map_api as map_api
+import opencda.scenario_testing.utils.sim_api as sim_api
+import opencda.scenario_testing.utils.customized_map_api as map_api
 
 # todo: PlatoonWorld is ugly
 from opencda.core.common.cav_world import CavWorld
-from opencda.scenerio_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
 def arg_parse():
@@ -45,7 +45,7 @@ def main():
         client, world, carla_map, origin_settings = sim_api.createSimulationWorld(simulation_config, xodr_path)
 
         if opt.record:
-            client.start_recorder("platoon_joining_town06_carla.log", True)
+            client.start_recorder("single_2lanefree_carla.log", True)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
