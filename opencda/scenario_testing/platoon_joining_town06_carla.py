@@ -10,10 +10,10 @@ import argparse
 
 import carla
 
-import opencda.scenerio_testing.utils.sim_api as sim_api
-import opencda.scenerio_testing.utils.customized_map_api as map_api
+import opencda.scenario_testing.utils.sim_api as sim_api
+import opencda.scenario_testing.utils.customized_map_api as map_api
 
-from opencda.scenerio_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
 def arg_parse():

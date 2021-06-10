@@ -11,7 +11,7 @@ import carla
 from opencda.core.common.vehicle_manager import VehicleManager
 from opencda.core.application.platooning.platooning_manager import PlatooningManager
 from opencda.core.common.cav_world import CavWorld
-from opencda.scenerio_testing.utils.customized_map_api import load_customized_world
+from opencda.scenario_testing.utils.customized_map_api import load_customized_world
 
 
 def createSimulationWorld(simulation_config, xodr_path=None, town=None):

@@ -10,10 +10,10 @@ import argparse
 
 import carla
 
-import opencda.scenerio_testing.utils.sim_api as sim_api
-import opencda.scenerio_testing.utils.customized_map_api as map_api
+import opencda.scenario_testing.utils.sim_api as sim_api
+import opencda.scenario_testing.utils.customized_map_api as map_api
 
-from opencda.scenerio_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
 def arg_parse():
@@ -43,7 +43,7 @@ def main():
                                                                     scenario_params['carla_traffic_manager'])
 
         if opt.record:
-            client.start_recorder("platoon_joining_town06_carla.log", True)
+            client.start_recorder("platoon_joining_2lanefreecomplete_carla.log", True)
 
         # create platoon members
         platoon_list, cav_world = sim_api.createPlatoonManagers(world, carla_map, scenario_params,
