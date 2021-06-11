@@ -124,7 +124,7 @@ scenario:
               <<: *base_perception
               activate: false
               camera_visualize: false
-              lidar_visualize: false
+              lidar_visualize: true
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           behavior:

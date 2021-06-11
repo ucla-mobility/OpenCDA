@@ -8,7 +8,7 @@ description: |-
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: false # when not activated, objects positions will be retrieved from server directly
+      activate: true # when not activated, objects positions will be retrieved from server directly
       camera_visualize: true # whether to visualize rgb camera image using cv2.imshow
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
@@ -105,8 +105,8 @@ carla_traffic_manager:
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [47.7194, 146.51, 0.3, 0, 0, 0]
-      destination: [606.87, 136.39, 0]
+      spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
+      destination: [606.87, 143.39, 0]
       v2x:
         <<: *base_v2x
         communication_range: 45

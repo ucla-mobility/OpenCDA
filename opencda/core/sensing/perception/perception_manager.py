@@ -246,10 +246,11 @@ class PerceptionManager(object):
             self.speed_retrieve(objects)
 
         if self.camera_visualize:
+            names = ['front', 'right', 'left']
             for (i, rgb_image) in enumerate(rgb_draw_images):
                 rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
-                cv2.imshow('rgb image %d of actor %d' % (i, self.vehicle.id), rgb_image)
+                cv2.imshow('%s camera of actor %d, perception activated' % (names[i], self.vehicle.id), rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
@@ -275,13 +276,14 @@ class PerceptionManager(object):
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
+            time.sleep(0.001)
             # we only visualiz the frontal camera
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
             rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
 
             # show image using cv2
-            cv2.imshow('rgb image of actor %d' % self.vehicle.id, rgb_image)
+            cv2.imshow('front camera of actor %d, perception deactivated' % self.vehicle.id, rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
