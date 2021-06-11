@@ -8,6 +8,7 @@ Perception module
 
 import weakref
 import sys
+import time
 
 import carla
 import cv2
@@ -223,6 +224,7 @@ class PerceptionManager(object):
         # retrieve current cameras and lidar data
         rgb_images = []
         for rgb_camera in self.rgb_camera:
+            time.sleep(0.001)
             rgb_images.append(cv2.cvtColor(np.array(rgb_camera.image), cv2.COLOR_BGR2RGB))
 
         # yolo detection

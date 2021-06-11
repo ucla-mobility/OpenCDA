@@ -114,10 +114,10 @@ carla_traffic_manager:
 scenario:
   platoon_list:
     - <<: *platoon_base
-      destination: [1000.372955, 7.5, 0.3]
+      destination: [1000.372955, 8.3, 0.3]
       members: # the first one is regarded as leader by default
         - <<: *vehicle_base
-          spawn_position: [-650, 7.5, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
+          spawn_position: [-650, 8.3, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
           sensing:
             <<: *base_sensing
             perception:
@@ -134,7 +134,7 @@ scenario:
               debug_trajectory: false
               debug: false
         - <<: *vehicle_base
-          spawn_position: [-660, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [-660, 8.3, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           controller:
@@ -143,14 +143,14 @@ scenario:
               <<: *control_args
               max_throttle: 1.0
         - <<: *vehicle_base
-          spawn_position: [-670, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [-670, 8.3, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
             args:
               <<: *control_args
               max_throttle: 1.0
         - <<: *vehicle_base
-          spawn_position: [-680, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [-680, 8.3, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
             args:
@@ -158,11 +158,11 @@ scenario:
               max_throttle: 1.0
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
+      spawn_position: [-680, 4.8, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
       spawn_special: [0.345]
-      destination: [300, 10.5, 0]
+      destination: [300, 12.0, 0]
       sensing:
         <<: *base_sensing
         perception:

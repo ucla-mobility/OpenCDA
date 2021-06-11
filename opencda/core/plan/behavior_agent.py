@@ -333,6 +333,7 @@ class BehaviorAgent(object):
                 print("left overtake is operated")
                 self.overtake_counter = 100
                 next_wpt = left_wpt.next(self._ego_speed / 3.6 * 6)[0]
+                left_wpt = left_wpt.next(5)[0]
                 self.set_destination(left_wpt.transform.location, next_wpt.transform.location,
                                      clean=True, end_reset=False)
                 return vehicle_state
@@ -351,6 +352,7 @@ class BehaviorAgent(object):
                 print("right overtake is operated")
                 self.overtake_counter = 100
                 next_wpt = right_wpt.next(self._ego_speed / 3.6 * 6)[0]
+                right_wpt = right_wpt.next(5)[0]
                 self.set_destination(right_wpt.transform.location, next_wpt.transform.location,
                                      clean=True, end_reset=False)
                 return vehicle_state
