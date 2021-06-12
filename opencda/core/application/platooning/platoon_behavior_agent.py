@@ -5,6 +5,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+import weakref
 from collections import deque
 
 import carla
@@ -34,9 +35,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         super(PlatooningBehaviorAgent, self).__init__(vehicle, carla_map, behavior_yaml)
 
-        self.vehicle_manager = vehicle_manager
+        self.vehicle_manager = weakref.ref(vehicle_manager)()
         # communication manager
-        self.v2x_manager = v2x_manager
+        self.v2x_manager = weakref.ref(v2x_manager)()
 
         # used for gap keeping
         self.inter_gap = platoon_yaml['inter_gap']
