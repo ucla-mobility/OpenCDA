@@ -11,7 +11,7 @@ import carla
 from opencda.core.common.vehicle_manager import VehicleManager
 from opencda.core.application.platooning.platooning_manager import PlatooningManager
 from opencda.core.common.cav_world import CavWorld
-from opencda.scenario_testing.utils.customized_map_api import load_customized_world
+from opencda.scenario_testing.utils.customized_map_api import load_customized_world, bcolors
 
 
 def createSimulationWorld(simulation_config, xodr_path=None, town=None):
@@ -29,7 +29,11 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     if xodr_path:
         world = load_customized_world(xodr_path, client)
     elif town:
-        world = client.load_world(town)
+        try:
+            world = client.load_world(town)
+        except RuntimeError:
+            print(f"{bcolors.FAIL} %s is not found in your CARLA repo! Please r"
+                  f"download all town maps to your CARLA repo!{bcolors.ENDC}" % town)
     else:
         world = client.get_world()
 

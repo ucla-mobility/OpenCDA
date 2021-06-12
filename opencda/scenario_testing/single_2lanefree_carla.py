@@ -38,7 +38,7 @@ def main():
         scenario_params = load_yaml(opt.config_yaml)
         current_path = os.path.dirname(os.path.realpath(__file__))
         xodr_path = os.path.join(current_path,
-                                 '../assets/2lane_freeway_simplified/map_v7.4_smooth_curve.xodr')
+                                 '../assets/2lane_freeway_simplified/map_v7.6_12ft_lane.xodr')
 
         # create simulation world
         simulation_config = scenario_params['world']

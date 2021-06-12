@@ -8,7 +8,7 @@ description: |-
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: true # when not activated, objects positions will be retrieved from server directly
+      activate: false # when not activated, objects positions will be retrieved from server directly
       camera_visualize: true # whether to visualize rgb camera image using cv2.imshow
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
@@ -23,7 +23,7 @@ vehicle_base: &vehicle_base
         dropoff_zero_intensity: 0.0
         noise_stddev: 0.0
     localization: &base_localize
-      activate: true # when not activated, ego position will be retrieved from server directly
+      activate: false # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
         noise_lat_stddev: 2e-6
@@ -91,22 +91,24 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   vehicle_list:
-    - spawn_position: [-330, 7.5, 0.3, 0, 0, 0]
+    - spawn_position: [-330, 8.3, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
-    - spawn_position: [-320, 4.5, 0.3, 0, 0, 0]
+    - spawn_position: [-320, 4.8, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
-    - spawn_position: [-300, 7.5, 0.3, 0, 0, 0]
+    - spawn_position: [-300, 8.3, 0.3, 0, 0, 0]
       vehicle_speed_perc: -100
-    - spawn_position: [-280, 4.5, 0.3, 0, 0, 0]
+    - spawn_position: [-280, 4.8, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-370, 7.5, 0.3, 0, 0, 0]
+      spawn_position: [-370, 8.3, 0.3, 0, 0, 0]
+      # this parameter will overwrite the spawn position, when it is set, the vehicle is spawn
+      # at the merging lane. 0.5 means it is spawn at the middle of the whole merging lange.
       # spawn_special: [0.34]
-      destination: [700, 7.5, 0.3]
+      destination: [700, 8.3, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -114,5 +116,5 @@ scenario:
         <<: *base_behavior
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: false
+          debug_trajectory: true
           debug: false

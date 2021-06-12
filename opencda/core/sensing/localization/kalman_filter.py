@@ -9,8 +9,6 @@ Reference: https://www.bzarg.com/p/how-a-kalman-filter-works-in-pictures/
 import math
 import numpy as np
 
-from functools import reduce
-
 
 class KalmanFilter(object):
     """

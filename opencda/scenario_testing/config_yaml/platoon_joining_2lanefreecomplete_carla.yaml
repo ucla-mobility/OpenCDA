@@ -13,7 +13,7 @@ vehicle_base: &vehicle_base
       camera_visualize: false # whether to visualize rgb camera image using cv2.imshow
       lidar_visualize: false # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        channels: 64
+        channels: 32
         range: 50
         points_per_second: 200000
         rotation_frequency: 20 # the simulation is 20 fps
@@ -45,7 +45,7 @@ vehicle_base: &vehicle_base
     emergency_param: 0.4 # used to identify whether a emergency stop needed
     ignore_traffic_light: true # whether to ignore traffic light
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
-    collision_time_ahead: 1.1 # used for collision checking
+    collision_time_ahead: 1.3 # used for collision checking
     overtake_counter_recover: 35 # used to avoid successive overtaking
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
     local_planner: &base_local_planner # trajectory planning related
@@ -55,6 +55,7 @@ vehicle_base: &vehicle_base
       min_dist: 3 # used to pop out the waypoints too close to current location
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
+
   controller: &base_controller
     type: pid_controller # this has to be exactly the same name as the controller py file
     args: &control_args
@@ -71,6 +72,7 @@ vehicle_base: &vehicle_base
       max_brake: 1.0
       max_throttle: 1.0
       max_steering: 0.3
+
   v2x: &base_v2x # comminuation related
     enabled: true
     communication_range: 35
@@ -99,36 +101,41 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   vehicle_list:
-    - spawn_position: [-580, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-605, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-625, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-700, 7.5, 0.3, 0, 0, 0 ]
+    - spawn_position: [-585, 7.5, 0.3, 0, 0, 0]
+    - spawn_position: [-610, 7.5, 0.3, 0, 0, 0]
+    - spawn_position: [-690, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-620, 4.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
     - spawn_position: [-635, 4.5, 0.3, 0, 0, 0]
     - spawn_position: [-660, 4.5, 0.3, 0, 0, 0]
-    - spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
     - spawn_position: [-700, 4.5, 0.3, 0, 0, 0]
-    - spawn_position: [-710, 4.5, 0.3, 0, 0, 0 ]
+    - spawn_position: [-710, 4.5, 0.3, 0, 0, 0]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   platoon_list:
     - <<: *platoon_base
-      destination: [1000.372955, 7.5, 0.3]
+      destination: [1000.372955, 8.3, 0.3]
       members: # the first one is regarded as leader by default
         - <<: *vehicle_base
-          spawn_position: [-650, 7.5, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
+          spawn_position: [-650, 8.3, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
+          sensing:
+            <<: *base_sensing
+            perception:
+              <<: *base_perception
+              activate: false
+              camera_visualize: false
+              lidar_visualize: true
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           behavior:
             <<: *base_behavior
             local_planner:
               <<: *base_local_planner
-              debug_trajectory: true
+              debug_trajectory: false
               debug: false
         - <<: *vehicle_base
-          spawn_position: [-660, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [-660, 8.3, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           controller:
@@ -137,21 +144,14 @@ scenario:
               <<: *control_args
               max_throttle: 1.0
         - <<: *vehicle_base
-          spawn_position: [-670, 7.5, 0.3, 0, 0, 0]
+          spawn_position: [-670, 8.3, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
             args:
               <<: *control_args
               max_throttle: 1.0
         - <<: *vehicle_base
-          spawn_position: [-680, 7.5, 0.3, 0, 0, 0]
-          platoon: # we need to add platoon specific params
-            <<: *platoon_base
-            args:
-              <<: *control_args
-              max_throttle: 1.0
-        - <<: *vehicle_base
-          spawn_position: [ -690, 7.5, 0.3, 0, 0, 0 ]
+          spawn_position: [-680, 8.3, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
             args:
@@ -159,11 +159,23 @@ scenario:
               max_throttle: 1.0
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-680, 4.5, 0.3, 0, 0, 0]
+      spawn_position: [-680, 4.8, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
-      spawn_special: [0.34]
-      destination: [300, 10.5, 0]
+      spawn_special: [0.345]
+      destination: [300, 12.0, 0]
+      sensing:
+        <<: *base_sensing
+        perception:
+          <<: *base_perception
+          activate: true
+          camera_visualize: false
+          lidar_visualize: true
+        localization:
+          <<: *base_localize
+          debug_helper:
+            <<: *loc_debug_helper
+            show_plotting: true
       v2x:
         <<: *base_v2x
         communication_range: 35
