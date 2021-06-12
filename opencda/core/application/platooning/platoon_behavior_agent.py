@@ -25,7 +25,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Construct class
         :param vehicle: carla actor todo:remove this later
-        :param vehicle_manager: vehicle manager of this agent. todo: try to avoid such circle reference in future
+        :param vehicle_manager: vehicle manager of this agent.
         :param v2x_manager: communication manager
         :param behavior_yaml: configure yaml file for normal behavior agent
         :param platoon_yaml:  configure yaml file for platoon behavior agent
@@ -60,7 +60,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
     def run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True):
         """
-        Run a single step for navigation under platooning agent.
+        Run a single step for navigation under platooning agent. Finite state machine is used to switch between
+        different platooning states.
         Args:
             target_speed (float): Target speed in km/h
             collision_detector_enabled (bool): Whether collision detection enabled.
@@ -207,7 +208,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 else len(frontal_trajectory)
             # todo: current not working well on curve
             for i in range(tracked_length):
-                delta_t = 0.25  # todo: this is harded coded
+                delta_t = self.get_local_planner().dt
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \

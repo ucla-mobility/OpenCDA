@@ -45,13 +45,14 @@ vehicle_base: &vehicle_base
     ignore_traffic_light: true # whether to ignore traffic light
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
     collision_time_ahead: 1.3 # used for collision checking
-    overtake_counter_recover: 35 # used to avoid successive overtaking
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
+    overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
     local_planner: &base_local_planner # trajectory planning related
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
       waypoint_update_freq: 12 # used to control waypoint updating frequency
       min_dist: 3 # used to pop out the waypoints too close to current location
+      trajectory_dt: 0.25 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
 

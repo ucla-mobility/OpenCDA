@@ -60,7 +60,6 @@ class BehaviorAgent(object):
         self.hazard_flag = False
 
         # route planner related
-        self.look_ahead_steps = 3  # todo: hard coded
         self._global_planner = None
         self.start_waypoint = None
         self.end_waypoint = None
