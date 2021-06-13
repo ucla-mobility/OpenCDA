@@ -66,7 +66,7 @@ class BehaviorAgent(object):
         self._sampling_resolution = config_yaml['sample_resolution']
 
         # intersection agent related
-        self.light_state = "Green"
+        self.light_state = "Red"
         self.light_id_to_ignore = -1
 
         # trajectory planner

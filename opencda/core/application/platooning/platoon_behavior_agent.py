@@ -476,7 +476,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return v.get_location().distance(ego_vehicle_loc)
         vehicle_blocking_status = False
         for vehicle in self.obstacle_vehicles:
-            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self.vehicle,
+            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self._ego_pos,
                                                                                                    frontal_vehicle,
                                                                                                    vehicle,
                                                                                                    self._map)
@@ -549,7 +549,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         vehicle_blocking_status = False
         for vehicle in self.obstacle_vehicles:
-            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self.vehicle,
+            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self._ego_pos,
                                                                                                    rear_vehicle,
                                                                                                    vehicle,
                                                                                                    self._map)
