@@ -5,6 +5,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+import weakref
 from collections import deque
 
 import carla
@@ -24,7 +25,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Construct class
         :param vehicle: carla actor todo:remove this later
-        :param vehicle_manager: vehicle manager of this agent. todo: try to avoid such circle reference in future
+        :param vehicle_manager: vehicle manager of this agent.
         :param v2x_manager: communication manager
         :param behavior_yaml: configure yaml file for normal behavior agent
         :param platoon_yaml:  configure yaml file for platoon behavior agent
@@ -34,9 +35,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         super(PlatooningBehaviorAgent, self).__init__(vehicle, carla_map, behavior_yaml)
 
-        self.vehicle_manager = vehicle_manager
+        self.vehicle_manager = weakref.ref(vehicle_manager)()
         # communication manager
-        self.v2x_manager = v2x_manager
+        self.v2x_manager = weakref.ref(v2x_manager)()
 
         # used for gap keeping
         self.inter_gap = platoon_yaml['inter_gap']
@@ -59,7 +60,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
     def run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True):
         """
-        Run a single step for navigation under platooning agent.
+        Run a single step for navigation under platooning agent. Finite state machine is used to switch between
+        different platooning states.
         Args:
             target_speed (float): Target speed in km/h
             collision_detector_enabled (bool): Whether collision detection enabled.
@@ -206,7 +208,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 else len(frontal_trajectory)
             # todo: current not working well on curve
             for i in range(tracked_length):
-                delta_t = 0.25  # todo: this is harded coded
+                delta_t = self.get_local_planner().dt
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \
@@ -304,7 +306,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
     def run_step_cut_in_move2point(self):
         """
-        TODO:  More than 2 lanes not working
         The vehicle is trying to get to the move in point
         :return: target_speed, target_waypoint, next FSM state
         """
@@ -347,7 +348,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return (*super().run_step(2.0 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT)
 
         # if the ego vehicle is too close or exceed the frontal vehicle
-        if distance < self._ego_speed / 3.6 * self.inter_gap / 1.5 or angle >= 80:
+        if distance < self._ego_speed / 3.6 * self.inter_gap / 1.5 or angle >= 70:
             print('too close, step back!')
             return (*super().run_step(0.9 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT)
 
@@ -474,7 +475,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return v.get_location().distance(ego_vehicle_loc)
         vehicle_blocking_status = False
         for vehicle in self.obstacle_vehicles:
-            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self.vehicle,
+            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self._ego_pos,
                                                                                                    frontal_vehicle,
                                                                                                    vehicle,
                                                                                                    self._map)
@@ -547,7 +548,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         vehicle_blocking_status = False
         for vehicle in self.obstacle_vehicles:
-            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self.vehicle,
+            vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self._ego_pos,
                                                                                                    rear_vehicle,
                                                                                                    vehicle,
                                                                                                    self._map)
