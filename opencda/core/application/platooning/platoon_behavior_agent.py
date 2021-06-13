@@ -306,7 +306,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
     def run_step_cut_in_move2point(self):
         """
-        TODO:  More than 2 lanes not working
         The vehicle is trying to get to the move in point
         :return: target_speed, target_waypoint, next FSM state
         """
@@ -349,7 +348,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             return (*super().run_step(2.0 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT)
 
         # if the ego vehicle is too close or exceed the frontal vehicle
-        if distance < self._ego_speed / 3.6 * self.inter_gap / 1.5 or angle >= 80:
+        if distance < self._ego_speed / 3.6 * self.inter_gap / 1.5 or angle >= 70:
             print('too close, step back!')
             return (*super().run_step(0.9 * get_speed(frontal_vehicle)), FSM.MOVE_TO_POINT)
 
