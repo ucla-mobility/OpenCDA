@@ -23,7 +23,7 @@ vehicle_base: &vehicle_base
         dropoff_zero_intensity: 0.0
         noise_stddev: 0.0
     localization: &base_localize
-      activate: false # when not activated, ego position will be retrieved from server directly
+      activate: true # when not activated, ego position will be retrieved from server directly
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
         noise_lat_stddev: 2e-6
