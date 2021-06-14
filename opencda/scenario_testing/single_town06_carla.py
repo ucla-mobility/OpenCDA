@@ -58,10 +58,3 @@ def run_scenario(opt, config_yaml):
             v.destroy()
         for v in bg_veh_list:
             v.destroy()
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(' - Exited by user.')

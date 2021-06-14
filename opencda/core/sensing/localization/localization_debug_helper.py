@@ -14,7 +14,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-class DebugHelper(object):
+class LocDebugHelper(object):
     """This class aims to help users debugging their localization algorithms.
 
     Users can apply this class to draw the x, y coordinate trajectory, yaw angle

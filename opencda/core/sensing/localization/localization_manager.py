@@ -12,7 +12,7 @@ import carla
 import numpy as np
 
 from opencda.core.common.misc import get_speed
-from opencda.core.sensing.localization.localization_debug_helper import DebugHelper
+from opencda.core.sensing.localization.localization_debug_helper import LocDebugHelper
 from opencda.core.sensing.localization.kalman_filter import KalmanFilter
 from opencda.core.sensing.localization.coordinate_transform import geo_to_transform
 
@@ -131,7 +131,7 @@ class LocalizationManager(object):
         self.EKF = KalmanFilter()
 
         # DebugHelper
-        self.debug_helper = DebugHelper(config_yaml['debug_helper'], self.vehicle.id)
+        self.debug_helper = LocDebugHelper(config_yaml['debug_helper'], self.vehicle.id)
 
     def localize(self):
         """

@@ -72,9 +72,3 @@ def run_scenario(opt, config_yaml):
         for platoon in platoon_list:
             platoon.destroy()
 
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(' - Exited by user.')
