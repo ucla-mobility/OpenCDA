@@ -222,5 +222,3 @@ class LocalizationManager(object):
         """
         self.gnss.sensor.destroy()
         self.imu.sensor.destroy()
-        if self.debug_helper.show_plotting:
-            self.debug_helper.plot()

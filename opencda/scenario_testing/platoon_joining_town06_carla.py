@@ -6,13 +6,11 @@ Warning: You have to load the 2lanefreecomplete map into your ue4 editor before 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import argparse
 
 import carla
 
 import opencda.scenario_testing.utils.sim_api as sim_api
 import opencda.scenario_testing.utils.customized_map_api as map_api
-
 from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
@@ -41,7 +39,6 @@ def run_scenario(opt, config_yaml):
         spectator_vehicle = single_cav_list[0].vehicle
 
         while True:
-            # TODO: Consider aysnc mode later
             world.tick()
             transform = spectator_vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=60),

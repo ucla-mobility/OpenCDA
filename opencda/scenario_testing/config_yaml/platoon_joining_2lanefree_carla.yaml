@@ -33,7 +33,6 @@ vehicle_base: &vehicle_base
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
         show_animation: false # whether to show real-time trajectory plotting
-        show_plotting: false # whether to show loc data plotting after simulation
         x_scale: 10.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 10.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
@@ -176,7 +175,6 @@ scenario:
           <<: *base_localize
           debug_helper:
             <<: *loc_debug_helper
-            show_plotting: true
       v2x:
         <<: *base_v2x
         communication_range: 35

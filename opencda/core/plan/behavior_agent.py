@@ -499,7 +499,7 @@ class BehaviorAgent(object):
                 # this flag is used for transition from cut-in joining to back joining
                 self.hazard_flag = is_hazard
                 # we only consider overtaking when speed is faster than the front obstacle
-                if self._ego_speed >= obstacle_speed:
+                if self._ego_speed >= obstacle_speed - 5:
                     car_following_flag = self.overtake_management(obstacle_vehicle)
                 else:
                     car_following_flag = True
