@@ -210,27 +210,26 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             ego_speed = self._ego_speed
 
             # xh -> compare speed with frontal veh
-            # print('~~~~~~~!!! compare speed !!!~~~~~~~~')
             frontal_speedd_diff = ego_speed-frontal_speed
-            # print('spd diff is: '+ str(frontal_speedd_diff))
-            # print('~~~~~~~!!! compare speed !!!~~~~~~~~')
            
 
             tracked_length = len(frontal_trajectory) - 1 if not frontal_front_vehicle_manger \
                 else len(frontal_trajectory)
             # todo: current not working well on curve
             for i in range(tracked_length):
-                delta_t = 0.25  # todo: this is harded coded --> default!
+                delta_t = 0.25  # todo: this is harded coded --> default dt!
                 # xh --> if leader is slowing down(leader target speed is smaller than current speed), use a bigger dt.
                 # xh -> spd diff max at 15. If diff greater than 8, increase dt
                 if frontal_speedd_diff > 3.0: 
-                    # only increase dt when V_ego > V_front (avoid collision)
+                        '''
+                        # only increase dt when V_ego > V_front (avoid collision)
                         # if V_ego < V_front (diff < 0), stick with small dt 
-                        # todo: change relation to a function: 
-                        #      --> 1. {V_ego < V_front}: decrease dt to decrease gap, helping catch up
-                        #      --> 2. {V_ego > V_front}: decrease dt to increase gap, helping avoid collision
-                        #      --> 3. more difference, more dt adjustment 
-                        #      --> 4. if {V_ego ~ V_front}: remain with default dt to keep gap 
+                        # todo: change delta_t to a function: 
+                        #      --> 1. {V_ego > V_front}: decrease dt to increase gap, help avoid collision
+                        #      --> 2. more difference, more dt adjustment 
+                        #      --> 3. {V_ego < V_front}: will not collide, keep default dt to keep gap
+                        #      --> 4. {V_ego ~ V_front}: keep default dt to keep gap 
+                        '''
                     delta_t = delta_t + frontal_speedd_diff*0.0125
                 else: 
                     delta_t = 0.25
