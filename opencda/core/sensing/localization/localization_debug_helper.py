@@ -5,9 +5,6 @@ Visualization tools for localization
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import os
-
-import cv2
 import numpy as np
 import matplotlib
 

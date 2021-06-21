@@ -47,6 +47,32 @@ class EvaluationManager(object):
         self.localization_eval(log_file)
         print('Localization Evaluation Done.')
 
+        self.kinematics_eval(log_file)
+        print('Kinematics Evaluation Done.')
+
+    def kinematics_eval(self, log_file):
+        """
+        vehicle kinematics related evaluation.
+        Args:
+            log_file (File): The log file to write the data.
+
+        Returns:
+
+        """
+        lprint(log_file, "***********Kinematics Module***********")
+        for vid, vm in self.cav_world.get_vehicle_managers().items():
+            actor_id = vm.vehicle.id
+            lprint(log_file, 'Actor ID: %d' % actor_id)
+
+            loc_debug_helper = vm.agent.debug_helper
+            figure, perform_txt = loc_debug_helper.evaluate()
+
+            # save plotting
+            figure_save_path = os.path.join(self.eval_save_path, '%d_kinematics_plotting.png' % actor_id)
+            figure.savefig(figure_save_path, dpi=100)
+
+            lprint(log_file, perform_txt)
+
     def localization_eval(self, log_file):
         """
         Localization module evaluation.

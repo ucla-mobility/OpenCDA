@@ -10,77 +10,73 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def draw_velocity_profile_single_plot(velocity_list, show=False):
+def draw_velocity_profile_single_plot(velocity_list):
     """
     Draw velocity profiles in a single plot
-    :param show:
     :param velocity_list:
     :return:
     """
 
-    label = []
-
     for i, v in enumerate(velocity_list):
         x_s = np.arange(len(v)) * 0.05
-        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
         plt.plot(x_s, v)
 
-    plt.ylim([10, 34])
+    plt.ylim([0, 34])
 
     plt.xlabel("Time (s)")
     plt.ylabel("Speed (m/s)")
     fig = plt.gcf()
     fig.set_size_inches(11, 5)
 
-    if show:
-        plt.legend(label)
-        plt.show()
 
-
-def draw_acceleration_profile_single_plot(acceleration, show=False):
+def draw_acceleration_profile_single_plot(acceleration):
     """
     Draw velocity profiles in a single plot
-    :param show:
     :param acceleration:
     :return:
     """
 
-    label = []
-
     for i, v in enumerate(acceleration):
         x_s = np.arange(len(v)) * 0.05
-        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
         plt.plot(x_s, v)
 
-    plt.ylim([-8, 5])
+    plt.ylim([-8, 8])
 
     plt.xlabel("Time (s)")
     plt.ylabel("Acceleration (m^2/s)")
     fig = plt.gcf()
     fig.set_size_inches(11, 5)
 
-    if show:
-        plt.legend(label)
-        plt.show()
+
+def draw_ttc_profile_single_plot(ttc_list):
+    """
+    Draw ttc.
+    :param ttc_list: ttc
+    :return:
+    """
+    # this is used to find the merging vehicle position since its inter gap length is always smaller
+
+    for i, v in enumerate(ttc_list):
+        x_s = np.arange(len(v)) * 0.05
+        plt.plot(x_s, v)
+
+    plt.xlabel("Time (s)")
+    plt.ylabel("TTC (s)")
+    plt.ylim([0, 30])
+    fig = plt.gcf()
+    fig.set_size_inches(11, 5)
 
 
-def draw_time_gap_profile_singel_plot(gap_list, show=False):
+def draw_time_gap_profile_singel_plot(gap_list):
     """
     Draw inter gap profiles in a single plot
     :param gap_list: time gap
     :return:
     """
-    # this is used to find the merging vehicle position since its inter gap length is always smaller
-    max_len = max(len(gap_list[0]), len(gap_list[-1]))
-    label = []
 
     for i, v in enumerate(gap_list):
-        if len(v) < max_len:
-            x_s = np.arange(max_len - len(v), max_len) * 0.05
-        else:
-            x_s = np.arange(len(v)) * 0.05
+        x_s = np.arange(len(v)) * 0.05
         plt.plot(x_s, v)
-        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
 
     plt.xlabel("Time (s)")
     plt.ylabel("Time Gap (s)")
@@ -88,28 +84,16 @@ def draw_time_gap_profile_singel_plot(gap_list, show=False):
     fig = plt.gcf()
     fig.set_size_inches(11, 5)
 
-    if show:
-        plt.legend(label)
-        plt.show()
 
-
-def draw_dist_gap_profile_singel_plot(gap_list, show=False):
+def draw_dist_gap_profile_singel_plot(gap_list):
     """
     Draw distance gap profiles in a single plot
     :param gap_list: time gap
     :return:
     """
-    # this is used to find the merging vehicle position since its inter gap length is always smaller
-    max_len = max(len(gap_list[0]), len(gap_list[-1]))
-    label = []
-
     for i, v in enumerate(gap_list):
-        if len(v) < max_len:
-            x_s = np.arange(max_len - len(v), max_len) * 0.05
-        else:
-            x_s = np.arange(len(v)) * 0.05
+        x_s = np.arange(len(v)) * 0.05
         plt.plot(x_s, v)
-        label.append('Leading Vehicle, id: %d' % i if i == 0 else 'Following Vehicle, id: %d' % i)
 
     plt.xlabel("Time (s)")
     plt.ylabel("Distance Gap (m)")
@@ -117,21 +101,17 @@ def draw_dist_gap_profile_singel_plot(gap_list, show=False):
     fig = plt.gcf()
     fig.set_size_inches(11, 5)
 
-    if show:
-        plt.legend(label)
-        plt.show()
-
 
 def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list):
     """
     This is a specific function that draws 4 in 1 images for trajectory following task
+    :param velocity_list:
     :param distance_gap_list:
     :param time_gap_list:
     :param acceleration_list:
-    :param velocity_list:
     :return:
     """
-    fig = plt.figure(figsize=[2200,1000])
+    fig = plt.figure(figsize=[2200, 1000])
     plt.subplot(411)
     draw_velocity_profile_single_plot(velocity_list)
 
