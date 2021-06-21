@@ -13,6 +13,7 @@ import carla
 import opencda.scenario_testing.utils.sim_api as sim_api
 
 from opencda.core.common.cav_world import CavWorld
+from opencda.scenario_testing.evaluations.evaluate_manager import EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
@@ -35,6 +36,9 @@ def run_scenario(opt, config_yaml):
         cav_world = CavWorld(opt.apply_ml)
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['single'], cav_world, carla_map)
 
+        # create evaluation manager
+        eval_manager = EvaluationManager(cav_world)
+
         spectator = world.get_spectator()
         # run steps
         while True:
@@ -49,6 +53,7 @@ def run_scenario(opt, config_yaml):
                 single_cav.vehicle.apply_control(control)
 
     finally:
+        eval_manager.evaluate()
         if opt.record:
             client.stop_recorder()
 

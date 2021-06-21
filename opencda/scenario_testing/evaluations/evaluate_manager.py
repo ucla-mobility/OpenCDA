@@ -50,6 +50,9 @@ class EvaluationManager(object):
         self.kinematics_eval(log_file)
         print('Kinematics Evaluation Done.')
 
+        self.platooning_eval(log_file)
+        print('Platooning Evaluation Done.')
+
     def kinematics_eval(self, log_file):
         """
         vehicle kinematics related evaluation.
@@ -96,3 +99,26 @@ class EvaluationManager(object):
 
             # save log txt
             lprint(log_file, perform_txt)
+
+    def platooning_eval(self, log_file):
+        """
+        Platooning evaluation.
+        Args:
+            log_file (File): The log file to write the data.
+
+        Returns:
+
+        """
+        lprint(log_file, "***********Platooning Analysis***********")
+
+        for pmid, pm in self.cav_world.get_platoon_dict().items():
+            lprint(log_file, 'Platoon ID: %s' % pmid)
+            figure, perform_txt = pm.evaluate()
+
+            # save plotting
+            figure_save_path = os.path.join(self.eval_save_path, '%s_platoon_plotting.png' % pmid)
+            figure.savefig(figure_save_path, dpi=100)
+
+            # save log txt
+            lprint(log_file, perform_txt)
+

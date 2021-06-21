@@ -97,7 +97,7 @@ def draw_dist_gap_profile_singel_plot(gap_list):
 
     plt.xlabel("Time (s)")
     plt.ylabel("Distance Gap (m)")
-    plt.ylim([5, 45])
+    plt.ylim([5, 35])
     fig = plt.gcf()
     fig.set_size_inches(11, 5)
 

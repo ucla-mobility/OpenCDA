@@ -4,6 +4,7 @@ Analysis + Visualization functions for planning
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
+import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,6 +44,7 @@ class PlanDebugHelper(object):
         self.ttc_list[0].append(ttc)
 
     def evaluate(self):
+        warnings.filterwarnings('ignore')
         # draw speed, acc and ttc plotting
         figure = plt.figure()
         plt.subplot(311)
