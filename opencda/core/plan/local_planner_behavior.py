@@ -118,7 +118,6 @@ class LocalPlanner(object):
         self._ego_pos = ego_pos
         self._ego_speed = ego_speed
 
-
     def get_trajetory(self):
         """
         Get the trajetory
@@ -302,9 +301,7 @@ class LocalPlanner(object):
             self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y,
                                                                            self._waypoint_buffer[0][
                                                                                0].transform.location.z + 0.5)),
-                                            self._waypoint_buffer[0][1],
-                                            target_speed,
-                                            i * dt))
+                                            target_speed))
             if break_flag:
                 break
 
@@ -333,7 +330,7 @@ class LocalPlanner(object):
 
         if self._trajectory_buffer:
             max_index = -1
-            for i, (waypoint, _, _, _) in enumerate(self._trajectory_buffer):
+            for i, (waypoint, _,) in enumerate(self._trajectory_buffer):
                 if distance_vehicle(
                         waypoint, vehicle_transform) < max(self._min_distance - 1, 1):
                     max_index = i
@@ -375,7 +372,7 @@ class LocalPlanner(object):
             self._trajectory_buffer = trajectory.copy()
 
         # Target waypoint TODO: dt is never used
-        self.target_waypoint, self.target_road_option, self._target_speed, dt = \
+        self.target_waypoint, self._target_speed = \
             self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
 
         # Purge the queue of obsolete waypoints
