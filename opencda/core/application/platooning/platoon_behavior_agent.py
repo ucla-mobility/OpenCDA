@@ -14,7 +14,7 @@ import numpy as np
 from opencda.core.application.platooning.fsm import FSM
 from opencda.core.application.platooning.platoon_debug_helper import PlatoonDebugHelper
 from opencda.core.common.misc import compute_distance, get_speed, cal_distance_angle
-from opencda.core.plan.behavior_agent import BehaviorAgent, RoadOption
+from opencda.core.plan.behavior_agent import BehaviorAgent
 
 
 class PlatooningBehaviorAgent(BehaviorAgent):
@@ -224,9 +224,6 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
         frontal_front_vehicle_manger, _ = frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
 
-        # must match leading vehicle's trajectory unit time
-        t_origin = 0
-
         if len(self._local_planner.get_trajetory()) > 7:
             return self._local_planner.run_step([], [], [], following=True)
         else:
@@ -260,11 +257,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 ego_trajetory.append([carla.Transform(
                     carla.Location(pos_x, pos_y,
                                    self._map.get_waypoint(self._ego_pos.location).transform.location.z)),
-                    frontal_trajectory[i][1],
-                    velocity,
-                    t_origin + delta_t])
+                    velocity])
 
-                t_origin = frontal_trajectory[i][3]
                 ego_loc_x = pos_x
                 ego_loc_y = pos_y
 
@@ -272,9 +266,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 wpt = self._map.get_waypoint(self._ego_pos.location)
                 next_wpt = wpt.next(max(2, self._ego_speed / 3.6 * 1))[0]
                 ego_trajetory.append((next_wpt.transform,
-                                      RoadOption.LANEFOLLOW,
-                                      self._ego_speed,
-                                      t_origin + 0.2))
+                                      self._ego_speed))
 
             return self._local_planner.run_step([], [], [], trajectory=ego_trajetory)
 
