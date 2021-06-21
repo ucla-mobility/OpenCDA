@@ -127,8 +127,9 @@ class LocalizationManager(object):
         self.heading_noise_std = config_yaml['gnss']['heading_direction_stddev']
         self.speed_noise_std = config_yaml['gnss']['speed_stddev']
 
+        dt = config_yaml['dt']
         # Kalman Filter
-        self.EKF = KalmanFilter()
+        self.EKF = KalmanFilter(dt)
 
         # DebugHelper
         self.debug_helper = LocDebugHelper(config_yaml['debug_helper'], self.vehicle.id)
