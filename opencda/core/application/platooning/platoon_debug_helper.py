@@ -15,18 +15,15 @@ class PlatoonDebugHelper(PlanDebugHelper):
     Attributes:
         time_gap_list (list): The list containing intra-time-gap(s) of all time-steps
         dist_gap_list(list): The list containing distance gap(s) of all time-steps
-        count(int): Used to count how many simulation steps have been executed.
     """
     def __init__(self, actor_id):
         super(PlatoonDebugHelper, self).__init__(actor_id)
         
         self.time_gap_list = [[]]
         self.dist_gap_list = [[]]
-        self.count = 0
         
     def update(self, ego_speed, ttc, time_gap=None, dist_gap=None):
         super().update(ego_speed, ttc)
-        self.count += 1
         # at the very beginning, the vehicle speed is 0, which causes an infinite time gap.
         # So we need to filter out the first 100 data points.
         if self.count > 100:

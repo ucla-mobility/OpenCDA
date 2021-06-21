@@ -204,7 +204,7 @@ class PlatooningManager(object):
             distance_gap_list_tmp = np.array(debug_helper.dist_gap_list)
             distance_gap_list_tmp = distance_gap_list_tmp[distance_gap_list_tmp < 100]
 
-            perform_txt += '\n Platoon member ID:%d: \n' % i
+            perform_txt += '\n Platoon member ID:%d, Actor ID:%d : \n' % (i, vm.vehicle.id)
             perform_txt += 'Time gap mean: %f, std: %f \n' % (np.mean(time_gap_list_tmp),
                                                               np.std(time_gap_list_tmp))
             perform_txt += 'Distance gap mean: %f, std: %f \n' %(np.mean(distance_gap_list_tmp),
@@ -229,6 +229,9 @@ class PlatooningManager(object):
             label.append('Leading Vehicle, id: %d' % int(i - 1) if i == 1 else 'Platoon member, id: %d' % int(i - 1))
 
         figure.legend(label, loc='upper right')
+
+        plt_manager = plt.get_current_fig_manager()
+        plt_manager.resize(*plt_manager.window.maxsize())
 
         return figure, perform_txt
 

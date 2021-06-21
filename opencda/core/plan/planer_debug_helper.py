@@ -18,6 +18,7 @@ class PlanDebugHelper(object):
         speed_list (list): The list containing speed info(m/s) of all time-steps
         acc_list(list): The list containing acceleration info(m^2/s) of all time-steps
         ttc_list(list): The list containing ttc info(s) for all time-steps
+        count(int): Used to count how many simulation steps have been executed.
     """
 
     def __init__(self, actor_id):
@@ -25,6 +26,8 @@ class PlanDebugHelper(object):
         self.speed_list = [[]]
         self.acc_list = [[]]
         self.ttc_list = [[]]
+
+        self.count = 0
 
     def update(self, ego_speed, ttc):
         """
@@ -35,13 +38,16 @@ class PlanDebugHelper(object):
         Returns:
 
         """
-        self.speed_list[0].append(ego_speed / 3.6)
-        if len(self.speed_list[0]) <= 1:
-            self.acc_list[0].append(0)
-        else:
-            # todo: time-step hardcoded
-            self.acc_list[0].append((self.speed_list[0][-1] - self.speed_list[0][-2]) / 0.05)
-        self.ttc_list[0].append(ttc)
+        self.count += 1
+        # at the very beginning, the vehicle is in a spawn state, so we should filter out the first 100 data points.
+        if self.count > 100:
+            self.speed_list[0].append(ego_speed / 3.6)
+            if len(self.speed_list[0]) <= 1:
+                self.acc_list[0].append(0)
+            else:
+                # todo: time-step hardcoded
+                self.acc_list[0].append((self.speed_list[0][-1] - self.speed_list[0][-2]) / 0.05)
+            self.ttc_list[0].append(ttc)
 
     def evaluate(self):
         warnings.filterwarnings('ignore')
