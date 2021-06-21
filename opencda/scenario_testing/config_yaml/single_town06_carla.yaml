@@ -4,6 +4,13 @@ description: |-
   Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
            testing in high speed in the customized 2lanefree simple version.
 
+
+# define carla simulation setting
+world:
+  sync_mode: true
+  client_port: 2000
+  fixed_delta_seconds: &delta 0.05
+
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
@@ -25,6 +32,7 @@ vehicle_base: &vehicle_base
         noise_stddev: 0.0
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
+      dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
         noise_lat_stddev: 2e-6
@@ -67,19 +75,13 @@ vehicle_base: &vehicle_base
         k_d: 0.024
         k_i: 0.032
       dynamic: false # whether use dynamic pid setting
-      dt: 0.05 # this should be equal to your simulation time-step
+      dt: *delta # this should be equal to your simulation time-step
       max_brake: 1.0
       max_throttle: 1.0
       max_steering: 0.3
   v2x: &base_v2x # communication related
     enabled: true
     communication_range: 35
-
-# define carla simulation setting
-world:
-  sync_mode: true
-  client_port: 2000
-  fixed_delta_seconds: 0.05
 
 # define the background traffic control by carla
 carla_traffic_manager:
