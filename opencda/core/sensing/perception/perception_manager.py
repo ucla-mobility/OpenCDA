@@ -146,6 +146,7 @@ class PerceptionManager(object):
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
+        self.camera_num = min(config_yaml['camera_num'], 3)
         self.lidar_visualize = config_yaml['lidar_visualize']
 
         if self.activate and not ml_manager:
@@ -156,9 +157,9 @@ class PerceptionManager(object):
         # we only spawn the camera when perception module is activated or camera visualization is needed
         if self.activate or self.camera_visualize:
             self.rgb_camera = []
-            self.rgb_camera.append(CameraSensor(vehicle, 'front'))
-            self.rgb_camera.append(CameraSensor(vehicle, 'right'))
-            self.rgb_camera.append(CameraSensor(vehicle, 'left'))
+            mount_position = ['front', 'right', 'left']
+            for i in range(self.camera_num):
+                self.rgb_camera.append(CameraSensor(vehicle, mount_position[i]))
 
         else:
             self.rgb_camera = None
@@ -248,6 +249,8 @@ class PerceptionManager(object):
         if self.camera_visualize:
             names = ['front', 'right', 'left']
             for (i, rgb_image) in enumerate(rgb_draw_images):
+                if i > self.camera_num or i > self.camera_visualize - 1:
+                    break
                 rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
                 cv2.imshow('%s camera of actor %d, perception activated' % (names[i], self.vehicle.id), rgb_image)
@@ -281,6 +284,8 @@ class PerceptionManager(object):
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
             rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
+            # resize to make it fittable to the screen
+            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
 
             # show image using cv2
             cv2.imshow('front camera of actor %d, perception deactivated' % self.vehicle.id, rgb_image)

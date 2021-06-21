@@ -11,9 +11,10 @@ from collections import deque
 import carla
 import numpy as np
 
-from opencda.core.plan.behavior_agent import BehaviorAgent, RoadOption
-from opencda.core.common.misc import compute_distance, get_speed, cal_distance_angle
 from opencda.core.application.platooning.fsm import FSM
+from opencda.core.application.platooning.platoon_debug_helper import PlatoonDebugHelper
+from opencda.core.common.misc import compute_distance, get_speed, cal_distance_angle
+from opencda.core.plan.behavior_agent import BehaviorAgent, RoadOption
 
 
 class PlatooningBehaviorAgent(BehaviorAgent):
@@ -53,10 +54,9 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         self.warm_up_speed = platoon_yaml['warm_up_speed']
 
         # used to calculate performance
-        self.time_gap_list = []
-        self.distance_gap_list = []
-        self.velocity_list = []
-        self.acceleration_list = []
+        self.debug_helper = PlatoonDebugHelper(self.vehicle.id)
+        self.time_gap = 100.0
+        self.dist_gap = 100.0
 
     def run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True):
         """
@@ -70,6 +70,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         Returns:
 
         """
+        # reset time gap and distance gap record at the beginning
+        self.time_gap = 100.0
+        self.dist_gap = 100.0
+
         status = self.v2x_manager.get_platoon_status()
         # case1: the vehicle is not cda enabled
         if status == FSM.DISABLE:
@@ -150,6 +154,34 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if status == FSM.OPEN_GAP:
             return self.run_step_open_gap()
 
+    def update_information(self, ego_pos, ego_speed, objects):
+        """
+        Update the perception and localization information to the behavior agent.
+        Args:
+            ego_pos (carla.Transform): ego position from localization module.
+            ego_speed (float): km/h, ego speed.
+            objects (dictionary): Objects detection results from perception module.
+        """
+        # update localization information
+        self._ego_speed = ego_speed
+        self._ego_pos = ego_pos
+        self.break_distance = self._ego_speed / 3.6 * self.emergency_param
+        # update the localization info to trajectory planner
+        self.get_local_planner().update_information(ego_pos, ego_speed)
+
+        # current version only consider about vehicles
+        obstacle_vehicles = objects['vehicles']
+        self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
+
+        # update the debug helper
+        self.debug_helper.update(ego_speed, self.ttc, time_gap=self.time_gap, dist_gap=self.dist_gap)
+
+        if self.ignore_traffic_light:
+            self.light_state = "Green"
+        else:
+            # This method also includes stop signs and intersections.
+            self.light_state = str(self.vehicle.get_traffic_light_state())
+
     def joining_finish_manager(self, insert_vehicle='front'):
         """
         Called when a joining is finish to update the platoon manager list.
@@ -179,8 +211,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         delta_v = self._ego_speed / 3.6
         time_gap = distance / delta_v
-        self.time_gap_list.append(time_gap)
-        self.distance_gap_list.append(distance - veh_length)
+        self.time_gap = time_gap
+        self.dist_gap = distance - veh_length
 
     def platooning_following_manager(self, inter_gap):
         """

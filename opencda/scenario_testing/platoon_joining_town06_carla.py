@@ -6,34 +6,18 @@ Warning: You have to load the 2lanefreecomplete map into your ue4 editor before 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import argparse
 
 import carla
 
 import opencda.scenario_testing.utils.sim_api as sim_api
 import opencda.scenario_testing.utils.customized_map_api as map_api
-
+from opencda.scenario_testing.evaluations.evaluate_manager import EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
-def arg_parse():
-    parser = argparse.ArgumentParser(description="Platooning Joining Settings")
-    parser.add_argument("--config_yaml", required=True, type=str, help='corresponding yaml file of the testing')
-    parser.add_argument("--record", action='store_true', help='whether to record playfile')
-    parser.add_argument("--apply_ml",
-                        action='store_true',
-                        help='whether ml/dl framework such as sklearn/pytorch is needed in the testing. '
-                             'Set it to true only when you have installed the pytorch/sklearn package.')
-
-    opt = parser.parse_args()
-    return opt
-
-
-def main():
+def run_scenario(opt, config_yaml):
     try:
-        # first define the path of the yaml file and 2lanefreemap file
-        opt = arg_parse()
-        scenario_params = load_yaml(opt.config_yaml)
+        scenario_params = load_yaml(config_yaml)
 
         # create simulation world
         simulation_config = scenario_params['world']
@@ -51,12 +35,15 @@ def main():
         # create single cavs
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], cav_world,
                                                        carla_map, map_api.spawn_helper_2lanefree_complete)
+
+        # create evaluation manager
+        eval_manager = EvaluationManager(cav_world)
+
         spectator = world.get_spectator()
         # fix the spectator on a certain car
         spectator_vehicle = single_cav_list[0].vehicle
 
         while True:
-            # TODO: Consider aysnc mode later
             world.tick()
             transform = spectator_vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=60),
@@ -75,6 +62,7 @@ def main():
                     single_cav.vehicle.apply_control(control)
 
     finally:
+        eval_manager.evaluate()
         if opt.record:
             client.stop_recorder()
 
@@ -87,9 +75,3 @@ def main():
         for platoon in platoon_list:
             platoon.destroy()
 
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(' - Exited by user.')

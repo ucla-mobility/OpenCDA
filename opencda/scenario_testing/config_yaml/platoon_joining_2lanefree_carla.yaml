@@ -9,12 +9,13 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: false # whether to visualize rgb camera image using cv2.imshow
+      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: false # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 50
-        points_per_second: 200000
+        points_per_second: 100000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 10.0
         lower_fov: -30.0
@@ -32,7 +33,6 @@ vehicle_base: &vehicle_base
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
         show_animation: false # whether to show real-time trajectory plotting
-        show_plotting: false # whether to show loc data plotting after simulation
         x_scale: 10.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 10.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
@@ -124,7 +124,8 @@ scenario:
             perception:
               <<: *base_perception
               activate: false
-              camera_visualize: false
+              camera_visualize: 1
+              camera_num: 1
               lidar_visualize: true
           platoon: # we need to add platoon specific params
             <<: *platoon_base
@@ -169,13 +170,13 @@ scenario:
         perception:
           <<: *base_perception
           activate: false
-          camera_visualize: false
+          camera_visualize: 1
+          camera_num: 1
           lidar_visualize: true
         localization:
           <<: *base_localize
           debug_helper:
             <<: *loc_debug_helper
-            show_plotting: true
       v2x:
         <<: *base_v2x
         communication_range: 35

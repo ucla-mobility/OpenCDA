@@ -144,3 +144,4 @@ outputs
 opencda/evaluation_figures/
 *.save
 *cache*
+evaluation_outputs/

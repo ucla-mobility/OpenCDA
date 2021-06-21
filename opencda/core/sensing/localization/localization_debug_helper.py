@@ -5,16 +5,13 @@ Visualization tools for localization
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import os
-
-import cv2
 import numpy as np
 import matplotlib
 
 import matplotlib.pyplot as plt
 
 
-class DebugHelper(object):
+class LocDebugHelper(object):
     """This class aims to help users debugging their localization algorithms.
 
     Users can apply this class to draw the x, y coordinate trajectory, yaw angle
@@ -23,7 +20,6 @@ class DebugHelper(object):
 
     Attributes:
         show_animation (bool):
-        show_plotting (bool):
         x_scale(float):
         y_scale(float):
     """
@@ -36,7 +32,6 @@ class DebugHelper(object):
             actor_id(int):
         """
         self.show_animation = config_yaml['show_animation']
-        self.show_plotting = config_yaml['show_plotting']
         self.x_scale = config_yaml['x_scale']
         self.y_scale = config_yaml['y_scale']
 
@@ -134,7 +129,7 @@ class DebugHelper(object):
             plt.legend()
             plt.pause(0.001)
 
-    def plot(self):
+    def evaluate(self):
         """
         Plot the localization related data points.
         Args:
@@ -191,23 +186,24 @@ class DebugHelper(object):
 
         figure.suptitle('localization plotting of actor id %d' % self.actor_id)
 
-        current_path = os.path.dirname(os.path.realpath(__file__))
-        if not os.path.exists(os.path.join(current_path, '../../../evaluation_figures')):
-            os.makedirs(os.path.join(current_path, '../../../evaluation_figures'))
-
-        save_file = os.path.join(current_path,
-                                 '../../../evaluation_figures/%s_localization_plotting.png' % str(self.actor_id))
-        plt.savefig(save_file, dpi=100)
-
-        print("--------------Localization Module Performance on Actor %d" % self.actor_id)
         x_error_mean = np.mean(np.abs(np.array(self.gt_x) - np.array(self.gnss_x)))
         y_error_mean = np.mean(np.abs(np.array(self.gt_y) - np.array(self.gnss_y)))
         yaw_error_mean = np.mean(np.abs(np.array(self.gt_yaw) - np.array(self.gnss_yaw)))
-        print('mean error for gnss x: %f m, gnss y: %f m, gnss yaw: %f degree'
-              % (x_error_mean, y_error_mean, yaw_error_mean))
+
+        perform_txt = 'mean error for GNSS raw data on x-axis: %f (meter), ' \
+                      'mean error for GNSS raw data on y-axis: %f (meter),' \
+                      'mean error for GNSS raw data on yaw angle: %f (degree) \n' % (x_error_mean,
+                                                                                     y_error_mean,
+                                                                                     yaw_error_mean)
 
         x_error_mean = np.mean(np.abs(np.array(self.gt_x) - np.array(self.filter_x)))
         y_error_mean = np.mean(np.abs(np.array(self.gt_y) - np.array(self.filter_y)))
         yaw_error_mean = np.mean(np.abs(np.array(self.gt_yaw) - np.array(self.filter_yaw)))
-        print('mean error for filtered x: %f m, filtered y: %f m filter yaw: %f degree'
-              % (x_error_mean, y_error_mean, yaw_error_mean))
+
+        perform_txt += 'mean error after data fusion on x-axis: %f (meter), ' \
+                       'mean error after data fusion  on y-axis: %f (meter),' \
+                       'mean error after data fusion yaw angle: %f (degree) \n' % (x_error_mean,
+                                                                                   y_error_mean,
+                                                                                   yaw_error_mean)
+
+        return figure, perform_txt
