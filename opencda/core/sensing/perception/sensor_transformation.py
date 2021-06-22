@@ -135,8 +135,8 @@ def world_to_sensor(cords, sensor_transform):
     """
     Transform coordinate from world reference to sensor reference.
     Args:
-        cords (np.ndarray): Coordinates under world reference.
-        sensor_transform (carla.Transform): sensor position in the world
+        cords (np.ndarray): Coordinates under world reference, shape:(4, n).
+        sensor_transform (carla.Transform): sensor position in the world, shape:(3, 1).
 
     Returns:
         sensor_cords: np.ndarray
@@ -169,9 +169,9 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
     """
     Transform coordinates from vehicle reference to sensor reference
     Args:
-        cords (np.ndarray): Coordinates under vehicle reference.
+        cords (np.ndarray): Coordinates under vehicle reference, shape (4, n)
         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-        sensor_transform (carla.Transform): sensor position in the world
+        sensor_transform (carla.Transform): sensor position in the world, shape(3, 1)
 
     Returns:
         (np.ndarray): Coordinates in sensor reference.

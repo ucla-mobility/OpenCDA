@@ -4,16 +4,15 @@ PID Control Class
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
+from collections import deque
 
 import math
 import numpy as np
 
-from collections import deque
-
 import carla
 
 
-class VehiclePIDController:
+class Controller:
     """
     VehiclePIDController is the combination of two PID controllers
     (lateral and longitudinal) to perform the
@@ -65,7 +64,7 @@ class VehiclePIDController:
 
     def update_info(self, ego_pos, ego_spd):
         """
-        TODO: Use Localization module later
+        Update ego position and speed to controller.
         :param ego_pos: ego position, carla.transform
         :param ego_spd: ego speed, km/h
         :return:

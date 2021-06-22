@@ -17,6 +17,7 @@ import open3d as o3d
 
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import cal_distance_angle, get_speed
+from opencda.core.sensing.perception.obstacle_vehicle import ObstacleVehicle
 from opencda.core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, \
     o3d_pointcloud_encode, o3d_visualizer_show, o3d_camera_lidar_fusion
 
@@ -276,6 +277,8 @@ class PerceptionManager(object):
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
 
+        # convert carla.Vehicle to opencda.ObstacleVehicle
+        vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
@@ -294,7 +297,7 @@ class PerceptionManager(object):
         if self.lidar_visualize:
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
             # render the raw lidar
-            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, {})
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
 
         return objects
 

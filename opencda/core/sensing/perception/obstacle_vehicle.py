@@ -8,6 +8,9 @@ Obstacle vehicle class to save object detection.
 
 import carla
 import numpy as np
+import open3d as o3d
+
+import opencda.core.sensing.perception.sensor_transformation as st
 
 
 def is_vehicle_cococlass(label):
@@ -52,18 +55,26 @@ class ObstacleVehicle(object):
     A class for obstacle vehicle. The attributes are designed to match with carla.Vehicle class
     """
 
-    def __init__(self, corners, o3d_bbx):
+    def __init__(self, corners, o3d_bbx, vehicle=None, lidar=None):
         """
         Construct class.
         Args:
             corners (nd.nparray): Eight corners of the bounding box. shape:(8, 3).
             o3d_bbx (open3d.AlignedBoundingBox): The bounding box object in Open3d. This is mainly used for
             visualization.
+            vehicle(carla.Vehicle): carla.Vehicle object.
+            lidar(carla.sensor.lidar): lidar sensor.
         """
-        self.bounding_box = BoundingBox(corners)
-        self.location = self.bounding_box.location
-        self.o3d_bbx = o3d_bbx
-        self.velocity = carla.Vector3D(0.0, 0.0, 0.0)
+        if not vehicle:
+            self.bounding_box = BoundingBox(corners)
+            self.location = self.bounding_box.location
+            self.o3d_bbx = o3d_bbx
+            self.velocity = carla.Vector3D(0.0, 0.0, 0.0)
+        else:
+            self.set_vehicle(vehicle, lidar)
+
+    def get_transform(self):
+        return self.transform
 
     def get_location(self):
         return self.location
@@ -81,6 +92,48 @@ class ObstacleVehicle(object):
 
         """
         self.velocity = velocity
+
+    def set_vehicle(self, vehicle, lidar):
+        """
+        Assign the attributes from carla.Vehicle to ObstacleVehicle
+        Args:
+            vehicle(carla.Vehicle): carla.Vehicle object.
+            lidar(carla.sensor.lidar): lidar sensor, used to project world coordinates to sensor coordinates.
+        Returns:
+
+        """
+        self.location = vehicle.get_location()
+        self.transform = vehicle.get_transform()
+        self.bounding_box = vehicle.bounding_box
+        self.set_velocity(vehicle.get_velocity())
+
+        # find the min and max boundary
+        min_boundary = np.array([self.location.x - self.bounding_box.extent.x,
+                                 self.location.y - self.bounding_box.extent.y,
+                                 self.location.z + self.bounding_box.location.z - self.bounding_box.extent.z,
+                                 1])
+        max_boundary = np.array([self.location.x + self.bounding_box.extent.x,
+                                 self.location.y + self.bounding_box.extent.y,
+                                 self.location.z + self.bounding_box.location.z + self.bounding_box.extent.z,
+                                 1])
+        min_boundary = min_boundary.reshape((4, 1))
+        max_boundary = max_boundary.reshape((4, 1))
+        stack_boundary = np.hstack((min_boundary, max_boundary))
+
+        # the boundary coord at the lidar sensor space
+        stack_boundary_sensor_cords = st.world_to_sensor(stack_boundary, lidar.get_transform())
+        # convert unreal space to o3d space
+        stack_boundary_sensor_cords[:1, :] = -stack_boundary_sensor_cords[:1, :]
+        # (4,2) -> (3, 2)
+        stack_boundary_sensor_cords = stack_boundary_sensor_cords[:-1, :]
+
+        min_boundary_sensor = np.min(stack_boundary_sensor_cords, axis=1)
+        max_boundary_sensor = np.max(stack_boundary_sensor_cords, axis=1)
+
+        aabb = o3d.geometry.AxisAlignedBoundingBox(min_bound=min_boundary_sensor,
+                                                   max_bound=max_boundary_sensor)
+        aabb.color = (1, 0, 0)
+        self.o3d_bbx = aabb
 
 
 class StaticObstacle(object):
