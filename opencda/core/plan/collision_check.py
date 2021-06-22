@@ -26,16 +26,16 @@ class CollisionChecker:
         self._circle_offsets = [-1.0, 1.0] if circle_offsets is None else circle_offsets
         self._circle_radius = circle_radius
 
-    def is_in_range(self, ego_vehicle, target_vehicle, candidate_vehicle, carla_map):
+    def is_in_range(self, ego_pos, target_vehicle, candidate_vehicle, carla_map):
         """
         Check whether there is a obstacle vehicle between target_vehicle and ego_vehicle during back_joining
         :param carla_map: carla map
-        :param ego_vehicle: The vehicle trying to join platooning
+        :param ego_pos: Ego vehicle position
         :param target_vehicle: The vehicle that is suppose to be catched
         :param candidate_vehicle: The possible obstacle vehicle blocking the ego vehicle and target vehicle
         :return:
         """
-        ego_loc = ego_vehicle.get_location()
+        ego_loc = ego_pos.location
         target_loc = target_vehicle.get_location()
         candidate_loc = candidate_vehicle.get_location()
 

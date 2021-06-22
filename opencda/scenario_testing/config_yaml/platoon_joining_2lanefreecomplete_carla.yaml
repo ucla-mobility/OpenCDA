@@ -5,17 +5,24 @@ description: |-
            at the customized 2lanefree complete version. You need to inject the complete map package and open
            it in the UE4 Editor first.
 
+# define carla simulation setting
+world:
+  sync_mode: true
+  client_port: 2000
+  fixed_delta_seconds: &delta 0.05
+
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: false # whether to visualize rgb camera image using cv2.imshow
+      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: false # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 50
-        points_per_second: 200000
+        points_per_second: 100000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 10.0
         lower_fov: -30.0
@@ -25,6 +32,7 @@ vehicle_base: &vehicle_base
         noise_stddev: 0.0
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
+      dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
         noise_lat_stddev: 2e-6
@@ -33,7 +41,6 @@ vehicle_base: &vehicle_base
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
         show_animation: false # whether to show real-time trajectory plotting
-        show_plotting: false # whether to show loc data plotting after simulation
         x_scale: 10.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 10.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
@@ -46,13 +53,13 @@ vehicle_base: &vehicle_base
     ignore_traffic_light: true # whether to ignore traffic light
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
     collision_time_ahead: 1.3 # used for collision checking
-    overtake_counter_recover: 35 # used to avoid successive overtaking
-    sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
+    overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
     local_planner: &base_local_planner # trajectory planning related
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
       waypoint_update_freq: 12 # used to control waypoint updating frequency
       min_dist: 3 # used to pop out the waypoints too close to current location
+      trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
 
@@ -68,7 +75,7 @@ vehicle_base: &vehicle_base
         k_d: 0.024
         k_i: 0.032
       dynamic: false # whether use dynamic pid setting
-      dt: 0.05 # this should be equal to your simulation time-step
+      dt: *delta # this should be equal to your simulation time-step
       max_brake: 1.0
       max_throttle: 1.0
       max_steering: 0.3
@@ -84,11 +91,6 @@ platoon_base: &platoon_base
   open_gap: 1.2 # open gap
   warm_up_speed: 55 # required speed before cooperative merging
 
-# define carla simulation setting
-world:
-  sync_mode: true
-  client_port: 2000
-  fixed_delta_seconds: 0.05
 
 # define the background traffic control by carla
 carla_traffic_manager:
@@ -124,7 +126,7 @@ scenario:
             perception:
               <<: *base_perception
               activate: false
-              camera_visualize: false
+              camera_visualize: 0
               lidar_visualize: true
           platoon: # we need to add platoon specific params
             <<: *platoon_base
@@ -169,13 +171,12 @@ scenario:
         perception:
           <<: *base_perception
           activate: true
-          camera_visualize: false
+          camera_visualize: 0
           lidar_visualize: true
         localization:
           <<: *base_localize
           debug_helper:
             <<: *loc_debug_helper
-            show_plotting: true
       v2x:
         <<: *base_v2x
         communication_range: 35

@@ -17,6 +17,7 @@ import open3d as o3d
 
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import cal_distance_angle, get_speed
+from opencda.core.sensing.perception.obstacle_vehicle import ObstacleVehicle
 from opencda.core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, \
     o3d_pointcloud_encode, o3d_visualizer_show, o3d_camera_lidar_fusion
 
@@ -146,6 +147,7 @@ class PerceptionManager(object):
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
+        self.camera_num = min(config_yaml['camera_num'], 3)
         self.lidar_visualize = config_yaml['lidar_visualize']
 
         if self.activate and not ml_manager:
@@ -156,9 +158,9 @@ class PerceptionManager(object):
         # we only spawn the camera when perception module is activated or camera visualization is needed
         if self.activate or self.camera_visualize:
             self.rgb_camera = []
-            self.rgb_camera.append(CameraSensor(vehicle, 'front'))
-            self.rgb_camera.append(CameraSensor(vehicle, 'right'))
-            self.rgb_camera.append(CameraSensor(vehicle, 'left'))
+            mount_position = ['front', 'right', 'left']
+            for i in range(self.camera_num):
+                self.rgb_camera.append(CameraSensor(vehicle, mount_position[i]))
 
         else:
             self.rgb_camera = None
@@ -248,6 +250,8 @@ class PerceptionManager(object):
         if self.camera_visualize:
             names = ['front', 'right', 'left']
             for (i, rgb_image) in enumerate(rgb_draw_images):
+                if i > self.camera_num or i > self.camera_visualize - 1:
+                    break
                 rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
                 cv2.imshow('%s camera of actor %d, perception activated' % (names[i], self.vehicle.id), rgb_image)
@@ -273,6 +277,8 @@ class PerceptionManager(object):
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
 
+        # convert carla.Vehicle to opencda.ObstacleVehicle
+        vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
@@ -281,6 +287,8 @@ class PerceptionManager(object):
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
             rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
+            # resize to make it fittable to the screen
+            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
 
             # show image using cv2
             cv2.imshow('front camera of actor %d, perception deactivated' % self.vehicle.id, rgb_image)
@@ -289,7 +297,7 @@ class PerceptionManager(object):
         if self.lidar_visualize:
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
             # render the raw lidar
-            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, {})
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
 
         return objects
 

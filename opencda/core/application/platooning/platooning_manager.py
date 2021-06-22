@@ -10,6 +10,10 @@ import uuid
 import weakref
 
 import carla
+import matplotlib.pyplot as plt
+import numpy as np
+
+import opencda.core.plan.drive_profile_plotting as open_plt
 
 
 class PlatooningManager(object):
@@ -150,7 +154,7 @@ class PlatooningManager(object):
 
     def update_information(self):
         """
-        Update CAV world information for every member in the list
+        Update CAV world information for every member in the list.
         :return:
         """
         self.reset_speed()
@@ -161,7 +165,7 @@ class PlatooningManager(object):
 
     def run_step(self):
         """
-        Run a step for each vehicles
+        Run a step for each vehicles.
         :return:
         """
         control_list = []
@@ -173,6 +177,63 @@ class PlatooningManager(object):
             self.vehicle_manager_list[i].vehicle.apply_control(control)
 
         return control_list
+
+    def evaluate(self):
+        # used to save all members' statistics
+        velocity_list = []
+        acceleration_list = []
+        time_gap_list = []
+        distance_gap_list = []
+
+        perform_txt = ''
+
+        for i in range(len(self.vehicle_manager_list)):
+            vm = self.vehicle_manager_list[i]
+            debug_helper = vm.agent.debug_helper
+
+            # we need to filter out the first 100 data points since the vehicles
+            # spawn at the beginning have no velocity and thus make the time gap close to infinite
+
+            velocity_list += debug_helper.speed_list
+            acceleration_list += debug_helper.acc_list
+            time_gap_list += debug_helper.time_gap_list
+            distance_gap_list += debug_helper.dist_gap_list
+
+            time_gap_list_tmp = np.array(debug_helper.time_gap_list)
+            time_gap_list_tmp = time_gap_list_tmp[time_gap_list_tmp < 100]
+            distance_gap_list_tmp = np.array(debug_helper.dist_gap_list)
+            distance_gap_list_tmp = distance_gap_list_tmp[distance_gap_list_tmp < 100]
+
+            perform_txt += '\n Platoon member ID:%d, Actor ID:%d : \n' % (i, vm.vehicle.id)
+            perform_txt += 'Time gap mean: %f, std: %f \n' % (np.mean(time_gap_list_tmp),
+                                                              np.std(time_gap_list_tmp))
+            perform_txt += 'Distance gap mean: %f, std: %f \n' %(np.mean(distance_gap_list_tmp),
+                                                                 np.std(distance_gap_list_tmp))
+
+        figure = plt.figure()
+
+        plt.subplot(411)
+        open_plt.draw_velocity_profile_single_plot(velocity_list)
+
+        plt.subplot(412)
+        open_plt.draw_acceleration_profile_single_plot(acceleration_list)
+
+        plt.subplot(413)
+        open_plt.draw_time_gap_profile_singel_plot(time_gap_list)
+
+        plt.subplot(414)
+        open_plt.draw_dist_gap_profile_singel_plot(distance_gap_list)
+
+        label = []
+        for i in range(1, len(velocity_list) + 1):
+            label.append('Leading Vehicle, id: %d' % int(i - 1) if i == 1 else 'Platoon member, id: %d' % int(i - 1))
+
+        figure.legend(label, loc='upper right')
+
+        plt_manager = plt.get_current_fig_manager()
+        plt_manager.resize(*plt_manager.window.maxsize())
+
+        return figure, perform_txt
 
     def destroy(self):
         """

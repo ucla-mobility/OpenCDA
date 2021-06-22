@@ -47,7 +47,7 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
         new_settings.synchronous_mode = True
         new_settings.fixed_delta_seconds = simulation_config['fixed_delta_seconds']
     else:
-        sys.exit('Current version only support sync mode')
+        sys.exit('ERROR: Current version only supports sync simulation mode, v0.2 will support async mode.')
 
     world.apply_settings(new_settings)
 

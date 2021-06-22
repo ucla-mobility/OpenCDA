@@ -14,9 +14,11 @@ class ExtentedKalmanFilter(object):
     Kalman Filter implementation for gps + imu
     """
 
-    def __init__(self):
+    def __init__(self, dt):
         """
         Construct class
+        Args:
+            dt(float): unit time step for simulation.
         """
         self.Q = np.diag([
             0.2,  # variance of location on x-axis
@@ -27,7 +29,7 @@ class ExtentedKalmanFilter(object):
 
         self.R = np.diag([0.5, 0.5, 0.2]) ** 2  # Observation x,y position covariance
 
-        self.time_step = 0.05
+        self.time_step = dt
 
         self.xEst = np.zeros((4, 1))
         self.PEst = np.eye(4)

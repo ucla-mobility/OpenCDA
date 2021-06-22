@@ -14,11 +14,12 @@ import sys
 import numpy as np
 import carla
 
+from opencda.core.common.misc import get_speed, positive, cal_distance_angle
 from opencda.core.plan.collision_check import CollisionChecker
-from opencda.core.plan.local_planner_behavior import LocalPlanner, RoadOption
+from opencda.core.plan.local_planner_behavior import LocalPlanner
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
-from opencda.core.common.misc import get_speed, positive, cal_distance_angle
+from opencda.core.plan.planer_debug_helper import PlanDebugHelper
 
 
 class BehaviorAgent(object):
@@ -51,6 +52,7 @@ class BehaviorAgent(object):
         self.safety_time = config_yaml['safety_time']
         self.emergency_param = config_yaml['emergency_param']
         self.break_distance = 0
+        self.ttc = 1000
         # collision checker
         self._collision_check = CollisionChecker(time_ahead=config_yaml['collision_time_ahead'])
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
@@ -60,14 +62,13 @@ class BehaviorAgent(object):
         self.hazard_flag = False
 
         # route planner related
-        self.look_ahead_steps = 3  # todo: hard coded
         self._global_planner = None
         self.start_waypoint = None
         self.end_waypoint = None
         self._sampling_resolution = config_yaml['sample_resolution']
 
         # intersection agent related
-        self.light_state = "Green"
+        self.light_state = "Red"
         self.light_id_to_ignore = -1
 
         # trajectory planner
@@ -83,6 +84,9 @@ class BehaviorAgent(object):
         # white list of vehicle managers that the cav does not consider as obstacles
         self.white_list = []
         self.obstacle_vehicles = []
+
+        # debug helper
+        self.debug_helper = PlanDebugHelper(self.vehicle.id)
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -102,6 +106,9 @@ class BehaviorAgent(object):
         # current version only consider about vehicles
         obstacle_vehicles = objects['vehicles']
         self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
+
+        # update the debug helper
+        self.debug_helper.update(ego_speed, self.ttc)
 
         if self.ignore_traffic_light:
             self.light_state = "Green"
@@ -403,6 +410,7 @@ class BehaviorAgent(object):
 
         delta_v = max(1, (self._ego_speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / np.nextafter(0., 1.)
+        self.ttc = ttc
         # Under safety time distance, slow down.
         if self.safety_time > ttc > 0.0:
             target_speed = min(positive(vehicle_speed - self.speed_decrease),
@@ -429,6 +437,8 @@ class BehaviorAgent(object):
         # retrieve ego location
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
+        # ttc reset to 1000 at the beginning
+        self.ttc = 1000
 
         # simulation ends condition
         if abs(self._ego_pos.location.x - self.end_waypoint.transform.location.x) <= 10 and \
@@ -500,7 +510,7 @@ class BehaviorAgent(object):
                 # this flag is used for transition from cut-in joining to back joining
                 self.hazard_flag = is_hazard
                 # we only consider overtaking when speed is faster than the front obstacle
-                if self._ego_speed >= obstacle_speed:
+                if self._ego_speed >= obstacle_speed - 5:
                     car_following_flag = self.overtake_management(obstacle_vehicle)
                 else:
                     car_following_flag = True

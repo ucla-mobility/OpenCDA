@@ -60,8 +60,6 @@ class LocalPlanner(object):
         # waypoint pop out thresholding
         self._min_distance = config_yaml['min_dist']
         self._buffer_size = config_yaml['buffer_size']
-        # TODO: Redudant, remove later
-        self._current_waypoint = None
 
         # TODO: pid controller should be outside
         self._pid_controller = None
@@ -75,6 +73,9 @@ class LocalPlanner(object):
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
         self.trajectory_update_freq = config_yaml['trajectory_update_freq']
+
+        # trajectory sampling rate
+        self.dt = config_yaml['trajectory_dt']
 
         # used to identify whether lane change is operated
         self.lane_change = False
@@ -116,23 +117,6 @@ class LocalPlanner(object):
         """
         self._ego_pos = ego_pos
         self._ego_speed = ego_speed
-
-    def get_incoming_waypoint_and_direction(self, steps=3):
-        """
-        Returns direction and waypoint at a distance ahead defined by the user.
-
-            :param steps: number of steps to get the incoming waypoint.
-        """
-        if len(self.waypoints_queue) > steps:
-            return self.waypoints_queue[steps]
-
-        else:
-            try:
-                wpt, direction = self.waypoints_queue[-1]
-                return wpt, direction
-            except IndexError as i:
-                print(i)
-                return None, RoadOption.VOID
 
     def get_trajetory(self):
         """
@@ -270,8 +254,8 @@ class LocalPlanner(object):
         """
         # unit distance for interpolation points
         ds = 0.1
-        # unit time space TODO: Make this dynamic to map a linear relationship with speed
-        dt = 0.25
+        # unit sampling resolution
+        dt = self.dt
 
         target_speed = self._target_speed
         current_speed = self._ego_speed
@@ -317,9 +301,7 @@ class LocalPlanner(object):
             self._trajectory_buffer.append((carla.Transform(carla.Location(sample_x, sample_y,
                                                                            self._waypoint_buffer[0][
                                                                                0].transform.location.z + 0.5)),
-                                            self._waypoint_buffer[0][1],
-                                            target_speed,
-                                            i * dt))
+                                            target_speed))
             if break_flag:
                 break
 
@@ -348,7 +330,7 @@ class LocalPlanner(object):
 
         if self._trajectory_buffer:
             max_index = -1
-            for i, (waypoint, _, _, _) in enumerate(self._trajectory_buffer):
+            for i, (waypoint, _,) in enumerate(self._trajectory_buffer):
                 if distance_vehicle(
                         waypoint, vehicle_transform) < max(self._min_distance - 1, 1):
                     max_index = i
@@ -389,11 +371,8 @@ class LocalPlanner(object):
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
 
-        # Current vehicle waypoint
-        self._current_waypoint = self._map.get_waypoint(self._ego_pos.location)
-
         # Target waypoint TODO: dt is never used
-        self.target_waypoint, self.target_road_option, self._target_speed, dt = \
+        self.target_waypoint, self._target_speed = \
             self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
 
         # Purge the queue of obsolete waypoints
