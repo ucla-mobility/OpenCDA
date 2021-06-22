@@ -224,7 +224,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
         frontal_front_vehicle_manger, _ = frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
 
-        if len(self._local_planner.get_trajetory()) > 7:
+        if len(self._local_planner.get_trajetory()) > self.get_local_planner().trajectory_update_freq - 2:
             return self._local_planner.run_step([], [], [], following=True)
         else:
             # this agent is a behavior agent 

@@ -230,9 +230,6 @@ class PlatooningManager(object):
 
         figure.legend(label, loc='upper right')
 
-        plt_manager = plt.get_current_fig_manager()
-        plt_manager.resize(*plt_manager.window.maxsize())
-
         return figure, perform_txt
 
     def destroy(self):
