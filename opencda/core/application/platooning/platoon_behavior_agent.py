@@ -224,20 +224,45 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
         frontal_front_vehicle_manger, _ = frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
 
-        if len(self._local_planner.get_trajetory()) > 7:
+        if len(self._local_planner.get_trajetory()) > self.get_local_planner().trajectory_update_freq - 2:
             return self._local_planner.run_step([], [], [], following=True)
         else:
+            # this agent is a behavior agent 
             frontal_trajectory = frontal_vehicle_manager.agent.get_local_planner().get_trajetory()
+
+            # get front speed
+            frontal_speed = frontal_vehicle_manager.agent._ego_speed
 
             ego_trajetory = deque(maxlen=30)
             ego_loc_x, ego_loc_y, ego_loc_z = self._ego_pos.location.x, self._ego_pos.location.y, \
                                               self._ego_pos.location.z
 
+            # get ego speed
+            ego_speed = self._ego_speed
+
+            # compare speed with frontal veh
+            frontal_speedd_diff = ego_speed - frontal_speed
+
             tracked_length = len(frontal_trajectory) - 1 if not frontal_front_vehicle_manger \
                 else len(frontal_trajectory)
+
             # todo: current not working well on curve
             for i in range(tracked_length):
                 delta_t = self.get_local_planner().dt
+                # if leader is slowing down(leader target speed is smaller than current speed), use a bigger dt.
+                # spd diff max at 15. If diff greater than 8, increase dt
+                if frontal_speedd_diff > 3.0:
+                    '''
+                    # only increase dt when V_ego > V_front (avoid collision)
+                    # if V_ego < V_front (diff < 0), stick with small dt 
+                    # todo: change delta_t to a function: 
+                    #      --> 1. {V_ego > V_front}: decrease dt to increase gap, help avoid collision
+                    #      --> 2. more difference, more dt adjustment 
+                    #      --> 3. {V_ego < V_front}: will not collide, keep default dt to keep gap
+                    #      --> 4. {V_ego ~ V_front}: keep default dt to keep gap 
+                    '''
+                    delta_t = delta_t + frontal_speedd_diff * 0.0125
+
                 # print('previous x :%f, delta t: %f' % (frontal_trajectory[i][0].location.x, delta_t))
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x + inter_gap / delta_t * ego_loc_x) / \
@@ -264,7 +289,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
             if not ego_trajetory:
                 wpt = self._map.get_waypoint(self._ego_pos.location)
-                next_wpt = wpt.next(max(2, self._ego_speed / 3.6 * 1))[0]
+                next_wpt = wpt.next(max(2, int(self._ego_speed / 3.6 * 1)))[0]
                 ego_trajetory.append((next_wpt.transform,
                                       self._ego_speed))
 
@@ -497,6 +522,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # 2. check if there is any other vehicle blocking between ego and platooning
         def dist(v):
             return v.get_location().distance(ego_vehicle_loc)
+
         vehicle_blocking_status = False
         for vehicle in self.obstacle_vehicles:
             vehicle_blocking_status = vehicle_blocking_status or self._collision_check.is_in_range(self._ego_pos,
@@ -508,7 +534,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # and it is close enough, then we regard the back joining finished
         if frontal_lane == ego_vehicle_lane \
                 and not vehicle_blocking_status \
-                and distance < 1.0 * self._ego_speed / 3.6 :
+                and distance < 1.0 * self._ego_speed / 3.6:
             print('joining finished !')
             return (*self.run_step_maintaining(), FSM.JOINING_FINISHED)
 
@@ -516,8 +542,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if not vehicle_blocking_status:
             print('no vehicle is blocking!!!')
             if frontal_lane != ego_vehicle_lane:
-                left_wpt = ego_wpt.next(max(1.2 * self._ego_speed / 3.6 , 5))[0].get_left_lane()
-                right_wpt = ego_wpt.next(max(1.2 * self._ego_speed / 3.6 , 5))[0].get_right_lane()
+                left_wpt = ego_wpt.next(max(1.2 * self._ego_speed / 3.6, 5))[0].get_left_lane()
+                right_wpt = ego_wpt.next(max(1.2 * self._ego_speed / 3.6, 5))[0].get_right_lane()
 
                 if not left_wpt and not right_wpt:
                     pass

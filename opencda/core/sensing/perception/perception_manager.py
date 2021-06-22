@@ -277,8 +277,9 @@ class PerceptionManager(object):
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
 
-        # convert carla.Vehicle to opencda.ObstacleVehicle
-        vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
+        # convert carla.Vehicle to opencda.ObstacleVehicle if lidar visualization is required.
+        if self.lidar:
+            vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
