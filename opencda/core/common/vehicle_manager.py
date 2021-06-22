@@ -7,7 +7,7 @@ Basic class of CAV
 
 import uuid
 
-from opencda.core.actuation.pid_controller import VehiclePIDController
+from opencda.core.actuation.control_manager import ControlManager
 from opencda.core.application.platooning.platoon_behavior_agent import PlatooningBehaviorAgent
 from opencda.core.common.v2x_manager import V2XManager
 from opencda.core.sensing.localization.localization_manager import LocalizationManager
@@ -58,7 +58,7 @@ class VehicleManager(object):
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
 
         # controller TODO: Add a wrapper class for all controller types
-        self.controller = VehiclePIDController(control_config['args'])
+        self.controller = ControlManager(control_config)
 
         cav_world.update_vehicle_manager(self)
 
