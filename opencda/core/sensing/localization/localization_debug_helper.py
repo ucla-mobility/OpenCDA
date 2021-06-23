@@ -100,7 +100,10 @@ class LocDebugHelper(object):
 
         if self.show_animation:
             # call backend setting here to solve the conflict between cv2 pyqt5 and pyplot qtagg
-            matplotlib.use('TkAgg')
+            try:
+                matplotlib.use('TkAgg')
+            except ImportError:
+                pass
             xEst = np.array([filter_x, filter_y]).reshape(2, 1)
             zTrue = np.array([gt_x, gt_y]).reshape(2, 1)
             z = np.array([gnss_x, gnss_y]).reshape(2, 1)
