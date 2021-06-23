@@ -4,13 +4,8 @@ Controller interface
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
-from collections import deque
 
-import math
 import importlib
-
-import numpy as np
-import carla
 
 
 class ControlManager(object):
