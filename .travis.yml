@@ -13,7 +13,7 @@ install:
   - pip install pytest-cov
   - pip install coveralls
 
-# command to run test
+# command to run tests
 script:
    pytest --cov=test/
 
