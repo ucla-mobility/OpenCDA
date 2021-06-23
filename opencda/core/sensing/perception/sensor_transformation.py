@@ -109,14 +109,17 @@ def bbx_to_world(cords, vehicle):
     """
     Convert bounding box coordinate at vehicle reference to world reference.
     Args:
-        cords (np.ndarray): Bounding box coordinates with 8 vertices.
+        cords (np.ndarray): Bounding box coordinates with 8 vertices, shape (n, 4)
         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
 
     Returns:
         bb_world_cords: np.ndarray
             Bounding box coordinates under word reference.
     """
-    bb_transform = carla.Transform(vehicle.bounding_box.location)
+    if hasattr(vehicle.bounding_box, 'transform'):
+        bb_transform = vehicle.bounding_box.transform
+    else:
+        bb_transform = carla.Transform(vehicle.bounding_box.location)
     # bounding box to vehicle transformation matrix
     bb_vehicle_matrix = x_to_world_transformation(bb_transform)
 
@@ -169,12 +172,12 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
     """
     Transform coordinates from vehicle reference to sensor reference
     Args:
-        cords (np.ndarray): Coordinates under vehicle reference, shape (4, n)
+        cords (np.ndarray): Coordinates under vehicle reference, shape (n, 4)
         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
         sensor_transform (carla.Transform): sensor position in the world, shape(3, 1)
 
     Returns:
-        (np.ndarray): Coordinates in sensor reference.
+        (np.ndarray): Coordinates in sensor reference, shape(4, n).
     """
     world_cord = bbx_to_world(cords, vehicle)
     sensor_cord = world_to_sensor(world_cord, sensor_transform)
@@ -182,18 +185,18 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
     return sensor_cord
 
 
-def get_bounding_box(vehicle, sensor, sensor_transform):
+def get_bounding_box(vehicle, camera, sensor_transform):
     """
     Get vehicle bounding box and project to sensor image
     Args:
          vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-         sensor (carla.sensor.camera.rgb): The CARLA sensor object.
+         camera (carla.sensor.camera.rgb): The CARLA sensor object.
          sensor_transform (carla.Transform): sensor position in the world
 
     Returns:
          (np.ndarray): Bounding box coordinates in sensor image.
     """
-    camera_k_matrix = get_camera_intrinsic(sensor)
+    camera_k_matrix = get_camera_intrinsic(camera)
     # bb_cords is relative to bbx center(approximate the vehicle center)
     bb_cords = create_bb_points(vehicle)
 
