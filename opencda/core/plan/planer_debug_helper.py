@@ -45,7 +45,6 @@ class PlanDebugHelper(object):
             if len(self.speed_list[0]) <= 1:
                 self.acc_list[0].append(0)
             else:
-                # todo: time-step hardcoded
                 self.acc_list[0].append((self.speed_list[0][-1] - self.speed_list[0][-2]) / 0.05)
             self.ttc_list[0].append(ttc)
 

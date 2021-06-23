@@ -102,26 +102,30 @@ def draw_dist_gap_profile_singel_plot(gap_list):
     fig.set_size_inches(11, 5)
 
 
-def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list):
+def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list, ttc_list):
     """
     This is a specific function that draws 4 in 1 images for trajectory following task
     :param velocity_list:
     :param distance_gap_list:
     :param time_gap_list:
     :param acceleration_list:
+    :param ttc_list:
     :return:
     """
-    fig = plt.figure(figsize=[2200, 1000])
-    plt.subplot(411)
+    fig = plt.figure()
+    plt.subplot(511)
     draw_velocity_profile_single_plot(velocity_list)
 
-    plt.subplot(412)
+    plt.subplot(512)
     draw_acceleration_profile_single_plot(acceleration_list)
 
-    plt.subplot(413)
+    plt.subplot(513)
     draw_time_gap_profile_singel_plot(time_gap_list)
 
-    plt.subplot(414)
+    plt.subplot(514)
+    draw_dist_gap_profile_singel_plot(distance_gap_list)
+
+    plt.subplot(515)
     draw_dist_gap_profile_singel_plot(distance_gap_list)
 
     label = []
@@ -129,22 +133,11 @@ def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_
         label.append('Leading Vehicle, id: %d' % int(i - 1) if i == 1 else 'Following Vehicle, id: %d' % int(i - 1))
 
     fig.legend(label, loc='upper right')
-    plt.get_current_fig_manager().window.showMaximized()
 
-    plt.show()
-
-
-def dump_data(data):
-    """
-    Dump data to json file
-    :param data: dictionary containing all stats
-    :return:
-    """
-    with open("platooning.json", "w") as outfile:
-        json.dump(data, outfile)
+    return fig
 
 
 if __name__ == '__main__':
     velocity_list = [[23, 25, 25, 44, 66], [44, 55, 25, 22, 33]]
-    ids = [23, 45]
-    draw_sub_plot(velocity_list, velocity_list, velocity_list, velocity_list)
+    fig = draw_sub_plot(velocity_list, velocity_list, velocity_list, velocity_list, velocity_list)
+    plt.show()
