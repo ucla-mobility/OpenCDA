@@ -9,7 +9,7 @@ This script contains the transformations between world and different sensors.
 import numpy as np
 from matplotlib import cm
 
-import carla
+from opencda.opencda_carla import Transform
 
 VIRIDIS = np.array(cm.get_cmap('viridis').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
@@ -116,10 +116,9 @@ def bbx_to_world(cords, vehicle):
         bb_world_cords: np.ndarray
             Bounding box coordinates under word reference.
     """
-    if hasattr(vehicle.bounding_box, 'transform'):
-        bb_transform = vehicle.bounding_box.transform
-    else:
-        bb_transform = carla.Transform(vehicle.bounding_box.location)
+
+    bb_transform = Transform(vehicle.bounding_box.location)
+
     # bounding box to vehicle transformation matrix
     bb_vehicle_matrix = x_to_world_transformation(bb_transform)
 
