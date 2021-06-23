@@ -16,8 +16,8 @@ install:
 script:
    pytest --cov=test/
 
-#after_success:
-#  - coveralls
+after_success:
+  - coveralls
 
 notifications:
   email:
