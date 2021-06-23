@@ -43,3 +43,7 @@ class testKalmanFilter(unittest.TestCase):
         assert isinstance(self.kf.run_step(10, 10, 10, 10, 3)[1], float)
         assert isinstance(self.kf.run_step(10, 10, 10, 10, 3)[2], float)
         assert isinstance(self.kf.run_step(10, 10, 10, 10, 3)[3], float)
+
+
+if __name__ == '__main__':
+    unittest.main()

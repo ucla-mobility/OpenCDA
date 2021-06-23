@@ -49,3 +49,7 @@ class testKalmanFilter(unittest.TestCase):
         assert isinstance(geo_to_transform(100, 70, 10, 10, 10, 10)[0], float)
         assert isinstance(geo_to_transform(100, 70, 10, 10, 10, 10)[1], float)
         assert isinstance(geo_to_transform(100, 70, 10.0, 10, 10, 10.0)[2], float)
+
+
+if __name__ == '__main__':
+    unittest.main()
