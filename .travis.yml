@@ -7,7 +7,7 @@ python:
 
 install:
   - pip install --upgrade pip
-  - pip install -r requirements.txt
+  - pip install -r requirements_ci.txt
   - pip install pytest
   - pip install pytest-cov
   - pip install coveralls
@@ -23,5 +23,5 @@ notifications:
   email:
     recipients:
       - derrickxu1994@gmail.com
-  on_success: change # default: change
+  on_success: never # default: change
   on_failure: always # default: always
