@@ -1,37 +1,32 @@
-# OpenCDA Documentation
+Welcome to OpenCDA
+=====
 
-Welcome to the OpenCDA documentation. 
+OpenCDA is a generalized framework for fast developing and testing <strong>cooperative driving automation 
+applications</strong>(e.g., cooperative perception, platooning) as well as <strong>autonomous vehicle components</strong>(e.g., 
+perception, localization, planning, control) on <strong>multi-resolution simulators</strong>(e.g., CARLA, SUMO, NS3).
 
-OpenCDA is a generalized open-source framework encapsulated with multi-resolution simulations for Cooperative Driving Automation research. This home page contains an index of the different sections in the documentation. 
+OpenCDA is a work in progress, and many features are still in the future roadma.
+ We welcome your contribution and please visit out Github repo for latest release.
 
-* __Install OpenCDA.__ Please follow the [OpenCDA installation](OpenCDA_installation.md) to install the latest OpenCDA release.  
-* __Use OpenCDA.__ This section instroduces the general workflow of [running scenarios](OpenCDA_examples.md) with OpenCDA.  
-* __Available API.__ there is a handy [Python API reference](python_api.md) to look up the classes and methods available.  
- 
-OpenCDA is a work in prgress, we welcome your input and please visit out Github repo for latest release.
+
 <div class="build-buttons">
 <a href="https://github.com/ucla-mobility/OpenCDA" target="_blank" class="btn btn-neutral" title="Go to the latest OpenCDA release">
 OpenCDA Github</a>
 </div>
 
 ---
-## Getting started
+### Contents:
+* [Introduction](OpenCDA_introduction.md)
+* [Installation](OpenCDA_installation.md)
+* [Quick Start](OpenCDA_getstarted.md)
+* [Tutorial](OpenCDA_tutorial.md)   
+* [Yaml Defining Rules](Opencda_yaml.md)
+* [Component](OpenCDA_components.md)
+* [Roadmap](OpenCDA_roadmap.md)
 
-[__Introduction__](OpenCDA_introduction.md) — What to expect from OpenCDA.  
-[__Installation__](OpenCDA_installation.md) — Configure enviroment and install OpenCDA on your local machine.  
-
-## Working with OpenCDA
-
-[__Software Structure__](OpenCDA_structure.md) — Understand the general structure of OpenCDA.  
-[__Examples__](OpenCDA_examples.md) — Pre-defined scenarios that demenstrates the OpenCDA workflow.  
-[__Python API Reference__](python_api.md) — An exclusive list of available Python classes and methods in the Python API.  
-[__Existing Benchmarks__](OpenCDA_benchmark.md) — Existing algortihms that handles cooperative driving automation scenarios.  
-
-## Cite Our Work
 
 If you use OpenCDA for academic research, you are highly encouraged to cite our paper:  
-Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Jiaqi Ma, "OpenCDA:An Open Cooperative Driving Automation FrameworkIntegrated with Multi-resolution Simulations"
-
-If you use the benchmarks, you are highly encouraged to cite our paper:  
-Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Jiaqi Ma, "OpenCDA:An Open Cooperative Driving Automation FrameworkIntegrated with Multi-resolution Simulations"
-
+```bibtex
+Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Jiaqi Ma, 
+"OpenCDA:An Open Cooperative Driving Automation Framework Integrated with Multi-resolution Simulations"
+```
