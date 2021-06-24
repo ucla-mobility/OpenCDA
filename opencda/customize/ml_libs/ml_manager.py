@@ -9,9 +9,8 @@ CAVs share the same model to avoid duplicate memory consumption.
 # License: MIT
 
 import cv2
+import numpy as np
 import torch
-
-from opencda.core.sensing.perception.obstacle_vehicle import is_vehicle_cococlass
 
 
 class MLManager(object):
@@ -59,3 +58,16 @@ class MLManager(object):
 
         return rgb_image
 
+
+def is_vehicle_cococlass(label):
+    """
+    Check whether the label belongs to the vehicle class according to coco dataset.
+    Args:
+        label(int):
+
+    Returns:
+        is_vehicle: bool
+            whether this label belongs to the vehicle class
+    """
+    vehicle_class_array = np.array([2, 3, 4, 6, 8], dtype=np.int)
+    return True if 0 in (label - vehicle_class_array) else False
