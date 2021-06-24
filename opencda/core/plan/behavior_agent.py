@@ -415,15 +415,15 @@ class BehaviorAgent(object):
         if self.safety_time > ttc > 0.0:
             target_speed = min(positive(vehicle_speed - self.speed_decrease),
                                target_speed)
-            print("vehicle id %d: car following decreasing speed mode, target speed %f"
-                  % (self.vehicle.id, target_speed))
+            # print("vehicle id %d: car following decreasing speed mode, target speed %f"
+            #       % (self.vehicle.id, target_speed))
 
         # Actual safety distance area, try to follow the speed of the vehicle in front.
         else:
             target_speed = min(max(self.min_speed, vehicle_speed + 1),
                                target_speed)
-            print("vehicle id %d: car following keep speed mode, target speed %f"
-                  % (self.vehicle.id, target_speed))
+            # print("vehicle id %d: car following keep speed mode, target speed %f"
+            #       % (self.vehicle.id, target_speed))
         return target_speed
 
     def run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True):
@@ -486,7 +486,7 @@ class BehaviorAgent(object):
                 and not self.destination_push_flag and self.overtake_counter <= 0:
             self.overtake_allowed = False
             reset_target = ego_vehicle_wp.next(self._ego_speed / 3.6 * 3)[0]
-            print('destination pushed forward because of potential collision')
+            print('Vehicle id: %d :destination pushed forward because of potential collision' % self.vehicle.id)
 
             self.destination_push_flag = True
             self.set_destination(ego_vehicle_loc, reset_target.transform.location, clean=True,
