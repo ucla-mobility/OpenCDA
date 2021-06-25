@@ -24,5 +24,41 @@ information to the `VehicleManager` for next round running.
 ![teaser](images/flow.png )
 
 ### Step1: Define the yaml file
+Check the [Yaml Define Rule](yaml_define.md) to see how to write a yaml file to define
+your scenario.
+
+### Step2: Construct scenario
+After the yaml file is given, the <strong>Scenario Manager </strong> will load the file
+and construct the scenario through `opencda sim_api and map_api`.
+
+```python
+import opencda.scenario_testing.utils.sim_api as sim_api
+import opencda.scenario_testing.utils.customized_map_api as map_api
+from opencda.scenario_testing.utils.yaml_utils import load_yaml
+
+# Aad yaml file into a dictionary
+scenario_params = load_yaml(config_yaml)
+
+# setup the simulation server configuration
+simulation_config = scenario_params['world']
+client, world, carla_map, origin_settings = sim_api.createSimulationWorld(simulation_config, 'town06')
+
+# create background traffic in carla
+traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
+                                                            scenario_params['carla_traffic_manager'])
+
+# create platoon members
+platoon_list, cav_world = sim_api.createPlatoonManagers(world, carla_map, scenario_params, opt.apply_ml)
+
+# create single cavs
+single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], cav_world,
+                                               carla_map)
 
 
+
+```
+As you can observe from the above scripts, <strong>only less than 10 lines of codes</strong> 
+are needed to construct a complex scenario!
+
+### Step3: Execute a single step
+The core class in OpenCDA is `VehicleManager`
