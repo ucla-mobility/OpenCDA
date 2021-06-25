@@ -54,7 +54,7 @@ year={2021}
 - [ ] Cooperative Localization application
 
 ## Contributors
-OpenCDA is supported by the [UCLA Mobilit Lab](https://mobility-lab.seas.ucla.edu/). <br>
+OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/). <br>
  Major developers: 
  - Runsheng Xu([linkedin](https://www.linkedin.com/in/runsheng-xu/), [github](https://github.com/DerrickXuNu))
  - Xu Han([linkedin](linkedin.com/in/xu-han-12851a64), [github](https://github.com/xuhan417))
