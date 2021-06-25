@@ -20,7 +20,8 @@ OpenCDA Github</a>
 * [Installation](OpenCDA_installation.md)
 * [Quick Start](OpenCDA_getstarted.md)
 * [Tutorial](OpenCDA_tutorial.md)   
-* [Yaml Defining Rules](Opencda_yaml.md)
+    * [Codebase structure](codebase_structure.md)
+    * [Yaml Defining Rules](Opencda_yaml.md)
 * [Component](OpenCDA_components.md)
 * [Roadmap](OpenCDA_roadmap.md)
 
