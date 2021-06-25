@@ -253,7 +253,7 @@ class PerceptionManager(object):
                 if i > self.camera_num or i > self.camera_visualize - 1:
                     break
                 rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
-                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
                 cv2.imshow('%s camera of actor %d, perception activated' % (names[i], self.vehicle.id), rgb_image)
             cv2.waitKey(1)
 
