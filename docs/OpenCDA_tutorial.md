@@ -20,7 +20,5 @@ the planned trajectory to the `ControlManager`. The controller will produce cont
 4. The simulation server will apply the received control commands to the vehicles, execute a single step, and return the updated
 information to the `VehicleManager` for next round running.
 
-
-
 ![teaser](images/flow.png )
 
