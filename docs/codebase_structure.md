@@ -3,7 +3,7 @@
 The `OpenCDA` codebase directory is structured as follows:
 
 ```sh
-flow
+OpenCDA
 ├── docs  # documents of opencda, no need to pay attention.
 ├── opencda
 │   ├── assests  # customized map package.
