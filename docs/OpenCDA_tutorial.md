@@ -61,4 +61,67 @@ As you can observe from the above scripts, <strong>only less than 10 lines of co
 are needed to construct a complex scenario!
 
 ### Step3: Execute a single step
-The core class in OpenCDA is `VehicleManager`
+A simplified class diagram design is shown below.
+The core class in OpenCDA is `VehicleManager`, which is the base class for any cooperative driving applications(e.g. `PlatoonManager`
+is built upon `VehicleManager` ). It contains the necessary modules such as `PerceptionManager` and
+`LocalizationManager`.
+
+![teaser](images/class_diagram.png )
+
+Based on whether certain cooperative driving application is activated,
+`VehicleManager` will choose different perception/localization/planning manager.
+```python
+# vehicle_manager.py
+class VehicleManager:
+    def __init__(self, vehicle, config_yaml, application, carla_map, cav_world):
+        if 'platooning' in application:
+            platoon_config = config_yaml['platoon']
+            self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
+                                                 behavior_config, platoon_config, carla_map)
+        else:
+            self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
+
+```
+During runtime, `VehicleManager` will first localize and detect the surrounding objects,
+and then pass the computed information to v2x stack, planner and controller. Then the donwstream
+modules will fuse information from different cavs, generate trajectory and control commands.
+```python
+class VehicleManager:
+        def update_info(self):
+            # localization
+            self.localizer.localize()
+            ego_pos = self.localizer.get_ego_pos()
+            ego_spd = self.localizer.get_ego_spd()
+    
+            # object detection
+            objects = self.perception_manager.detect(ego_pos)
+    
+            self.v2x_manager.update_info(ego_pos, ego_spd)
+            self.agent.update_information(ego_pos, ego_spd, objects)
+            # pass position and speed info to controller
+            self.controller.update_info(ego_pos, ego_spd)
+            
+        def run_step(self, target_speed=None):
+            target_speed, target_pos = self.agent.run_step(target_speed)
+            control = self.controller.run_step(target_speed, target_pos)
+            return control
+
+```
+
+### Step4: Keep the simulation loop running
+```python
+while True:
+    world.tick()
+    single_cav.update_info()
+    control = single_cav.run_step()
+    single_cav.vehicle.apply_control(control)
+```
+
+### Step5: Evaluation
+When the simulation is over, the `EvaluationManager` will evaluate the performance,
+and save the results in `~/OpenCDA/evluation_outputs`
+```python
+# create evaluation manager
+eval_manager = EvaluationManager(cav_world)
+eval_manager.evaluate()
+```

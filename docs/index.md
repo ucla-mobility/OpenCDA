@@ -21,8 +21,9 @@ OpenCDA Github</a>
 * [Quick Start](OpenCDA_getstarted.md)
 * [Tutorial](OpenCDA_tutorial.md)   
     * [Codebase structure](codebase_structure.md)
-    * [Yaml Defining Rules](yaml_define.md)
-* [Component](OpenCDA_components.md)
+    * [Step1: Define the yaml file](OpenCDA_tutorial.md#step1-define-the-yaml-file)
+    * [Step2: Construct the scenario](OpenCDA_tutorial.md#step2-construct-scenario)
+    * [Step3: Execute a single step](OpenCDA_tutorial.md#step3-execute-a-single-step)
 * [Roadmap](OpenCDA_roadmap.md)
 
 
