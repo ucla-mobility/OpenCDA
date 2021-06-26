@@ -1,2 +1,0 @@
-# OpenCDA Structure
-
