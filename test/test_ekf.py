@@ -9,15 +9,12 @@ import os
 import sys
 import unittest
 
-import numpy as np
-
 # temporary solution for relative imports in case opencda is not installed
 # if opencda is installed, no need to use the following line
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 
-import mocked_carla as mcarla
-from opencda.core.sensing.localization.extented_kalman_filter import ExtentedKalmanFilter
+from opencda.customize.core.sensing.localization.extented_kalman_filter import ExtentedKalmanFilter
 
 
 class testKalmanFilter(unittest.TestCase):
