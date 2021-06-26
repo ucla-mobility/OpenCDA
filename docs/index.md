@@ -24,7 +24,9 @@ OpenCDA Github</a>
     * [Step1: Define the yaml file](OpenCDA_tutorial.md#step1-define-the-yaml-file)
     * [Step2: Construct the scenario](OpenCDA_tutorial.md#step2-construct-scenario)
     * [Step3: Execute a single step](OpenCDA_tutorial.md#step3-execute-a-single-step)
-* [Roadmap](OpenCDA_roadmap.md)
+    * [Step4: Run simulation loop](OpenCDA_tutorial.md#step4-keep-the-simulation-loop-running)
+    * [Step5: Evaluation](OpenCDA_tutorial.md#step5-evaluation)
+* [PythonAPI](PythonAPI.md)
 
 
 If you use OpenCDA for academic research, you are highly encouraged to cite our paper:  
