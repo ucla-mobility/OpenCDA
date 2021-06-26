@@ -272,8 +272,8 @@ class LocalPlanner(object):
         mean_k = 0.0001 if len(rk) < 2 else abs(statistics.mean(rk))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
         target_speed = min(target_speed, np.sqrt(5.0 / (mean_k + 10e-6)) * 3.6)
-        print('Vehicle Id:%d, current speed %f and target speed is %f' % (self._vehicle.id,
-                                                                          current_speed * 3.6, target_speed))
+        # print('Vehicle Id:%d, current speed %f and target speed is %f' % (self._vehicle.id,
+        #                                                                   current_speed * 3.6, target_speed))
 
         # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
         if self._pid_controller:
@@ -371,7 +371,7 @@ class LocalPlanner(object):
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
 
-        # Target waypoint TODO: dt is never used
+        # Target waypoint
         self.target_waypoint, self._target_speed = \
             self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
 

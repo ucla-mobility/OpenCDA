@@ -134,7 +134,7 @@ scenario:
             <<: *base_behavior
             local_planner:
               <<: *base_local_planner
-              debug_trajectory: false
+              debug_trajectory: true
               debug: false
         - <<: *vehicle_base
           spawn_position: [-360, 8.3, 0.3, 0, 0, 0]

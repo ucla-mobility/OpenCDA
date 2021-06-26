@@ -13,6 +13,7 @@ import carla
 import opencda.scenario_testing.utils.sim_api as sim_api
 import opencda.scenario_testing.utils.customized_map_api as map_api
 
+from opencda.scenario_testing.evaluations.evaluate_manager import EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
@@ -36,12 +37,15 @@ def run_scenario(opt, config_yaml):
         # create single cavs
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], cav_world,
                                                        carla_map, map_api.spawn_helper_2lanefree_complete)
+
+        # create evaluation manager
+        eval_manager = EvaluationManager(cav_world)
+
         spectator = world.get_spectator()
         spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle
 
         # run steps
         while True:
-            # TODO: Consider aysnc mode later
             world.tick()
             transform = spectator_vehicle.get_transform()
             spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
@@ -60,6 +64,7 @@ def run_scenario(opt, config_yaml):
                     single_cav.vehicle.apply_control(control)
 
     finally:
+        # eval_manager.evaluate()
         if opt.record:
             client.stop_recorder()
 
