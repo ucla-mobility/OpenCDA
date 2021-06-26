@@ -34,7 +34,7 @@ def run_scenario(opt, config_yaml):
                                                                 apply_ml=opt.apply_ml)
         # create single cavs
         single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], cav_world,
-                                                       carla_map, map_api.spawn_helper_2lanefree_complete)
+                                                       carla_map)
 
         # create evaluation manager
         eval_manager = EvaluationManager(cav_world)
