@@ -106,7 +106,7 @@ carla_traffic_manager:
   vehicle_list:
     - spawn_position: [-285, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-310, 7.5, 0.3, 0, 0, 0]
-    - spawn_position: [-390, 7.5, 0.3, 0, 0, 0]
+    - spawn_position: [-405, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-320, 4.5, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
     - spawn_position: [-335, 4.5, 0.3, 0, 0, 0]
@@ -142,25 +142,19 @@ scenario:
           spawn_position: [-360, 7.5, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
-          controller:
-            <<: *base_controller
-            args:
-              <<: *control_args
-              max_throttle: 1.0
         - <<: *vehicle_base
           spawn_position: [-370, 7.5, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
-            args:
-              <<: *control_args
-              max_throttle: 1.0
         - <<: *vehicle_base
           spawn_position: [-380, 7.5, 0.3, 0, 0, 0]
           platoon: # we need to add platoon specific params
             <<: *platoon_base
-            args:
-              <<: *control_args
-              max_throttle: 1.0
+        - <<: *vehicle_base
+          spawn_position: [ -390, 7.5, 0.3, 0, 0, 0 ]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+
   single_cav_list:
     - <<: *vehicle_base
       spawn_position: [-380, 4.5, 0.3, 0, 0, 0]
