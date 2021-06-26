@@ -57,7 +57,9 @@ class BehaviorAgent(object):
         self._collision_check = CollisionChecker(time_ahead=config_yaml['collision_time_ahead'])
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
         self.overtake_allowed = config_yaml['overtake_allowed']
-        self.overtake_counter = 0  # TODO: MODIFY THIS LATER
+        # if overtake is not allowed at the beginning, then it should never do an overtake
+        self.overtake_allowed_origin = config_yaml['overtake_allowed']
+        self.overtake_counter = 0
         # used to indicate whether a vehicle is on the planned path
         self.hazard_flag = False
 
@@ -458,7 +460,7 @@ class BehaviorAgent(object):
         if len(self.get_local_planner().waypoints_queue) == 0 \
                 and len(self.get_local_planner()._waypoint_buffer) <= 2:
             print('Destination Reset!')
-            self.overtake_allowed = True
+            self.overtake_allowed = True and self.overtake_allowed_origin
             self.destination_push_flag = False
             self.set_destination(ego_vehicle_loc, self.end_waypoint.transform.location, clean=True, clean_history=True)
 

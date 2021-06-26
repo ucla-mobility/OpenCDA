@@ -86,8 +86,8 @@ def o3d_visualizer_init(actor_id):
     """
     vis = o3d.visualization.Visualizer()
     vis.create_window(window_name=str(actor_id),
-                      width=720,
-                      height=405,
+                      width=480,
+                      height=320,
                       left=480,
                       top=270)
     vis.get_render_option().background_color = [0.05, 0.05, 0.05]

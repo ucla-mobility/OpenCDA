@@ -161,7 +161,7 @@ scenario:
             args:
               <<: *control_args
               max_throttle: 1.0
-  single_cav_list: 
+  single_cav_list:
     - <<: *vehicle_base
       spawn_position: [-380, 4.5, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
