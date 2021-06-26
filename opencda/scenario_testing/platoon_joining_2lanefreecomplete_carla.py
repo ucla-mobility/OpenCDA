@@ -64,7 +64,7 @@ def run_scenario(opt, config_yaml):
                     single_cav.vehicle.apply_control(control)
 
     finally:
-        # eval_manager.evaluate()
+        eval_manager.evaluate()
         if opt.record:
             client.stop_recorder()
 
