@@ -97,8 +97,29 @@ class ImuSensor(object):
 
 
 class LocalizationManager(object):
-    """
-    The core class that manages localization estimation.
+    """Default localization module.
+    Parameters
+    ----------
+    vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+    config_yaml: dict
+        The configuration dictionary of the localization module.
+    carla_map: carla.Map
+        The carla HDMap. We need this to find the map origin to
+        convert wg84 to enu coordinate system.
+    Attributes
+    ----------
+    gnss : opencda Object
+        GNSS sensor manager for spawning gnss sensor and listen to the data
+        transmission.
+    gnss : opencda Object
+        GNSS sensor manager for spawning gnss sensor and listen to the data
+        transmission.
+    kf : opencda Object
+        The filter used to fuse different sensors.
+    debug_helper : opencda Object
+        The debug helper is used to visualize the accuracy of
+        the localization and provide evaluation functions.
     """
 
     def __init__(self, vehicle, config_yaml, carla_map):
@@ -127,9 +148,9 @@ class LocalizationManager(object):
         self.heading_noise_std = config_yaml['gnss']['heading_direction_stddev']
         self.speed_noise_std = config_yaml['gnss']['speed_stddev']
 
-        dt = config_yaml['dt']
+        self.dt = config_yaml['dt']
         # Kalman Filter
-        self.EKF = KalmanFilter(dt)
+        self.kf = KalmanFilter(self.dt)
 
         # DebugHelper
         self.debug_helper = LocDebugHelper(config_yaml['debug_helper'], self.vehicle.id)
@@ -162,9 +183,9 @@ class LocalizationManager(object):
             if len(self._ego_pos_history) == 0:
                 x_kf, y_kf, heading_angle_kf = x, y, heading_angle
                 self._speed = speed_true
-                self.EKF.run_step_init(x, y, np.deg2rad(heading_angle), self._speed / 3.6)
+                self.kf.run_step_init(x, y, np.deg2rad(heading_angle), self._speed / 3.6)
             else:
-                x_kf, y_kf, heading_angle_kf, speed_kf = self.EKF.run_step(x, y, np.deg2rad(heading_angle),
+                x_kf, y_kf, heading_angle_kf, speed_kf = self.kf.run_step(x, y, np.deg2rad(heading_angle),
                                                                            speed_noise / 3.6, self.imu.gyroscope[2])
                 self._speed = speed_kf * 3.6
                 heading_angle_kf = np.rad2deg(heading_angle_kf)

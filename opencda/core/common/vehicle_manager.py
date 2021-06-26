@@ -13,6 +13,8 @@ from opencda.core.common.v2x_manager import V2XManager
 from opencda.core.sensing.localization.localization_manager import LocalizationManager
 from opencda.core.sensing.perception.perception_manager import PerceptionManager
 from opencda.core.plan.behavior_agent import BehaviorAgent
+# customize moudles import here
+from opencda.customize.core.sensing.localization.localization_manager import CustomizedLocalizationManager
 
 
 class VehicleManager(object):
