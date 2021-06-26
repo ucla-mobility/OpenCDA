@@ -28,7 +28,7 @@ else:
 
 import sumolib
 import traci
-import co_simulation.sumo_src.ccparams as cc
+import opencda.co_simulation.sumo_src.ccparams as cc
 
 # constants for lane change mode
 # add a new lane change mode to accelerate the lane change; avoid immediate collision
