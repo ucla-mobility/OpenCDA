@@ -26,7 +26,9 @@ OpenCDA Github</a>
     * [Step3: Execute a single step](OpenCDA_tutorial.md#step3-execute-a-single-step)
     * [Step4: Run simulation loop](OpenCDA_tutorial.md#step4-keep-the-simulation-loop-running)
     * [Step5: Evaluation](OpenCDA_tutorial.md#step5-evaluation)
-* [PythonAPI](PythonAPI.md)
+
+* [Link to PythonAPI](Python_API_docs.html) — Test out the html doc files.  
+
 
 
 If you use OpenCDA for academic research, you are highly encouraged to cite our paper:  

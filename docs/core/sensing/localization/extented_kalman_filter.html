@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>opencda.core.sensing.localization.extented_kalman_filter API documentation</title>
+<meta name="description" content="Use Extended Kalman Filter on GPS + IMU for better localization." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>opencda.core.sensing.localization.extented_kalman_filter</code></h1>
+</header>
+<section id="section-intro">
+<p>Use Extended Kalman Filter on GPS + IMU for better localization.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+&#34;&#34;&#34;
+Use Extended Kalman Filter on GPS + IMU for better localization.
+&#34;&#34;&#34;
+# Author: Runsheng Xu &lt;rxx3386@ucla.edu&gt;, credit to Kartik Madhira &lt;kartikmadhira1@gmail.com&gt;
+# License: MIT
+
+import math
+import numpy as np
+
+
+class ExtentedKalmanFilter(object):
+    &#34;&#34;&#34;
+    Kalman Filter implementation for gps + imu
+    &#34;&#34;&#34;
+
+    def __init__(self, dt):
+        &#34;&#34;&#34;
+        Construct class
+        Args:
+            dt(float): unit time step for simulation.
+        &#34;&#34;&#34;
+        self.Q = np.diag([
+            0.2,  # variance of location on x-axis
+            0.2,  # variance of location on y-axis
+            np.deg2rad(0.1),  # variance of yaw angle
+            0.001  # variance of velocity
+        ]) ** 2  # predict state covariance
+
+        self.R = np.diag([0.5, 0.5, 0.2]) ** 2  # Observation x,y position covariance
+
+        self.time_step = dt
+
+        self.xEst = np.zeros((4, 1))
+        self.PEst = np.eye(4)
+
+    def motion_model(self, x, u):
+        &#34;&#34;&#34;
+        Predict current position and yaw based on previous result.
+        X = F * X_prev + B * u
+        Args:
+            x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
+            u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
+
+        Returns:
+          np.array: predicted state.
+        &#34;&#34;&#34;
+        F = np.array([[1.0, 0, 0, 0],
+                      [0, 1.0, 0, 0],
+                      [0, 0, 1.0, 0],
+                      [0, 0, 0, 0]])
+
+        B = np.array([[self.time_step * math.cos(x[2, 0]), 0],
+                      [self.time_step * math.sin(x[2, 0]), 0],
+                      [0.0, self.time_step],
+                      [1.0, 0.0]])
+
+        x = F @ x + B @ u
+
+        return x
+
+    def jacob_f(self, x, u):
+        &#34;&#34;&#34;
+        Jacobian of Motion Model motion model
+        x_{t+1} = x_t+v*dt*cos(yaw)
+        y_{t+1} = y_t+v*dt*sin(yaw)
+        yaw_{t+1} = yaw_t+omega*dt
+        v_{t+1} = v{t}
+        so
+        dx/dyaw = -v*dt*sin(yaw)
+        dx/dv = dt*cos(yaw)
+        dy/dyaw = v*dt*cos(yaw)
+        dy/dv = dt*sin(yaw)
+        &#34;&#34;&#34;
+        yaw = x[2, 0]
+        v = u[0, 0]
+        jF = np.array([
+            [1.0, 0.0, -self.time_step * v * math.sin(yaw), self.time_step * math.cos(yaw)],
+            [0.0, 1.0, self.time_step * v * math.cos(yaw), self.time_step * math.sin(yaw)],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]])
+
+        return jF
+
+    def observation_model(self, x):
+        &#34;&#34;&#34;
+        Project the state matrix to sensor measurement matrix.
+        Args:
+            x (np.array): [x, y, yaw, v], shape: (4. 1).
+
+        Returns:
+            np.array: predicted measurement.
+
+        &#34;&#34;&#34;
+        H = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0]
+        ])
+
+        z = H @ x
+
+        return z
+
+    def run_step_init(self, x, y, heading, velocity):
+        &#34;&#34;&#34;
+        Initalization for states
+        :param x:
+        :param y:
+        :param heading:
+        :param velocity:
+        :return:
+        &#34;&#34;&#34;
+        self.xEst[0] = x
+        self.xEst[1] = y
+        self.xEst[2] = heading
+        self.xEst[3] = velocity
+
+    def run_step(self, x, y, heading, velocity, yaw_rate_imu):
+        &#34;&#34;&#34;
+        Apply EKF on current measurement and previous prediction
+        :param x: x(esu) coordinate from gnss sensor at current timestamp
+        :param y: y(esu) coordinate from gnss sensor at current timestamp
+        :param heading: heading direction at current timestamp
+        :param velocity: current speed
+        :param yaw_rate_imu: yaw rate rad/s from IMU sensor
+        :return: corrected x, y, heading, velocity
+        &#34;&#34;&#34;
+
+        # gps observation
+        z = np.array([x, y, heading]).reshape(3, 1)
+        # velocity and imu yaw rate
+        u = np.array([velocity, yaw_rate_imu]).reshape(2, 1)
+
+        # EKF starts
+        xPred = self.motion_model(self.xEst, u)
+        jF = self.jacob_f(self.xEst, u)
+        PPred = jF @ self.PEst @ jF.T + self.Q
+
+        # Jacobian of Observation Model
+        jH = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0]])
+        zPred = self.observation_model(xPred)
+        y = z - zPred
+        S = jH @ PPred @ jH.T + self.R
+        K = PPred @ jH.T @ np.linalg.inv(S)
+        self.xEst = xPred + K @ y
+        self.PEst = (np.eye(len(self.xEst)) - K @ jH) @ PPred
+
+        return self.xEst[0][0], self.xEst[1][0], self.xEst[2][0], self.xEst[3][0]</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter"><code class="flex name class">
+<span>class <span class="ident">ExtentedKalmanFilter</span></span>
+<span>(</span><span>dt)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Kalman Filter implementation for gps + imu</p>
+<p>Construct class</p>
+<h2 id="args">Args</h2>
+<p>dt(float): unit time step for simulation.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ExtentedKalmanFilter(object):
+    &#34;&#34;&#34;
+    Kalman Filter implementation for gps + imu
+    &#34;&#34;&#34;
+
+    def __init__(self, dt):
+        &#34;&#34;&#34;
+        Construct class
+        Args:
+            dt(float): unit time step for simulation.
+        &#34;&#34;&#34;
+        self.Q = np.diag([
+            0.2,  # variance of location on x-axis
+            0.2,  # variance of location on y-axis
+            np.deg2rad(0.1),  # variance of yaw angle
+            0.001  # variance of velocity
+        ]) ** 2  # predict state covariance
+
+        self.R = np.diag([0.5, 0.5, 0.2]) ** 2  # Observation x,y position covariance
+
+        self.time_step = dt
+
+        self.xEst = np.zeros((4, 1))
+        self.PEst = np.eye(4)
+
+    def motion_model(self, x, u):
+        &#34;&#34;&#34;
+        Predict current position and yaw based on previous result.
+        X = F * X_prev + B * u
+        Args:
+            x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
+            u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
+
+        Returns:
+          np.array: predicted state.
+        &#34;&#34;&#34;
+        F = np.array([[1.0, 0, 0, 0],
+                      [0, 1.0, 0, 0],
+                      [0, 0, 1.0, 0],
+                      [0, 0, 0, 0]])
+
+        B = np.array([[self.time_step * math.cos(x[2, 0]), 0],
+                      [self.time_step * math.sin(x[2, 0]), 0],
+                      [0.0, self.time_step],
+                      [1.0, 0.0]])
+
+        x = F @ x + B @ u
+
+        return x
+
+    def jacob_f(self, x, u):
+        &#34;&#34;&#34;
+        Jacobian of Motion Model motion model
+        x_{t+1} = x_t+v*dt*cos(yaw)
+        y_{t+1} = y_t+v*dt*sin(yaw)
+        yaw_{t+1} = yaw_t+omega*dt
+        v_{t+1} = v{t}
+        so
+        dx/dyaw = -v*dt*sin(yaw)
+        dx/dv = dt*cos(yaw)
+        dy/dyaw = v*dt*cos(yaw)
+        dy/dv = dt*sin(yaw)
+        &#34;&#34;&#34;
+        yaw = x[2, 0]
+        v = u[0, 0]
+        jF = np.array([
+            [1.0, 0.0, -self.time_step * v * math.sin(yaw), self.time_step * math.cos(yaw)],
+            [0.0, 1.0, self.time_step * v * math.cos(yaw), self.time_step * math.sin(yaw)],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]])
+
+        return jF
+
+    def observation_model(self, x):
+        &#34;&#34;&#34;
+        Project the state matrix to sensor measurement matrix.
+        Args:
+            x (np.array): [x, y, yaw, v], shape: (4. 1).
+
+        Returns:
+            np.array: predicted measurement.
+
+        &#34;&#34;&#34;
+        H = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0]
+        ])
+
+        z = H @ x
+
+        return z
+
+    def run_step_init(self, x, y, heading, velocity):
+        &#34;&#34;&#34;
+        Initalization for states
+        :param x:
+        :param y:
+        :param heading:
+        :param velocity:
+        :return:
+        &#34;&#34;&#34;
+        self.xEst[0] = x
+        self.xEst[1] = y
+        self.xEst[2] = heading
+        self.xEst[3] = velocity
+
+    def run_step(self, x, y, heading, velocity, yaw_rate_imu):
+        &#34;&#34;&#34;
+        Apply EKF on current measurement and previous prediction
+        :param x: x(esu) coordinate from gnss sensor at current timestamp
+        :param y: y(esu) coordinate from gnss sensor at current timestamp
+        :param heading: heading direction at current timestamp
+        :param velocity: current speed
+        :param yaw_rate_imu: yaw rate rad/s from IMU sensor
+        :return: corrected x, y, heading, velocity
+        &#34;&#34;&#34;
+
+        # gps observation
+        z = np.array([x, y, heading]).reshape(3, 1)
+        # velocity and imu yaw rate
+        u = np.array([velocity, yaw_rate_imu]).reshape(2, 1)
+
+        # EKF starts
+        xPred = self.motion_model(self.xEst, u)
+        jF = self.jacob_f(self.xEst, u)
+        PPred = jF @ self.PEst @ jF.T + self.Q
+
+        # Jacobian of Observation Model
+        jH = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0]])
+        zPred = self.observation_model(xPred)
+        y = z - zPred
+        S = jH @ PPred @ jH.T + self.R
+        K = PPred @ jH.T @ np.linalg.inv(S)
+        self.xEst = xPred + K @ y
+        self.PEst = (np.eye(len(self.xEst)) - K @ jH) @ PPred
+
+        return self.xEst[0][0], self.xEst[1][0], self.xEst[2][0], self.xEst[3][0]</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.jacob_f"><code class="name flex">
+<span>def <span class="ident">jacob_f</span></span>(<span>self, x, u)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Jacobian of Motion Model motion model
+x_{t+1} = x_t+v<em>dt</em>cos(yaw)
+y_{t+1} = y_t+v<em>dt</em>sin(yaw)
+yaw_{t+1} = yaw_t+omega<em>dt
+v_{t+1} = v{t}
+so
+dx/dyaw = -v</em>dt<em>sin(yaw)
+dx/dv = dt</em>cos(yaw)
+dy/dyaw = v<em>dt</em>cos(yaw)
+dy/dv = dt*sin(yaw)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def jacob_f(self, x, u):
+    &#34;&#34;&#34;
+    Jacobian of Motion Model motion model
+    x_{t+1} = x_t+v*dt*cos(yaw)
+    y_{t+1} = y_t+v*dt*sin(yaw)
+    yaw_{t+1} = yaw_t+omega*dt
+    v_{t+1} = v{t}
+    so
+    dx/dyaw = -v*dt*sin(yaw)
+    dx/dv = dt*cos(yaw)
+    dy/dyaw = v*dt*cos(yaw)
+    dy/dv = dt*sin(yaw)
+    &#34;&#34;&#34;
+    yaw = x[2, 0]
+    v = u[0, 0]
+    jF = np.array([
+        [1.0, 0.0, -self.time_step * v * math.sin(yaw), self.time_step * math.cos(yaw)],
+        [0.0, 1.0, self.time_step * v * math.cos(yaw), self.time_step * math.sin(yaw)],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0]])
+
+    return jF</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.motion_model"><code class="name flex">
+<span>def <span class="ident">motion_model</span></span>(<span>self, x, u)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Predict current position and yaw based on previous result.
+X = F * X_prev + B * u</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>np.array</code></dt>
+<dd>[x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).</dd>
+<dt><strong><code>u</code></strong> :&ensp;<code>np.array</code></dt>
+<dd>[v_current, imu_yaw_rate], shape:(2, 1).</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.array</code></dt>
+<dd>predicted state.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def motion_model(self, x, u):
+    &#34;&#34;&#34;
+    Predict current position and yaw based on previous result.
+    X = F * X_prev + B * u
+    Args:
+        x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
+        u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
+
+    Returns:
+      np.array: predicted state.
+    &#34;&#34;&#34;
+    F = np.array([[1.0, 0, 0, 0],
+                  [0, 1.0, 0, 0],
+                  [0, 0, 1.0, 0],
+                  [0, 0, 0, 0]])
+
+    B = np.array([[self.time_step * math.cos(x[2, 0]), 0],
+                  [self.time_step * math.sin(x[2, 0]), 0],
+                  [0.0, self.time_step],
+                  [1.0, 0.0]])
+
+    x = F @ x + B @ u
+
+    return x</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.observation_model"><code class="name flex">
+<span>def <span class="ident">observation_model</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Project the state matrix to sensor measurement matrix.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>np.array</code></dt>
+<dd>[x, y, yaw, v], shape: (4. 1).</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.array</code></dt>
+<dd>predicted measurement.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def observation_model(self, x):
+    &#34;&#34;&#34;
+    Project the state matrix to sensor measurement matrix.
+    Args:
+        x (np.array): [x, y, yaw, v], shape: (4. 1).
+
+    Returns:
+        np.array: predicted measurement.
+
+    &#34;&#34;&#34;
+    H = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0]
+    ])
+
+    z = H @ x
+
+    return z</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.run_step"><code class="name flex">
+<span>def <span class="ident">run_step</span></span>(<span>self, x, y, heading, velocity, yaw_rate_imu)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Apply EKF on current measurement and previous prediction
+:param x: x(esu) coordinate from gnss sensor at current timestamp
+:param y: y(esu) coordinate from gnss sensor at current timestamp
+:param heading: heading direction at current timestamp
+:param velocity: current speed
+:param yaw_rate_imu: yaw rate rad/s from IMU sensor
+:return: corrected x, y, heading, velocity</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run_step(self, x, y, heading, velocity, yaw_rate_imu):
+    &#34;&#34;&#34;
+    Apply EKF on current measurement and previous prediction
+    :param x: x(esu) coordinate from gnss sensor at current timestamp
+    :param y: y(esu) coordinate from gnss sensor at current timestamp
+    :param heading: heading direction at current timestamp
+    :param velocity: current speed
+    :param yaw_rate_imu: yaw rate rad/s from IMU sensor
+    :return: corrected x, y, heading, velocity
+    &#34;&#34;&#34;
+
+    # gps observation
+    z = np.array([x, y, heading]).reshape(3, 1)
+    # velocity and imu yaw rate
+    u = np.array([velocity, yaw_rate_imu]).reshape(2, 1)
+
+    # EKF starts
+    xPred = self.motion_model(self.xEst, u)
+    jF = self.jacob_f(self.xEst, u)
+    PPred = jF @ self.PEst @ jF.T + self.Q
+
+    # Jacobian of Observation Model
+    jH = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0]])
+    zPred = self.observation_model(xPred)
+    y = z - zPred
+    S = jH @ PPred @ jH.T + self.R
+    K = PPred @ jH.T @ np.linalg.inv(S)
+    self.xEst = xPred + K @ y
+    self.PEst = (np.eye(len(self.xEst)) - K @ jH) @ PPred
+
+    return self.xEst[0][0], self.xEst[1][0], self.xEst[2][0], self.xEst[3][0]</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.run_step_init"><code class="name flex">
+<span>def <span class="ident">run_step_init</span></span>(<span>self, x, y, heading, velocity)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initalization for states
+:param x:
+:param y:
+:param heading:
+:param velocity:
+:return:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run_step_init(self, x, y, heading, velocity):
+    &#34;&#34;&#34;
+    Initalization for states
+    :param x:
+    :param y:
+    :param heading:
+    :param velocity:
+    :return:
+    &#34;&#34;&#34;
+    self.xEst[0] = x
+    self.xEst[1] = y
+    self.xEst[2] = heading
+    self.xEst[3] = velocity</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="opencda.core.sensing.localization" href="index.html">opencda.core.sensing.localization</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter" href="#opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter">ExtentedKalmanFilter</a></code></h4>
+<ul class="">
+<li><code><a title="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.jacob_f" href="#opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.jacob_f">jacob_f</a></code></li>
+<li><code><a title="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.motion_model" href="#opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.motion_model">motion_model</a></code></li>
+<li><code><a title="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.observation_model" href="#opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.observation_model">observation_model</a></code></li>
+<li><code><a title="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.run_step" href="#opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.run_step">run_step</a></code></li>
+<li><code><a title="opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.run_step_init" href="#opencda.core.sensing.localization.extented_kalman_filter.ExtentedKalmanFilter.run_step_init">run_step_init</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

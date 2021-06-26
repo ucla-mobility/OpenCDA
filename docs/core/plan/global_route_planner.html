@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>opencda.core.plan.global_route_planner API documentation</title>
+<meta name="description" content="This module provides GlobalRoutePlanner implementation." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>opencda.core.plan.global_route_planner</code></h1>
+</header>
+<section id="section-intro">
+<p>This module provides GlobalRoutePlanner implementation.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># Copyright (c) # Copyright (c) 2018-2020 CVC.
+#
+# This work is licensed under the terms of the MIT license.
+# For a copy, see &lt;https://opensource.org/licenses/MIT&gt;.
+
+
+&#34;&#34;&#34;
+This module provides GlobalRoutePlanner implementation.
+&#34;&#34;&#34;
+
+import math
+import numpy as np
+import networkx as nx
+
+import carla
+from opencda.core.plan.local_planner_behavior import RoadOption
+from opencda.core.common.misc import vector
+
+
+class GlobalRoutePlanner(object):
+    &#34;&#34;&#34;
+    This class provides a very high level route plan.
+    Instantiate the class by passing a reference to
+    A GlobalRoutePlannerDAO object.
+    &#34;&#34;&#34;
+
+    def __init__(self, dao):
+        &#34;&#34;&#34;
+        Constructor
+        &#34;&#34;&#34;
+        self._dao = dao
+        self._topology = None
+        self._graph = None
+        self._id_map = None
+        self._road_id_to_edge = None
+        self._intersection_end_node = -1
+        self._previous_decision = RoadOption.VOID
+
+    def setup(self):
+        &#34;&#34;&#34;
+        Performs initial server data lookup for detailed topology
+        and builds graph representation of the world map.
+        &#34;&#34;&#34;
+        self._topology = self._dao.get_topology()
+        self._graph, self._id_map, self._road_id_to_edge = self._build_graph()
+        self._find_loose_ends()
+        self._lane_change_link()
+
+    def _build_graph(self):
+        &#34;&#34;&#34;
+        This function builds a networkx graph representation of topology.
+        The topology is read from self._topology.
+        graph node properties:
+            vertex   -   (x,y,z) position in world map
+        graph edge properties:
+            entry_vector    -   unit vector along tangent at entry point
+            exit_vector     -   unit vector along tangent at exit point
+            net_vector      -   unit vector of the chord from entry to exit
+            intersection    -   boolean indicating if the edge belongs to an
+                                intersection
+        return      :   graph -&gt; networkx graph representing the world map,
+                        id_map-&gt; mapping from (x,y,z) to node id
+                        road_id_to_edge-&gt; map from road id to edge in the graph
+        &#34;&#34;&#34;
+        graph = nx.DiGraph()
+        id_map = dict()  # Map with structure {(x,y,z): id, ... }
+        road_id_to_edge = dict()  # Map with structure {road_id: {lane_id: edge, ... }, ... }
+
+        for segment in self._topology:
+
+            entry_xyz, exit_xyz = segment[&#39;entryxyz&#39;], segment[&#39;exitxyz&#39;]
+            path = segment[&#39;path&#39;]
+            entry_wp, exit_wp = segment[&#39;entry&#39;], segment[&#39;exit&#39;]
+            intersection = entry_wp.is_junction
+            road_id, section_id, lane_id = entry_wp.road_id, entry_wp.section_id, entry_wp.lane_id
+
+            for vertex in entry_xyz, exit_xyz:
+                # Adding unique nodes and populating id_map
+                if vertex not in id_map:
+                    new_id = len(id_map)
+                    id_map[vertex] = new_id
+                    graph.add_node(new_id, vertex=vertex)
+            n1 = id_map[entry_xyz]
+            n2 = id_map[exit_xyz]
+            if road_id not in road_id_to_edge:
+                road_id_to_edge[road_id] = dict()
+            if section_id not in road_id_to_edge[road_id]:
+                road_id_to_edge[road_id][section_id] = dict()
+            road_id_to_edge[road_id][section_id][lane_id] = (n1, n2)
+
+            entry_carla_vector = entry_wp.transform.rotation.get_forward_vector()
+            exit_carla_vector = exit_wp.transform.rotation.get_forward_vector()
+
+            # Adding edge with attributes
+            graph.add_edge(
+                n1, n2,
+                length=len(path) + 1, path=path,
+                entry_waypoint=entry_wp, exit_waypoint=exit_wp,
+                entry_vector=np.array(
+                    [entry_carla_vector.x, entry_carla_vector.y, entry_carla_vector.z]),
+                exit_vector=np.array(
+                    [exit_carla_vector.x, exit_carla_vector.y, exit_carla_vector.z]),
+                net_vector=vector(entry_wp.transform.location, exit_wp.transform.location),
+                intersection=intersection, type=RoadOption.LANEFOLLOW)
+
+        return graph, id_map, road_id_to_edge
+
+    def _find_loose_ends(self):
+        &#34;&#34;&#34;
+        This method finds road segments that have an unconnected end, and
+        adds them to the internal graph representation
+        &#34;&#34;&#34;
+        count_loose_ends = 0
+        hop_resolution = self._dao.get_resolution()
+        for segment in self._topology:
+            end_wp = segment[&#39;exit&#39;]
+            exit_xyz = segment[&#39;exitxyz&#39;]
+            road_id, section_id, lane_id = end_wp.road_id, end_wp.section_id, end_wp.lane_id
+            if road_id in self._road_id_to_edge and section_id in self._road_id_to_edge[road_id] and lane_id in self._road_id_to_edge[road_id][section_id]:
+                pass
+            else:
+                count_loose_ends += 1
+                if road_id not in self._road_id_to_edge:
+                    self._road_id_to_edge[road_id] = dict()
+                if section_id not in self._road_id_to_edge[road_id]:
+                    self._road_id_to_edge[road_id][section_id] = dict()
+                n1 = self._id_map[exit_xyz]
+                n2 = -1*count_loose_ends
+                self._road_id_to_edge[road_id][section_id][lane_id] = (n1, n2)
+                next_wp = end_wp.next(hop_resolution)
+                path = []
+                while next_wp is not None and next_wp and next_wp[0].road_id == road_id and next_wp[0].section_id == section_id and next_wp[0].lane_id == lane_id:
+                    path.append(next_wp[0])
+                    next_wp = next_wp[0].next(hop_resolution)
+                if path:
+                    n2_xyz = (path[-1].transform.location.x,
+                              path[-1].transform.location.y,
+                              path[-1].transform.location.z)
+                    self._graph.add_node(n2, vertex=n2_xyz)
+                    self._graph.add_edge(
+                        n1, n2,
+                        length=len(path) + 1, path=path,
+                        entry_waypoint=end_wp, exit_waypoint=path[-1],
+                        entry_vector=None, exit_vector=None, net_vector=None,
+                        intersection=end_wp.is_junction, type=RoadOption.LANEFOLLOW)
+
+    def _localize(self, location):
+        &#34;&#34;&#34;
+        This function finds the road segment closest to given location
+        location        :   carla.Location to be localized in the graph
+        return          :   pair node ids representing an edge in the graph
+        &#34;&#34;&#34;
+        waypoint = self._dao.get_waypoint(location)
+        edge = None
+        try:
+            edge = self._road_id_to_edge[waypoint.road_id][waypoint.section_id][waypoint.lane_id]
+        except KeyError:
+            print(
+                &#34;Failed to localize! : &#34;,
+                &#34;Road id : &#34;, waypoint.road_id,
+                &#34;Section id : &#34;, waypoint.section_id,
+                &#34;Lane id : &#34;, waypoint.lane_id,
+                &#34;Location : &#34;, waypoint.transform.location.x,
+                waypoint.transform.location.y)
+        return edge
+
+    def _lane_change_link(self):
+        &#34;&#34;&#34;
+        This method places zero cost links in the topology graph
+        representing availability of lane changes.
+        &#34;&#34;&#34;
+
+        for segment in self._topology:
+            left_found, right_found = False, False
+
+            for waypoint in segment[&#39;path&#39;]:
+                if not segment[&#39;entry&#39;].is_junction:
+                    next_waypoint, next_road_option, next_segment = None, None, None
+
+                    if waypoint.right_lane_marking.lane_change &amp; carla.LaneChange.Right and not right_found:
+                        next_waypoint = waypoint.get_right_lane()
+                        if next_waypoint is not None and next_waypoint.lane_type == carla.LaneType.Driving and waypoint.road_id == next_waypoint.road_id:
+                            next_road_option = RoadOption.CHANGELANERIGHT
+                            next_segment = self._localize(next_waypoint.transform.location)
+                            if next_segment is not None:
+                                self._graph.add_edge(
+                                    self._id_map[segment[&#39;entryxyz&#39;]], next_segment[0], entry_waypoint=waypoint,
+                                    exit_waypoint=next_waypoint, intersection=False, exit_vector=None,
+                                    path=[], length=0, type=next_road_option, change_waypoint=next_waypoint)
+                                right_found = True
+                    if waypoint.left_lane_marking.lane_change &amp; carla.LaneChange.Left and not left_found:
+                        next_waypoint = waypoint.get_left_lane()
+                        if next_waypoint is not None and next_waypoint.lane_type == carla.LaneType.Driving and waypoint.road_id == next_waypoint.road_id:
+                            next_road_option = RoadOption.CHANGELANELEFT
+                            next_segment = self._localize(next_waypoint.transform.location)
+                            if next_segment is not None:
+                                self._graph.add_edge(
+                                    self._id_map[segment[&#39;entryxyz&#39;]], next_segment[0], entry_waypoint=waypoint,
+                                    exit_waypoint=next_waypoint, intersection=False, exit_vector=None,
+                                    path=[], length=0, type=next_road_option, change_waypoint=next_waypoint)
+                                left_found = True
+                if left_found and right_found:
+                    break
+
+    def _distance_heuristic(self, n1, n2):
+        &#34;&#34;&#34;
+        Distance heuristic calculator for path searching
+        in self._graph
+        &#34;&#34;&#34;
+        l1 = np.array(self._graph.nodes[n1][&#39;vertex&#39;])
+        l2 = np.array(self._graph.nodes[n2][&#39;vertex&#39;])
+        return np.linalg.norm(l1-l2)
+
+    def _path_search(self, origin, destination):
+        &#34;&#34;&#34;
+        This function finds the shortest path connecting origin and destination
+        using A* search with distance heuristic.
+        origin      :   carla.Location object of start position
+        destination :   carla.Location object of of end position
+        return      :   path as list of node ids (as int) of the graph self._graph
+        connecting origin and destination
+        &#34;&#34;&#34;
+
+        start, end = self._localize(origin), self._localize(destination)
+
+        route = nx.astar_path(
+            self._graph, source=start[0], target=end[0],
+            heuristic=self._distance_heuristic, weight=&#39;length&#39;)
+        route.append(end[1])
+        return route
+
+    def _successive_last_intersection_edge(self, index, route):
+        &#34;&#34;&#34;
+        This method returns the last successive intersection edge
+        from a starting index on the route.
+        This helps moving past tiny intersection edges to calculate
+        proper turn decisions.
+        &#34;&#34;&#34;
+
+        last_intersection_edge = None
+        last_node = None
+        for node1, node2 in [(route[i], route[i+1]) for i in range(index, len(route)-1)]:
+            candidate_edge = self._graph.edges[node1, node2]
+            if node1 == route[index]:
+                last_intersection_edge = candidate_edge
+            if candidate_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and candidate_edge[&#39;intersection&#39;]:
+                last_intersection_edge = candidate_edge
+                last_node = node2
+            else:
+                break
+
+        return last_node, last_intersection_edge
+
+    def _turn_decision(self, index, route, threshold=math.radians(35)):
+        &#34;&#34;&#34;
+        This method returns the turn decision (RoadOption) for pair of edges
+        around current index of route list
+        &#34;&#34;&#34;
+
+        decision = None
+        previous_node = route[index-1]
+        current_node = route[index]
+        next_node = route[index+1]
+        next_edge = self._graph.edges[current_node, next_node]
+        if index &gt; 0:
+            if self._previous_decision != RoadOption.VOID and self._intersection_end_node &gt; 0 and self._intersection_end_node != previous_node and next_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and next_edge[&#39;intersection&#39;]:
+                decision = self._previous_decision
+            else:
+                self._intersection_end_node = -1
+                current_edge = self._graph.edges[previous_node, current_node]
+                calculate_turn = current_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and not current_edge[
+                    &#39;intersection&#39;] and next_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and next_edge[&#39;intersection&#39;]
+                if calculate_turn:
+                    last_node, tail_edge = self._successive_last_intersection_edge(index, route)
+                    self._intersection_end_node = last_node
+                    if tail_edge is not None:
+                        next_edge = tail_edge
+                    cv, nv = current_edge[&#39;exit_vector&#39;], next_edge[&#39;exit_vector&#39;]
+                    if cv is None or nv is None:
+                        return next_edge[&#39;type&#39;]
+                    cross_list = []
+                    for neighbor in self._graph.successors(current_node):
+                        select_edge = self._graph.edges[current_node, neighbor]
+                        if select_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW:
+                            if neighbor != route[index+1]:
+                                sv = select_edge[&#39;net_vector&#39;]
+                                cross_list.append(np.cross(cv, sv)[2])
+                    next_cross = np.cross(cv, nv)[2]
+                    deviation = math.acos(np.clip(
+                        np.dot(cv, nv)/(np.linalg.norm(cv)*np.linalg.norm(nv)), -1.0, 1.0))
+                    if not cross_list:
+                        cross_list.append(0)
+                    if deviation &lt; threshold:
+                        decision = RoadOption.STRAIGHT
+                    elif cross_list and next_cross &lt; min(cross_list):
+                        decision = RoadOption.LEFT
+                    elif cross_list and next_cross &gt; max(cross_list):
+                        decision = RoadOption.RIGHT
+                    elif next_cross &lt; 0:
+                        decision = RoadOption.LEFT
+                    elif next_cross &gt; 0:
+                        decision = RoadOption.RIGHT
+                else:
+                    decision = next_edge[&#39;type&#39;]
+
+        else:
+            decision = next_edge[&#39;type&#39;]
+
+        self._previous_decision = decision
+        return decision
+
+    def abstract_route_plan(self, origin, destination):
+        &#34;&#34;&#34;
+        The following function generates the route plan based on
+        origin      : carla.Location object of the route&#39;s start position
+        destination : carla.Location object of the route&#39;s end position
+        return      : list of turn by turn navigation decisions as
+        agents.navigation.local_planner.RoadOption elements
+        Possible values are STRAIGHT, LEFT, RIGHT, LANEFOLLOW, VOID
+        CHANGELANELEFT, CHANGELANERIGHT
+        &#34;&#34;&#34;
+
+        route = self._path_search(origin, destination)
+        plan = []
+
+        for i in range(len(route) - 1):
+            road_option = self._turn_decision(i, route)
+            plan.append(road_option)
+
+        return plan
+
+    def _find_closest_in_list(self, current_waypoint, waypoint_list):
+        min_distance = float(&#39;inf&#39;)
+        closest_index = -1
+        for i, waypoint in enumerate(waypoint_list):
+            distance = waypoint.transform.location.distance(
+                current_waypoint.transform.location)
+            if distance &lt; min_distance:
+                min_distance = distance
+                closest_index = i
+
+        return closest_index
+
+    def trace_route(self, origin, destination):
+        &#34;&#34;&#34;
+        This method returns list of (carla.Waypoint, RoadOption)
+        from origin to destination
+        &#34;&#34;&#34;
+
+        route_trace = []
+        route = self._path_search(origin, destination)
+        current_waypoint = self._dao.get_waypoint(origin)
+        destination_waypoint = self._dao.get_waypoint(destination)
+        resolution = self._dao.get_resolution()
+
+        for i in range(len(route) - 1):
+            road_option = self._turn_decision(i, route)
+            edge = self._graph.edges[route[i], route[i+1]]
+            path = []
+
+            if edge[&#39;type&#39;] != RoadOption.LANEFOLLOW and edge[&#39;type&#39;] != RoadOption.VOID:
+                route_trace.append((current_waypoint, road_option))
+                exit_wp = edge[&#39;exit_waypoint&#39;]
+                n1, n2 = self._road_id_to_edge[exit_wp.road_id][exit_wp.section_id][exit_wp.lane_id]
+                next_edge = self._graph.edges[n1, n2]
+                if next_edge[&#39;path&#39;]:
+                    closest_index = self._find_closest_in_list(current_waypoint, next_edge[&#39;path&#39;])
+                    closest_index = min(len(next_edge[&#39;path&#39;])-1, closest_index+5)
+                    current_waypoint = next_edge[&#39;path&#39;][closest_index]
+                else:
+                    current_waypoint = next_edge[&#39;exit_waypoint&#39;]
+                route_trace.append((current_waypoint, road_option))
+
+            else:
+                path = path + [edge[&#39;entry_waypoint&#39;]] + edge[&#39;path&#39;] + [edge[&#39;exit_waypoint&#39;]]
+                closest_index = self._find_closest_in_list(current_waypoint, path)
+                for waypoint in path[closest_index:]:
+                    current_waypoint = waypoint
+                    route_trace.append((current_waypoint, road_option))
+                    if len(route)-i &lt;= 2 and waypoint.transform.location.distance(destination) &lt; 2*resolution:
+                        break
+                    elif len(route)-i &lt;= 2 and current_waypoint.road_id == destination_waypoint.road_id and current_waypoint.section_id == destination_waypoint.section_id and current_waypoint.lane_id == destination_waypoint.lane_id:
+                        destination_index = self._find_closest_in_list(destination_waypoint, path)
+                        if closest_index &gt; destination_index:
+                            break
+
+        return route_trace</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="opencda.core.plan.global_route_planner.GlobalRoutePlanner"><code class="flex name class">
+<span>class <span class="ident">GlobalRoutePlanner</span></span>
+<span>(</span><span>dao)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This class provides a very high level route plan.
+Instantiate the class by passing a reference to
+A GlobalRoutePlannerDAO object.</p>
+<p>Constructor</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class GlobalRoutePlanner(object):
+    &#34;&#34;&#34;
+    This class provides a very high level route plan.
+    Instantiate the class by passing a reference to
+    A GlobalRoutePlannerDAO object.
+    &#34;&#34;&#34;
+
+    def __init__(self, dao):
+        &#34;&#34;&#34;
+        Constructor
+        &#34;&#34;&#34;
+        self._dao = dao
+        self._topology = None
+        self._graph = None
+        self._id_map = None
+        self._road_id_to_edge = None
+        self._intersection_end_node = -1
+        self._previous_decision = RoadOption.VOID
+
+    def setup(self):
+        &#34;&#34;&#34;
+        Performs initial server data lookup for detailed topology
+        and builds graph representation of the world map.
+        &#34;&#34;&#34;
+        self._topology = self._dao.get_topology()
+        self._graph, self._id_map, self._road_id_to_edge = self._build_graph()
+        self._find_loose_ends()
+        self._lane_change_link()
+
+    def _build_graph(self):
+        &#34;&#34;&#34;
+        This function builds a networkx graph representation of topology.
+        The topology is read from self._topology.
+        graph node properties:
+            vertex   -   (x,y,z) position in world map
+        graph edge properties:
+            entry_vector    -   unit vector along tangent at entry point
+            exit_vector     -   unit vector along tangent at exit point
+            net_vector      -   unit vector of the chord from entry to exit
+            intersection    -   boolean indicating if the edge belongs to an
+                                intersection
+        return      :   graph -&gt; networkx graph representing the world map,
+                        id_map-&gt; mapping from (x,y,z) to node id
+                        road_id_to_edge-&gt; map from road id to edge in the graph
+        &#34;&#34;&#34;
+        graph = nx.DiGraph()
+        id_map = dict()  # Map with structure {(x,y,z): id, ... }
+        road_id_to_edge = dict()  # Map with structure {road_id: {lane_id: edge, ... }, ... }
+
+        for segment in self._topology:
+
+            entry_xyz, exit_xyz = segment[&#39;entryxyz&#39;], segment[&#39;exitxyz&#39;]
+            path = segment[&#39;path&#39;]
+            entry_wp, exit_wp = segment[&#39;entry&#39;], segment[&#39;exit&#39;]
+            intersection = entry_wp.is_junction
+            road_id, section_id, lane_id = entry_wp.road_id, entry_wp.section_id, entry_wp.lane_id
+
+            for vertex in entry_xyz, exit_xyz:
+                # Adding unique nodes and populating id_map
+                if vertex not in id_map:
+                    new_id = len(id_map)
+                    id_map[vertex] = new_id
+                    graph.add_node(new_id, vertex=vertex)
+            n1 = id_map[entry_xyz]
+            n2 = id_map[exit_xyz]
+            if road_id not in road_id_to_edge:
+                road_id_to_edge[road_id] = dict()
+            if section_id not in road_id_to_edge[road_id]:
+                road_id_to_edge[road_id][section_id] = dict()
+            road_id_to_edge[road_id][section_id][lane_id] = (n1, n2)
+
+            entry_carla_vector = entry_wp.transform.rotation.get_forward_vector()
+            exit_carla_vector = exit_wp.transform.rotation.get_forward_vector()
+
+            # Adding edge with attributes
+            graph.add_edge(
+                n1, n2,
+                length=len(path) + 1, path=path,
+                entry_waypoint=entry_wp, exit_waypoint=exit_wp,
+                entry_vector=np.array(
+                    [entry_carla_vector.x, entry_carla_vector.y, entry_carla_vector.z]),
+                exit_vector=np.array(
+                    [exit_carla_vector.x, exit_carla_vector.y, exit_carla_vector.z]),
+                net_vector=vector(entry_wp.transform.location, exit_wp.transform.location),
+                intersection=intersection, type=RoadOption.LANEFOLLOW)
+
+        return graph, id_map, road_id_to_edge
+
+    def _find_loose_ends(self):
+        &#34;&#34;&#34;
+        This method finds road segments that have an unconnected end, and
+        adds them to the internal graph representation
+        &#34;&#34;&#34;
+        count_loose_ends = 0
+        hop_resolution = self._dao.get_resolution()
+        for segment in self._topology:
+            end_wp = segment[&#39;exit&#39;]
+            exit_xyz = segment[&#39;exitxyz&#39;]
+            road_id, section_id, lane_id = end_wp.road_id, end_wp.section_id, end_wp.lane_id
+            if road_id in self._road_id_to_edge and section_id in self._road_id_to_edge[road_id] and lane_id in self._road_id_to_edge[road_id][section_id]:
+                pass
+            else:
+                count_loose_ends += 1
+                if road_id not in self._road_id_to_edge:
+                    self._road_id_to_edge[road_id] = dict()
+                if section_id not in self._road_id_to_edge[road_id]:
+                    self._road_id_to_edge[road_id][section_id] = dict()
+                n1 = self._id_map[exit_xyz]
+                n2 = -1*count_loose_ends
+                self._road_id_to_edge[road_id][section_id][lane_id] = (n1, n2)
+                next_wp = end_wp.next(hop_resolution)
+                path = []
+                while next_wp is not None and next_wp and next_wp[0].road_id == road_id and next_wp[0].section_id == section_id and next_wp[0].lane_id == lane_id:
+                    path.append(next_wp[0])
+                    next_wp = next_wp[0].next(hop_resolution)
+                if path:
+                    n2_xyz = (path[-1].transform.location.x,
+                              path[-1].transform.location.y,
+                              path[-1].transform.location.z)
+                    self._graph.add_node(n2, vertex=n2_xyz)
+                    self._graph.add_edge(
+                        n1, n2,
+                        length=len(path) + 1, path=path,
+                        entry_waypoint=end_wp, exit_waypoint=path[-1],
+                        entry_vector=None, exit_vector=None, net_vector=None,
+                        intersection=end_wp.is_junction, type=RoadOption.LANEFOLLOW)
+
+    def _localize(self, location):
+        &#34;&#34;&#34;
+        This function finds the road segment closest to given location
+        location        :   carla.Location to be localized in the graph
+        return          :   pair node ids representing an edge in the graph
+        &#34;&#34;&#34;
+        waypoint = self._dao.get_waypoint(location)
+        edge = None
+        try:
+            edge = self._road_id_to_edge[waypoint.road_id][waypoint.section_id][waypoint.lane_id]
+        except KeyError:
+            print(
+                &#34;Failed to localize! : &#34;,
+                &#34;Road id : &#34;, waypoint.road_id,
+                &#34;Section id : &#34;, waypoint.section_id,
+                &#34;Lane id : &#34;, waypoint.lane_id,
+                &#34;Location : &#34;, waypoint.transform.location.x,
+                waypoint.transform.location.y)
+        return edge
+
+    def _lane_change_link(self):
+        &#34;&#34;&#34;
+        This method places zero cost links in the topology graph
+        representing availability of lane changes.
+        &#34;&#34;&#34;
+
+        for segment in self._topology:
+            left_found, right_found = False, False
+
+            for waypoint in segment[&#39;path&#39;]:
+                if not segment[&#39;entry&#39;].is_junction:
+                    next_waypoint, next_road_option, next_segment = None, None, None
+
+                    if waypoint.right_lane_marking.lane_change &amp; carla.LaneChange.Right and not right_found:
+                        next_waypoint = waypoint.get_right_lane()
+                        if next_waypoint is not None and next_waypoint.lane_type == carla.LaneType.Driving and waypoint.road_id == next_waypoint.road_id:
+                            next_road_option = RoadOption.CHANGELANERIGHT
+                            next_segment = self._localize(next_waypoint.transform.location)
+                            if next_segment is not None:
+                                self._graph.add_edge(
+                                    self._id_map[segment[&#39;entryxyz&#39;]], next_segment[0], entry_waypoint=waypoint,
+                                    exit_waypoint=next_waypoint, intersection=False, exit_vector=None,
+                                    path=[], length=0, type=next_road_option, change_waypoint=next_waypoint)
+                                right_found = True
+                    if waypoint.left_lane_marking.lane_change &amp; carla.LaneChange.Left and not left_found:
+                        next_waypoint = waypoint.get_left_lane()
+                        if next_waypoint is not None and next_waypoint.lane_type == carla.LaneType.Driving and waypoint.road_id == next_waypoint.road_id:
+                            next_road_option = RoadOption.CHANGELANELEFT
+                            next_segment = self._localize(next_waypoint.transform.location)
+                            if next_segment is not None:
+                                self._graph.add_edge(
+                                    self._id_map[segment[&#39;entryxyz&#39;]], next_segment[0], entry_waypoint=waypoint,
+                                    exit_waypoint=next_waypoint, intersection=False, exit_vector=None,
+                                    path=[], length=0, type=next_road_option, change_waypoint=next_waypoint)
+                                left_found = True
+                if left_found and right_found:
+                    break
+
+    def _distance_heuristic(self, n1, n2):
+        &#34;&#34;&#34;
+        Distance heuristic calculator for path searching
+        in self._graph
+        &#34;&#34;&#34;
+        l1 = np.array(self._graph.nodes[n1][&#39;vertex&#39;])
+        l2 = np.array(self._graph.nodes[n2][&#39;vertex&#39;])
+        return np.linalg.norm(l1-l2)
+
+    def _path_search(self, origin, destination):
+        &#34;&#34;&#34;
+        This function finds the shortest path connecting origin and destination
+        using A* search with distance heuristic.
+        origin      :   carla.Location object of start position
+        destination :   carla.Location object of of end position
+        return      :   path as list of node ids (as int) of the graph self._graph
+        connecting origin and destination
+        &#34;&#34;&#34;
+
+        start, end = self._localize(origin), self._localize(destination)
+
+        route = nx.astar_path(
+            self._graph, source=start[0], target=end[0],
+            heuristic=self._distance_heuristic, weight=&#39;length&#39;)
+        route.append(end[1])
+        return route
+
+    def _successive_last_intersection_edge(self, index, route):
+        &#34;&#34;&#34;
+        This method returns the last successive intersection edge
+        from a starting index on the route.
+        This helps moving past tiny intersection edges to calculate
+        proper turn decisions.
+        &#34;&#34;&#34;
+
+        last_intersection_edge = None
+        last_node = None
+        for node1, node2 in [(route[i], route[i+1]) for i in range(index, len(route)-1)]:
+            candidate_edge = self._graph.edges[node1, node2]
+            if node1 == route[index]:
+                last_intersection_edge = candidate_edge
+            if candidate_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and candidate_edge[&#39;intersection&#39;]:
+                last_intersection_edge = candidate_edge
+                last_node = node2
+            else:
+                break
+
+        return last_node, last_intersection_edge
+
+    def _turn_decision(self, index, route, threshold=math.radians(35)):
+        &#34;&#34;&#34;
+        This method returns the turn decision (RoadOption) for pair of edges
+        around current index of route list
+        &#34;&#34;&#34;
+
+        decision = None
+        previous_node = route[index-1]
+        current_node = route[index]
+        next_node = route[index+1]
+        next_edge = self._graph.edges[current_node, next_node]
+        if index &gt; 0:
+            if self._previous_decision != RoadOption.VOID and self._intersection_end_node &gt; 0 and self._intersection_end_node != previous_node and next_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and next_edge[&#39;intersection&#39;]:
+                decision = self._previous_decision
+            else:
+                self._intersection_end_node = -1
+                current_edge = self._graph.edges[previous_node, current_node]
+                calculate_turn = current_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and not current_edge[
+                    &#39;intersection&#39;] and next_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW and next_edge[&#39;intersection&#39;]
+                if calculate_turn:
+                    last_node, tail_edge = self._successive_last_intersection_edge(index, route)
+                    self._intersection_end_node = last_node
+                    if tail_edge is not None:
+                        next_edge = tail_edge
+                    cv, nv = current_edge[&#39;exit_vector&#39;], next_edge[&#39;exit_vector&#39;]
+                    if cv is None or nv is None:
+                        return next_edge[&#39;type&#39;]
+                    cross_list = []
+                    for neighbor in self._graph.successors(current_node):
+                        select_edge = self._graph.edges[current_node, neighbor]
+                        if select_edge[&#39;type&#39;] == RoadOption.LANEFOLLOW:
+                            if neighbor != route[index+1]:
+                                sv = select_edge[&#39;net_vector&#39;]
+                                cross_list.append(np.cross(cv, sv)[2])
+                    next_cross = np.cross(cv, nv)[2]
+                    deviation = math.acos(np.clip(
+                        np.dot(cv, nv)/(np.linalg.norm(cv)*np.linalg.norm(nv)), -1.0, 1.0))
+                    if not cross_list:
+                        cross_list.append(0)
+                    if deviation &lt; threshold:
+                        decision = RoadOption.STRAIGHT
+                    elif cross_list and next_cross &lt; min(cross_list):
+                        decision = RoadOption.LEFT
+                    elif cross_list and next_cross &gt; max(cross_list):
+                        decision = RoadOption.RIGHT
+                    elif next_cross &lt; 0:
+                        decision = RoadOption.LEFT
+                    elif next_cross &gt; 0:
+                        decision = RoadOption.RIGHT
+                else:
+                    decision = next_edge[&#39;type&#39;]
+
+        else:
+            decision = next_edge[&#39;type&#39;]
+
+        self._previous_decision = decision
+        return decision
+
+    def abstract_route_plan(self, origin, destination):
+        &#34;&#34;&#34;
+        The following function generates the route plan based on
+        origin      : carla.Location object of the route&#39;s start position
+        destination : carla.Location object of the route&#39;s end position
+        return      : list of turn by turn navigation decisions as
+        agents.navigation.local_planner.RoadOption elements
+        Possible values are STRAIGHT, LEFT, RIGHT, LANEFOLLOW, VOID
+        CHANGELANELEFT, CHANGELANERIGHT
+        &#34;&#34;&#34;
+
+        route = self._path_search(origin, destination)
+        plan = []
+
+        for i in range(len(route) - 1):
+            road_option = self._turn_decision(i, route)
+            plan.append(road_option)
+
+        return plan
+
+    def _find_closest_in_list(self, current_waypoint, waypoint_list):
+        min_distance = float(&#39;inf&#39;)
+        closest_index = -1
+        for i, waypoint in enumerate(waypoint_list):
+            distance = waypoint.transform.location.distance(
+                current_waypoint.transform.location)
+            if distance &lt; min_distance:
+                min_distance = distance
+                closest_index = i
+
+        return closest_index
+
+    def trace_route(self, origin, destination):
+        &#34;&#34;&#34;
+        This method returns list of (carla.Waypoint, RoadOption)
+        from origin to destination
+        &#34;&#34;&#34;
+
+        route_trace = []
+        route = self._path_search(origin, destination)
+        current_waypoint = self._dao.get_waypoint(origin)
+        destination_waypoint = self._dao.get_waypoint(destination)
+        resolution = self._dao.get_resolution()
+
+        for i in range(len(route) - 1):
+            road_option = self._turn_decision(i, route)
+            edge = self._graph.edges[route[i], route[i+1]]
+            path = []
+
+            if edge[&#39;type&#39;] != RoadOption.LANEFOLLOW and edge[&#39;type&#39;] != RoadOption.VOID:
+                route_trace.append((current_waypoint, road_option))
+                exit_wp = edge[&#39;exit_waypoint&#39;]
+                n1, n2 = self._road_id_to_edge[exit_wp.road_id][exit_wp.section_id][exit_wp.lane_id]
+                next_edge = self._graph.edges[n1, n2]
+                if next_edge[&#39;path&#39;]:
+                    closest_index = self._find_closest_in_list(current_waypoint, next_edge[&#39;path&#39;])
+                    closest_index = min(len(next_edge[&#39;path&#39;])-1, closest_index+5)
+                    current_waypoint = next_edge[&#39;path&#39;][closest_index]
+                else:
+                    current_waypoint = next_edge[&#39;exit_waypoint&#39;]
+                route_trace.append((current_waypoint, road_option))
+
+            else:
+                path = path + [edge[&#39;entry_waypoint&#39;]] + edge[&#39;path&#39;] + [edge[&#39;exit_waypoint&#39;]]
+                closest_index = self._find_closest_in_list(current_waypoint, path)
+                for waypoint in path[closest_index:]:
+                    current_waypoint = waypoint
+                    route_trace.append((current_waypoint, road_option))
+                    if len(route)-i &lt;= 2 and waypoint.transform.location.distance(destination) &lt; 2*resolution:
+                        break
+                    elif len(route)-i &lt;= 2 and current_waypoint.road_id == destination_waypoint.road_id and current_waypoint.section_id == destination_waypoint.section_id and current_waypoint.lane_id == destination_waypoint.lane_id:
+                        destination_index = self._find_closest_in_list(destination_waypoint, path)
+                        if closest_index &gt; destination_index:
+                            break
+
+        return route_trace</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="opencda.core.plan.global_route_planner.GlobalRoutePlanner.abstract_route_plan"><code class="name flex">
+<span>def <span class="ident">abstract_route_plan</span></span>(<span>self, origin, destination)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The following function generates the route plan based on
+origin
+: carla.Location object of the route's start position
+destination : carla.Location object of the route's end position
+return
+: list of turn by turn navigation decisions as
+agents.navigation.local_planner.RoadOption elements
+Possible values are STRAIGHT, LEFT, RIGHT, LANEFOLLOW, VOID
+CHANGELANELEFT, CHANGELANERIGHT</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def abstract_route_plan(self, origin, destination):
+    &#34;&#34;&#34;
+    The following function generates the route plan based on
+    origin      : carla.Location object of the route&#39;s start position
+    destination : carla.Location object of the route&#39;s end position
+    return      : list of turn by turn navigation decisions as
+    agents.navigation.local_planner.RoadOption elements
+    Possible values are STRAIGHT, LEFT, RIGHT, LANEFOLLOW, VOID
+    CHANGELANELEFT, CHANGELANERIGHT
+    &#34;&#34;&#34;
+
+    route = self._path_search(origin, destination)
+    plan = []
+
+    for i in range(len(route) - 1):
+        road_option = self._turn_decision(i, route)
+        plan.append(road_option)
+
+    return plan</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.plan.global_route_planner.GlobalRoutePlanner.setup"><code class="name flex">
+<span>def <span class="ident">setup</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Performs initial server data lookup for detailed topology
+and builds graph representation of the world map.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def setup(self):
+    &#34;&#34;&#34;
+    Performs initial server data lookup for detailed topology
+    and builds graph representation of the world map.
+    &#34;&#34;&#34;
+    self._topology = self._dao.get_topology()
+    self._graph, self._id_map, self._road_id_to_edge = self._build_graph()
+    self._find_loose_ends()
+    self._lane_change_link()</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.plan.global_route_planner.GlobalRoutePlanner.trace_route"><code class="name flex">
+<span>def <span class="ident">trace_route</span></span>(<span>self, origin, destination)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This method returns list of (carla.Waypoint, RoadOption)
+from origin to destination</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def trace_route(self, origin, destination):
+    &#34;&#34;&#34;
+    This method returns list of (carla.Waypoint, RoadOption)
+    from origin to destination
+    &#34;&#34;&#34;
+
+    route_trace = []
+    route = self._path_search(origin, destination)
+    current_waypoint = self._dao.get_waypoint(origin)
+    destination_waypoint = self._dao.get_waypoint(destination)
+    resolution = self._dao.get_resolution()
+
+    for i in range(len(route) - 1):
+        road_option = self._turn_decision(i, route)
+        edge = self._graph.edges[route[i], route[i+1]]
+        path = []
+
+        if edge[&#39;type&#39;] != RoadOption.LANEFOLLOW and edge[&#39;type&#39;] != RoadOption.VOID:
+            route_trace.append((current_waypoint, road_option))
+            exit_wp = edge[&#39;exit_waypoint&#39;]
+            n1, n2 = self._road_id_to_edge[exit_wp.road_id][exit_wp.section_id][exit_wp.lane_id]
+            next_edge = self._graph.edges[n1, n2]
+            if next_edge[&#39;path&#39;]:
+                closest_index = self._find_closest_in_list(current_waypoint, next_edge[&#39;path&#39;])
+                closest_index = min(len(next_edge[&#39;path&#39;])-1, closest_index+5)
+                current_waypoint = next_edge[&#39;path&#39;][closest_index]
+            else:
+                current_waypoint = next_edge[&#39;exit_waypoint&#39;]
+            route_trace.append((current_waypoint, road_option))
+
+        else:
+            path = path + [edge[&#39;entry_waypoint&#39;]] + edge[&#39;path&#39;] + [edge[&#39;exit_waypoint&#39;]]
+            closest_index = self._find_closest_in_list(current_waypoint, path)
+            for waypoint in path[closest_index:]:
+                current_waypoint = waypoint
+                route_trace.append((current_waypoint, road_option))
+                if len(route)-i &lt;= 2 and waypoint.transform.location.distance(destination) &lt; 2*resolution:
+                    break
+                elif len(route)-i &lt;= 2 and current_waypoint.road_id == destination_waypoint.road_id and current_waypoint.section_id == destination_waypoint.section_id and current_waypoint.lane_id == destination_waypoint.lane_id:
+                    destination_index = self._find_closest_in_list(destination_waypoint, path)
+                    if closest_index &gt; destination_index:
+                        break
+
+    return route_trace</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="opencda.core.plan" href="index.html">opencda.core.plan</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="opencda.core.plan.global_route_planner.GlobalRoutePlanner" href="#opencda.core.plan.global_route_planner.GlobalRoutePlanner">GlobalRoutePlanner</a></code></h4>
+<ul class="">
+<li><code><a title="opencda.core.plan.global_route_planner.GlobalRoutePlanner.abstract_route_plan" href="#opencda.core.plan.global_route_planner.GlobalRoutePlanner.abstract_route_plan">abstract_route_plan</a></code></li>
+<li><code><a title="opencda.core.plan.global_route_planner.GlobalRoutePlanner.setup" href="#opencda.core.plan.global_route_planner.GlobalRoutePlanner.setup">setup</a></code></li>
+<li><code><a title="opencda.core.plan.global_route_planner.GlobalRoutePlanner.trace_route" href="#opencda.core.plan.global_route_planner.GlobalRoutePlanner.trace_route">trace_route</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

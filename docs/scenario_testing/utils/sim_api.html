@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>opencda.scenario_testing.utils.sim_api API documentation</title>
+<meta name="description" content="Simulation API for create simulation world, vehicle manager and so on" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>opencda.scenario_testing.utils.sim_api</code></h1>
+</header>
+<section id="section-intro">
+<p>Simulation API for create simulation world, vehicle manager and so on</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+&#34;&#34;&#34;
+Simulation API for create simulation world, vehicle manager and so on
+&#34;&#34;&#34;
+# Author: Runsheng Xu &lt;rxx3386@ucla.edu&gt;
+# License: MIT
+import sys
+
+import carla
+
+from opencda.core.common.vehicle_manager import VehicleManager
+from opencda.core.application.platooning.platooning_manager import PlatooningManager
+from opencda.core.common.cav_world import CavWorld
+from opencda.scenario_testing.utils.customized_map_api import load_customized_world, bcolors
+
+
+def createSimulationWorld(simulation_config, xodr_path=None, town=None):
+    &#34;&#34;&#34;
+    Create client and simulation world
+    :param simulation_config: configuration dictionary for simulation
+    :param xodr_path: optional, used only when customized map needed
+    :param town: default town name if not using customized map, eg. &#39;Town06&#39;
+    :return: client, simulation world, origin setting
+    &#34;&#34;&#34;
+
+    client = carla.Client(&#39;localhost&#39;, simulation_config[&#39;client_port&#39;])
+    client.set_timeout(10.0)
+
+    if xodr_path:
+        world = load_customized_world(xodr_path, client)
+    elif town:
+        try:
+            world = client.load_world(town)
+        except RuntimeError:
+            print(f&#34;{bcolors.FAIL} %s is not found in your CARLA repo! Please r&#34;
+                  f&#34;download all town maps to your CARLA repo!{bcolors.ENDC}&#34; % town)
+    else:
+        world = client.get_world()
+
+    if not world:
+        sys.exit(&#39;World loading failed&#39;)
+
+    origin_settings = world.get_settings()
+    new_settings = world.get_settings()
+
+    if simulation_config[&#39;sync_mode&#39;]:
+        new_settings.synchronous_mode = True
+        new_settings.fixed_delta_seconds = simulation_config[&#39;fixed_delta_seconds&#39;]
+    else:
+        sys.exit(&#39;ERROR: Current version only supports sync simulation mode, v0.2 will support async mode.&#39;)
+
+    world.apply_settings(new_settings)
+
+    return client, world, world.get_map(), origin_settings
+
+
+def car_blueprint_filter(blueprints):
+    &#34;&#34;&#34;
+    Filter out the uncommon vehicles
+    :return:
+    &#34;&#34;&#34;
+    blueprints = [x for x in blueprints if int(x.get_attribute(&#39;number_of_wheels&#39;)) == 4]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;isetta&#39;)]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;carlacola&#39;)]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;cybertruck&#39;)]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;t2&#39;)]
+
+    blueprints = sorted(blueprints, key=lambda bp: bp.id)
+
+    return blueprints
+
+
+def createTrafficManager(client, world, traffic_config):
+    &#34;&#34;&#34;
+    Create background traffic
+    :param client:
+    :param world:
+    :param traffic_config:
+    :return:
+    &#34;&#34;&#34;
+
+    tm = client.get_trafficmanager()
+
+    tm.set_global_distance_to_leading_vehicle(traffic_config[&#39;global_distance&#39;])
+    tm.set_synchronous_mode(traffic_config[&#39;sync_mode&#39;])
+    tm.set_osm_mode(traffic_config[&#39;set_osm_mode&#39;])
+    tm.global_percentage_speed_difference(traffic_config[&#39;global_speed_perc&#39;])
+
+    bg_list = []
+
+    blueprint_library = world.get_blueprint_library()
+    # todo: traffic model should be random
+    ego_vehicle_bp = blueprint_library.find(&#39;vehicle.lincoln.mkz2017&#39;)
+
+    for i, vehicle_config in enumerate(traffic_config[&#39;vehicle_list&#39;]):
+        spawn_transform = carla.Transform(carla.Location(x=vehicle_config[&#39;spawn_position&#39;][0],
+                                                         y=vehicle_config[&#39;spawn_position&#39;][1],
+                                                         z=vehicle_config[&#39;spawn_position&#39;][2]),
+                                          carla.Rotation(pitch=vehicle_config[&#39;spawn_position&#39;][5],
+                                                         yaw=vehicle_config[&#39;spawn_position&#39;][4],
+                                                         roll=vehicle_config[&#39;spawn_position&#39;][3]))
+        ego_vehicle_bp.set_attribute(&#39;color&#39;, &#39;0, 255, 0&#39;)
+        vehicle = world.spawn_actor(ego_vehicle_bp, spawn_transform)
+        vehicle.set_autopilot(True, 8000)
+
+        if &#39;vehicle_speed_perc&#39; in vehicle_config:
+            tm.vehicle_percentage_speed_difference(vehicle, vehicle_config[&#39;vehicle_speed_perc&#39;])
+        tm.auto_lane_change(vehicle, traffic_config[&#39;auto_lane_change&#39;])
+
+        bg_list.append(vehicle)
+
+    return tm, bg_list
+
+
+def createPlatoonManagers(world, carla_map, scenario_params, apply_ml, map_helper=None):
+    &#34;&#34;&#34;
+    Create Platooning Managers based on given params.
+    Args:
+    world (carla.World): World from CARLA simulator.
+    carla_map (carla.Map): Map obtained from CARLA server.
+    scenario_params (dict): Platoon paramters.
+    apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn required to install if set to true.
+    map_helper (function): Specific function to convert certain parameters to spawn position in certain map.
+
+    Returns:
+        platoon_list list (list)
+        cav_world (carla.World)
+    &#34;&#34;&#34;
+
+    platoon_list = []
+    cav_world = CavWorld(apply_ml)
+
+    # we use lincoln as default choice since our UCLA mobility lab use the same car
+    cav_vehicle_bp = world.get_blueprint_library().find(&#39;vehicle.lincoln.mkz2017&#39;)
+
+    # create platoons
+    for i, platoon in enumerate(scenario_params[&#39;scenario&#39;][&#39;platoon_list&#39;]):
+        platoon_manager = PlatooningManager(platoon, cav_world)
+        for j, cav in enumerate(platoon[&#39;members&#39;]):
+            if &#39;spawn_special&#39; not in cav:
+                spawn_transform = carla.Transform(carla.Location(x=cav[&#39;spawn_position&#39;][0],
+                                                                 y=cav[&#39;spawn_position&#39;][1],
+                                                                 z=cav[&#39;spawn_position&#39;][2]),
+                                                  carla.Rotation(pitch=cav[&#39;spawn_position&#39;][5],
+                                                                 yaw=cav[&#39;spawn_position&#39;][4],
+                                                                 roll=cav[&#39;spawn_position&#39;][3]))
+            else:
+                spawn_transform = map_helper(carla_map, *cav[&#39;spawn_special&#39;])
+
+            cav_vehicle_bp.set_attribute(&#39;color&#39;, &#39;0, 0, 0&#39;)
+            vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
+
+            # create vehicle manager for each cav
+            vehicle_manager = VehicleManager(vehicle, cav, [&#39;platooning&#39;], carla_map, cav_world)
+            # add the vehicle manager to platoon
+            if j == 0:
+                platoon_manager.set_lead(vehicle_manager)
+            else:
+                platoon_manager.add_member(vehicle_manager, leader=False)
+
+        world.tick()
+        destination = carla.Location(x=platoon[&#39;destination&#39;][0],
+                                     y=platoon[&#39;destination&#39;][1],
+                                     z=platoon[&#39;destination&#39;][2])
+
+        platoon_manager.set_destination(destination)
+        platoon_manager.update_member_order()
+        platoon_list.append(platoon_manager)
+
+        return platoon_list, cav_world
+
+
+def createVehicleManager(world, scenario_params, application, cav_world, carla_map, map_helper=None):
+    &#34;&#34;&#34;
+    Create single CAV manager
+    :param world: simulation world
+    :param scenario_params: scenario configuration
+    :param application: the application purpose, a list, eg. [&#39;single&#39;]
+    :param cav_world: object containing all cav info
+    :param carla_map: carla HD Map
+    :param map_helper: A function used for conveniently set the spawn position depending on different maps
+    :return: a list of vehicle managers
+    &#34;&#34;&#34;
+
+    cav_vehicle_bp = world.get_blueprint_library().find(&#39;vehicle.lincoln.mkz2017&#39;)
+    single_cav_list = []
+
+    for i, cav in enumerate(scenario_params[&#39;scenario&#39;][&#39;single_cav_list&#39;]):
+
+        # if the spawn position is a single scalar, we need to use map helper to transfer to spawn transform
+        if &#39;spawn_special&#39; not in cav:
+            spawn_transform = carla.Transform(carla.Location(x=cav[&#39;spawn_position&#39;][0],
+                                                             y=cav[&#39;spawn_position&#39;][1],
+                                                             z=cav[&#39;spawn_position&#39;][2]),
+                                              carla.Rotation(pitch=cav[&#39;spawn_position&#39;][5],
+                                                             yaw=cav[&#39;spawn_position&#39;][4],
+                                                             roll=cav[&#39;spawn_position&#39;][3]))
+        else:
+            spawn_transform = map_helper(carla_map, *cav[&#39;spawn_special&#39;])
+
+        cav_vehicle_bp.set_attribute(&#39;color&#39;, &#39;0, 0, 0&#39;)
+        vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
+
+        # create vehicle manager for each cav
+        vehicle_manager = VehicleManager(vehicle, cav, application, carla_map, cav_world)
+        world.tick()
+
+        vehicle_manager.v2x_manager.set_platoon(None)
+
+        destination = carla.Location(x=cav[&#39;destination&#39;][0],
+                                     y=cav[&#39;destination&#39;][1],
+                                     z=cav[&#39;destination&#39;][2])
+        vehicle_manager.update_info()
+        vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),
+                                        destination,
+                                        clean=True)
+
+        single_cav_list.append(vehicle_manager)
+
+    return single_cav_list
+
+
+def destroyActors(world):
+    &#34;&#34;&#34;
+    Destroy all actors in the world
+    :param world:
+    :return:
+    &#34;&#34;&#34;
+
+    actor_list = world.get_actors()
+    for actor in actor_list:
+        actor.destroy()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="opencda.scenario_testing.utils.sim_api.car_blueprint_filter"><code class="name flex">
+<span>def <span class="ident">car_blueprint_filter</span></span>(<span>blueprints)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filter out the uncommon vehicles
+:return:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def car_blueprint_filter(blueprints):
+    &#34;&#34;&#34;
+    Filter out the uncommon vehicles
+    :return:
+    &#34;&#34;&#34;
+    blueprints = [x for x in blueprints if int(x.get_attribute(&#39;number_of_wheels&#39;)) == 4]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;isetta&#39;)]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;carlacola&#39;)]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;cybertruck&#39;)]
+    blueprints = [x for x in blueprints if not x.id.endswith(&#39;t2&#39;)]
+
+    blueprints = sorted(blueprints, key=lambda bp: bp.id)
+
+    return blueprints</code></pre>
+</details>
+</dd>
+<dt id="opencda.scenario_testing.utils.sim_api.createPlatoonManagers"><code class="name flex">
+<span>def <span class="ident">createPlatoonManagers</span></span>(<span>world, carla_map, scenario_params, apply_ml, map_helper=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create Platooning Managers based on given params.
+Args:
+world (carla.World): World from CARLA simulator.
+carla_map (carla.Map): Map obtained from CARLA server.
+scenario_params (dict): Platoon paramters.
+apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn required to install if set to true.
+map_helper (function): Specific function to convert certain parameters to spawn position in certain map.</p>
+<h2 id="returns">Returns</h2>
+<p>platoon_list list (list)
+cav_world (carla.World)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def createPlatoonManagers(world, carla_map, scenario_params, apply_ml, map_helper=None):
+    &#34;&#34;&#34;
+    Create Platooning Managers based on given params.
+    Args:
+    world (carla.World): World from CARLA simulator.
+    carla_map (carla.Map): Map obtained from CARLA server.
+    scenario_params (dict): Platoon paramters.
+    apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn required to install if set to true.
+    map_helper (function): Specific function to convert certain parameters to spawn position in certain map.
+
+    Returns:
+        platoon_list list (list)
+        cav_world (carla.World)
+    &#34;&#34;&#34;
+
+    platoon_list = []
+    cav_world = CavWorld(apply_ml)
+
+    # we use lincoln as default choice since our UCLA mobility lab use the same car
+    cav_vehicle_bp = world.get_blueprint_library().find(&#39;vehicle.lincoln.mkz2017&#39;)
+
+    # create platoons
+    for i, platoon in enumerate(scenario_params[&#39;scenario&#39;][&#39;platoon_list&#39;]):
+        platoon_manager = PlatooningManager(platoon, cav_world)
+        for j, cav in enumerate(platoon[&#39;members&#39;]):
+            if &#39;spawn_special&#39; not in cav:
+                spawn_transform = carla.Transform(carla.Location(x=cav[&#39;spawn_position&#39;][0],
+                                                                 y=cav[&#39;spawn_position&#39;][1],
+                                                                 z=cav[&#39;spawn_position&#39;][2]),
+                                                  carla.Rotation(pitch=cav[&#39;spawn_position&#39;][5],
+                                                                 yaw=cav[&#39;spawn_position&#39;][4],
+                                                                 roll=cav[&#39;spawn_position&#39;][3]))
+            else:
+                spawn_transform = map_helper(carla_map, *cav[&#39;spawn_special&#39;])
+
+            cav_vehicle_bp.set_attribute(&#39;color&#39;, &#39;0, 0, 0&#39;)
+            vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
+
+            # create vehicle manager for each cav
+            vehicle_manager = VehicleManager(vehicle, cav, [&#39;platooning&#39;], carla_map, cav_world)
+            # add the vehicle manager to platoon
+            if j == 0:
+                platoon_manager.set_lead(vehicle_manager)
+            else:
+                platoon_manager.add_member(vehicle_manager, leader=False)
+
+        world.tick()
+        destination = carla.Location(x=platoon[&#39;destination&#39;][0],
+                                     y=platoon[&#39;destination&#39;][1],
+                                     z=platoon[&#39;destination&#39;][2])
+
+        platoon_manager.set_destination(destination)
+        platoon_manager.update_member_order()
+        platoon_list.append(platoon_manager)
+
+        return platoon_list, cav_world</code></pre>
+</details>
+</dd>
+<dt id="opencda.scenario_testing.utils.sim_api.createSimulationWorld"><code class="name flex">
+<span>def <span class="ident">createSimulationWorld</span></span>(<span>simulation_config, xodr_path=None, town=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create client and simulation world
+:param simulation_config: configuration dictionary for simulation
+:param xodr_path: optional, used only when customized map needed
+:param town: default town name if not using customized map, eg. 'Town06'
+:return: client, simulation world, origin setting</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def createSimulationWorld(simulation_config, xodr_path=None, town=None):
+    &#34;&#34;&#34;
+    Create client and simulation world
+    :param simulation_config: configuration dictionary for simulation
+    :param xodr_path: optional, used only when customized map needed
+    :param town: default town name if not using customized map, eg. &#39;Town06&#39;
+    :return: client, simulation world, origin setting
+    &#34;&#34;&#34;
+
+    client = carla.Client(&#39;localhost&#39;, simulation_config[&#39;client_port&#39;])
+    client.set_timeout(10.0)
+
+    if xodr_path:
+        world = load_customized_world(xodr_path, client)
+    elif town:
+        try:
+            world = client.load_world(town)
+        except RuntimeError:
+            print(f&#34;{bcolors.FAIL} %s is not found in your CARLA repo! Please r&#34;
+                  f&#34;download all town maps to your CARLA repo!{bcolors.ENDC}&#34; % town)
+    else:
+        world = client.get_world()
+
+    if not world:
+        sys.exit(&#39;World loading failed&#39;)
+
+    origin_settings = world.get_settings()
+    new_settings = world.get_settings()
+
+    if simulation_config[&#39;sync_mode&#39;]:
+        new_settings.synchronous_mode = True
+        new_settings.fixed_delta_seconds = simulation_config[&#39;fixed_delta_seconds&#39;]
+    else:
+        sys.exit(&#39;ERROR: Current version only supports sync simulation mode, v0.2 will support async mode.&#39;)
+
+    world.apply_settings(new_settings)
+
+    return client, world, world.get_map(), origin_settings</code></pre>
+</details>
+</dd>
+<dt id="opencda.scenario_testing.utils.sim_api.createTrafficManager"><code class="name flex">
+<span>def <span class="ident">createTrafficManager</span></span>(<span>client, world, traffic_config)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create background traffic
+:param client:
+:param world:
+:param traffic_config:
+:return:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def createTrafficManager(client, world, traffic_config):
+    &#34;&#34;&#34;
+    Create background traffic
+    :param client:
+    :param world:
+    :param traffic_config:
+    :return:
+    &#34;&#34;&#34;
+
+    tm = client.get_trafficmanager()
+
+    tm.set_global_distance_to_leading_vehicle(traffic_config[&#39;global_distance&#39;])
+    tm.set_synchronous_mode(traffic_config[&#39;sync_mode&#39;])
+    tm.set_osm_mode(traffic_config[&#39;set_osm_mode&#39;])
+    tm.global_percentage_speed_difference(traffic_config[&#39;global_speed_perc&#39;])
+
+    bg_list = []
+
+    blueprint_library = world.get_blueprint_library()
+    # todo: traffic model should be random
+    ego_vehicle_bp = blueprint_library.find(&#39;vehicle.lincoln.mkz2017&#39;)
+
+    for i, vehicle_config in enumerate(traffic_config[&#39;vehicle_list&#39;]):
+        spawn_transform = carla.Transform(carla.Location(x=vehicle_config[&#39;spawn_position&#39;][0],
+                                                         y=vehicle_config[&#39;spawn_position&#39;][1],
+                                                         z=vehicle_config[&#39;spawn_position&#39;][2]),
+                                          carla.Rotation(pitch=vehicle_config[&#39;spawn_position&#39;][5],
+                                                         yaw=vehicle_config[&#39;spawn_position&#39;][4],
+                                                         roll=vehicle_config[&#39;spawn_position&#39;][3]))
+        ego_vehicle_bp.set_attribute(&#39;color&#39;, &#39;0, 255, 0&#39;)
+        vehicle = world.spawn_actor(ego_vehicle_bp, spawn_transform)
+        vehicle.set_autopilot(True, 8000)
+
+        if &#39;vehicle_speed_perc&#39; in vehicle_config:
+            tm.vehicle_percentage_speed_difference(vehicle, vehicle_config[&#39;vehicle_speed_perc&#39;])
+        tm.auto_lane_change(vehicle, traffic_config[&#39;auto_lane_change&#39;])
+
+        bg_list.append(vehicle)
+
+    return tm, bg_list</code></pre>
+</details>
+</dd>
+<dt id="opencda.scenario_testing.utils.sim_api.createVehicleManager"><code class="name flex">
+<span>def <span class="ident">createVehicleManager</span></span>(<span>world, scenario_params, application, cav_world, carla_map, map_helper=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create single CAV manager
+:param world: simulation world
+:param scenario_params: scenario configuration
+:param application: the application purpose, a list, eg. ['single']
+:param cav_world: object containing all cav info
+:param carla_map: carla HD Map
+:param map_helper: A function used for conveniently set the spawn position depending on different maps
+:return: a list of vehicle managers</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def createVehicleManager(world, scenario_params, application, cav_world, carla_map, map_helper=None):
+    &#34;&#34;&#34;
+    Create single CAV manager
+    :param world: simulation world
+    :param scenario_params: scenario configuration
+    :param application: the application purpose, a list, eg. [&#39;single&#39;]
+    :param cav_world: object containing all cav info
+    :param carla_map: carla HD Map
+    :param map_helper: A function used for conveniently set the spawn position depending on different maps
+    :return: a list of vehicle managers
+    &#34;&#34;&#34;
+
+    cav_vehicle_bp = world.get_blueprint_library().find(&#39;vehicle.lincoln.mkz2017&#39;)
+    single_cav_list = []
+
+    for i, cav in enumerate(scenario_params[&#39;scenario&#39;][&#39;single_cav_list&#39;]):
+
+        # if the spawn position is a single scalar, we need to use map helper to transfer to spawn transform
+        if &#39;spawn_special&#39; not in cav:
+            spawn_transform = carla.Transform(carla.Location(x=cav[&#39;spawn_position&#39;][0],
+                                                             y=cav[&#39;spawn_position&#39;][1],
+                                                             z=cav[&#39;spawn_position&#39;][2]),
+                                              carla.Rotation(pitch=cav[&#39;spawn_position&#39;][5],
+                                                             yaw=cav[&#39;spawn_position&#39;][4],
+                                                             roll=cav[&#39;spawn_position&#39;][3]))
+        else:
+            spawn_transform = map_helper(carla_map, *cav[&#39;spawn_special&#39;])
+
+        cav_vehicle_bp.set_attribute(&#39;color&#39;, &#39;0, 0, 0&#39;)
+        vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
+
+        # create vehicle manager for each cav
+        vehicle_manager = VehicleManager(vehicle, cav, application, carla_map, cav_world)
+        world.tick()
+
+        vehicle_manager.v2x_manager.set_platoon(None)
+
+        destination = carla.Location(x=cav[&#39;destination&#39;][0],
+                                     y=cav[&#39;destination&#39;][1],
+                                     z=cav[&#39;destination&#39;][2])
+        vehicle_manager.update_info()
+        vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),
+                                        destination,
+                                        clean=True)
+
+        single_cav_list.append(vehicle_manager)
+
+    return single_cav_list</code></pre>
+</details>
+</dd>
+<dt id="opencda.scenario_testing.utils.sim_api.destroyActors"><code class="name flex">
+<span>def <span class="ident">destroyActors</span></span>(<span>world)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Destroy all actors in the world
+:param world:
+:return:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def destroyActors(world):
+    &#34;&#34;&#34;
+    Destroy all actors in the world
+    :param world:
+    :return:
+    &#34;&#34;&#34;
+
+    actor_list = world.get_actors()
+    for actor in actor_list:
+        actor.destroy()</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="opencda.scenario_testing.utils" href="index.html">opencda.scenario_testing.utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="opencda.scenario_testing.utils.sim_api.car_blueprint_filter" href="#opencda.scenario_testing.utils.sim_api.car_blueprint_filter">car_blueprint_filter</a></code></li>
+<li><code><a title="opencda.scenario_testing.utils.sim_api.createPlatoonManagers" href="#opencda.scenario_testing.utils.sim_api.createPlatoonManagers">createPlatoonManagers</a></code></li>
+<li><code><a title="opencda.scenario_testing.utils.sim_api.createSimulationWorld" href="#opencda.scenario_testing.utils.sim_api.createSimulationWorld">createSimulationWorld</a></code></li>
+<li><code><a title="opencda.scenario_testing.utils.sim_api.createTrafficManager" href="#opencda.scenario_testing.utils.sim_api.createTrafficManager">createTrafficManager</a></code></li>
+<li><code><a title="opencda.scenario_testing.utils.sim_api.createVehicleManager" href="#opencda.scenario_testing.utils.sim_api.createVehicleManager">createVehicleManager</a></code></li>
+<li><code><a title="opencda.scenario_testing.utils.sim_api.destroyActors" href="#opencda.scenario_testing.utils.sim_api.destroyActors">destroyActors</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

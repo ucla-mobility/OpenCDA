@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>opencda.core.sensing.perception.perception_manager API documentation</title>
+<meta name="description" content="Perception module" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>opencda.core.sensing.perception.perception_manager</code></h1>
+</header>
+<section id="section-intro">
+<p>Perception module</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+&#34;&#34;&#34;
+Perception module
+&#34;&#34;&#34;
+
+# Author: Runsheng Xu &lt;rxx3386@ucla.edu&gt;
+# License: MIT
+
+import weakref
+import sys
+import time
+
+import carla
+import cv2
+import numpy as np
+import open3d as o3d
+
+import opencda.core.sensing.perception.sensor_transformation as st
+from opencda.core.common.misc import cal_distance_angle, get_speed
+from opencda.core.sensing.perception.obstacle_vehicle import ObstacleVehicle
+from opencda.core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, \
+    o3d_pointcloud_encode, o3d_visualizer_show, o3d_camera_lidar_fusion
+
+
+class CameraSensor(object):
+    &#34;&#34;&#34;
+    Class for rgb camera.
+    &#34;&#34;&#34;
+
+    def __init__(self, vehicle, position=&#39;front&#39;):
+        &#34;&#34;&#34;
+        Construct class.
+        Args:
+            vehicle (carla.Vehicle): Carla actor.
+            position (string): the camera mounted position, only front, left and right supported.
+        &#34;&#34;&#34;
+        world = vehicle.get_world()
+        blueprint = world.get_blueprint_library().find(&#39;sensor.camera.rgb&#39;)
+        blueprint.set_attribute(&#39;fov&#39;, &#39;100&#39;)
+
+        if position == &#39;front&#39;:
+            spawn_point = carla.Transform(carla.Location(x=2.5, y=0.0, z=1.0),
+                                          carla.Rotation(pitch=0, roll=0, yaw=0))
+        elif position == &#39;right&#39;:
+            spawn_point = carla.Transform(carla.Location(x=0.0, y=0.3, z=1.8),
+                                          carla.Rotation(pitch=0, roll=0, yaw=100))
+        else:
+            spawn_point = carla.Transform(carla.Location(x=0.0, y=-0.3, z=1.8),
+                                          carla.Rotation(pitch=0, roll=0, yaw=-100))
+
+        self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+
+        self.image = None
+        self.timstamp = None
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: CameraSensor._on_rgb_image_event(weak_self, event))
+
+        # camera attributes
+        self.image_width = int(self.sensor.attributes[&#39;image_size_x&#39;])
+        self.image_height = int(self.sensor.attributes[&#39;image_size_y&#39;])
+
+    @staticmethod
+    def _on_rgb_image_event(weak_self, event):
+        &#34;&#34;&#34;CAMERA  method&#34;&#34;&#34;
+        self = weak_self()
+        if not self:
+            return
+        image = np.array(event.raw_data)
+        image = image.reshape((self.image_height, self.image_width, 4))
+        # we need to remove the alpha channel
+        image = image[:, :, :3]
+
+        self.image = image
+        self.timestamp = event.timestamp
+
+
+class LidarSensor(object):
+    &#34;&#34;&#34;
+    Lidar sensor manager.
+    &#34;&#34;&#34;
+
+    def __init__(self, vehicle, config_yaml):
+        &#34;&#34;&#34;
+        Construct class.
+        Args:
+            vehicle (carla.Vehicle): The attached vehicle.
+            config_yaml (dict): Configuration for lidar.
+        &#34;&#34;&#34;
+        world = vehicle.get_world()
+        blueprint = world.get_blueprint_library().find(&#39;sensor.lidar.ray_cast&#39;)
+
+        # set attribute based on the configuration
+        blueprint.set_attribute(&#39;upper_fov&#39;, str(config_yaml[&#39;upper_fov&#39;]))
+        blueprint.set_attribute(&#39;lower_fov&#39;, str(config_yaml[&#39;lower_fov&#39;]))
+        blueprint.set_attribute(&#39;channels&#39;, str(config_yaml[&#39;channels&#39;]))
+        blueprint.set_attribute(&#39;range&#39;, str(config_yaml[&#39;range&#39;]))
+        blueprint.set_attribute(&#39;points_per_second&#39;, str(config_yaml[&#39;points_per_second&#39;]))
+        blueprint.set_attribute(&#39;rotation_frequency&#39;, str(config_yaml[&#39;rotation_frequency&#39;]))
+        blueprint.set_attribute(&#39;dropoff_general_rate&#39;, str(config_yaml[&#39;dropoff_general_rate&#39;]))
+        blueprint.set_attribute(&#39;dropoff_intensity_limit&#39;, str(config_yaml[&#39;dropoff_intensity_limit&#39;]))
+        blueprint.set_attribute(&#39;dropoff_zero_intensity&#39;, str(config_yaml[&#39;dropoff_zero_intensity&#39;]))
+        blueprint.set_attribute(&#39;noise_stddev&#39;, str(config_yaml[&#39;noise_stddev&#39;]))
+
+        # spawn sensor on vehicle
+        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.8))
+        self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+
+        # lidar data
+        self.data = None
+        self.timestamp = None
+        # open3d point cloud object
+        self.o3d_pointcloud = o3d.geometry.PointCloud()
+
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: LidarSensor._on_data_event(weak_self, event))
+
+    @staticmethod
+    def _on_data_event(weak_self, event):
+        &#34;&#34;&#34;CAMERA  method&#34;&#34;&#34;
+        self = weak_self()
+        if not self:
+            return
+
+        # retrieve the raw lidar data and reshape to (N, 4)
+        data = np.copy(np.frombuffer(event.raw_data, dtype=np.dtype(&#39;f4&#39;)))
+        # (x, y, z, intensity)
+        data = np.reshape(data, (int(data.shape[0] / 4), 4))
+
+        self.data = data
+        self.timestamp = event.timestamp
+
+
+class PerceptionManager(object):
+    &#34;&#34;&#34;
+    Perception manager mainly for object detection
+    &#34;&#34;&#34;
+
+    def __init__(self, vehicle, config_yaml, ml_manager):
+        &#34;&#34;&#34;
+        Construct class.
+        Args:
+            vehicle (carla.Actor): The carla vehicle.
+            config_yaml (dict):  The configuration yaml dictionary.
+            ml_manager(MlManager): Machine learning manager from CAV World.
+        &#34;&#34;&#34;
+        self.vehicle = vehicle
+
+        self.activate = config_yaml[&#39;activate&#39;]
+        self.camera_visualize = config_yaml[&#39;camera_visualize&#39;]
+        self.camera_num = min(config_yaml[&#39;camera_num&#39;], 3)
+        self.lidar_visualize = config_yaml[&#39;lidar_visualize&#39;]
+
+        if self.activate and not ml_manager:
+            sys.exit(&#39;If you activate the perception module, then apply_ml must be set to true in&#39;
+                     &#39;the argument parser to load the detection DL model.&#39;)
+        self.ml_manager = ml_manager
+
+        # we only spawn the camera when perception module is activated or camera visualization is needed
+        if self.activate or self.camera_visualize:
+            self.rgb_camera = []
+            mount_position = [&#39;front&#39;, &#39;right&#39;, &#39;left&#39;]
+            for i in range(self.camera_num):
+                self.rgb_camera.append(CameraSensor(vehicle, mount_position[i]))
+
+        else:
+            self.rgb_camera = None
+
+        # we only spawn the camera when perception module is activated or lidar visualization is needed
+        if self.activate or self.lidar_visualize:
+            self.lidar = LidarSensor(vehicle, config_yaml[&#39;lidar&#39;])
+            self.o3d_vis = o3d_visualizer_init(vehicle.id)
+        else:
+            self.lidar = None
+            self.o3d_vis = None
+
+        # count how many steps have been passed
+        self.count = 0
+
+        self.ego_pos = None
+
+    def dist(self, v):
+        &#34;&#34;&#34;
+        A fast method to retrieve the obstable distance the ego vehicle from the server directly.
+        Args:
+            v (carla.vehicle):
+
+        Returns:
+            float: distance
+
+        &#34;&#34;&#34;
+        return v.get_location().distance(self.ego_pos.location)
+
+    def detect(self, ego_pos):
+        &#34;&#34;&#34;
+        Detect surrounding objects. Currently only vehicle detection supported.
+        Args:
+            ego_pos (carla.Transform): Vehicle ego position
+
+        Returns:
+            List of carla.Vehicle or ObstacleVehicle
+        &#34;&#34;&#34;
+        self.ego_pos = ego_pos
+
+        objects = {&#39;vehicles&#39;: []}
+
+        if not self.activate:
+            objects = self.deactivate_mode(objects)
+
+        else:
+            objects = self.activate_mode(objects)
+
+        self.count += 1
+
+        return objects
+
+    def activate_mode(self, objects):
+        &#34;&#34;&#34;
+        Use Yolov5 + Lidar fusion to detect objects.
+        Args:
+            objects(dict): object dictionary
+
+        Returns:
+            objects: dict
+                The updated object dictionary.
+        &#34;&#34;&#34;
+        # retrieve current cameras and lidar data
+        rgb_images = []
+        for rgb_camera in self.rgb_camera:
+            time.sleep(0.001)
+            rgb_images.append(cv2.cvtColor(np.array(rgb_camera.image), cv2.COLOR_BGR2RGB))
+
+        # yolo detection
+        yolo_detection = self.ml_manager.object_detector(rgb_images)
+        # rgb_images for drawing
+        rgb_draw_images = []
+
+        for (i, rgb_camera) in enumerate(self.rgb_camera):
+            # lidar projection
+            rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, rgb_camera.sensor,
+                                                                    self.lidar.data, np.array(rgb_camera.image))
+            rgb_draw_images.append(rgb_image)
+
+            # camera lidar fusion
+            objects = o3d_camera_lidar_fusion(objects, yolo_detection.xyxy[i],
+                                              self.lidar.data, projected_lidar, self.lidar.sensor)
+
+            # calculate the speed. current we retrieve from the server directly.
+            self.speed_retrieve(objects)
+
+        if self.camera_visualize:
+            names = [&#39;front&#39;, &#39;right&#39;, &#39;left&#39;]
+            for (i, rgb_image) in enumerate(rgb_draw_images):
+                if i &gt; self.camera_num or i &gt; self.camera_visualize - 1:
+                    break
+                rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
+                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+                cv2.imshow(&#39;%s camera of actor %d, perception activated&#39; % (names[i], self.vehicle.id), rgb_image)
+            cv2.waitKey(1)
+
+        if self.lidar_visualize:
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+
+        return objects
+
+    def deactivate_mode(self, objects):
+        &#34;&#34;&#34;
+        Obstacle detection under perception deactivation mode.
+        Args:
+            objects(dict): object dictionary
+        Returns:
+
+        &#34;&#34;&#34;
+        world = self.vehicle.get_world()
+
+        vehicle_list = world.get_actors().filter(&#34;*vehicle*&#34;)
+        vehicle_list = [v for v in vehicle_list if self.dist(v) &lt; 50 and
+                        v.id != self.vehicle.id]
+
+        # convert carla.Vehicle to opencda.ObstacleVehicle if lidar visualization is required.
+        if self.lidar:
+            vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
+        objects.update({&#39;vehicles&#39;: vehicle_list})
+
+        if self.camera_visualize:
+            time.sleep(0.001)
+            # we only visualiz the frontal camera
+            rgb_image = np.array(self.rgb_camera[0].image)
+            # draw the ground truth bbx on the camera image
+            rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
+            # resize to make it fittable to the screen
+            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+
+            # show image using cv2
+            cv2.imshow(&#39;front camera of actor %d, perception deactivated&#39; % self.vehicle.id, rgb_image)
+            cv2.waitKey(1)
+
+        if self.lidar_visualize:
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            # render the raw lidar
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+
+        return objects
+
+    def visualize_3d_bbx_front_camera(self, objects, rgb_image):
+        &#34;&#34;&#34;
+        Visualize the 3d bounding box on frontal camera image.
+        Args:
+            objects (dict): a dictionary containing all detected objects.
+            rgb_image (np.ndarray):camera image.
+
+        Returns:
+
+        &#34;&#34;&#34;
+        for v in objects[&#39;vehicles&#39;]:
+            # we only draw the bounding box in the fov of camera
+            _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
+            if angle &lt; 30:
+                bbx_camera = st.get_2d_bb(v, self.rgb_camera[0].sensor, self.rgb_camera[0].sensor.get_transform())
+                cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
+                              (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
+
+        return rgb_image
+
+    def speed_retrieve(self, objects):
+        &#34;&#34;&#34;
+        We don&#39;t implement any obstacle speed calculation algorithm. The speed will be retrieved from
+        the server directly.
+        Args:
+            objects(dict): The dictionary contains the objects.
+
+        Returns:
+
+        &#34;&#34;&#34;
+        if &#39;vehicles&#39; not in objects:
+            return
+
+        world = self.vehicle.get_world()
+        vehicle_list = world.get_actors().filter(&#34;*vehicle*&#34;)
+        vehicle_list = [v for v in vehicle_list if self.dist(v) &lt; 50 and
+                        v.id != self.vehicle.id]
+
+        for v in vehicle_list:
+            loc = v.get_location()
+            for obstacle_vehicle in objects[&#39;vehicles&#39;]:
+                obstacle_speed = get_speed(obstacle_vehicle)
+                if obstacle_speed &gt; 0:
+                    continue
+                obstacle_loc = obstacle_vehicle.get_location()
+                if abs(loc.x - obstacle_loc.x) &lt;= 3.0 and abs(loc.y - obstacle_loc.y) &lt;= 3.0:
+                    obstacle_vehicle.set_velocity(v.get_velocity())
+
+    def destroy(self):
+        &#34;&#34;&#34;
+        Destroy sensors.
+        Returns:
+
+        &#34;&#34;&#34;
+        if self.rgb_camera:
+            for rgb_camera in self.rgb_camera:
+                rgb_camera.sensor.destroy()
+        if self.lidar:
+            self.lidar.sensor.destroy()
+        if self.camera_visualize:
+            cv2.destroyAllWindows()
+        if self.lidar_visualize:
+            self.o3d_vis.destroy_window()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="opencda.core.sensing.perception.perception_manager.CameraSensor"><code class="flex name class">
+<span>class <span class="ident">CameraSensor</span></span>
+<span>(</span><span>vehicle, position='front')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class for rgb camera.</p>
+<p>Construct class.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>vehicle</code></strong> :&ensp;<code>carla.Vehicle</code></dt>
+<dd>Carla actor.</dd>
+<dt><strong><code>position</code></strong> :&ensp;<code>string</code></dt>
+<dd>the camera mounted position, only front, left and right supported.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CameraSensor(object):
+    &#34;&#34;&#34;
+    Class for rgb camera.
+    &#34;&#34;&#34;
+
+    def __init__(self, vehicle, position=&#39;front&#39;):
+        &#34;&#34;&#34;
+        Construct class.
+        Args:
+            vehicle (carla.Vehicle): Carla actor.
+            position (string): the camera mounted position, only front, left and right supported.
+        &#34;&#34;&#34;
+        world = vehicle.get_world()
+        blueprint = world.get_blueprint_library().find(&#39;sensor.camera.rgb&#39;)
+        blueprint.set_attribute(&#39;fov&#39;, &#39;100&#39;)
+
+        if position == &#39;front&#39;:
+            spawn_point = carla.Transform(carla.Location(x=2.5, y=0.0, z=1.0),
+                                          carla.Rotation(pitch=0, roll=0, yaw=0))
+        elif position == &#39;right&#39;:
+            spawn_point = carla.Transform(carla.Location(x=0.0, y=0.3, z=1.8),
+                                          carla.Rotation(pitch=0, roll=0, yaw=100))
+        else:
+            spawn_point = carla.Transform(carla.Location(x=0.0, y=-0.3, z=1.8),
+                                          carla.Rotation(pitch=0, roll=0, yaw=-100))
+
+        self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+
+        self.image = None
+        self.timstamp = None
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: CameraSensor._on_rgb_image_event(weak_self, event))
+
+        # camera attributes
+        self.image_width = int(self.sensor.attributes[&#39;image_size_x&#39;])
+        self.image_height = int(self.sensor.attributes[&#39;image_size_y&#39;])
+
+    @staticmethod
+    def _on_rgb_image_event(weak_self, event):
+        &#34;&#34;&#34;CAMERA  method&#34;&#34;&#34;
+        self = weak_self()
+        if not self:
+            return
+        image = np.array(event.raw_data)
+        image = image.reshape((self.image_height, self.image_width, 4))
+        # we need to remove the alpha channel
+        image = image[:, :, :3]
+
+        self.image = image
+        self.timestamp = event.timestamp</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.LidarSensor"><code class="flex name class">
+<span>class <span class="ident">LidarSensor</span></span>
+<span>(</span><span>vehicle, config_yaml)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Lidar sensor manager.</p>
+<p>Construct class.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>vehicle</code></strong> :&ensp;<code>carla.Vehicle</code></dt>
+<dd>The attached vehicle.</dd>
+<dt><strong><code>config_yaml</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Configuration for lidar.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LidarSensor(object):
+    &#34;&#34;&#34;
+    Lidar sensor manager.
+    &#34;&#34;&#34;
+
+    def __init__(self, vehicle, config_yaml):
+        &#34;&#34;&#34;
+        Construct class.
+        Args:
+            vehicle (carla.Vehicle): The attached vehicle.
+            config_yaml (dict): Configuration for lidar.
+        &#34;&#34;&#34;
+        world = vehicle.get_world()
+        blueprint = world.get_blueprint_library().find(&#39;sensor.lidar.ray_cast&#39;)
+
+        # set attribute based on the configuration
+        blueprint.set_attribute(&#39;upper_fov&#39;, str(config_yaml[&#39;upper_fov&#39;]))
+        blueprint.set_attribute(&#39;lower_fov&#39;, str(config_yaml[&#39;lower_fov&#39;]))
+        blueprint.set_attribute(&#39;channels&#39;, str(config_yaml[&#39;channels&#39;]))
+        blueprint.set_attribute(&#39;range&#39;, str(config_yaml[&#39;range&#39;]))
+        blueprint.set_attribute(&#39;points_per_second&#39;, str(config_yaml[&#39;points_per_second&#39;]))
+        blueprint.set_attribute(&#39;rotation_frequency&#39;, str(config_yaml[&#39;rotation_frequency&#39;]))
+        blueprint.set_attribute(&#39;dropoff_general_rate&#39;, str(config_yaml[&#39;dropoff_general_rate&#39;]))
+        blueprint.set_attribute(&#39;dropoff_intensity_limit&#39;, str(config_yaml[&#39;dropoff_intensity_limit&#39;]))
+        blueprint.set_attribute(&#39;dropoff_zero_intensity&#39;, str(config_yaml[&#39;dropoff_zero_intensity&#39;]))
+        blueprint.set_attribute(&#39;noise_stddev&#39;, str(config_yaml[&#39;noise_stddev&#39;]))
+
+        # spawn sensor on vehicle
+        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.8))
+        self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+
+        # lidar data
+        self.data = None
+        self.timestamp = None
+        # open3d point cloud object
+        self.o3d_pointcloud = o3d.geometry.PointCloud()
+
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: LidarSensor._on_data_event(weak_self, event))
+
+    @staticmethod
+    def _on_data_event(weak_self, event):
+        &#34;&#34;&#34;CAMERA  method&#34;&#34;&#34;
+        self = weak_self()
+        if not self:
+            return
+
+        # retrieve the raw lidar data and reshape to (N, 4)
+        data = np.copy(np.frombuffer(event.raw_data, dtype=np.dtype(&#39;f4&#39;)))
+        # (x, y, z, intensity)
+        data = np.reshape(data, (int(data.shape[0] / 4), 4))
+
+        self.data = data
+        self.timestamp = event.timestamp</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager"><code class="flex name class">
+<span>class <span class="ident">PerceptionManager</span></span>
+<span>(</span><span>vehicle, config_yaml, ml_manager)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Perception manager mainly for object detection</p>
+<p>Construct class.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>vehicle</code></strong> :&ensp;<code>carla.Actor</code></dt>
+<dd>The carla vehicle.</dd>
+<dt><strong><code>config_yaml</code></strong> :&ensp;<code>dict</code></dt>
+<dd>The configuration yaml dictionary.</dd>
+</dl>
+<p>ml_manager(MlManager): Machine learning manager from CAV World.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PerceptionManager(object):
+    &#34;&#34;&#34;
+    Perception manager mainly for object detection
+    &#34;&#34;&#34;
+
+    def __init__(self, vehicle, config_yaml, ml_manager):
+        &#34;&#34;&#34;
+        Construct class.
+        Args:
+            vehicle (carla.Actor): The carla vehicle.
+            config_yaml (dict):  The configuration yaml dictionary.
+            ml_manager(MlManager): Machine learning manager from CAV World.
+        &#34;&#34;&#34;
+        self.vehicle = vehicle
+
+        self.activate = config_yaml[&#39;activate&#39;]
+        self.camera_visualize = config_yaml[&#39;camera_visualize&#39;]
+        self.camera_num = min(config_yaml[&#39;camera_num&#39;], 3)
+        self.lidar_visualize = config_yaml[&#39;lidar_visualize&#39;]
+
+        if self.activate and not ml_manager:
+            sys.exit(&#39;If you activate the perception module, then apply_ml must be set to true in&#39;
+                     &#39;the argument parser to load the detection DL model.&#39;)
+        self.ml_manager = ml_manager
+
+        # we only spawn the camera when perception module is activated or camera visualization is needed
+        if self.activate or self.camera_visualize:
+            self.rgb_camera = []
+            mount_position = [&#39;front&#39;, &#39;right&#39;, &#39;left&#39;]
+            for i in range(self.camera_num):
+                self.rgb_camera.append(CameraSensor(vehicle, mount_position[i]))
+
+        else:
+            self.rgb_camera = None
+
+        # we only spawn the camera when perception module is activated or lidar visualization is needed
+        if self.activate or self.lidar_visualize:
+            self.lidar = LidarSensor(vehicle, config_yaml[&#39;lidar&#39;])
+            self.o3d_vis = o3d_visualizer_init(vehicle.id)
+        else:
+            self.lidar = None
+            self.o3d_vis = None
+
+        # count how many steps have been passed
+        self.count = 0
+
+        self.ego_pos = None
+
+    def dist(self, v):
+        &#34;&#34;&#34;
+        A fast method to retrieve the obstable distance the ego vehicle from the server directly.
+        Args:
+            v (carla.vehicle):
+
+        Returns:
+            float: distance
+
+        &#34;&#34;&#34;
+        return v.get_location().distance(self.ego_pos.location)
+
+    def detect(self, ego_pos):
+        &#34;&#34;&#34;
+        Detect surrounding objects. Currently only vehicle detection supported.
+        Args:
+            ego_pos (carla.Transform): Vehicle ego position
+
+        Returns:
+            List of carla.Vehicle or ObstacleVehicle
+        &#34;&#34;&#34;
+        self.ego_pos = ego_pos
+
+        objects = {&#39;vehicles&#39;: []}
+
+        if not self.activate:
+            objects = self.deactivate_mode(objects)
+
+        else:
+            objects = self.activate_mode(objects)
+
+        self.count += 1
+
+        return objects
+
+    def activate_mode(self, objects):
+        &#34;&#34;&#34;
+        Use Yolov5 + Lidar fusion to detect objects.
+        Args:
+            objects(dict): object dictionary
+
+        Returns:
+            objects: dict
+                The updated object dictionary.
+        &#34;&#34;&#34;
+        # retrieve current cameras and lidar data
+        rgb_images = []
+        for rgb_camera in self.rgb_camera:
+            time.sleep(0.001)
+            rgb_images.append(cv2.cvtColor(np.array(rgb_camera.image), cv2.COLOR_BGR2RGB))
+
+        # yolo detection
+        yolo_detection = self.ml_manager.object_detector(rgb_images)
+        # rgb_images for drawing
+        rgb_draw_images = []
+
+        for (i, rgb_camera) in enumerate(self.rgb_camera):
+            # lidar projection
+            rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, rgb_camera.sensor,
+                                                                    self.lidar.data, np.array(rgb_camera.image))
+            rgb_draw_images.append(rgb_image)
+
+            # camera lidar fusion
+            objects = o3d_camera_lidar_fusion(objects, yolo_detection.xyxy[i],
+                                              self.lidar.data, projected_lidar, self.lidar.sensor)
+
+            # calculate the speed. current we retrieve from the server directly.
+            self.speed_retrieve(objects)
+
+        if self.camera_visualize:
+            names = [&#39;front&#39;, &#39;right&#39;, &#39;left&#39;]
+            for (i, rgb_image) in enumerate(rgb_draw_images):
+                if i &gt; self.camera_num or i &gt; self.camera_visualize - 1:
+                    break
+                rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
+                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+                cv2.imshow(&#39;%s camera of actor %d, perception activated&#39; % (names[i], self.vehicle.id), rgb_image)
+            cv2.waitKey(1)
+
+        if self.lidar_visualize:
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+
+        return objects
+
+    def deactivate_mode(self, objects):
+        &#34;&#34;&#34;
+        Obstacle detection under perception deactivation mode.
+        Args:
+            objects(dict): object dictionary
+        Returns:
+
+        &#34;&#34;&#34;
+        world = self.vehicle.get_world()
+
+        vehicle_list = world.get_actors().filter(&#34;*vehicle*&#34;)
+        vehicle_list = [v for v in vehicle_list if self.dist(v) &lt; 50 and
+                        v.id != self.vehicle.id]
+
+        # convert carla.Vehicle to opencda.ObstacleVehicle if lidar visualization is required.
+        if self.lidar:
+            vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
+        objects.update({&#39;vehicles&#39;: vehicle_list})
+
+        if self.camera_visualize:
+            time.sleep(0.001)
+            # we only visualiz the frontal camera
+            rgb_image = np.array(self.rgb_camera[0].image)
+            # draw the ground truth bbx on the camera image
+            rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
+            # resize to make it fittable to the screen
+            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+
+            # show image using cv2
+            cv2.imshow(&#39;front camera of actor %d, perception deactivated&#39; % self.vehicle.id, rgb_image)
+            cv2.waitKey(1)
+
+        if self.lidar_visualize:
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            # render the raw lidar
+            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+
+        return objects
+
+    def visualize_3d_bbx_front_camera(self, objects, rgb_image):
+        &#34;&#34;&#34;
+        Visualize the 3d bounding box on frontal camera image.
+        Args:
+            objects (dict): a dictionary containing all detected objects.
+            rgb_image (np.ndarray):camera image.
+
+        Returns:
+
+        &#34;&#34;&#34;
+        for v in objects[&#39;vehicles&#39;]:
+            # we only draw the bounding box in the fov of camera
+            _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
+            if angle &lt; 30:
+                bbx_camera = st.get_2d_bb(v, self.rgb_camera[0].sensor, self.rgb_camera[0].sensor.get_transform())
+                cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
+                              (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
+
+        return rgb_image
+
+    def speed_retrieve(self, objects):
+        &#34;&#34;&#34;
+        We don&#39;t implement any obstacle speed calculation algorithm. The speed will be retrieved from
+        the server directly.
+        Args:
+            objects(dict): The dictionary contains the objects.
+
+        Returns:
+
+        &#34;&#34;&#34;
+        if &#39;vehicles&#39; not in objects:
+            return
+
+        world = self.vehicle.get_world()
+        vehicle_list = world.get_actors().filter(&#34;*vehicle*&#34;)
+        vehicle_list = [v for v in vehicle_list if self.dist(v) &lt; 50 and
+                        v.id != self.vehicle.id]
+
+        for v in vehicle_list:
+            loc = v.get_location()
+            for obstacle_vehicle in objects[&#39;vehicles&#39;]:
+                obstacle_speed = get_speed(obstacle_vehicle)
+                if obstacle_speed &gt; 0:
+                    continue
+                obstacle_loc = obstacle_vehicle.get_location()
+                if abs(loc.x - obstacle_loc.x) &lt;= 3.0 and abs(loc.y - obstacle_loc.y) &lt;= 3.0:
+                    obstacle_vehicle.set_velocity(v.get_velocity())
+
+    def destroy(self):
+        &#34;&#34;&#34;
+        Destroy sensors.
+        Returns:
+
+        &#34;&#34;&#34;
+        if self.rgb_camera:
+            for rgb_camera in self.rgb_camera:
+                rgb_camera.sensor.destroy()
+        if self.lidar:
+            self.lidar.sensor.destroy()
+        if self.camera_visualize:
+            cv2.destroyAllWindows()
+        if self.lidar_visualize:
+            self.o3d_vis.destroy_window()</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager.activate_mode"><code class="name flex">
+<span>def <span class="ident">activate_mode</span></span>(<span>self, objects)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Use Yolov5 + Lidar fusion to detect objects.</p>
+<h2 id="args">Args</h2>
+<p>objects(dict): object dictionary</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>objects</code></dt>
+<dd>dict
+The updated object dictionary.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def activate_mode(self, objects):
+    &#34;&#34;&#34;
+    Use Yolov5 + Lidar fusion to detect objects.
+    Args:
+        objects(dict): object dictionary
+
+    Returns:
+        objects: dict
+            The updated object dictionary.
+    &#34;&#34;&#34;
+    # retrieve current cameras and lidar data
+    rgb_images = []
+    for rgb_camera in self.rgb_camera:
+        time.sleep(0.001)
+        rgb_images.append(cv2.cvtColor(np.array(rgb_camera.image), cv2.COLOR_BGR2RGB))
+
+    # yolo detection
+    yolo_detection = self.ml_manager.object_detector(rgb_images)
+    # rgb_images for drawing
+    rgb_draw_images = []
+
+    for (i, rgb_camera) in enumerate(self.rgb_camera):
+        # lidar projection
+        rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, rgb_camera.sensor,
+                                                                self.lidar.data, np.array(rgb_camera.image))
+        rgb_draw_images.append(rgb_image)
+
+        # camera lidar fusion
+        objects = o3d_camera_lidar_fusion(objects, yolo_detection.xyxy[i],
+                                          self.lidar.data, projected_lidar, self.lidar.sensor)
+
+        # calculate the speed. current we retrieve from the server directly.
+        self.speed_retrieve(objects)
+
+    if self.camera_visualize:
+        names = [&#39;front&#39;, &#39;right&#39;, &#39;left&#39;]
+        for (i, rgb_image) in enumerate(rgb_draw_images):
+            if i &gt; self.camera_num or i &gt; self.camera_visualize - 1:
+                break
+            rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
+            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+            cv2.imshow(&#39;%s camera of actor %d, perception activated&#39; % (names[i], self.vehicle.id), rgb_image)
+        cv2.waitKey(1)
+
+    if self.lidar_visualize:
+        o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+        o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+
+    return objects</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager.deactivate_mode"><code class="name flex">
+<span>def <span class="ident">deactivate_mode</span></span>(<span>self, objects)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Obstacle detection under perception deactivation mode.</p>
+<h2 id="args">Args</h2>
+<p>objects(dict): object dictionary
+Returns:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def deactivate_mode(self, objects):
+    &#34;&#34;&#34;
+    Obstacle detection under perception deactivation mode.
+    Args:
+        objects(dict): object dictionary
+    Returns:
+
+    &#34;&#34;&#34;
+    world = self.vehicle.get_world()
+
+    vehicle_list = world.get_actors().filter(&#34;*vehicle*&#34;)
+    vehicle_list = [v for v in vehicle_list if self.dist(v) &lt; 50 and
+                    v.id != self.vehicle.id]
+
+    # convert carla.Vehicle to opencda.ObstacleVehicle if lidar visualization is required.
+    if self.lidar:
+        vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
+    objects.update({&#39;vehicles&#39;: vehicle_list})
+
+    if self.camera_visualize:
+        time.sleep(0.001)
+        # we only visualiz the frontal camera
+        rgb_image = np.array(self.rgb_camera[0].image)
+        # draw the ground truth bbx on the camera image
+        rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
+        # resize to make it fittable to the screen
+        rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+
+        # show image using cv2
+        cv2.imshow(&#39;front camera of actor %d, perception deactivated&#39; % self.vehicle.id, rgb_image)
+        cv2.waitKey(1)
+
+    if self.lidar_visualize:
+        o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+        # render the raw lidar
+        o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+
+    return objects</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager.destroy"><code class="name flex">
+<span>def <span class="ident">destroy</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Destroy sensors.
+Returns:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def destroy(self):
+    &#34;&#34;&#34;
+    Destroy sensors.
+    Returns:
+
+    &#34;&#34;&#34;
+    if self.rgb_camera:
+        for rgb_camera in self.rgb_camera:
+            rgb_camera.sensor.destroy()
+    if self.lidar:
+        self.lidar.sensor.destroy()
+    if self.camera_visualize:
+        cv2.destroyAllWindows()
+    if self.lidar_visualize:
+        self.o3d_vis.destroy_window()</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager.detect"><code class="name flex">
+<span>def <span class="ident">detect</span></span>(<span>self, ego_pos)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Detect surrounding objects. Currently only vehicle detection supported.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>ego_pos</code></strong> :&ensp;<code>carla.Transform</code></dt>
+<dd>Vehicle ego position</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>List of carla.Vehicle or ObstacleVehicle</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def detect(self, ego_pos):
+    &#34;&#34;&#34;
+    Detect surrounding objects. Currently only vehicle detection supported.
+    Args:
+        ego_pos (carla.Transform): Vehicle ego position
+
+    Returns:
+        List of carla.Vehicle or ObstacleVehicle
+    &#34;&#34;&#34;
+    self.ego_pos = ego_pos
+
+    objects = {&#39;vehicles&#39;: []}
+
+    if not self.activate:
+        objects = self.deactivate_mode(objects)
+
+    else:
+        objects = self.activate_mode(objects)
+
+    self.count += 1
+
+    return objects</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager.dist"><code class="name flex">
+<span>def <span class="ident">dist</span></span>(<span>self, v)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A fast method to retrieve the obstable distance the ego vehicle from the server directly.</p>
+<h2 id="args">Args</h2>
+<p>v (carla.vehicle):</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>distance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def dist(self, v):
+    &#34;&#34;&#34;
+    A fast method to retrieve the obstable distance the ego vehicle from the server directly.
+    Args:
+        v (carla.vehicle):
+
+    Returns:
+        float: distance
+
+    &#34;&#34;&#34;
+    return v.get_location().distance(self.ego_pos.location)</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager.speed_retrieve"><code class="name flex">
+<span>def <span class="ident">speed_retrieve</span></span>(<span>self, objects)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>We don't implement any obstacle speed calculation algorithm. The speed will be retrieved from
+the server directly.</p>
+<h2 id="args">Args</h2>
+<p>objects(dict): The dictionary contains the objects.
+Returns:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def speed_retrieve(self, objects):
+    &#34;&#34;&#34;
+    We don&#39;t implement any obstacle speed calculation algorithm. The speed will be retrieved from
+    the server directly.
+    Args:
+        objects(dict): The dictionary contains the objects.
+
+    Returns:
+
+    &#34;&#34;&#34;
+    if &#39;vehicles&#39; not in objects:
+        return
+
+    world = self.vehicle.get_world()
+    vehicle_list = world.get_actors().filter(&#34;*vehicle*&#34;)
+    vehicle_list = [v for v in vehicle_list if self.dist(v) &lt; 50 and
+                    v.id != self.vehicle.id]
+
+    for v in vehicle_list:
+        loc = v.get_location()
+        for obstacle_vehicle in objects[&#39;vehicles&#39;]:
+            obstacle_speed = get_speed(obstacle_vehicle)
+            if obstacle_speed &gt; 0:
+                continue
+            obstacle_loc = obstacle_vehicle.get_location()
+            if abs(loc.x - obstacle_loc.x) &lt;= 3.0 and abs(loc.y - obstacle_loc.y) &lt;= 3.0:
+                obstacle_vehicle.set_velocity(v.get_velocity())</code></pre>
+</details>
+</dd>
+<dt id="opencda.core.sensing.perception.perception_manager.PerceptionManager.visualize_3d_bbx_front_camera"><code class="name flex">
+<span>def <span class="ident">visualize_3d_bbx_front_camera</span></span>(<span>self, objects, rgb_image)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Visualize the 3d bounding box on frontal camera image.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>objects</code></strong> :&ensp;<code>dict</code></dt>
+<dd>a dictionary containing all detected objects.</dd>
+</dl>
+<p>rgb_image (np.ndarray):camera image.
+Returns:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def visualize_3d_bbx_front_camera(self, objects, rgb_image):
+    &#34;&#34;&#34;
+    Visualize the 3d bounding box on frontal camera image.
+    Args:
+        objects (dict): a dictionary containing all detected objects.
+        rgb_image (np.ndarray):camera image.
+
+    Returns:
+
+    &#34;&#34;&#34;
+    for v in objects[&#39;vehicles&#39;]:
+        # we only draw the bounding box in the fov of camera
+        _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
+        if angle &lt; 30:
+            bbx_camera = st.get_2d_bb(v, self.rgb_camera[0].sensor, self.rgb_camera[0].sensor.get_transform())
+            cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
+                          (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
+
+    return rgb_image</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="opencda.core.sensing.perception" href="index.html">opencda.core.sensing.perception</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="opencda.core.sensing.perception.perception_manager.CameraSensor" href="#opencda.core.sensing.perception.perception_manager.CameraSensor">CameraSensor</a></code></h4>
+</li>
+<li>
+<h4><code><a title="opencda.core.sensing.perception.perception_manager.LidarSensor" href="#opencda.core.sensing.perception.perception_manager.LidarSensor">LidarSensor</a></code></h4>
+</li>
+<li>
+<h4><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager">PerceptionManager</a></code></h4>
+<ul class="">
+<li><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager.activate_mode" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager.activate_mode">activate_mode</a></code></li>
+<li><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager.deactivate_mode" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager.deactivate_mode">deactivate_mode</a></code></li>
+<li><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager.destroy" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager.destroy">destroy</a></code></li>
+<li><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager.detect" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager.detect">detect</a></code></li>
+<li><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager.dist" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager.dist">dist</a></code></li>
+<li><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager.speed_retrieve" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager.speed_retrieve">speed_retrieve</a></code></li>
+<li><code><a title="opencda.core.sensing.perception.perception_manager.PerceptionManager.visualize_3d_bbx_front_camera" href="#opencda.core.sensing.perception.perception_manager.PerceptionManager.visualize_3d_bbx_front_camera">visualize_3d_bbx_front_camera</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
