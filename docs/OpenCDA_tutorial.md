@@ -125,3 +125,35 @@ and save the results in `~/OpenCDA/evluation_outputs`
 eval_manager = EvaluationManager(cav_world)
 eval_manager.evaluate()
 ```
+
+### Customize your own algorithms
+Due the high modularity of OpenCDA, you can conveniently replace any default module with your own
+algorithms. It is highly recommended to put your customized module under `opencda/customize/..` and apply
+inheritance to overwrite the default algorithm. <br>
+Here we show an example of customizing localzation module. The default localization selects Kalman Filter
+as the fusing algorim, and we aim to use Extended Kalman Filter to replace it.<br>
+Under `opencda/customize/core/sensing/localization`, create `localization_manager.py` that inherit 
+the origin localization module and overrite the Kalman Filter with Extended Kalman Filter:
+```python
+from opencda.core.sensing.localization.localization_manager import LocalizationManager
+from opencda.customize.core.sensing.localization.extented_kalman_filter import ExtentedKalmanFilter
+
+class CustomizedLocalizationManager(LocalizationManager):
+    def __init__(self, vehicle, config_yaml, carla_map):
+        super(CustomizedLocalizationManager, self).__init__(vehicle, config_yaml, carla_map)
+        self.kf = ExtentedKalmanFilter(self.dt)
+``` 
+
+Then go to `VehicleManager` class, import this customized module and set it as the localizer.
+```python
+from opencda.core.sensing.localization.localization_manager import LocalizationManager
+from opencda.customize.core.sensing.localization.localization_manager import CustomizedLocalizationManager
+
+class VehicleManager(object):
+    def __init__(self, vehicle, config_yaml, application, carla_map, cav_world):
+        # self.localizer = LocalizationManager(vehicle, sensing_config['localization'], carla_map)
+        self.localizer = CustomizedLocalizationManager(vehicle, sensing_config['localization'], carla_map)
+```
+As long as you <strong>keep the input and output format as the origin imlementation</strong>, customization will 
+be a very simple job.
+  

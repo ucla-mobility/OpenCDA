@@ -48,7 +48,7 @@ def run_scenario(opt, config_yaml):
         while True:
             world.tick()
             transform = spectator_vehicle.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=80),
+            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=60),
                                                     carla.Rotation(pitch=-90)))
             for platoon in platoon_list:
                 platoon.update_information()

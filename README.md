@@ -22,12 +22,12 @@ and  <strong>Scenario Manager</strong>.
 Check the [OpenCDA Introduction](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_introduction/) for more details.
 
 ## Get Started
-![teaser](docs/images/platoon_joining_2lanefree.gif)
+![teaser](docs/images/platoon_joining_2lanefree_complete.gif)
 ### Users Guide
 1. [Installation](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_installation)
 1. [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_getstarted)
 1. [Tutorials](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_tutorial/)
-1. [Python API]()
+1. [Python API](https://opencda-documentation.readthedocs.io/en/latest/PythonAPI/)
 
 ### Developer Guide
 We welcome your contributions.
