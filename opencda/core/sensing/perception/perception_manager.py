@@ -289,7 +289,7 @@ class PerceptionManager(object):
             # draw the ground truth bbx on the camera image
             rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
             # resize to make it fittable to the screen
-            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
 
             # show image using cv2
             cv2.imshow('front camera of actor %d, perception deactivated' % self.vehicle.id, rgb_image)
