@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Tools to plot velocity, acceleration, curvation....
+"""Tools to plot velocity, acceleration, and curvation.
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
@@ -12,9 +12,10 @@ import numpy as np
 
 def draw_velocity_profile_single_plot(velocity_list):
     """
-    Draw velocity profiles in a single plot
-    :param velocity_list:
-    :return:
+    Draw velocity profiles in a single plot.
+
+    Args:
+        -velocity_list (list): The vehicle velocity profile saved in a list.
     """
 
     for i, v in enumerate(velocity_list):
@@ -31,9 +32,11 @@ def draw_velocity_profile_single_plot(velocity_list):
 
 def draw_acceleration_profile_single_plot(acceleration):
     """
-    Draw velocity profiles in a single plot
-    :param acceleration:
-    :return:
+    Draw velocity profiles in a single plot.
+
+    Args:
+        -acceleration (list): The vehicle acceleration profile saved in a list.
+    
     """
 
     for i, v in enumerate(acceleration):
@@ -51,8 +54,9 @@ def draw_acceleration_profile_single_plot(acceleration):
 def draw_ttc_profile_single_plot(ttc_list):
     """
     Draw ttc.
-    :param ttc_list: ttc
-    :return:
+    
+    Args:
+        -ttc_list (list): The vehicle time to collision profile saved in a list.
     """
     # this is used to find the merging vehicle position since its inter gap length is always smaller
 
@@ -69,9 +73,11 @@ def draw_ttc_profile_single_plot(ttc_list):
 
 def draw_time_gap_profile_singel_plot(gap_list):
     """
-    Draw inter gap profiles in a single plot
-    :param gap_list: time gap
-    :return:
+    Draw inter gap profiles in a single plot.
+
+    Args:
+        -gap_list (list): The vehicle front time gap profile saved in a list.
+   
     """
 
     for i, v in enumerate(gap_list):
@@ -87,9 +93,10 @@ def draw_time_gap_profile_singel_plot(gap_list):
 
 def draw_dist_gap_profile_singel_plot(gap_list):
     """
-    Draw distance gap profiles in a single plot
-    :param gap_list: time gap
-    :return:
+    Draw distance gap profiles in a single plot.
+
+    Args:
+        -gap_list (list): The vehicle front distance gap profile saved in a list.
     """
     for i, v in enumerate(gap_list):
         x_s = np.arange(len(v)) * 0.05
@@ -102,30 +109,28 @@ def draw_dist_gap_profile_singel_plot(gap_list):
     fig.set_size_inches(11, 5)
 
 
-def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list, ttc_list):
+def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list):
     """
-    This is a specific function that draws 4 in 1 images for trajectory following task
-    :param velocity_list:
-    :param distance_gap_list:
-    :param time_gap_list:
-    :param acceleration_list:
-    :param ttc_list:
-    :return:
+    This is a specific function that draws 4 in 1 images for trajectory following task. 
+
+    Args: 
+        -velocity_list (list): The vehicle velocity profile saved in a list.
+        -distance_gap_list (list): The vehicle distance gap profile saved in a list.
+        -time_gap_list (list): The vehicle time gap profile saved in a list.
+        -acceleration_list (list): The vehicle acceleration profile saved in a list.
+
     """
-    fig = plt.figure()
-    plt.subplot(511)
+    fig = plt.figure(figsize=[2200, 1000])
+    plt.subplot(411)
     draw_velocity_profile_single_plot(velocity_list)
 
-    plt.subplot(512)
+    plt.subplot(412)
     draw_acceleration_profile_single_plot(acceleration_list)
 
-    plt.subplot(513)
+    plt.subplot(413)
     draw_time_gap_profile_singel_plot(time_gap_list)
 
-    plt.subplot(514)
-    draw_dist_gap_profile_singel_plot(distance_gap_list)
-
-    plt.subplot(515)
+    plt.subplot(414)
     draw_dist_gap_profile_singel_plot(distance_gap_list)
 
     label = []
@@ -133,11 +138,23 @@ def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_
         label.append('Leading Vehicle, id: %d' % int(i - 1) if i == 1 else 'Following Vehicle, id: %d' % int(i - 1))
 
     fig.legend(label, loc='upper right')
+    plt.get_current_fig_manager().window.showMaximized()
 
-    return fig
+    plt.show()
+
+
+def dump_data(data):
+    """
+    Dump data to json file.
+
+    Args: 
+        -data (dict): dictionary containing all stats.
+    """
+    with open("platooning.json", "w") as outfile:
+        json.dump(data, outfile)
 
 
 if __name__ == '__main__':
     velocity_list = [[23, 25, 25, 44, 66], [44, 55, 25, 22, 33]]
-    fig = draw_sub_plot(velocity_list, velocity_list, velocity_list, velocity_list, velocity_list)
-    plt.show()
+    ids = [23, 45]
+    draw_sub_plot(velocity_list, velocity_list, velocity_list, velocity_list)

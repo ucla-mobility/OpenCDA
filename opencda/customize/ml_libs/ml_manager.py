@@ -9,30 +9,35 @@ CAVs share the same model to avoid duplicate memory consumption.
 # License: MIT
 
 import cv2
-import numpy as np
 import torch
+
+from opencda.core.sensing.perception.obstacle_vehicle import is_vehicle_cococlass
 
 
 class MLManager(object):
     """
     A class that should contain all the ML models you want to initialize.
+
+    Attributes
+    -object_detector : torch_detector
+        The YoloV5 detector load from pytorch.
+    
     """
     def __init__(self):
-        """
-        Construction class.
-        """
+
         self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
 
     def draw_2d_box(self, result, rgb_image, index):
         """
         Draw 2d bounding box based on the yolo detection.
+
         Args:
-            result (yolo.Result):Detection result from yolo 5.
-            rgb_image (np.ndarray): Camera rgb image.
-            index(int): Indicate the index
+            -result (yolo.Result):Detection result from yolo 5.
+            -rgb_image (np.ndarray): Camera rgb image.
+            -index(int): Indicate the index.
 
         Returns:
-            (np.ndarray): camera image with bbx drawn.
+            -rgb_image (np.ndarray): camera image with bbx drawn.
         """
         # torch.Tensor
         bounding_box = result.xyxy[index]
@@ -58,16 +63,3 @@ class MLManager(object):
 
         return rgb_image
 
-
-def is_vehicle_cococlass(label):
-    """
-    Check whether the label belongs to the vehicle class according to coco dataset.
-    Args:
-        label(int):
-
-    Returns:
-        is_vehicle: bool
-            whether this label belongs to the vehicle class
-    """
-    vehicle_class_array = np.array([2, 3, 4, 6, 8], dtype=np.int)
-    return True if 0 in (label - vehicle_class_array) else False

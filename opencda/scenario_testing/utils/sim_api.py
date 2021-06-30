@@ -16,11 +16,18 @@ from opencda.scenario_testing.utils.customized_map_api import load_customized_wo
 
 def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     """
-    Create client and simulation world
-    :param simulation_config: configuration dictionary for simulation
-    :param xodr_path: optional, used only when customized map needed
-    :param town: default town name if not using customized map, eg. 'Town06'
-    :return: client, simulation world, origin setting
+    Create client and simulation world.
+
+    Args:
+        -simulation_config (dict): configuration dictionary for simulation
+        -xodr_path (string): optional, used only when customized map needed
+        -town (string): default town name if not using customized map, eg. 'Town06'
+    
+    Return: 
+        -client (carla.client): The client that is running the CARLA simulation. 
+        -world (carla.world): The current simulation world.
+        -map (carla.map): The map of the current simulation world.
+        -origin setting (string): The settings of the current simulation world.
     """
 
     client = carla.Client('localhost', simulation_config['client_port'])
@@ -56,8 +63,7 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
 
 def car_blueprint_filter(blueprints):
     """
-    Filter out the uncommon vehicles
-    :return:
+    Exclude the uncommon vehicles from the default CARLA blueprint library (i.e., isetta, carlacola, cybertruck, t2).
     """
     blueprints = [x for x in blueprints if int(x.get_attribute('number_of_wheels')) == 4]
     blueprints = [x for x in blueprints if not x.id.endswith('isetta')]
@@ -72,11 +78,15 @@ def car_blueprint_filter(blueprints):
 
 def createTrafficManager(client, world, traffic_config):
     """
-    Create background traffic
-    :param client:
-    :param world:
-    :param traffic_config:
-    :return:
+    Create background traffic.
+
+    Args:
+        -client (carla.client): The client that is running the CARLA simulation. 
+        -world (carla.world): The current simulation world.
+        -traffic_config (dict): The simulation configuration file.
+    Returns:
+        -tm (carla.trafficmanager): The traffic manager that is controlling the background traffic.
+        -bg_list (list): A list that contains all the background traffic vehicles.
     """
 
     tm = client.get_trafficmanager()
@@ -115,15 +125,17 @@ def createTrafficManager(client, world, traffic_config):
 def createPlatoonManagers(world, carla_map, scenario_params, apply_ml, map_helper=None):
     """
     Create Platooning Managers based on given params.
+
     Args:
-        world (carla.World): World from CARLA simulator.
-        carla_map (carla.Map): Map obtained from CARLA server.
-        scenario_params (dict): Platoon paramters.
-        apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn required to install if set to true.
-        map_helper (function): Specific function to convert certain parameters to spawn position in certain map.
+        -world (carla.World): World from CARLA simulator.
+        -carla_map (carla.Map): Map obtained from CARLA server.
+        -scenario_params (dict): Platoon paramters.
+        -apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn required to install if set to true.
+        -map_helper (function): Specific function to convert certain parameters to spawn position in certain map.
 
     Returns:
-
+	   -platoon_list (list): A list contains all platoon members.
+	   -cav_world (carla.World): The current simulation world.
     """
 
     platoon_list = []
@@ -171,14 +183,17 @@ def createPlatoonManagers(world, carla_map, scenario_params, apply_ml, map_helpe
 
 def createVehicleManager(world, scenario_params, application, cav_world, carla_map, map_helper=None):
     """
-    Create single CAV manager
-    :param world: simulation world
-    :param scenario_params: scenario configuration
-    :param application: the application purpose, a list, eg. ['single']
-    :param cav_world: object containing all cav info
-    :param carla_map: carla HD Map
-    :param map_helper: A function used for conveniently set the spawn position depending on different maps
-    :return: a list of vehicle managers
+    Create single CAV manager.
+    
+    Args:
+        -world (carla.world): simulation world.
+        -scenario_params (dict): scenario configuration.
+        -application (string): the application purpose, a list, eg. ['single'].
+        -cav_world (carla.world): object containing all cav info.
+        -carla_map (carla.map): carla HD Map.
+        -map_helper (opencda.map_helper): A function used for conveniently set the spawn position depending on different maps.
+    Returns: 
+        -single_cav_list (list): A list of vehicle managers.
     """
 
     cav_vehicle_bp = world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
@@ -221,9 +236,7 @@ def createVehicleManager(world, scenario_params, application, cav_world, carla_m
 
 def destroyActors(world):
     """
-    Destroy all actors in the world
-    :param world:
-    :return:
+    Destroy all actors in the world.
     """
 
     actor_list = world.get_actors()

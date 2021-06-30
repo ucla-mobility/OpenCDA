@@ -24,17 +24,73 @@ from opencda.core.plan.planer_debug_helper import PlanDebugHelper
 
 class BehaviorAgent(object):
     """
-    A modulized version of BehaviorAgent
+    A modulized version of carla BehaviorAgent.
+    
+    Parameters
+    -vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+    -carla_map : carla.map
+        The carla HD map for simulation world.
+    -config : dict
+        The configuration dictionary of the localization module.
+    
+    Attributes
+    -_ego_pos : carla.position
+        Posiion of the ego vehicle. 
+    -_ego_speed : float 
+        Speed of the ego vehicle. 
+    -_map : carla.map
+        The HD map of the current simulation world.
+    -max_speed : float
+        The current speed limit of the ego vehicles.
+    -tailgate_speed : float
+        The current speed limit for car-following situation.
+    -speed_lim_dist : float
+        The safety following distance.
+    -speed_decrease : float
+        The maximum decceleration of the ego vehicle.
+    -min_speed : float
+        The minimum speed for the ego vehicle.
+    -safety_time : float
+        The safety time for car following scenario.
+    -emergency_param : float
+        Used to identify whether a emergency stop needed.
+    -break_distance : float
+        The current distance needed for ego vehicle to reach a steady stop.
+    -ttc : float
+        The current time to collision.
+    -_collision_check : collisionchecker
+        A collision check class to estimate the collision with front obstacle.
+    -ignore_traffic_light : boolean
+        Boolean indicator of whether to ignore traffic light.
+    -overtake_allowed : boolean
+        Boolean indicator of whether to allow overtake.
+    -overtake_counter : int
+        A timer to track the time span of the overtake manuver.
+    -hazard_flag : boolean
+        Boolean indicator of whether the vehicle is in a hazard situation (i.e., more likely to collide with nearby obstacles).
+    -light_state : string
+        The traffic light state (i.e., red, yellow, green).
+    -light_id_to_ignore : int 
+        The ID to identify a specific traffic light to ignore.
+    -_local_planner : LocalPlanner
+        A carla local planner class for behavior planning.
+    -car_following_flag : boolean
+        Boolean indicator of whether the vehicle is in car following scenario.
+    -lane_change_allowed : boolean
+        Boolean indicator of whether the lane change is allowed.
+    -destination_push_flag : boolean
+        Boolean indicator to renew the next target.
+    -white_list : list
+        The white list contains all position of target platoon member for joining.
+    -obstacle_vehicles : carla.vehicle
+        The obstacle vehicles that is blocking the ego vehicle.
+    -debug_helper : PlanDebugHelper
+        The helper class that help with the debug functions.
     """
 
     def __init__(self, vehicle, carla_map, config_yaml):
-        """
-        Construct class
-        :param vehicle: carla actor
-        :param config_yaml: a dictionary containing all initialization params
-        provide customized function under customize/controller
-        """
-
+        
         self.vehicle = vehicle
         # ego pos(transform) and speed(km/h) retrieved from localization module
         self._ego_pos = None
@@ -57,9 +113,7 @@ class BehaviorAgent(object):
         self._collision_check = CollisionChecker(time_ahead=config_yaml['collision_time_ahead'])
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
         self.overtake_allowed = config_yaml['overtake_allowed']
-        # if overtake is not allowed at the beginning, then it should never do an overtake
-        self.overtake_allowed_origin = config_yaml['overtake_allowed']
-        self.overtake_counter = 0
+        self.overtake_counter = 0  # TODO: MODIFY THIS LATER
         # used to indicate whether a vehicle is on the planned path
         self.hazard_flag = False
 
@@ -93,10 +147,11 @@ class BehaviorAgent(object):
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information to the behavior agent.
+
         Args:
-            ego_pos (carla.Transform): ego position from localization module.
-            ego_speed (float): km/h, ego speed.
-            objects (dictionary): Objects detection results from perception module.
+            -ego_pos (carla.Transform): ego position from localization module.
+            -ego_speed (float): km/h, ego speed.
+            -objects (dictionary): Objects detection results from perception module.
         """
         # update localization information
         self._ego_speed = ego_speed
@@ -120,12 +175,7 @@ class BehaviorAgent(object):
 
     def add_white_list(self, vm):
         """
-        Add vehicle manager to
-        Args:
-            vm ():
-
-        Returns:
-
+        Add vehicle manager to white list.
         """
         self.white_list.append(vm)
 
@@ -133,11 +183,12 @@ class BehaviorAgent(object):
         """
         Match the detected obstacles with the white list. Remove the obstacles that are in white list.
         The white list contains all position of target platoon member for joining.
+
         Args:
-            obstacles (list):  a list of carla.Vehicle or ObstacleVehicle
+            -obstacles (list):  a list of carla.Vehicle or ObstacleVehicle
 
         Returns:
-            (list): the new list of obstacles.
+            -new_obstacle_list (list): the new list of obstacles.
         """
         new_obstacle_list = []
 
@@ -174,11 +225,12 @@ class BehaviorAgent(object):
         This method creates a list of waypoints from agent's position to destination location
         based on the route returned by the global router.
 
-            :param end_reset: indicates whether the new destination is a temporary destination
-            :param start_location: initial position
-            :param end_location: final position
-            :param clean: boolean to clean the waypoint queue
-            :param clean_history:
+        Args:
+            -end_reset (boolean): Flag to reset the waypoint queue.
+            -start_location (carla.position): initial position.
+            -end_location (carla.position): final position.
+            -clean (boolean): Flag to clean the waypoint queue.
+            -clean_history (boolean): Flag to clean the waypoint history.
         """
         if clean:
             self.get_local_planner().waypoints_queue.clear()
@@ -208,7 +260,8 @@ class BehaviorAgent(object):
         self._local_planner.set_global_plan(route_trace, clean)
 
     def get_local_planner(self):
-        """return the local planner
+        """
+        return the local planner
         """
         return self._local_planner
 
@@ -217,7 +270,8 @@ class BehaviorAgent(object):
         This method implements re-routing for vehicles approaching its destination.
         It finds a new target and computes another path to reach it.
 
-            :param spawn_points: list of possible destinations for the agent
+        Args:
+        -spawn_points (list): list of possible destinations for the agent.
         """
 
         print("Target almost reached, setting new destination...")
@@ -233,8 +287,9 @@ class BehaviorAgent(object):
         This method sets up a global router and returns the
         optimal route from start_waypoint to end_waypoint.
 
-            :param start_waypoint: initial position
-            :param end_waypoint: final position
+        Args:
+            -start_waypoint (carla.waypoint): initial position.
+            -end_waypoint carla.waypoint: final position.
         """
         # Setting up global router
         if self._global_planner is None:
@@ -255,13 +310,13 @@ class BehaviorAgent(object):
     def traffic_light_manager(self, waypoint):
         """
         This method is in charge of behaviors for red lights and stops.
-
         WARNING: What follows is a proxy to avoid having a car brake after running a yellow light.
         This happens because the car is still under the influence of the semaphore,
         even after passing it. So, the semaphore id is temporarely saved to
         ignore it and go around this issue, until the car is near a new one.
 
-            :param waypoint: current waypoint of the agent
+        Args: 
+            -waypoint (carla.waypoint): current waypoint of the agent.
         """
 
         light_id = self.vehicle.get_traffic_light().id if self.vehicle.get_traffic_light() is not None else -1
@@ -277,15 +332,18 @@ class BehaviorAgent(object):
 
     def collision_manager(self, rx, ry, ryaw, waypoint, adjacent_check=False):
         """
-        This module is in charge of warning in case of a collision
-        :param adjacent_check: whether it is a check for adjacent lane
-        :param rx: x coordinates of plan path
-        :param ry: y coordinates of plan path
-        :param ryaw: yaw angle
-        :param waypoint: current waypoint of the agent
-        :return vehicle_state: True if there is a vehicle nearby, False if not
-        :return vehicle: nearby vehicle
-        :return distance: distance to nearby vehicle
+        This module is in charge of warning in case of a collision.
+
+        Args: 
+        -adjacent_check (boolean): whether it is a check for adjacent lane.
+        -rx (float): x coordinates of plan path.
+        -ry (float): y coordinates of plan path.
+        -ryaw (float): yaw angle.
+        -waypoint (carla.waypoint): current waypoint of the agent.
+        -vehicle_state (string): True if there is a vehicle nearby, False if not.
+        -vehicle (carla.vehicle): nearby vehicle.
+        Returns:
+        -distance (float): distance to nearby vehicle.
         """
 
         def dist(v):
@@ -311,8 +369,11 @@ class BehaviorAgent(object):
     def overtake_management(self, obstacle_vehicle):
         """
         Overtake behavior.
-        :param obstacle_vehicle: the vehicle
-        :return:
+
+        Args:
+        -obstacle_vehicle (carla.vehicle): The obstacle vehicle.
+        Return: 
+        -vehicle_state (boolean): Flag indicating whether the vehicle is in dangerous state.
         """
         # obstacle vehicle's location
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
@@ -371,8 +432,9 @@ class BehaviorAgent(object):
     def lane_change_management(self):
         """
         Identify whether a potential hazard exits if operating lane change.
+
         Returns:
-            bool: whether the lane change is dangerous
+            vehicle_state (boolean): whether the lane change is dangerous
         """
         ego_wpt = self._map.get_waypoint(self._ego_pos.location)
         ego_lane_id = ego_wpt.lane_id
@@ -399,11 +461,15 @@ class BehaviorAgent(object):
         """
         Module in charge of car-following behaviors when there's
         someone in front of us.
-
-            :param target_speed:
-            :param vehicle: car to follow
-            :param distance: distance from vehicle
-            :return control: carla.VehicleControl
+        
+        Args:
+            -target_speed (float): The target car following speed.
+            -vehicle (carla.vehicle): Leading vehicle to follow.
+            -distance (float): distance from leading vehicle.
+            -control (carla.VehicleControl): Vehicle control of the next step.
+        Returns: 
+            -target_speed (float): The target speed for the next step.
+            -target_loc (carla.location): The target location for the next step.
         """
         if not target_speed:
             target_speed = self.max_speed - self.speed_lim_dist
@@ -417,24 +483,27 @@ class BehaviorAgent(object):
         if self.safety_time > ttc > 0.0:
             target_speed = min(positive(vehicle_speed - self.speed_decrease),
                                target_speed)
-            # print("vehicle id %d: car following decreasing speed mode, target speed %f"
-            #       % (self.vehicle.id, target_speed))
+            print("vehicle id %d: car following decreasing speed mode, target speed %f"
+                  % (self.vehicle.id, target_speed))
 
         # Actual safety distance area, try to follow the speed of the vehicle in front.
         else:
             target_speed = min(max(self.min_speed, vehicle_speed + 1),
                                target_speed)
-            # print("vehicle id %d: car following keep speed mode, target speed %f"
-            #       % (self.vehicle.id, target_speed))
+            print("vehicle id %d: car following keep speed mode, target speed %f"
+                  % (self.vehicle.id, target_speed))
         return target_speed
 
     def run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True):
         """
         Execute one step of navigation
-        :param collision_detector_enabled: whether to enable collision detection.
-        :param target_speed:  a manual order to achieve certain speed.
-        :param lane_change_allowed: whether lane change is allowed. This is passed from platoon behavior agent.
-        :return: control: carla.VehicleControl
+
+        Args: 
+        -collision_detector_enabled (boolean): whether to enable collision detection.
+        -target_speed (float):  a manual order to achieve certain speed.
+        -lane_change_allowed (boolean): whether lane change is allowed. This is passed from platoon behavior agent.
+        Returns:
+        -control (carla.VehicleControl): Vehicle control of the next step.
         """
         # retrieve ego location
         ego_vehicle_loc = self._ego_pos.location
@@ -460,7 +529,7 @@ class BehaviorAgent(object):
         if len(self.get_local_planner().waypoints_queue) == 0 \
                 and len(self.get_local_planner()._waypoint_buffer) <= 2:
             print('Destination Reset!')
-            self.overtake_allowed = True and self.overtake_allowed_origin
+            self.overtake_allowed = True
             self.destination_push_flag = False
             self.set_destination(ego_vehicle_loc, self.end_waypoint.transform.location, clean=True, clean_history=True)
 
@@ -488,7 +557,7 @@ class BehaviorAgent(object):
                 and not self.destination_push_flag and self.overtake_counter <= 0:
             self.overtake_allowed = False
             reset_target = ego_vehicle_wp.next(self._ego_speed / 3.6 * 3)[0]
-            print('Vehicle id: %d :destination pushed forward because of potential collision' % self.vehicle.id)
+            print('destination pushed forward because of potential collision')
 
             self.destination_push_flag = True
             self.set_destination(ego_vehicle_loc, reset_target.transform.location, clean=True,

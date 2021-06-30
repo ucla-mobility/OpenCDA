@@ -11,18 +11,17 @@ from opencda.customize.core.sensing.localization.extented_kalman_filter import E
 
 class CustomizedLocalizationManager(LocalizationManager):
     """Customized Localization module to replace the default module.
+
     Parameters
-    ----------
-    vehicle : carla.Vehicle
+    -vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
-    config_yaml: dict
+    -config_yaml: dict
         The configuration dictionary of the localization module.
-    carla_map: carla.Map
-        The carla HDMap. We need this to find the map origin to
-        convert wg84 to enu coordinate system.
+    -carla_map: carla.Map
+        The carla HDMap. We need this to find the map origin to convert wg84 to enu coordinate system.
+    
     Attributes
-    ----------
-    kf : opencda Object
+    -kf : opencda Object
         The filter used to fuse different sensors.
     """
 

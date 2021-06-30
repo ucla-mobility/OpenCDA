@@ -13,24 +13,39 @@ from opencda.core.common.v2x_manager import V2XManager
 from opencda.core.sensing.localization.localization_manager import LocalizationManager
 from opencda.core.sensing.perception.perception_manager import PerceptionManager
 from opencda.core.plan.behavior_agent import BehaviorAgent
-# customize moudles import here
-from opencda.customize.core.sensing.localization.localization_manager import CustomizedLocalizationManager
 
 
 class VehicleManager(object):
     """
-    A class manager to embed different modules with vehicle together
+    A class manager to embed different modules with vehicle together.
+
+    Parameters
+    -vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+    -config : dict
+        The configuration dictionary of the localization module.
+    -application : list
+        The application category, currently support:['single','platoon'].
+    -carla_map : carla.world
+        The CARLA simulation map.
+    -cav_world : carla.world
+        The CARLA simulation world.
+    
+    Attributes
+    -v2x_manager : V2XManager
+        The current V2X manageer. 
+    -localizer : LocalizationManager
+        The current localization manageer. 
+    -perception_manager : PerceptionManager
+        The current V2X perception manageer. 
+    -agent : BehaviorAgent
+        The current carla agent that handles the basic control of ego vehicle.
+    -controller : ControlManager
+        The current control manager.
     """
 
     def __init__(self, vehicle, config_yaml, application, carla_map, cav_world):
-        """
-        Construction class
-        :param vehicle: carla actor
-        :param config_yaml: a dictionary that contains the parameters of the vehicle
-        :param application: application category, support:['single','platoon'] currently
-        :param carla_map: Carla HD Map
-        :param cav_world: CAV world object
-        """
+        
         # an unique uuid for this vehicle
         self.vid = str(uuid.uuid1())
         self.vehicle = vehicle
@@ -56,9 +71,10 @@ class VehicleManager(object):
             self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
                                                  behavior_config, platoon_config, carla_map)
         else:
+            # todo: remove the vehicle
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
 
-        # controller
+        # controller TODO: Add a wrapper class for all controller types
         self.controller = ControlManager(control_config)
 
         cav_world.update_vehicle_manager(self)
@@ -66,18 +82,18 @@ class VehicleManager(object):
     def set_destination(self, start_location, end_location, clean=False, end_reset=True):
         """
         Wrapper function to set global route
-        :param start_location:
-        :param end_location:
-        :param clean:
-        :param end_reset:
-        :return:
+
+        Args:
+            -start_location (carla.location): The start location of the current task.
+            -end_location (carla.location): The destination location of the current task.
+            -clean (boolean): Indicator of whether clean waypoint queue.
+            -end_reset (boolean): Indicator of whether reset the end location.
         """
         self.agent.set_destination(start_location, end_location, clean, end_reset)
 
     def update_info(self):
         """
         Call perception and localization module to retrieve surrounding info an ego position.
-        :return:
         """
         # localization
         self.localizer.localize()
@@ -95,8 +111,8 @@ class VehicleManager(object):
     def run_step(self, target_speed=None):
         """
         Execute one step of navigation.
-        :return:
         """
+        # TODO: use a safer way to pass target speed
         target_speed, target_pos = self.agent.run_step(target_speed)
         control = self.controller.run_step(target_speed, target_pos)
         return control
@@ -104,7 +120,6 @@ class VehicleManager(object):
     def destroy(self):
         """
         Destroy the actor vehicle
-        :return:
         """
         self.perception_manager.destroy()
         self.localizer.destroy()

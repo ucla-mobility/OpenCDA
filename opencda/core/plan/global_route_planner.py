@@ -22,12 +22,28 @@ class GlobalRoutePlanner(object):
     This class provides a very high level route plan.
     Instantiate the class by passing a reference to
     A GlobalRoutePlannerDAO object.
+
+    Parameters
+    -dao : carla.dao
+        A global plan that contains routes from start to end.
+    
+    Attributes
+    -_topology : carla.topology
+        The topology graph of the current routes.
+    -_graph : nx.DiGraph 
+        The node-edge graph of the current routes.
+    -_id_map : dict
+        A map constructed with road segment IDs.
+    -_road_id_to_edge : list
+        A mapping that reference road it to edge in the graph.  
+    -_intersection_end_node : int
+        The node ID of at the end of the intersection.    
+    -_previous_decision : carla.RoadOption
+        The previous behavioral option of the ego vehicle.    
     """
 
     def __init__(self, dao):
-        """
-        Constructor
-        """
+
         self._dao = dao
         self._topology = None
         self._graph = None
@@ -50,17 +66,17 @@ class GlobalRoutePlanner(object):
         """
         This function builds a networkx graph representation of topology.
         The topology is read from self._topology.
-        graph node properties:
-            vertex   -   (x,y,z) position in world map
-        graph edge properties:
-            entry_vector    -   unit vector along tangent at entry point
-            exit_vector     -   unit vector along tangent at exit point
-            net_vector      -   unit vector of the chord from entry to exit
-            intersection    -   boolean indicating if the edge belongs to an
-                                intersection
-        return      :   graph -> networkx graph representing the world map,
-                        id_map-> mapping from (x,y,z) to node id
-                        road_id_to_edge-> map from road id to edge in the graph
+
+        Args:
+            -vertex(graph node): (x,y,z) position in world map.
+            -entry_vector (graph edge): unit vector along tangent at entry point.
+            -exit_vector (graph edge): unit vector along tangent at exit point.
+            -net_vector (graph edge): unit vector of the chord from entry to exit.
+            -intersection (graph edge): boolean indicating if the edge belongs to an intersection.
+        Returns:
+            -graph (nx.DiGraph): networkx graph representing the world map.
+            -id_map (dict): mapping from (x,y,z) to node id.
+            -road_id_to_edge (dict): map from road id to edge in the graph.
         """
         graph = nx.DiGraph()
         id_map = dict()  # Map with structure {(x,y,z): id, ... }
@@ -108,7 +124,7 @@ class GlobalRoutePlanner(object):
     def _find_loose_ends(self):
         """
         This method finds road segments that have an unconnected end, and
-        adds them to the internal graph representation
+        adds them to the internal graph representation.
         """
         count_loose_ends = 0
         hop_resolution = self._dao.get_resolution()
@@ -146,9 +162,12 @@ class GlobalRoutePlanner(object):
 
     def _localize(self, location):
         """
-        This function finds the road segment closest to given location
-        location        :   carla.Location to be localized in the graph
-        return          :   pair node ids representing an edge in the graph
+        This function finds the road segment closest to given location.
+
+        Args:
+            -location (carla.location) : use location to be localized in the graph.
+        Returns:
+            -edge (string) : pair node ids representing an edge in the graph.
         """
         waypoint = self._dao.get_waypoint(location)
         edge = None
@@ -204,8 +223,7 @@ class GlobalRoutePlanner(object):
 
     def _distance_heuristic(self, n1, n2):
         """
-        Distance heuristic calculator for path searching
-        in self._graph
+        Distance heuristic calculator for path searching in self._graph
         """
         l1 = np.array(self._graph.nodes[n1]['vertex'])
         l2 = np.array(self._graph.nodes[n2]['vertex'])
@@ -215,10 +233,13 @@ class GlobalRoutePlanner(object):
         """
         This function finds the shortest path connecting origin and destination
         using A* search with distance heuristic.
-        origin      :   carla.Location object of start position
-        destination :   carla.Location object of of end position
-        return      :   path as list of node ids (as int) of the graph self._graph
-        connecting origin and destination
+
+        Args:
+            -origin (arla.Location): object of start position.
+            -destination (carla.Location): object of of end position.
+        Returns:      
+            -route (list): path as list of node ids (as int) of the graph self._graph
+        connecting origin and destination.
         """
 
         start, end = self._localize(origin), self._localize(destination)
@@ -231,10 +252,8 @@ class GlobalRoutePlanner(object):
 
     def _successive_last_intersection_edge(self, index, route):
         """
-        This method returns the last successive intersection edge
-        from a starting index on the route.
-        This helps moving past tiny intersection edges to calculate
-        proper turn decisions.
+        This method returns the last successive intersection edge from a starting index on the route. 
+        This helps moving past tiny intersection edges to calculate proper turn decisions.
         """
 
         last_intersection_edge = None
@@ -253,8 +272,7 @@ class GlobalRoutePlanner(object):
 
     def _turn_decision(self, index, route, threshold=math.radians(35)):
         """
-        This method returns the turn decision (RoadOption) for pair of edges
-        around current index of route list
+        This method returns the turn decision (RoadOption) for pair of edges around current index of route list.
         """
 
         decision = None
@@ -311,13 +329,13 @@ class GlobalRoutePlanner(object):
 
     def abstract_route_plan(self, origin, destination):
         """
-        The following function generates the route plan based on
-        origin      : carla.Location object of the route's start position
-        destination : carla.Location object of the route's end position
-        return      : list of turn by turn navigation decisions as
-        agents.navigation.local_planner.RoadOption elements
-        Possible values are STRAIGHT, LEFT, RIGHT, LANEFOLLOW, VOID
-        CHANGELANELEFT, CHANGELANERIGHT
+        The function that generates the route plan based on origin and destination.
+
+        Args:
+            -origin (carla.Location): object of the route's start position.
+            -destination (carla.Location):  object of the route's end position.
+        Returns:
+            - plan (list): List of turn by turn navigation decisions as agents.navigation.local_planner.RoadOption.
         """
 
         route = self._path_search(origin, destination)
@@ -344,7 +362,7 @@ class GlobalRoutePlanner(object):
     def trace_route(self, origin, destination):
         """
         This method returns list of (carla.Waypoint, RoadOption)
-        from origin to destination
+        from origin to destination.
         """
 
         route_trace = []

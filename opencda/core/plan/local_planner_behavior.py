@@ -19,8 +19,7 @@ from opencda.core.plan.spline import Spline2D
 
 class RoadOption(Enum):
     """
-    RoadOption represents the possible topological configurations
-    when moving from a segment of lane to other.
+    RoadOption represents the possible topological configurations when moving from a segment of lane to other.
     """
     VOID = -1
     LEFT = 1
@@ -33,14 +32,41 @@ class RoadOption(Enum):
 
 class LocalPlanner(object):
     """
-    LocalPlanner implements the basic behavior of following a trajectory
-    of waypoints that is generated on-the-fly.
-    The low-level motion of the vehicle is computed by using two PID controllers,
-    one is used for the lateral control
-    and the other for the longitudinal control (cruise speed).
+    LocalPlanner implements the basic behavior of following a trajectory of waypoints that is generated on-the-fly.
+    The low-level motion of the vehicle is computed by using lateral and longitudinal PID controllers. 
+    When multiple paths are available (intersections) this local planner makes a random choice.
 
-    When multiple paths are available (intersections)
-    this local planner makes a random choice.
+    Parameters
+    -agent : carla.agent
+        The carla.agent that applying vehicle contorl.
+    -carla_map : carla.map
+        The HD map of the current simulation world.
+    -config : dict
+        The configuration dictionary of the localization module.
+    
+    Attributes
+    -_vehicle : carla.vehicle
+        The caral vehicle objcet.
+    -_ego_pos : carla.position 
+        The current position of the ego vehicle.
+    -_ego_speed : float
+        The current speed of the ego vehicle.
+    -_pid_controller : opencda object
+        The controller object that handles low level control.
+    -waypoints_queue : deque
+        The waypoint deque of the current plan.
+    -_waypoint_buffer : deque
+        A buffer deque to store waypoints of the next step.
+    -_long_plan_debug : list
+        A list that stores the waypoints of global plan for debug purposes.
+    -_trajectory_buffer : deque
+        A deque buffer that stores the current trajectory.
+    -_history_buffer : deque
+        A deque buffer that stores the trajectory history of the ego vehicle.
+    -lane_change : boolean
+        A indicator used to identify whether lane change is operated
+    -lane_id_change : boolean
+        In some corner cases, the id is not changed but we regard it as lane change due to large lateral diff.
     """
 
     # Minimum distance to target waypoint as a percentage
@@ -90,8 +116,9 @@ class LocalPlanner(object):
         """
         Sets new global plan.
 
-            :param clean:
-            :param current_plan: list of waypoints in the actual plan
+        Args:
+            -clean (boolean): Indicator of whether to clear the global plan.
+            -current_plan (list): list of waypoints in the actual plan.
         """
         for elem in current_plan:
             self.waypoints_queue.append(elem)
@@ -108,11 +135,10 @@ class LocalPlanner(object):
     def update_information(self, ego_pos, ego_speed):
         """
         Update the ego position and speed for trajectory planner.
-        Args:
-            ego_pos (carla.Transform): Ego position from localization module.
-            ego_speed (float): Ego speed(km/h) from localization module.
 
-        Returns:
+        Args:
+            -ego_pos (carla.Transform): Ego position from localization module.
+            -ego_speed (float): Ego speed(km/h) from localization module.
 
         """
         self._ego_pos = ego_pos
@@ -120,15 +146,19 @@ class LocalPlanner(object):
 
     def get_trajetory(self):
         """
-        Get the trajetory
-        :return:
+        Get the trajetory.
         """
         return self._trajectory_buffer
 
     def generate_path(self):
         """
-        Generate the smooth path using cubic spline
-        :return: rx, ry, ryaw, rk: list of planned path points' x,y coordinates, yaw angle and curvature
+        Generate the smooth path using cubic spline.
+        
+        Returns: 
+            -rx (list): List of planned path points' x coordinates.
+            -ry (list): List of planned path points' y coordinates.
+            -ryaw (list): List of planned path points' yaw angles.
+            -rk (list): List of planned path points' curvatures.
         """
 
         # used to save all key spline node
@@ -245,12 +275,14 @@ class LocalPlanner(object):
 
     def generate_trajectory(self, rx, ry, rk):
         """
-        Sampling the generated path and assign speed to each point
-        :param rx: x coordinates of planning path
-        :param ry: y coordinates of planning path
-        :param rk: curvature of planning path
-        :param debug: whether to draw the whole plan path
-        :return:
+        Sampling the generated path and assign speed to each point.
+
+        Args:
+            -rx (list): List of planned path points' x coordinates.
+            -ry (list): List of planned path points' y coordinates.
+            -rk (list): List of planned path points' curvatures.
+            -debug (boolean): whether to draw the whole plan path
+
         """
         # unit distance for interpolation points
         ds = 0.1
@@ -272,8 +304,8 @@ class LocalPlanner(object):
         mean_k = 0.0001 if len(rk) < 2 else abs(statistics.mean(rk))
         # v^2 <= a_lat_max / curvature, we assume 3.6 is the maximum lateral acceleration
         target_speed = min(target_speed, np.sqrt(5.0 / (mean_k + 10e-6)) * 3.6)
-        # print('Vehicle Id:%d, current speed %f and target speed is %f' % (self._vehicle.id,
-        #                                                                   current_speed * 3.6, target_speed))
+        print('Vehicle Id:%d, current speed %f and target speed is %f' % (self._vehicle.id,
+                                                                          current_speed * 3.6, target_speed))
 
         # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
         if self._pid_controller:
@@ -307,8 +339,7 @@ class LocalPlanner(object):
 
     def pop_buffer(self, vehicle_transform):
         """
-        Remove waypoints achieved
-        :return:
+        Remove waypoints the ego vehicle has achieved.
         """
         max_index = -1
 
@@ -343,14 +374,19 @@ class LocalPlanner(object):
         Execute one step of local planning which involves
         running the longitudinal and lateral PID controllers to
         follow the smooth waypoints trajectory.
-
-            :param rx: generated path x coordinates
-            :param ry: generated path y coordinates
-            :param rk: generated path curvatures
-            :param following: whether the vehicle is under following status
-            :param trajectory: pre-generated trajectory only for following vehicles in the platooning
-            :param target_speed: desired speed
-            :return: next trajectory point's target speed and waypoint
+        
+        Args:
+            -rx (list): List of planned path points' x coordinates.
+            -ry (list): List of planned path points' y coordinates.
+            -ryaw (list): List of planned path points' yaw angles.
+            -rk (list): List of planned path points' curvatures.
+            -following (boolean): Indicator of whether the vehicle is under following status.
+            -trajectory (list): Pre-generated car-following trajectory only for platoon members.
+            -target_speed (float): The ego vehicle's desired speed.
+        Returns:
+            -speed (float): Next trajectory point's target speed
+            -waypoint (carla.waypoint): Next trajectory point's waypoint.
+            
         """
 
         self._target_speed = target_speed
@@ -371,7 +407,7 @@ class LocalPlanner(object):
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
 
-        # Target waypoint
+        # Target waypoint TODO: dt is never used
         self.target_waypoint, self._target_speed = \
             self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
 

@@ -13,12 +13,23 @@ import opencda.core.plan.drive_profile_plotting as open_plt
 
 
 class PlanDebugHelper(object):
-    """This class aims to save statistics for planner behaviour
-    Attributes:
-        speed_list (list): The list containing speed info(m/s) of all time-steps
-        acc_list(list): The list containing acceleration info(m^2/s) of all time-steps
-        ttc_list(list): The list containing ttc info(s) for all time-steps
-        count(int): Used to count how many simulation steps have been executed.
+    """
+    This class aims to save statistics for planner behaviour.
+    
+    Parameters:
+    -actor_id : int
+        The actor ID of the target vehicle for bebuging. 
+
+    Attributes
+    -speed_list : list 
+        The list containing speed info(m/s) of all time-steps.
+    -acc_list : list
+        The list containing acceleration info(m^2/s) of all time-steps.
+    -ttc_list : list
+        The list containing ttc info(s) for all time-steps.
+    -count : int 
+        Used to count how many simulation steps have been executed.
+    
     """
 
     def __init__(self, actor_id):
@@ -33,9 +44,8 @@ class PlanDebugHelper(object):
         """
         Update the speed info.
         Args:
-            ego_speed(km/h): Ego speed.
-            ttc(s): time to collision.
-        Returns:
+            -ego_speed (float): Ego speed in km/h.
+            -ttc (flot): Time to collision in seconds.
 
         """
         self.count += 1
@@ -45,10 +55,18 @@ class PlanDebugHelper(object):
             if len(self.speed_list[0]) <= 1:
                 self.acc_list[0].append(0)
             else:
+                # todo: time-step hardcoded
                 self.acc_list[0].append((self.speed_list[0][-1] - self.speed_list[0][-2]) / 0.05)
             self.ttc_list[0].append(ttc)
 
     def evaluate(self):
+        """
+        Evaluate the target vehicle and visulize the plot.
+        Returns:
+            -figure (matplotlib.pyplot.figure): The target vehicle's planning profile (velocity, acceleration, and ttc).
+            -perform_txt (txt file): The target vehicle's planning profile as text files.
+
+        """
         warnings.filterwarnings('ignore')
         # draw speed, acc and ttc plotting
         figure = plt.figure()

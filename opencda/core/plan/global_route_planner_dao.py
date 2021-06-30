@@ -12,17 +12,18 @@ import numpy as np
 
 class GlobalRoutePlannerDAO(object):
     """
-    This class is the data access layer for fetching data
-    from the carla server instance for GlobalRoutePlanner
+    This class is the data access layer for fetching data from the carla server instance for GlobalRoutePlanner.
+
+    Parameters
+    -wmap : carla.world
+        The current carla simulation world.
+    -sampling_resolution : float
+        sampling distance between waypoints.
+    
     """
 
     def __init__(self, wmap, sampling_resolution):
-        """
-        Constructor method.
-
-            :param wmap: carla.world object
-            :param sampling_resolution: sampling distance between waypoints
-        """
+        
         self._sampling_resolution = sampling_resolution
         self._wmap = wmap
 
@@ -66,14 +67,16 @@ class GlobalRoutePlannerDAO(object):
 
     def get_waypoint(self, location):
         """
-        The method returns waypoint at given location
+        The method returns waypoint at given location.
 
-            :param location: vehicle location
-            :return waypoint: generated waypoint close to location
+        Args:
+            -location (carla.lcoation): Vehicle location.
+        Returns:
+            -waypoint (carla.waypoint): Newly generated waypoint close to location.
         """
         waypoint = self._wmap.get_waypoint(location)
         return waypoint
 
     def get_resolution(self):
-        """ Accessor for self._sampling_resolution """
+        """ Return the sampling resolution."""
         return self._sampling_resolution

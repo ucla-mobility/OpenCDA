@@ -1,3 +1,3 @@
 """
-Co-simulation folder, prototyping is done, integration will happen in v0.2.
+The CARLA-SUMO co-simulation will be released in the contents OpenCDA release v0.2.
 """

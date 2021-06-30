@@ -11,13 +11,18 @@ def geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0):
     """
     Convert WG84 to ENU. The origin of the ENU should pass the geo reference.
     Note this function is a writen by reversing the official API transform_to_geo.
-    :param lat: current latitude
-    :param lon: current longitude
-    :param alt: current altitude
-    :param lat_0: geo_ref latitude
-    :param lon_0: geo_ref longitude
-    :param alt_0: geo_ref altitude
-    :return:
+
+    Args:
+        -lat (float): current latitude.
+        -lon (float): current longitude.
+        -alt (float): current altitude.
+        -lat_0 (float): geo_ref latitude.
+        -lon_0 (float): geo_ref longitude.
+        -alt_0 (float): geo_ref altitude.
+    Returns:
+        -x (float): The transformed x coordinate. 
+        -y (float): The transformed y coordinate. 
+        -z (float): The transformed z coordinate. 
     """
     EARTH_RADIUS_EQUA = 6378137.0
     scale = np.cos(np.deg2rad(lat_0))

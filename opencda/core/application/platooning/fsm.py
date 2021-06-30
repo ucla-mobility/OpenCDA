@@ -10,6 +10,14 @@ from enum import Enum
 
 
 class FSM(Enum):
+    """
+    The finite state machine class.
+    
+    Parameters
+    -Enum : int
+        State indicator of the finite state machine.
+    
+    """
     SEARCHING = 0
     OPEN_GAP = 1
     MOVE_TO_POINT = 2

@@ -9,24 +9,21 @@ This script contains the transformations between world and different sensors.
 import numpy as np
 from matplotlib import cm
 
-from opencda.opencda_carla import Transform
+import carla
 
 VIRIDIS = np.array(cm.get_cmap('viridis').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
 
-"""
-Part 1: Camera Related Transformation
-"""
 
 
 def get_camera_intrinsic(sensor):
     """
     Retrieve the camera intrinsic matrix
     Args:
-        sensor (carla.sensor.camera.rgb): The CARLA sensor object.
+        -sensor (carla.sensor.camera.rgb): The CARLA sensor object.
 
     Returns:
-        np.ndarray: 2D intrinsic matrix
+        -matrix_k (np.ndarray): The 2D intrinsic matrix.
     """
     VIEW_WIDTH = int(sensor.attributes['image_size_x'])
     VIEW_HEIGHT = int(sensor.attributes['image_size_y'])
@@ -43,11 +40,12 @@ def get_camera_intrinsic(sensor):
 def create_bb_points(vehicle):
     """
     Extract the eight vertices of the bounding box from the vehicle.
+
     Args:
-        vehicle (carla.Vehicle or ObstacleVehicle):
+        -vehicle (carla.Vehicle or ObstacleVehicle): The object vehicle. 
 
     Returns:
-        (np.ndarray): 3d bounding box.
+        - bbx(np.ndarray): 3d bounding box.
     """
     bbx = np.zeros((8, 4))
     extent = vehicle.bounding_box.extent
@@ -67,12 +65,12 @@ def create_bb_points(vehicle):
 def x_to_world_transformation(transform):
     """
     Get the transformation matrix from x(it can be vehicle or sensor) coordinates to world coordinate.
+
     Args:
-        transform (carla.Transform): The transform that contains location and rotation.
+        -transform (carla.Transform): The transform that contains location and rotation.
 
     Returns:
-        matrix: np.ndarray
-            The transformation matrix
+        -matrix (np.ndarray): The transformation matrix
     """
     rotation = transform.rotation
     location = transform.location
@@ -109,16 +107,16 @@ def bbx_to_world(cords, vehicle):
     """
     Convert bounding box coordinate at vehicle reference to world reference.
     Args:
-        cords (np.ndarray): Bounding box coordinates with 8 vertices, shape (n, 4)
-        vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
+        -cords (np.ndarray): Bounding box coordinates with 8 vertices, shape (n, 4).
+        -vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
 
     Returns:
-        bb_world_cords: np.ndarray
-            Bounding box coordinates under word reference.
+        -bb_world_cords (np.ndarray): Bounding box coordinates under word reference.
     """
-
-    bb_transform = Transform(vehicle.bounding_box.location)
-
+    if hasattr(vehicle.bounding_box, 'transform'):
+        bb_transform = vehicle.bounding_box.transform
+    else:
+        bb_transform = carla.Transform(vehicle.bounding_box.location)
     # bounding box to vehicle transformation matrix
     bb_vehicle_matrix = x_to_world_transformation(bb_transform)
 
@@ -136,13 +134,13 @@ def bbx_to_world(cords, vehicle):
 def world_to_sensor(cords, sensor_transform):
     """
     Transform coordinate from world reference to sensor reference.
+
     Args:
-        cords (np.ndarray): Coordinates under world reference, shape:(4, n).
-        sensor_transform (carla.Transform): sensor position in the world, shape:(3, 1).
+        -cords (np.ndarray): Coordinates under world reference, shape:(4, n).
+        -sensor_transform (carla.Transform): sensor position in the world, shape:(3, 1).
 
     Returns:
-        sensor_cords: np.ndarray
-            Coordinates in sensor reference.
+        -sensor_cords(np.ndarray): Coordinates in sensor reference.
     """
     sensor_world_matrix = x_to_world_transformation(sensor_transform)
     world_sensor_matrix = np.linalg.inv(sensor_world_matrix)
@@ -155,11 +153,10 @@ def sensor_to_world(cords, sensor_transform):
     """
     Project 
     Args:
-        cords (np.ndarray): Coordinates under sensor reference.
-        sensor_transform (carla.Transform): sensor position in the world
+        -cords (np.ndarray): Coordinates under sensor reference.
+        -sensor_transform (carla.Transform): sensor position in the world
     Returns:
-        world_cords: np.ndarray
-            Coordinates projected to world space.
+        -world_cords (np.ndarray): Coordinates projected to world space.
     """
     sensor_world_matrix = x_to_world_transformation(sensor_transform)
     world_cords = np.dot(sensor_world_matrix, cords)
@@ -171,12 +168,12 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
     """
     Transform coordinates from vehicle reference to sensor reference
     Args:
-        cords (np.ndarray): Coordinates under vehicle reference, shape (n, 4)
-        vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-        sensor_transform (carla.Transform): sensor position in the world, shape(3, 1)
+        -cords (np.ndarray): Coordinates under vehicle reference, shape (n, 4).
+        -vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
+        -sensor_transform (carla.Transform): sensor position in the world, shape(3, 1).
 
     Returns:
-        (np.ndarray): Coordinates in sensor reference, shape(4, n).
+        -(np.ndarray): Coordinates in sensor reference, shape(4, n).
     """
     world_cord = bbx_to_world(cords, vehicle)
     sensor_cord = world_to_sensor(world_cord, sensor_transform)
@@ -186,14 +183,14 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
 
 def get_bounding_box(vehicle, camera, sensor_transform):
     """
-    Get vehicle bounding box and project to sensor image
+    Get vehicle bounding box and project to sensor image.
     Args:
-         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-         camera (carla.sensor.camera.rgb): The CARLA sensor object.
-         sensor_transform (carla.Transform): sensor position in the world
+        -vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
+        -camera (carla.sensor.camera.rgb): The CARLA sensor object.
+        -sensor_transform (carla.Transform): sensor position in the world
 
     Returns:
-         (np.ndarray): Bounding box coordinates in sensor image.
+        -camera_bbox (np.ndarray): Bounding box coordinates in sensor image.
     """
     camera_k_matrix = get_camera_intrinsic(camera)
     # bb_cords is relative to bbx center(approximate the vehicle center)
@@ -221,9 +218,10 @@ def p3d_to_p2d_bb(p3d_bb):
     Draw 2D bounding box (4 vertices) from 3D bounding box (8 vertices) in image.
     2D bounding box is represented by two corner points
     Args:
-        p3d_bb ():
+        -p3d_bb (np.array): The objective 3D bounding box. 
 
     Returns:
+        -p2d_bb (np.array): The corresponding 2D bounding box.
 
     """
     min_x = np.amin(p3d_bb[:, 0])
@@ -238,12 +236,12 @@ def get_2d_bb(vehicle, sensor, senosr_transform):
     """
     Summarize 2D bounding box creation
     Args:
-         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-         sensor (carla.sensor.camera.rgb): The CARLA sensor object.
-         senosr_transform (carla.Transform): sensor position in the world
+        -vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
+        -sensor (carla.sensor.camera.rgb): The CARLA sensor object.
+        -senosr_transform (carla.Transform): sensor position in the world
 
     Returns:
-        (np.ndarray): 2d bounding box in camera image
+        -p2d_bb (np.ndarray): 2d bounding box in camera image.
 
     """
     p3d_bb = get_bounding_box(vehicle, sensor, senosr_transform)
@@ -251,23 +249,19 @@ def get_2d_bb(vehicle, sensor, senosr_transform):
     return p2d_bb
 
 
-"""
-Part 2: Lidar Related Transformation
-"""
-
-
 def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
     """
     Project lidar to camera space.
+    
     Args:
-        lidar (carla.Sensor): Lidar sensor.
-        camera (carla.Sensor): Camera seonsor.
-        point_cloud (np.ndarray): cloud points, (x, y, z, intensity).
-        rgb_image (np.ndarray): rgb image from camera.
+        -lidar (carla.Sensor): Lidar sensor.
+        -camera (carla.Sensor): Camera seonsor.
+        -point_cloud (np.ndarray): cloud points, (x, y, z, intensity).
+        -rgb_image (np.ndarray): rgb image from camera.
 
     Returns:
-        (np.ndarray): new rgb image with lidar points projected.
-        (np.ndarray): point clouds projected to camera space.
+        -rgb_image (np.ndarray): new rgb image with lidar points projected.
+        -points_2d (np.ndarray): point clouds projected to camera space.
     """
 
     # Lidar intensity array of shape (p_cloud_size,) but, for now, let's
