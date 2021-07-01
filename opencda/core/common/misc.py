@@ -13,7 +13,7 @@ import numpy as np
 import carla
 
 
-def draw_trajetory_points(world, waypoints, z=0.25, color=carla.Color(255, 0, 0), lt=5, size=0.1):
+def draw_trajetory_points(world, waypoints, z=0.25, color=carla.Color(255, 0, 0), lt=5, size=0.1, arrow_size=0.1):
     """
     Draw a list of trajetory points
 
@@ -34,7 +34,9 @@ def draw_trajetory_points(world, waypoints, z=0.25, color=carla.Color(255, 0, 0)
         else:
             wpt_t = wpt
 
-        world.debug.draw_point(wpt_t.location + carla.Location(z), size, color, lt, False)
+        world.debug.draw_arrow(wpt_t.location, wpt_t.location + wpt_t.get_forward_vector(),
+                               thickness=size, arrow_size=arrow_size, color=color, life_time=lt)
+        # world.debug.draw_point(wpt_t.location + carla.Location(z), size, color, lt, False)
 
 
 def draw_waypoints(world, waypoints, z=0.5):
