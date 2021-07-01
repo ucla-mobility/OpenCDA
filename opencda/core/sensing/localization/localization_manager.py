@@ -134,15 +134,15 @@ class LocalizationManager(object):
         convert wg84 to enu coordinate system.
     
     Attributes
-    -gnss : opencda Object
+    -gnss : opencda object
         GNSS sensor manager for spawning gnss sensor and listen to the data
         transmission.
-    -ImuSensor : opencda Object
+    -ImuSensor : opencda object
         Imu sensor manager for spawning gnss sensor and listen to the data
         transmission.
-    -kf : opencda Object
+    -kf : opencda object
         The filter used to fuse different sensors.
-    -debug_helper : opencda Object
+    -debug_helper : opencda object
         The debug helper is used to visualize the accuracy of
         the localization and provide evaluation functions.
     """

@@ -11,7 +11,7 @@ import numpy as np
 
 class ExtentedKalmanFilter(object):
     """
-    Kalman Filter implementation for gps and imu.
+    Extended Kalman Filter implementation for gps and imu.
 
     Parameters
     -dt : float
@@ -19,7 +19,7 @@ class ExtentedKalmanFilter(object):
     
     Attributes
     -Q : numpy.array
-        # predict state covariance.
+        predict state covariance.
     -R : numpy.array
         Observation x,y position covariance.
     -time_step : float

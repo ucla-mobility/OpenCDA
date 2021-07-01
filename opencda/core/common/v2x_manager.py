@@ -15,16 +15,16 @@ class V2XManager(object):
     V2X Manager for platooning, cooperative perception and so on.
 
     Parameters
-    -cav_world : carla.world
-        The simulation world.
+    -cav_world : opencda object
+        CAV world.
     -config_yaml : dict
-        The configuration dictionary of the localization module.
+        The configuration dictionary of the v2x module.
     
     Attributes
     -_recieved_buffer : dict
-        A buffer for recieved data.
-    -platooning_plugin : platooningPlguin 
-        The platooning class that handles communications.
+        A buffer for receive data.
+    -platooning_plugin : opencda object
+        The platooning plugin for communication during platooning.
     """
 
     def __init__(self, cav_world, config_yaml):
@@ -46,7 +46,6 @@ class V2XManager(object):
         Update all communication plugins with current localization info.
         """
         self.platooning_plugin.update_info(ego_pos, ego_spd)
-
 
     def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
         """

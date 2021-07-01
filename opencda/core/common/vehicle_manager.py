@@ -26,21 +26,21 @@ class VehicleManager(object):
         The configuration dictionary of the localization module.
     -application : list
         The application category, currently support:['single','platoon'].
-    -carla_map : carla.world
+    -carla_map : carla.Map
         The CARLA simulation map.
-    -cav_world : carla.world
-        The CARLA simulation world.
+    -cav_world : opencda object
+        CAV World.
     
     Attributes
-    -v2x_manager : V2XManager
+    -v2x_manager : opencda object
         The current V2X manageer. 
-    -localizer : LocalizationManager
+    -localizer : opencda object
         The current localization manageer. 
-    -perception_manager : PerceptionManager
+    -perception_manager : opencda object
         The current V2X perception manageer. 
-    -agent : BehaviorAgent
+    -agent : opencda object
         The current carla agent that handles the basic control of ego vehicle.
-    -controller : ControlManager
+    -controller : opencda object
         The current control manager.
     """
 

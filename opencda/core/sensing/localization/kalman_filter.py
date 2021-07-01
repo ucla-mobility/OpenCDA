@@ -20,7 +20,7 @@ class KalmanFilter(object):
     
     Attributes
     -Q : numpy.array
-        # predict state covariance.
+        predict state covariance.
     -R : numpy.array
         Observation x,y position covariance.
     -time_step : float

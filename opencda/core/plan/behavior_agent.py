@@ -43,48 +43,20 @@ class BehaviorAgent(object):
         The HD map of the current simulation world.
     -max_speed : float
         The current speed limit of the ego vehicles.
-    -tailgate_speed : float
-        The current speed limit for car-following situation.
-    -speed_lim_dist : float
-        The safety following distance.
-    -speed_decrease : float
-        The maximum decceleration of the ego vehicle.
-    -min_speed : float
-        The minimum speed for the ego vehicle.
-    -safety_time : float
-        The safety time for car following scenario.
-    -emergency_param : float
-        Used to identify whether a emergency stop needed.
     -break_distance : float
         The current distance needed for ego vehicle to reach a steady stop.
-    -ttc : float
-        The current time to collision.
     -_collision_check : collisionchecker
         A collision check class to estimate the collision with front obstacle.
     -ignore_traffic_light : boolean
         Boolean indicator of whether to ignore traffic light.
     -overtake_allowed : boolean
         Boolean indicator of whether to allow overtake.
-    -overtake_counter : int
-        A timer to track the time span of the overtake manuver.
-    -hazard_flag : boolean
-        Boolean indicator of whether the vehicle is in a hazard situation (i.e., more likely to collide with nearby obstacles).
-    -light_state : string
-        The traffic light state (i.e., red, yellow, green).
-    -light_id_to_ignore : int 
-        The ID to identify a specific traffic light to ignore.
     -_local_planner : LocalPlanner
         A carla local planner class for behavior planning.
-    -car_following_flag : boolean
-        Boolean indicator of whether the vehicle is in car following scenario.
     -lane_change_allowed : boolean
         Boolean indicator of whether the lane change is allowed.
-    -destination_push_flag : boolean
-        Boolean indicator to renew the next target.
     -white_list : list
         The white list contains all position of target platoon member for joining.
-    -obstacle_vehicles : carla.vehicle
-        The obstacle vehicles that is blocking the ego vehicle.
     -debug_helper : PlanDebugHelper
         The helper class that help with the debug functions.
     """
@@ -227,8 +199,8 @@ class BehaviorAgent(object):
 
         Args:
             -end_reset (boolean): Flag to reset the waypoint queue.
-            -start_location (carla.position): initial position.
-            -end_location (carla.position): final position.
+            -start_location (carla.location): initial position.
+            -end_location (carla.location): final position.
             -clean (boolean): Flag to clean the waypoint queue.
             -clean_history (boolean): Flag to clean the waypoint history.
         """

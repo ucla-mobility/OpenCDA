@@ -21,7 +21,7 @@ class CustomizedLocalizationManager(LocalizationManager):
         The carla HDMap. We need this to find the map origin to convert wg84 to enu coordinate system.
     
     Attributes
-    -kf : opencda Object
+    -kf : opencda object
         The filter used to fuse different sensors.
     """
 

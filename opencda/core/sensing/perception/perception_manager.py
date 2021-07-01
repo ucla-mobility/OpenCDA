@@ -25,15 +25,21 @@ from opencda.core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, 
 class CameraSensor(object):
     """
     Class for rgb camera.
+
+    Parameters
+    -vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn sensors.
+    -position : string
+        Indicates the sensor is a front or rear camera. option: front, left, right.
+
+    Attributes
+    -image : np.ndarray
+        Current received image.
+    -sensor : CARLA actor
+        The current sensor actors that will be attach to the vehicles.
     """
 
     def __init__(self, vehicle, position='front'):
-        """
-        Construct class.
-        Args:
-            vehicle (carla.Vehicle): Carla actor.
-            position (string): the camera mounted position, only front, left and right supported.
-        """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
         blueprint.set_attribute('fov', '100')
@@ -77,6 +83,18 @@ class CameraSensor(object):
 class LidarSensor(object):
     """
     Lidar sensor manager.
+
+    Parameters
+    -vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn sensors.
+    -config_yaml : dict
+        Configuration for lidar sensor.
+
+    Attributes
+    -o3d_pointcloud : o3d.PointCloud
+        Recieved point cloud saved in o3d.PointCloud format.
+    -sensor : CARLA actor
+        The current sensor actors that will be attach to the vehicles.
     """
 
     def __init__(self, vehicle, config_yaml):
@@ -132,7 +150,26 @@ class LidarSensor(object):
 
 class PerceptionManager(object):
     """
-    Perception manager mainly for object detection
+    Default perception module. Currenly only used to detect vehicles.
+
+    Parameters
+    -vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn sensors.
+    -config_yaml : dict
+        Configuration for perception.
+    - ml_manager: opencda object
+        Ml manager includes all loaded trained perception models.
+
+    Attributes
+    -ml_manager : opencda object
+        weak reference of the ML Manager.
+    -activate : bool
+        Whether perception algorithms are activated. If not, load object
+        coordinates directly from the server.
+    -lidar: opencda object
+        Lidar sensor manager.
+    -rgb_camera: opencda object
+        Camera manager.
     """
 
     def __init__(self, vehicle, config_yaml, ml_manager):

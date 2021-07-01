@@ -42,7 +42,7 @@ class LocalPlanner(object):
     -carla_map : carla.map
         The HD map of the current simulation world.
     -config : dict
-        The configuration dictionary of the localization module.
+        The configuration dictionary of the trajectory planning module.
     
     Attributes
     -_vehicle : carla.vehicle
@@ -51,12 +51,10 @@ class LocalPlanner(object):
         The current position of the ego vehicle.
     -_ego_speed : float
         The current speed of the ego vehicle.
-    -_pid_controller : opencda object
-        The controller object that handles low level control.
     -waypoints_queue : deque
         The waypoint deque of the current plan.
     -_waypoint_buffer : deque
-        A buffer deque to store waypoints of the next step.
+        A buffer deque to store waypoints of the next steps.
     -_long_plan_debug : list
         A list that stores the waypoints of global plan for debug purposes.
     -_trajectory_buffer : deque
@@ -86,9 +84,6 @@ class LocalPlanner(object):
         # waypoint pop out thresholding
         self._min_distance = config_yaml['min_dist']
         self._buffer_size = config_yaml['buffer_size']
-
-        # TODO: pid controller should be outside
-        self._pid_controller = None
 
         # global route
         self.waypoints_queue = deque(maxlen=20000)
@@ -308,11 +303,7 @@ class LocalPlanner(object):
         print('Vehicle Id:%d, current speed %f and target speed is %f' % (self._vehicle.id,
                                                                           current_speed * 3.6, target_speed))
 
-        # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
-        if self._pid_controller:
-            max_acc = 3.5 if self._pid_controller.max_throttle >= 0.9 else 2.5
-        else:
-            max_acc = 3.5
+        max_acc = 3.5
         # todo: hard-coded, need to be tuned
         acceleration = max(min(max_acc,
                                (target_speed / 3.6 - current_speed) / dt), -6.5)
