@@ -9,7 +9,7 @@ This script contains the transformations between world and different sensors.
 import numpy as np
 from matplotlib import cm
 
-import carla
+from opencda.opencda_carla import Transform
 
 VIRIDIS = np.array(cm.get_cmap('viridis').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
@@ -40,7 +40,6 @@ def get_camera_intrinsic(sensor):
 def create_bb_points(vehicle):
     """
     Extract the eight vertices of the bounding box from the vehicle.
-
     Args:
         -vehicle (carla.Vehicle or ObstacleVehicle): The object vehicle. 
 
@@ -65,7 +64,6 @@ def create_bb_points(vehicle):
 def x_to_world_transformation(transform):
     """
     Get the transformation matrix from x(it can be vehicle or sensor) coordinates to world coordinate.
-
     Args:
         -transform (carla.Transform): The transform that contains location and rotation.
 
@@ -113,10 +111,9 @@ def bbx_to_world(cords, vehicle):
     Returns:
         -bb_world_cords (np.ndarray): Bounding box coordinates under word reference.
     """
-    if hasattr(vehicle.bounding_box, 'transform'):
-        bb_transform = vehicle.bounding_box.transform
-    else:
-        bb_transform = carla.Transform(vehicle.bounding_box.location)
+
+    bb_transform = Transform(vehicle.bounding_box.location)
+
     # bounding box to vehicle transformation matrix
     bb_vehicle_matrix = x_to_world_transformation(bb_transform)
 
@@ -134,7 +131,6 @@ def bbx_to_world(cords, vehicle):
 def world_to_sensor(cords, sensor_transform):
     """
     Transform coordinate from world reference to sensor reference.
-
     Args:
         -cords (np.ndarray): Coordinates under world reference, shape:(4, n).
         -sensor_transform (carla.Transform): sensor position in the world, shape:(3, 1).
@@ -151,7 +147,7 @@ def world_to_sensor(cords, sensor_transform):
 
 def sensor_to_world(cords, sensor_transform):
     """
-    Project 
+    Project
     Args:
         -cords (np.ndarray): Coordinates under sensor reference.
         -sensor_transform (carla.Transform): sensor position in the world
@@ -221,7 +217,6 @@ def p3d_to_p2d_bb(p3d_bb):
         -p3d_bb (np.array): The objective 3D bounding box. 
 
     Returns:
-        -p2d_bb (np.array): The corresponding 2D bounding box.
 
     """
     min_x = np.amin(p3d_bb[:, 0])
@@ -252,7 +247,6 @@ def get_2d_bb(vehicle, sensor, senosr_transform):
 def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
     """
     Project lidar to camera space.
-    
     Args:
         -lidar (carla.Sensor): Lidar sensor.
         -camera (carla.Sensor): Camera seonsor.

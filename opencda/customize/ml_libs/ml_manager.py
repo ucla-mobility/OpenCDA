@@ -10,8 +10,7 @@ CAVs share the same model to avoid duplicate memory consumption.
 
 import cv2
 import torch
-
-from opencda.core.sensing.perception.obstacle_vehicle import is_vehicle_cococlass
+import numpy as np
 
 
 class MLManager(object):
@@ -23,6 +22,7 @@ class MLManager(object):
         The YoloV5 detector load from pytorch.
     
     """
+
     def __init__(self):
 
         self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
@@ -57,9 +57,21 @@ class MLManager(object):
                 label_name = 'vehicle'
 
             x1, y1, x2, y2 = int(detection[0]), int(detection[1]), int(detection[2]), int(detection[3])
-            cv2.rectangle(rgb_image, (x1,  y1), (x2, y2), (0, 255, 0), 2)
+            cv2.rectangle(rgb_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
             # draw text on it
             cv2.putText(rgb_image, label_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 1)
 
         return rgb_image
 
+
+def is_vehicle_cococlass(label):
+    """
+    Check whether the label belongs to the vehicle class according to coco dataset.
+    Args:
+        -label(int): yolo detection prediction.
+    Returns:
+        -is_vehicle: bool
+            whether this label belongs to the vehicle class
+    """
+    vehicle_class_array = np.array([2, 3, 4, 6, 8], dtype=np.int)
+    return True if 0 in (label - vehicle_class_array) else False

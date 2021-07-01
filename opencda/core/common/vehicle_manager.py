@@ -71,10 +71,8 @@ class VehicleManager(object):
             self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
                                                  behavior_config, platoon_config, carla_map)
         else:
-            # todo: remove the vehicle
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
 
-        # controller TODO: Add a wrapper class for all controller types
         self.controller = ControlManager(control_config)
 
         cav_world.update_vehicle_manager(self)
@@ -112,7 +110,6 @@ class VehicleManager(object):
         """
         Execute one step of navigation.
         """
-        # TODO: use a safer way to pass target speed
         target_speed, target_pos = self.agent.run_step(target_speed)
         control = self.controller.run_step(target_speed, target_pos)
         return control
