@@ -14,13 +14,13 @@ from opencda.core.application.platooning.fsm import FSM
 
 class PlatooningPlugin(object):
     """
-    The default GNSS sensor module.
+    Platooning plugin inside the V2X manager.
     
     Parameters
     -search_range : float
-        The search range of the on board GNSS sensor.
+        The search range of the communication equipment.
     -cda_enabled : boolean
-        Boolean indicator of CDA enable status.
+        Whether connectivity is supported.
     
     Attributes
     -leader : boolean
@@ -30,19 +30,19 @@ class PlatooningPlugin(object):
     -platooning_id : int
         The current platoon ID.
     -in_id : int
-        The inner platoon ID.
-    -status : string
+        The position in the platoon.
+    -status : enum
         The current platooning status.
     -ego_pos : carla.transformation
         The current position (i.e., location and rotation) of the ego vehicle.
-    -ego_spd : CARLA actor
-        The current speed of the ego vehicle.
+    -ego_spd : float
+        The current speed(km/h) of the ego vehicle.
     -platooning_blacklist : list
-        The list of vehicle that are not suitable for platooning.
-    -front_vehicle : carla.vehicle
-        The front vehicle of the ego vehicle.
-    -rear_vechile : carla.vehicle
-        The rear vehicle of the ego vehicle.
+        The platoon in the black list won't be considered again.
+    -front_vehicle : opencda object
+        The front vehicle manager of the ego vehicle.
+    -rear_vechile : opencda object
+        The rear vehicle manager of the ego vehicle.
     """
 
     def __init__(self, search_range, cda_enabled):

@@ -19,23 +19,31 @@ from opencda.core.plan.behavior_agent import BehaviorAgent
 
 class PlatooningBehaviorAgent(BehaviorAgent):
     """
-    The default GNSS sensor module.
+    Platoon behavior agent that inherits the single vehicle behavior agent.
     
     Parameters
     -vehicle : carla.Vehicle
-        The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
-    -config : dict
-        The configuration dictionary of the localization module.
+        The carla vehicle.
+    -vehicle_manager : opencda object
+        The vehicle manager, used when joining platoon finished.
+    -v2x_manager : opencda object
+        Used to received and deliver information.
+    -behavior_yaml : dict
+        The configuration dictionary for BehaviorAgent.
+    -platoon_yaml : dict.
+        The configuration dictionary for platoon behavior.
+    -carla_map : carla.Map
+        The HD Map used in the simulation.
     
     Attributes
-    -world : carla.world
-        The caral world of the current vehicle.
-    -blueprint : carla.blueprint 
-        The current blueprint of the sensor actor.
-    -weak_self : opencda Object
-        A weak reference point to avoid circular reference.
-    -sensor : CARLA actor
-        The current sensor actors that will be attach to the vehicles.
+    -vehicle_manager : opencda object
+        The weak reference of the vehicle manager, used when joining platoon finished.
+    -v2x_manager : opencda object
+        The weak reference of the v2x_manager
+    -debug_helper : opencda Object
+        A debug helper used to record the driving performance during platooning.
+    -inter_gap : float
+        The desired time gap between each platoon member.
     """
 
     def __init__(self, vehicle, vehicle_manager, v2x_manager, behavior_yaml, platoon_yaml, carla_map):
@@ -161,7 +169,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Update the perception and localization information to the behavior agent.
         Args:
-            -go_pos (carla.Transform): ego position from localization module.
+            -ego_pos (carla.Transform): ego position from localization module.
             -ego_speed (float): km/h, ego speed.
             -objects (dictionary): Objects detection results from perception module.
         """
@@ -369,7 +377,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         Args:  
             -target_speed (float): The target speed for ego vehile.
             -target_waypoint (carla.waypoint): The waypoint for ego vehile.
-            -next FSM state (string): The next finite state machine state.
+            -next FSM state (enum): The next finite state machine state.
         """
 
         frontal_vehicle_manager, rear_vehicle_vm = self.v2x_manager.get_platoon_front_rear()
@@ -488,7 +496,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         Returns:
             -control command (opencda object): control command for bacj joining.
-            -back join status (string): FSM back joining status.
+            -back join status (enum): FSM back joining status.
         """
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
         # reset lane change flag every step
@@ -589,7 +597,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         Returns:
             -control command (opencda object): control command for bacj joining.
-            -back join status (string): FSM back joining status.
+            -back join status (enum): FSM back joining status.
         """
         _, rear_vehicle_manager = self.v2x_manager.get_platoon_front_rear()
         # get necessary information of the ego vehicle and target vehicle in the platooning

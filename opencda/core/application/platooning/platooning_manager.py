@@ -18,13 +18,13 @@ import opencda.core.plan.drive_profile_plotting as open_plt
 
 class PlatooningManager(object):
     """
-    Default localization module.
+    Platoon manager. Used to manage all vehicle managers inside the platoon.
     
     Parameters
     -config_yaml : dict
-        The configuration dictionary of the localization module.
-    -cav_world : carla.world
-        The current simulation world.
+        The configuration dictionary for platoon.
+    -cav_world : opencda object
+        CAV world that stores all CAV information.
     
     Attributes
     -pmid : int
@@ -38,7 +38,7 @@ class PlatooningManager(object):
     -leader_target_speed : float
         The speed of the leader vehicle.
     -origin_leader_target_speed : float
-        The original planned target speed of the platoon leader..
+        The original planned target speed of the platoon leader.
     -recover_speed_counter : int
         The counter that record the number of speed recovery attempts.
     """
@@ -117,7 +117,7 @@ class PlatooningManager(object):
     def update_member_order(self):
         """
         Update the members' front and rear vehicle.
-        This should be called whenever new member added to the platoon list
+        This should be called whenever new member added to the platoon list.
         """
         for i, vm in enumerate(self.vehicle_manager_list):
             if i != 0:

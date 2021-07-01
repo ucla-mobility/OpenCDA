@@ -16,7 +16,7 @@ import carla
 
 class ControlManager(object):
     """
-    The default control manager module.
+    Controller manager that is used to choose and call different controller's functions.
     
     Parameters
     -control_config : dict

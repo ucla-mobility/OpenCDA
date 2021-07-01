@@ -14,11 +14,11 @@ import carla
 
 class Controller:
     """
-    The default controller module.
+    PID Controller implementation.
     
     Parameters
     -args : dict
-        The arguments dictionary parsed from configuration file.
+        The configuration dictionary parsed from yaml file.
     
     Attributes
     -_lon_ebuffer : deque
