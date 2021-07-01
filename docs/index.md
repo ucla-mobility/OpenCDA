@@ -26,11 +26,16 @@ OpenCDA Github</a>
     * [Step3: Execute a single step](OpenCDA_tutorial.md#step3-execute-a-single-step)
     * [Step4: Run simulation loop](OpenCDA_tutorial.md#step4-keep-the-simulation-loop-running)
     * [Step5: Evaluation](OpenCDA_tutorial.md#step5-evaluation)
+    * [Customize your own modules](OpenCDA_tutorial.md#customize-your-own-algorithms)
 * [PythonAPI](PythonAPI.md)
 
 
 If you use OpenCDA for academic research, you are highly encouraged to cite our paper:  
-```bibtex
-Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Jiaqi Ma, 
-"OpenCDA:An Open Cooperative Driving Automation Framework Integrated with Multi-resolution Simulations"
+ ```bibtex
+@inproceedings{xu2021opencda,
+title={OpenCDA: An Open Cooperative Driving Automation Framework Integrated with Multi-resolution Simulations},
+author={Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Jiaqi Ma},
+booktitle={2021 IEEE Intelligent Transportation Systems Conference (ITSC)},
+year={2021}
+}
 ```

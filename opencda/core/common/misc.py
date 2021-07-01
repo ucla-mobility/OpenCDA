@@ -16,13 +16,14 @@ import carla
 def draw_trajetory_points(world, waypoints, z=0.25, color=carla.Color(255, 0, 0), lt=5, size=0.1, arrow_size=0.1):
     """
     Draw a list of trajetory points
-    :param size:
-    :param lt:
-    :param color:
-    :param world:
-    :param waypoints:
-    :param z:
-    :return:
+
+    Args
+        -size (float): Time step between updating visulized waypoint (dfault=0.1).
+        -lt (int): Number of waypoints being visulized (dfault=5).
+        -color (carla.color): The trajectory color (default=carla.Color(255, 0, 0)).
+        -world (carla.world): The simulation world.
+        -waypoints (list): The waypoints of the current plan.
+        -z (float): The height of the visulized waypoint (dfault=0.25). 
     """
     for i in range(len(waypoints)):
         wpt = waypoints[i]
@@ -42,9 +43,10 @@ def draw_waypoints(world, waypoints, z=0.5):
     """
     Draw a list of waypoints at a certain height given in z.
 
-        :param world: carla.world object
-        :param waypoints: list or iterable container with the waypoints to draw
-        :param z: height in meters
+    Args
+        -world: carla.world object
+        -waypoints: list or iterable container with the waypoints to draw
+        -z: height in meters
     """
     for wpt in waypoints:
         wpt_t = wpt.transform
@@ -57,10 +59,12 @@ def draw_waypoints(world, waypoints, z=0.5):
 def get_speed(vehicle, meters=False):
     """
     Compute speed of a vehicle in Km/h.
-
-        :param meters: use m/s or km/h
-        :param vehicle: the vehicle for which speed is calculated
-        :return: speed as a float in Km/h
+    
+    Args
+        -meters (boolean): whether to use m/s (True) or km/h (False).
+        -vehicle (carla.vehicle): the vehicle for which speed is calculated.
+    Returns
+        -speed (flaot): The vehicle speed.
     """
     vel = vehicle.get_velocity()
     vel_meter_per_second = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
@@ -69,11 +73,13 @@ def get_speed(vehicle, meters=False):
 
 def get_acc(vehicle, meters=False):
     """
-    Compute speed of a vehicle in Km/h.
+    Compute acceleration of a vehicle.
 
-        :param meters: use m/s or km/h
-        :param vehicle: the vehicle for which speed is calculated
-        :return: speed as a float in Km/h
+    Args
+        -meters (boolean): whether to use m/s^2 (True) or km/h^2 (False).
+        -vehicle (carla.vehicle): the vehicle for which speed is calculated.
+    Returns
+        -acceleration (flaot): The vehicle speed.
     """
     acc = vehicle.get_acceleration()
     acc_meter_per_second = math.sqrt(acc.x ** 2 + acc.y ** 2 + acc.z ** 2)
@@ -85,11 +91,13 @@ def is_within_distance_ahead(target_transform, current_transform, max_distance):
     """
     Check if a target object is within a certain distance in front of a reference object.
 
-    :param target_transform: location of the target object
-    :param current_transform: location of the reference object
-    :param orientation: orientation of the reference object
-    :param max_distance: maximum allowed distance
-    :return: True if target object is within max_distance ahead of the reference object
+    Args
+        -target_transform (carla.transform): location of the target object.
+        -current_transform (carla.transform): location of the reference object.
+        -orientation (carla.rotation): orientation of the reference object.
+        -max_distance (float): maximum allowed distance.
+    Returns
+        -detection result (boolen): True if target object is within max_distance ahead of the reference object.
     """
     target_vector = np.array([target_transform.location.x - current_transform.location.x,
                               target_transform.location.y - current_transform.location.y])
@@ -111,11 +119,15 @@ def is_within_distance_ahead(target_transform, current_transform, max_distance):
 
 def cal_distance_angle(target_location, current_location, orientation):
     """
-    Calculate the vehicle current relative distance to target location
-    :param target_location:
-    :param current_location:
-    :param orientation:
-    :return: distance and angle
+    Calculate the vehicle current relative distance to target location.
+
+    Args
+        -target_location (carla.location): The target location to calcualte distance.
+        -current_location (carla.location): The current location as origin for distance calculation.
+        -orientation (carla.rotation): orientation of the reference object.
+    Returns
+        -distance (float): The measured distance from current location to target location.
+        -d_angle (float): The measureed rotation (angle) fron current location to target location.
     """
     target_vector = np.array([target_location.x - current_location.x, target_location.y - current_location.y])
     norm_target = np.linalg.norm(target_vector) + 1e-10
@@ -132,13 +144,15 @@ def is_within_distance(target_location, current_location, orientation, max_dista
     Check if a target object is within a certain distance from a reference object.
     A vehicle in front would be something around 0 deg, while one behind around 180 deg.
 
-        :param target_location: location of the target object
-        :param current_location: location of the reference object
-        :param orientation: orientation of the reference object
-        :param max_distance: maximum allowed distance
-        :param d_angle_th_up: upper thereshold for angle
-        :param d_angle_th_low: low thereshold for angle (optional, default is 0)
-        :return: True if target object is within max_distance ahead of the reference object
+    Args
+        -target_location (carla.location): location of the target object.
+        -current_location (carla.location): location of the reference object.
+        -orientation (carla.rotation): orientation of the reference object.
+        -max_distance (float): maximum allowed distance.
+        -d_angle_th_up (carla.rotation): upper thereshold for angle.
+        -d_angle_th_low (carla.rotation): low thereshold for angle (optional, default is 0).
+    Returns
+        - detect result (boolean): True if target object is within max_distance ahead of the reference object.
     """
     target_vector = np.array([target_location.x - current_location.x, target_location.y - current_location.y])
     norm_target = np.linalg.norm(target_vector)
@@ -159,12 +173,14 @@ def is_within_distance(target_location, current_location, orientation, max_dista
 
 def compute_magnitude_angle(target_location, current_location, orientation):
     """
-    Compute relative angle and distance between a target_location and a current_location
+    Compute relative angle and distance between a target_location and a current_location.
 
-        :param target_location: location of the target object
-        :param current_location: location of the reference object
-        :param orientation: orientation of the reference object
-        :return: a tuple composed by the distance to the object and the angle between both objects
+    Args
+        -target_location (carla.location): location of the target object.
+        -current_location (carla.location): location of the reference object.
+        -orientation (carla.rotation): orientation of the reference object.
+    Returns
+        -compute result (tuple): A tuple composed by the distance to the object and the angle between both objects(i.e., (dist, angle)).
     """
     target_vector = np.array([target_location.x - current_location.x, target_location.y - current_location.y])
     norm_target = np.linalg.norm(target_vector)
@@ -179,8 +195,9 @@ def distance_vehicle(waypoint, vehicle_transform):
     """
     Returns the 2D distance from a waypoint to a vehicle
 
-        :param waypoint: actual waypoint
-        :param vehicle_transform: transform of the target vehicle
+    Args
+        -waypoint (carla.waypoint): actual waypoint
+        -vehicle_transform (carla.transform): transform of the target vehicle
     """
     loc = vehicle_transform.location
     if hasattr(waypoint, 'is_junction'):
@@ -195,9 +212,11 @@ def distance_vehicle(waypoint, vehicle_transform):
 
 def vector(location_1, location_2):
     """
-    Returns the unit vector from location_1 to location_2
-
-        :param location_1, location_2: carla.Location objects
+    Returns the unit vector from location_1 to location_2.
+    
+    Args
+        -location_1 (carla.location): Start location of the vector.
+        -location_2 (carla.location): End location of the vector.
     """
     x = location_2.x - location_1.x
     y = location_2.y - location_1.y
@@ -209,10 +228,11 @@ def vector(location_1, location_2):
 
 def compute_distance(location_1, location_2):
     """
-    Euclidean distance between 3D points
+    Euclidean distance between 3D points.
 
-        :param location_1: 3D points
-        :param location_2: 3D points
+    Args
+        -location_1 (3D points): Start point of the measurement.
+        -location_2 (3D points): End point of the measurement.
     """
     x = location_2.x - location_1.x
     y = location_2.y - location_1.y
@@ -224,7 +244,5 @@ def compute_distance(location_1, location_2):
 def positive(num):
     """
     Return the given number if positive, else 0
-
-        :param num: value to check
     """
     return num if num > 0.0 else 0.0

@@ -14,16 +14,26 @@ import carla
 
 class Controller:
     """
-    VehiclePIDController is the combination of two PID controllers
-    (lateral and longitudinal) to perform the
-    low level control a vehicle from client side
+    PID Controller implementation.
+    
+    Parameters
+    -args : dict
+        The configuration dictionary parsed from yaml file.
+    
+    Attributes
+    -_lon_ebuffer : deque
+        A deque buffer that stores longitudinal control errors.
+    -_lat_ebuffer : deque
+        A deque buffer that stores latitudinal control errors.
+    -current_transform : carla.transform
+        Current ego vehicle transformation in CARLA world(i.e., location and rotation).
+    -current_speed : float
+        Current ego vehicle speed .
+    -past_steering : float
+        Sterring angle from previous control step.
     """
 
     def __init__(self, args):
-        """
-        Construct class
-        :param args: the parameters for pid controller
-        """
 
         # longitudinal related
         self.max_brake = args['max_brake']
@@ -58,16 +68,16 @@ class Controller:
     def dynamic_pid(self):
         """
         Compute kp, kd, ki based on current speed
-        :return:
         """
         pass
 
     def update_info(self, ego_pos, ego_spd):
         """
         Update ego position and speed to controller.
-        :param ego_pos: ego position, carla.transform
-        :param ego_spd: ego speed, km/h
-        :return:
+
+        Args:
+            -ego_pos (carla.location): Position of the ego vehicle.
+            -ego_spd (float): Speed of the ego vehicle.
         """
         self.current_transform = ego_pos
         self.current_speed = ego_spd
@@ -77,8 +87,11 @@ class Controller:
     def lon_run_step(self, target_speed):
         """
         Generate the throttle command based on current speed and target speed
-        :param target_speed: target speed in km/h
-        :return: throttle scalar
+
+        Args:
+            -target_speed (float): Target speed of the ego vehicle.
+        Returns:
+            -acceleration (float): Desired acceleration value for the current step to achieve target speed.
         """
         error = target_speed - self.current_speed
         self._lat_ebuffer.append(error)
@@ -95,8 +108,11 @@ class Controller:
     def lat_run_step(self, target_location):
         """
         Generate the throttle command based on current speed and target speed
-        :param target_location: target waypoint
-        :return: steering scalar
+        
+        Args:
+            -target_location (carla.loaction): Target location of the ego vehicle.
+        Returns:
+            -current_steering (float): Desired steering angle value for the current step to achieve target location.
         """
         v_begin = self.current_transform.location
         v_end = v_begin + carla.Location(x=math.cos(math.radians(self.current_transform.rotation.yaw)),
@@ -128,9 +144,12 @@ class Controller:
         PID controllers to reach a target waypoint
         at a given target_speed.
 
-            :param target_speed: desired vehicle speed
-            :param waypoint: target location encoded as a waypoint
-            :return: control command
+        Args:
+            -target_speed (float): Target speed of the ego vehicle.
+            -target_location (carla.loaction): Target location of the ego vehicle.
+        Returns:
+            -control (carla.VehicleControl): Desired vehicle control command for the current step.
+
         """
         # control class for carla vehicle
         control = carla.VehicleControl()

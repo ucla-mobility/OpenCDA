@@ -20,7 +20,7 @@ import os
 import carla  # pylint: disable=import-error
 import traci  # pylint: disable=import-error
 
-from co_simulation.sumo_integration.sumo_simulation import SumoSignalState, SumoVehSignal
+from opencda.co_simulation.sumo_integration.sumo_simulation import SumoSignalState, SumoVehSignal
 
 # ==================================================================================================
 # -- Bridge helper (SUMO <=> CARLA) ----------------------------------------------------------------

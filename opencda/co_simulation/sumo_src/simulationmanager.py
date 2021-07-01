@@ -7,12 +7,12 @@ Created on Tue Dec 1, 2020
 """
 import traci
 import numpy as np
-import co_simulation.sumo_src.utils as ut
 
-from co_simulation.sumo_src.intersectionController import IntersectionController
-from co_simulation.sumo_src.platoon import Platoon
-from co_simulation.sumo_src.vehicle import Vehicle
-from co_simulation.sumo_src.simlib import flatten
+import opencda.co_simulation.sumo_src.utils as ut
+from opencda.co_simulation.sumo_src.intersectionController import IntersectionController
+from opencda.co_simulation.sumo_src.platoon import Platoon
+from opencda.co_simulation.sumo_src.vehicle import Vehicle
+from opencda.co_simulation.sumo_src.simlib import flatten
 
 # vehicle length
 LENGTH = 5

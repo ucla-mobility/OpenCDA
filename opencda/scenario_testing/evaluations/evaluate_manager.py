@@ -16,15 +16,16 @@ from opencda.scenario_testing.evaluations.utils import lprint
 
 
 class EvaluationManager(object):
-    """Evaluation manager to manage the analysis of the results for different modules.
+    """
+    Evaluation manager to manage the analysis of the results for different modules.
+
+    Args:
+    -cav_world : opencda.CavWorld)
+    	The CavWorld object that contains all CAVs' information.
     """
 
     def __init__(self, cav_world):
-        """
-        Construct class
-        Args:
-            cav_world (opencda.CavWorld): The CavWorld object that contains all CAVs' information
-        """
+       
         self.cav_world = cav_world
 
         current_path = os.path.dirname(os.path.realpath(__file__))
@@ -39,8 +40,6 @@ class EvaluationManager(object):
     def evaluate(self):
         """
         Evaluate performance of all modules by plotting and writing the statistics into the log file.
-        Returns:
-
         """
         log_file = os.path.join(self.eval_save_path, 'log.txt')
 
@@ -56,10 +55,9 @@ class EvaluationManager(object):
     def kinematics_eval(self, log_file):
         """
         vehicle kinematics related evaluation.
-        Args:
-            log_file (File): The log file to write the data.
 
-        Returns:
+        Args:
+            -log_file (File): The log file to write the data.
 
         """
         lprint(log_file, "***********Kinematics Module***********")
@@ -79,11 +77,9 @@ class EvaluationManager(object):
     def localization_eval(self, log_file):
         """
         Localization module evaluation.
+
         Args:
-            log_file (File): The log file to write the data.
-
-        Returns:
-
+            -log_file (File): The log file to write the data.
         """
         lprint(log_file, "***********Localization Module***********")
         for vid, vm in self.cav_world.get_vehicle_managers().items():
@@ -103,10 +99,9 @@ class EvaluationManager(object):
     def platooning_eval(self, log_file):
         """
         Platooning evaluation.
+        
         Args:
-            log_file (File): The log file to write the data.
-
-        Returns:
+            -log_file (File): The log file to write the data.
 
         """
         lprint(log_file, "***********Platooning Analysis***********")

@@ -9,30 +9,35 @@ CAVs share the same model to avoid duplicate memory consumption.
 # License: MIT
 
 import cv2
-import numpy as np
 import torch
+import numpy as np
 
 
 class MLManager(object):
     """
     A class that should contain all the ML models you want to initialize.
+
+    Attributes
+    -object_detector : torch_detector
+        The YoloV5 detector load from pytorch.
+    
     """
+
     def __init__(self):
-        """
-        Construction class.
-        """
+
         self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
 
     def draw_2d_box(self, result, rgb_image, index):
         """
         Draw 2d bounding box based on the yolo detection.
+
         Args:
-            result (yolo.Result):Detection result from yolo 5.
-            rgb_image (np.ndarray): Camera rgb image.
-            index(int): Indicate the index
+            -result (yolo.Result):Detection result from yolo 5.
+            -rgb_image (np.ndarray): Camera rgb image.
+            -index(int): Indicate the index.
 
         Returns:
-            (np.ndarray): camera image with bbx drawn.
+            -rgb_image (np.ndarray): camera image with bbx drawn.
         """
         # torch.Tensor
         bounding_box = result.xyxy[index]
@@ -52,7 +57,7 @@ class MLManager(object):
                 label_name = 'vehicle'
 
             x1, y1, x2, y2 = int(detection[0]), int(detection[1]), int(detection[2]), int(detection[3])
-            cv2.rectangle(rgb_image, (x1,  y1), (x2, y2), (0, 255, 0), 2)
+            cv2.rectangle(rgb_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
             # draw text on it
             cv2.putText(rgb_image, label_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 1)
 
@@ -63,10 +68,9 @@ def is_vehicle_cococlass(label):
     """
     Check whether the label belongs to the vehicle class according to coco dataset.
     Args:
-        label(int):
-
+        -label(int): yolo detection prediction.
     Returns:
-        is_vehicle: bool
+        -is_vehicle: bool
             whether this label belongs to the vehicle class
     """
     vehicle_class_array = np.array([2, 3, 4, 6, 8], dtype=np.int)

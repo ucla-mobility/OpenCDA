@@ -15,25 +15,35 @@ from opencda.core.plan.spline import Spline2D
 
 
 class CollisionChecker:
+    """
+    The default collision checker module.
+
+    Parameters
+    -time_ahead : float
+        how many seconds we look ahead in advance for collision check.
+    -circle_radius : float
+        The radius of the collision checking circle.
+    -circle_offsets : float
+        The offset between collision checking circle and the trajectory point.
+    """
+
     def __init__(self, time_ahead=1.2, circle_radius=1.3, circle_offsets=None):
-        """
-        Construction method
-        :param time_ahead: how many seconds we look ahead in advance for collision check
-        :param circle_offsets: the offset between collision checking circle and the trajectory point
-        :param circle_radius: The radius of the collision checking circle
-        """
+        
         self.time_ahead = time_ahead
         self._circle_offsets = [-1.0, 1.0] if circle_offsets is None else circle_offsets
         self._circle_radius = circle_radius
 
     def is_in_range(self, ego_pos, target_vehicle, candidate_vehicle, carla_map):
         """
-        Check whether there is a obstacle vehicle between target_vehicle and ego_vehicle during back_joining
-        :param carla_map: carla map
-        :param ego_pos: Ego vehicle position
-        :param target_vehicle: The vehicle that is suppose to be catched
-        :param candidate_vehicle: The possible obstacle vehicle blocking the ego vehicle and target vehicle
-        :return:
+        Check whether there is a obstacle vehicle between target_vehicle and ego_vehicle during back_joining.
+
+        Args: 
+            -carla_map (carla.map): carla map  of the current simulation world.
+            -ego_pos (carla.transform): Ego vehicle position.
+            -target_vehicle (carla.vehicle): The vehicle that is suppose to be catched.
+            -candidate_vehicle (carla.vehicle): The possible obstacle vehicle blocking the ego vehicle and target vehicle.
+        Returns: 
+            -detection result (boolean): Indicator of whther the target vehicle is in range.
         """
         ego_loc = ego_pos.location
         target_loc = target_vehicle.get_location()
@@ -70,16 +80,17 @@ class CollisionChecker:
         """
         Generate a straight line in the adjacent lane for collision detection during
         overtake/lane change. Todo: current version may not work well on curved lane
+
         Args:
-            ego_loc (carla.Location): Ego Location.
-            target_wpt (carla.Waypoint): the check point in the adjacent at a far distance.
-            overtake (bool): indicate whether this is an overtake or normal lane change behavior.
-            world (carla.World): CARLA Simulation world, used to draw debug lines.
+            -ego_loc (carla.Location): Ego Location.
+            -target_wpt (carla.Waypoint): the check point in the adjacent at a far distance.
+            -overtake (bool): indicate whether this is an overtake or normal lane change behavior.
+            -world (carla.World): CARLA Simulation world, used to draw debug lines.
 
         Returns:
-            list: the x coordinates of the collision check line in the adjacent lane
-            list: the y coordinates of the collision check line in the adjacent lane
-            list: the yaw angle of the the collision check line in the adjacent lane
+            -rx (list): the x coordinates of the collision check line in the adjacent lane
+            -ry (list): the y coordinates of the collision check line in the adjacent lane
+            -ryaw (list): the yaw angle of the the collision check line in the adjacent lane
         """
         # we first need to consider the vehicle on the other lane in front
         if overtake:
@@ -113,24 +124,27 @@ class CollisionChecker:
             debug_tmp.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # draw yellow line for overtaking, white line for lane change
-        # draw_trajetory_points(world,
-        #                       debug_tmp,
-        #                       color=carla.Color(255, 255, 0) if overtake else carla.Color(255, 255, 255),
-        #                       size=0.05,
-        #                       lt=0.1)
+        draw_trajetory_points(world,
+                              debug_tmp,
+                              color=carla.Color(255, 255, 0) if overtake else carla.Color(255, 255, 255),
+                              size=0.05,
+                              lt=0.1)
 
         return rx, ry, ryaw
 
     def collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle, speed, adjacent_check=False):
         """
-        Use circled collision check to see whether potential hazard on the forwarding path
-        :param adjacent_check: always give full path for adjacent lane check
-        :param speed: ego vehicle speed in m/s
-        :param path_yaw: a list of yaw angles
-        :param path_x: a list of x coordinates
-        :param path_y: a loist of y coordinates
-        :param obstacle_vehicle: potention hazard vehicle on the way
-        :return:
+        Use circled collision check to see whether potential hazard on the forwarding path.
+
+        Args:
+            -adjacent_check (boolean): Indicator of whether do adjacent check. Note: always give full path for adjacent lane check.
+            -speed (float): ego vehicle speed in m/s.
+            -path_yaw (float): a list of yaw angles
+            -path_x (list): a list of x coordinates
+            -path_y (list): a list of y coordinates
+            -obstacle_vehicle (carla.vehicle): potention hazard vehicle on the way
+        Returns: 
+            -collision_free (boolean): Flag indicate whether the current range is collision free.
         """
         collision_free = True
         # detect 2 second ahead

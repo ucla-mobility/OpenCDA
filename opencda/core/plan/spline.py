@@ -11,7 +11,27 @@ import bisect
 
 class Spline:
     """
-    Cubic Spline class
+    Cubic Spline class for calculte curvature (Author: Atsushi Sakai(@Atsushi_twi)).
+
+    Parameters
+    -x : float
+        The x coordinate.
+    -y : float
+        The y coordinate.
+    
+    Attributes
+    -b : float
+        The spline coefficient b.
+    -c : float
+        The spline coefficient c.
+    -d : float
+        The spline coefficient d.
+    -w : float
+        The spline coefficient w.
+    -nx : float
+        The dimension of x.
+    -h : float 
+        The n-th discrete difference along the x-axis.
     """
 
     def __init__(self, x, y):
@@ -43,7 +63,10 @@ class Spline:
         """
         Calc position
 
-        if t is outside of the input x, return None
+        Args:
+            - t (float): if t is outside of the input x, return None
+        Returns:
+            - result (float): The calcualtion result of position. If t is outside the range of x, return None.
 
         """
 
@@ -61,9 +84,7 @@ class Spline:
 
     def calcd(self, t):
         """
-        Calc first derivative
-
-        if t is outside of the input x, return None
+        Calc first derivative. If t is outside of the input x, return None.
         """
 
         if t < self.x[0]:
@@ -78,7 +99,7 @@ class Spline:
 
     def calcdd(self, t):
         """
-        Calc second derivative
+        Calc second derivative, If t is outside of the input x, return None.
         """
 
         if t < self.x[0]:
@@ -93,13 +114,13 @@ class Spline:
 
     def __search_index(self, x):
         """
-        search data segment index
+        Search data segment index.
         """
         return bisect.bisect(self.x, x) - 1
 
     def __calc_A(self, h):
         """
-        calc matrix A for spline coefficient c
+        Calculate matrix A for spline coefficient a.
         """
         A = np.zeros((self.nx, self.nx))
         A[0, 0] = 1.0
@@ -117,7 +138,7 @@ class Spline:
 
     def __calc_B(self, h):
         """
-        calc matrix B for spline coefficient c
+        Calculate matrix B for spline coefficient b.
         """
         B = np.zeros(self.nx)
         for i in range(self.nx - 2):
@@ -128,7 +149,27 @@ class Spline:
 
 class Spline2D:
     """
-    2D Cubic Spline class
+    2D Cubic Spline class for calculte curvature (Author: Atsushi Sakai(@Atsushi_twi)).
+
+    Parameters
+    -x : float
+        The x coordinate.
+    -y : float
+        The y coordinate.
+    
+    Attributes
+    -b : float
+        The spline coefficient b.
+    -c : float
+        The spline coefficient c.
+    -d : float
+        The spline coefficient d.
+    -w : float
+        The spline coefficient w.
+    -nx : float
+        The dimension of x.
+    -h : float 
+        The n-th discrete difference along the x-axis.
 
     """
 
@@ -147,7 +188,7 @@ class Spline2D:
 
     def calc_position(self, s):
         """
-        calc position
+        Calculate position.
         """
         x = self.sx.calc(s)
         y = self.sy.calc(s)
@@ -156,7 +197,7 @@ class Spline2D:
 
     def calc_curvature(self, s):
         """
-        calc curvature
+        Calculate curvature.
         """
         dx = self.sx.calcd(s)
         ddx = self.sx.calcdd(s)
@@ -167,7 +208,7 @@ class Spline2D:
 
     def calc_yaw(self, s):
         """
-        calc yaw
+        Calculate yaw.
         """
         dx = self.sx.calcd(s)
         dy = self.sy.calcd(s)
@@ -176,6 +217,21 @@ class Spline2D:
 
 
 def calc_spline_course(x, y, ds=0.1):
+    """
+    Caculate 2D splice course.
+
+    Args: 
+        -x (float): The x coordinate of the input point. 
+        -y (float): The y coordinate of the input point.
+        -ds (flost): The s step value. Default value equals to 0.1.
+
+    Returns:
+        -rx (list): List of spline course points' x coordinates.
+        -ry (list): List of spline course points' y coordinates.
+        -ryaw (list): List of spline course points' yaw angles.
+        -rk (list): List of spline course points' curvatures.
+        -s (list): List of spline course points' s values.
+    """
     sp = Spline2D(x, y)
     s = list(np.arange(0, sp.s[-1], ds))
 
@@ -190,7 +246,10 @@ def calc_spline_course(x, y, ds=0.1):
     return rx, ry, ryaw, rk, s
 
 
-def main():  # pragma: no cover
+def main():  
+    """
+    Main function to calculate spline and visulize the results.
+    """
     print("Spline 2D test")
     import matplotlib.pyplot as plt
     x = [-135, -131, -131, -131]

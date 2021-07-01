@@ -145,3 +145,4 @@ opencda/evaluation_figures/
 *.save
 *cache*
 evaluation_outputs/
+docs/tmp.py

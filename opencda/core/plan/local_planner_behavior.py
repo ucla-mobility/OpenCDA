@@ -19,8 +19,7 @@ from opencda.core.plan.spline import Spline2D
 
 class RoadOption(Enum):
     """
-    RoadOption represents the possible topological configurations
-    when moving from a segment of lane to other.
+    RoadOption represents the possible topological configurations when moving from a segment of lane to other.
     """
     VOID = -1
     LEFT = 1
@@ -33,24 +32,45 @@ class RoadOption(Enum):
 
 class LocalPlanner(object):
     """
-    LocalPlanner implements the basic behavior of following a trajectory
-    of waypoints that is generated on-the-fly.
-    The low-level motion of the vehicle is computed by using two PID controllers,
-    one is used for the lateral control
-    and the other for the longitudinal control (cruise speed).
+    LocalPlanner implements the basic behavior of following a trajectory of waypoints that is generated on-the-fly.
+    The low-level motion of the vehicle is computed by using lateral and longitudinal PID controllers. 
+    When multiple paths are available (intersections) this local planner makes a random choice.
 
-    When multiple paths are available (intersections)
-    this local planner makes a random choice.
+    Parameters
+    -agent : carla.agent
+        The carla.agent that applying vehicle contorl.
+    -carla_map : carla.map
+        The HD map of the current simulation world.
+    -config : dict
+        The configuration dictionary of the trajectory planning module.
+    
+    Attributes
+    -_vehicle : carla.vehicle
+        The caral vehicle objcet.
+    -_ego_pos : carla.position 
+        The current position of the ego vehicle.
+    -_ego_speed : float
+        The current speed of the ego vehicle.
+    -waypoints_queue : deque
+        The waypoint deque of the current plan.
+    -_waypoint_buffer : deque
+        A buffer deque to store waypoints of the next steps.
+    -_long_plan_debug : list
+        A list that stores the waypoints of global plan for debug purposes.
+    -_trajectory_buffer : deque
+        A deque buffer that stores the current trajectory.
+    -_history_buffer : deque
+        A deque buffer that stores the trajectory history of the ego vehicle.
+    -lane_change : boolean
+        A indicator used to identify whether lane change is operated
+    -lane_id_change : boolean
+        In some corner cases, the id is not changed but we regard it as lane change due to large lateral diff.
     """
 
     # Minimum distance to target waypoint as a percentage
     # (e.g. within 80% of total distance)
 
     def __init__(self, agent, carla_map, config_yaml):
-        """
-        :param agent: agent that regulates the vehicle
-        :param config_yaml: local planner configuration file
-        """
         self._vehicle = agent.vehicle
         self._map = carla_map
 
@@ -60,9 +80,6 @@ class LocalPlanner(object):
         # waypoint pop out thresholding
         self._min_distance = config_yaml['min_dist']
         self._buffer_size = config_yaml['buffer_size']
-
-        # TODO: pid controller should be outside
-        self._pid_controller = None
 
         # global route
         self.waypoints_queue = deque(maxlen=20000)
@@ -90,8 +107,9 @@ class LocalPlanner(object):
         """
         Sets new global plan.
 
-            :param clean:
-            :param current_plan: list of waypoints in the actual plan
+        Args:
+            -clean (boolean): Indicator of whether to clear the global plan.
+            -current_plan (list): list of waypoints in the actual plan.
         """
         for elem in current_plan:
             self.waypoints_queue.append(elem)
@@ -108,11 +126,10 @@ class LocalPlanner(object):
     def update_information(self, ego_pos, ego_speed):
         """
         Update the ego position and speed for trajectory planner.
-        Args:
-            ego_pos (carla.Transform): Ego position from localization module.
-            ego_speed (float): Ego speed(km/h) from localization module.
 
-        Returns:
+        Args:
+            -ego_pos (carla.Transform): Ego position from localization module.
+            -ego_speed (float): Ego speed(km/h) from localization module.
 
         """
         self._ego_pos = ego_pos
@@ -120,15 +137,19 @@ class LocalPlanner(object):
 
     def get_trajetory(self):
         """
-        Get the trajetory
-        :return:
+        Get the trajetory.
         """
         return self._trajectory_buffer
 
     def generate_path(self):
         """
-        Generate the smooth path using cubic spline
-        :return: rx, ry, ryaw, rk: list of planned path points' x,y coordinates, yaw angle and curvature
+        Generate the smooth path using cubic spline.
+        
+        Returns: 
+            -rx (list): List of planned path points' x coordinates.
+            -ry (list): List of planned path points' y coordinates.
+            -ryaw (list): List of planned path points' yaw angles.
+            -rk (list): List of planned path points' curvatures.
         """
 
         # used to save all key spline node
@@ -246,12 +267,14 @@ class LocalPlanner(object):
 
     def generate_trajectory(self, rx, ry, rk):
         """
-        Sampling the generated path and assign speed to each point
-        :param rx: x coordinates of planning path
-        :param ry: y coordinates of planning path
-        :param rk: curvature of planning path
-        :param debug: whether to draw the whole plan path
-        :return:
+        Sampling the generated path and assign speed to each point.
+
+        Args:
+            -rx (list): List of planned path points' x coordinates.
+            -ry (list): List of planned path points' y coordinates.
+            -rk (list): List of planned path points' curvatures.
+            -debug (boolean): whether to draw the whole plan path
+
         """
         # unit distance for interpolation points
         ds = 0.1
@@ -276,11 +299,7 @@ class LocalPlanner(object):
         # print('Vehicle Id:%d, current speed %f and target speed is %f' % (self._vehicle.id,
         #                                                                   current_speed * 3.6, target_speed))
 
-        # TODO: This may need to be tuned more(for instance, use history speed to check acceleration)
-        if self._pid_controller:
-            max_acc = 3.5 if self._pid_controller.max_throttle >= 0.9 else 2.5
-        else:
-            max_acc = 3.5
+        max_acc = 3.5
         # todo: hard-coded, need to be tuned
         acceleration = max(min(max_acc,
                                (target_speed / 3.6 - current_speed) / dt), -6.5)
@@ -308,8 +327,7 @@ class LocalPlanner(object):
 
     def pop_buffer(self, vehicle_transform):
         """
-        Remove waypoints achieved
-        :return:
+        Remove waypoints the ego vehicle has achieved.
         """
         max_index = -1
 
@@ -344,14 +362,19 @@ class LocalPlanner(object):
         Execute one step of local planning which involves
         running the longitudinal and lateral PID controllers to
         follow the smooth waypoints trajectory.
-
-            :param rx: generated path x coordinates
-            :param ry: generated path y coordinates
-            :param rk: generated path curvatures
-            :param following: whether the vehicle is under following status
-            :param trajectory: pre-generated trajectory only for following vehicles in the platooning
-            :param target_speed: desired speed
-            :return: next trajectory point's target speed and waypoint
+        
+        Args:
+            -rx (list): List of planned path points' x coordinates.
+            -ry (list): List of planned path points' y coordinates.
+            -ryaw (list): List of planned path points' yaw angles.
+            -rk (list): List of planned path points' curvatures.
+            -following (boolean): Indicator of whether the vehicle is under following status.
+            -trajectory (list): Pre-generated car-following trajectory only for platoon members.
+            -target_speed (float): The ego vehicle's desired speed.
+        Returns:
+            -speed (float): Next trajectory point's target speed
+            -waypoint (carla.waypoint): Next trajectory point's waypoint.
+            
         """
 
         self._target_speed = target_speed

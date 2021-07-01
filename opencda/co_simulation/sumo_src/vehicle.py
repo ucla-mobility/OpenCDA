@@ -7,7 +7,7 @@ Created on Tue Dec 1, 2020
 
 import traci
 import traci.constants as tc
-import co_simulation.sumo_src.utils as ut
+import opencda.co_simulation.sumo_src.utils as ut
 import math
 
 class Vehicle():

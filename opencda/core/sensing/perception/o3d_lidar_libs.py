@@ -50,11 +50,9 @@ def o3d_pointcloud_encode(raw_data, point_cloud):
     """
     Encode the raw point cloud to Open3d PointCloud object.
     Args:
-        raw_data (np.ndarray): Raw lidar points (N, (x, y, z, i)) obtained from lidar sensor.
-        point_cloud (o3d.PointCloud):  Open3d PointCloud.
+        -raw_data (np.ndarray): Raw lidar points (N, (x, y, z, i)) obtained from lidar sensor.
+        -point_cloud (o3d.PointCloud):  Open3d PointCloud.
 
-    Returns:
-        (o3d.PointCloud): PointCloud with added points.
     """
 
     # Isolate the intensity and compute a color for it
@@ -79,9 +77,9 @@ def o3d_visualizer_init(actor_id):
     """
     Initialize the visualizer.
     Args:
-        actor_id (int): Vehicle's id.
+        -actor_id (int): Vehicle's id.
     Returns:
-        (o3d.visualizer): Initialize Open3d visualizer.
+        -vis (o3d.visualizer): Initialize Open3d visualizer.
 
     """
     vis = o3d.visualization.Visualizer()
@@ -101,12 +99,10 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
     """
     Visualize the point cloud at runtime.
     Args:
-        vis (o3d.Visualizer): Visualization interface.
-        count (int): current step since simulation started.
-        point_cloud (o3d.PointCLoud): Open3d point clouds.
-        objects (dict): The dictionary containing objects.
-    Returns:
-
+        -vis (o3d.Visualizer): Visualization interface.
+        -count (int): current step since simulation started.
+        -point_cloud (o3d.PointCLoud): Open3d point clouds.
+        -objects (dict): The dictionary containing objects.
     """
 
     if count == 2:
@@ -139,16 +135,15 @@ def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_
     """
     Utilize the 3D lidar points to extend the 2D bounding box from camera to 3D bounding box under world coordinates.
     Args:
-        objects (dict): The dictionary contains all object detection result.
-        yolo_bbx (torch.Tensor): Object detection bounding box at current photo from yolov5,
+        -objects (dict): The dictionary contains all object detection result.
+        -yolo_bbx (torch.Tensor): Object detection bounding box at current photo from yolov5,
                                  shape:(n, [x1, y1, x2, y2, label]).
-        lidar_3d (np.ndarray): Raw 3D lidar points in lidar coordinate system.
-        projected_lidar (np.ndarray): 3D lidar points projected to the camera space.
-        lidar_sensor (carla.Sensor): The lidar sensor.
+        -lidar_3d (np.ndarray): Raw 3D lidar points in lidar coordinate system.
+        -projected_lidar (np.ndarray): 3D lidar points projected to the camera space.
+        -lidar_sensor (carla.Sensor): The lidar sensor.
 
     Returns:
-        objects: dict
-            The update object dictionary that contains 3d bounding boxes.
+        -objects (dict): The update object dictionary that contains 3d bounding boxes.
     """
     
     # convert torch tensor to numpy array first

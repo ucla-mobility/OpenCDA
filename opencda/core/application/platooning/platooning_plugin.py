@@ -14,15 +14,39 @@ from opencda.core.application.platooning.fsm import FSM
 
 class PlatooningPlugin(object):
     """
-    Platooning Plugin
+    Platooning plugin inside the V2X manager.
+    
+    Parameters
+    -search_range : float
+        The search range of the communication equipment.
+    -cda_enabled : boolean
+        Whether connectivity is supported.
+    
+    Attributes
+    -leader : boolean
+        Boolean indicator of the platoon leader status.
+    -platooning_object : opencda object 
+        The current platoon object.
+    -platooning_id : int
+        The current platoon ID.
+    -in_id : int
+        The position in the platoon.
+    -status : enum
+        The current platooning status.
+    -ego_pos : carla.transformation
+        The current position (i.e., location and rotation) of the ego vehicle.
+    -ego_spd : float
+        The current speed(km/h) of the ego vehicle.
+    -platooning_blacklist : list
+        The platoon in the black list won't be considered again.
+    -front_vehicle : opencda object
+        The front vehicle manager of the ego vehicle.
+    -rear_vechile : opencda object
+        The rear vehicle manager of the ego vehicle.
     """
 
     def __init__(self, search_range, cda_enabled):
-        """
-        Construct class
-        :param search_range:
-        :param cda_enabled:
-        """
+
         self.search_range = search_range
         self.cda_enabled = cda_enabled
 
@@ -47,17 +71,22 @@ class PlatooningPlugin(object):
     def update_info(self, ego_pos, ego_spd):
         """
         Update the ego position and speed
-        :param ego_pos: ego position, carla.Transform
-        :param ego_spd: ego speed, km/h
-        :return:
+
+        Args:
+            -heading_direction: groundtruth heading_direction obtained from the server.
+            -dummy_variable: dummy variable to test multiple return/args.
+            -dummy_variable: dummy variable to test multiple return/args.
+            -dummy_variable: dummy variable to test multiple return/args.
+        Returns:
+            -heading_direction: heading direction with noise.
+            -dummy_variable: dummy variable to test multiple return/args.
         """
         self.ego_pos = ego_pos
         self.ego_spd = ego_spd
 
     def reset(self):
         """
-        Reset to the origin status
-        :return:
+        Reset to the origin status.
         """
         self.front_vehicle = None
         self.rear_vechile = None
@@ -70,11 +99,12 @@ class PlatooningPlugin(object):
     def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
         """
         Set platooning status
-        :param platooning_object: platooning manager todo: remove this later
-        :param platooning_id: platoon id the cav belongs to
-        :param in_id: the position in the platoon, etc. 0 represents leader and 1 represents the second position
-        :param leader: indicate whether this cav is a leader in platoon
-        :return:
+        
+        Args:
+            -in_id (int): Inner platoon ID of the vehicle.
+            -platooning_object (opencda object): The current platoon object.
+            -platooning_id (int): The current platoon ID.
+            -leader (boolean): Boolean indicator of the platoon leader status.
         """
         if in_id is None:
             if not self.cda_enabled:
@@ -99,17 +129,22 @@ class PlatooningPlugin(object):
     def set_status(self, status):
         """
         Set FSM status
-        :param status:
-        :return:
+        
+        Args:
+            -status (string): The current platooning status.
         """
         self.status = status
 
     def search_platoon(self, ego_pos, cav_world):
         """
         Search platoon candidate in the range
-        :param ego_pos:
-        :param cav_world:
-        :return: the uuid of platoon member, platoon object
+        
+        Args:
+            -ego_pos (carla.transformation): Current position of the ego vehicle.
+            -cav_world (carla.world): Current simulation world.
+        Returns:
+            -pmid (int): Platoon manager ID.
+            -pm (opencda object): Platoon manager ID.
         """
         platoon_manager_dict = cav_world.get_platoon_dict()
         for pmid, pm in platoon_manager_dict.items():
@@ -122,9 +157,15 @@ class PlatooningPlugin(object):
     def match_platoon(self, cav_world):
         """
         A naive way to find the best position to join a platoon
-        :param cav_world: an object containing all existing platoons
-        :return: platoon found or not, closest platoon member team id, and a list containing the vehicle managers
+        
+        Args:
+            -cav_world (carla.world): Current simulation world.
+        Returns:
+            -(boolean): The boolean indicator of matching result. 
+            -min_index (int): The minimum index inside the selected platoon.
+            -platoon_vehicle_list (list): The list of platoon vehicle memebers.
         """
+
         # make sure the previous status won't influence current one
         self.reset()
 

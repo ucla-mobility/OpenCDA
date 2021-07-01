@@ -1,7 +1,7 @@
 import traci
 import logging
 
-from co_simulation.sumo_src.simlib import flatten
+from opencda.co_simulation.sumo_src.simlib import flatten
 
 
 class IntersectionController():

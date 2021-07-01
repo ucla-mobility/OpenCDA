@@ -11,9 +11,12 @@ import yaml
 
 def load_yaml(file):
     """
-    load yaml file and return a dictionary
-    :param file: yaml file path
-    :return: a dictionary that contains defined parameters
+    Load yaml file and return a dictionary.
+
+    Args:
+        -file (string): yaml file path.
+    Returns: 
+        - param (dict): A dictionary that contains defined parameters.
     """
 
     stream = open(file, 'r')

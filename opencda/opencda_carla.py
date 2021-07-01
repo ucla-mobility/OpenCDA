@@ -84,14 +84,14 @@ class Rotation(object):
     A 90-degree "Yaw" maps the positive X-axis to the positive Y-axis.
 
     Args:
-        pitch: Rotation about Y-axis.
-        yaw:   Rotation about Z-axis.
-        roll:  Rotation about X-axis.
+        -pitch: Rotation about Y-axis.
+        -yaw:   Rotation about Z-axis.
+        -roll:  Rotation about X-axis.
 
     Attributes:
-        pitch: Rotation about Y-axis.
-        yaw:   Rotation about Z-axis.
-        roll:  Rotation about X-axis.
+        -pitch: Rotation about Y-axis.
+        -yaw:   Rotation about Z-axis.
+        -roll:  Rotation about X-axis.
     """
 
     def __init__(self, pitch: float = 0, yaw: float = 0, roll: float = 0):
@@ -104,7 +104,7 @@ class Rotation(object):
         """Creates a pylot Rotation from a simulator rotation.
 
         Args:
-            rotation: An instance of a simulator rotation.
+            -rotation: An instance of a simulator rotation.
 
         Returns:
             :py:class:`.Rotation`: A pylot rotation.
@@ -125,15 +125,15 @@ class Transform(object):
     or using a matrix.
 
     Args:
-        location (:py:class:`.Location`, optional): The location of the object
+        -location (:py:class:`.Location`, optional): The location of the object
             represented by the transform.
-        rotation (:py:class:`.Rotation`, optional): The rotation  (in degrees)
+        -rotation (:py:class:`.Rotation`, optional): The rotation  (in degrees)
             of the object represented by the transform.
 
     Attributes:
-        location (:py:class:`.Location`): The location of the object
+        -location (:py:class:`.Location`): The location of the object
             represented by the transform.
-        rotation (:py:class:`.Rotation`): The rotation (in degrees) of the
+        -rotation (:py:class:`.Rotation`): The rotation (in degrees) of the
             object represented by the transform.
     """
 
@@ -148,7 +148,7 @@ class Transform(object):
         """Creates a pylot transform from a simulator transform.
 
         Args:
-            transform: A simulator transform.
+            -transform: A simulator transform.
 
         Returns:
             :py:class:`.Transform`: An instance of a pylot transform.

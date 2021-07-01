@@ -26,9 +26,11 @@ class bcolors:
 def load_customized_world(xodr_path, client):
     """
     Load .xodr file and return the carla world object
-    :param xodr_path: path to the xodr file
-    :param client: created client
-    :return:
+
+    Args:
+        -xodr_path (string): path to the xodr file
+        -client (carla.client): The created CARLA simulation client.
+
     """
     if os.path.exists(xodr_path):
         with open(xodr_path) as od_file:
@@ -59,10 +61,12 @@ def load_customized_world(xodr_path, client):
 def spawn_helper_2lanefree(carla_map, coefficient):
     """
     A helper function to locate the valid spawn point on the merge lane.
-    :param carla_map: the 2lanefreeway map
-    :param coefficient: a single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position
-    is in the middle of the merge lane
-    :return: carla transform
+
+    Args:
+        -carla_map (carla.map): the 2lanefreeway map
+        -coefficient (float): A single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position is in the middle of the merge lane.
+    Returns:
+        -transform_point (carla.transform): The desired spawn points.
     """
 
     all_deafault_spawn = carla_map.get_spawn_points()
@@ -78,10 +82,12 @@ def spawn_helper_2lanefree(carla_map, coefficient):
 def spawn_helper_2lanefree_complete(carla_map, coefficient):
     """
     A helper function to locate the valid spawn point on the merge lane.
-    :param carla_map: the 2lanefreeway map
-    :param coefficient: a single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position
-    is in the middle of the merge lane
-    :return: carla transform
+
+    Args:
+        -carla_map (carla.map): The 2lanefreeway map.
+        -coefficient (float): A single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position is in the middle of the merge lane.
+    Returns: 
+        -transform_point (carla.transform): The desired spawn points.
     """
 
     start_point_x = -1202.19

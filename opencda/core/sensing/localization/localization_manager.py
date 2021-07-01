@@ -19,15 +19,26 @@ from opencda.core.sensing.localization.coordinate_transform import geo_to_transf
 
 class GnssSensor(object):
     """
-    Class for gnss sensors
+    The default GNSS sensor module.
+    
+    Parameters
+    -vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+    -config : dict
+        The configuration dictionary of the localization module.
+    
+    Attributes
+    -world : carla.world
+        The caral world of the current vehicle.
+    -blueprint : carla.blueprint 
+        The current blueprint of the sensor actor.
+    -weak_self : opencda Object
+        A weak reference point to avoid circular reference.
+    -sensor : CARLA actor
+        The current sensor actors that will be attach to the vehicles.
     """
 
     def __init__(self, vehicle, config):
-        """
-        Construct class
-        :param vehicle: carla actor
-        :param config: gnss configuration
-        """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.other.gnss')
 
@@ -47,7 +58,7 @@ class GnssSensor(object):
 
     @staticmethod
     def _on_gnss_event(weak_self, event):
-        """GNSS method"""
+        """GNSS method that returns the current geo location."""
         self = weak_self()
         if not self:
             return
@@ -59,14 +70,24 @@ class GnssSensor(object):
 
 class ImuSensor(object):
     """
-    IMU Sensor
+    Default ImuSensor module.
+    
+    Parameters
+    -vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+
+    Attributes
+    -world : carla.world
+        The caral world of the current vehicle.
+    -blueprint : carla.blueprint 
+        The current blueprint of the sensor actor.
+    -weak_self : opencda Object
+        A weak reference point to avoid circular reference.
+    -sensor : CARLA actor
+        The current sensor actors that will be attach to the vehicles.
     """
 
     def __init__(self, vehicle):
-        """
-        Construct class
-        :param vehicle: Carla Actor
-        """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.other.imu')
         self.sensor = world.spawn_actor(
@@ -79,6 +100,9 @@ class ImuSensor(object):
 
     @staticmethod
     def _IMU_callback(weak_self, sensor_data):
+        """
+        IMU method that returns the 3-D (x,y,z) acceleration and gyroscope values.
+        """
         self = weak_self()
         if not self:
             return
@@ -97,37 +121,34 @@ class ImuSensor(object):
 
 
 class LocalizationManager(object):
-    """Default localization module.
+    """
+    Default localization module.
+    
     Parameters
-    ----------
-    vehicle : carla.Vehicle
+    -vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
-    config_yaml: dict
+    -config_yaml : dict
         The configuration dictionary of the localization module.
-    carla_map: carla.Map
+    -carla_map : carla.Map
         The carla HDMap. We need this to find the map origin to
         convert wg84 to enu coordinate system.
+    
     Attributes
-    ----------
-    gnss : opencda Object
+    -gnss : opencda object
         GNSS sensor manager for spawning gnss sensor and listen to the data
         transmission.
-    gnss : opencda Object
-        GNSS sensor manager for spawning gnss sensor and listen to the data
+    -ImuSensor : opencda object
+        Imu sensor manager for spawning gnss sensor and listen to the data
         transmission.
-    kf : opencda Object
+    -kf : opencda object
         The filter used to fuse different sensors.
-    debug_helper : opencda Object
+    -debug_helper : opencda object
         The debug helper is used to visualize the accuracy of
         the localization and provide evaluation functions.
     """
 
     def __init__(self, vehicle, config_yaml, carla_map):
-        """
-        Construction class
-        :param vehicle: carla actor
-        :param config_yaml: configuration related to localization
-        """
+
         self.vehicle = vehicle
         self.activate = config_yaml['activate']
         self.map = carla_map
@@ -158,7 +179,6 @@ class LocalizationManager(object):
     def localize(self):
         """
         Currently implemented in a naive way.
-        :return:
         """
 
         if not self.activate:
@@ -206,41 +226,41 @@ class LocalizationManager(object):
     def add_heading_direction_noise(self, heading_direction):
         """
         Add synthetic noise to heading direction.
-        :param heading_direction: groundtruth heading_direction obtained from the server.
-        :return: heading direction with noise.
+
+        Args:
+            -heading_direction (float): groundtruth heading_direction obtained from the server.
+        Returns:
+            -heading_direction (float): heading direction with noise.
         """
         return heading_direction + np.random.normal(0, self.heading_noise_std)
 
     def add_speed_noise(self, speed):
         """
         Add gaussian white noise to the current speed.
+
         Args:
-            speed (float): m/s, current speed.
-
+            -speed (float): m/s, current speed.
+            
         Returns:
-            float: the speed with noise added.
-
+            -speed (float): the speed with noise.
         """
         return speed + np.random.normal(0, self.speed_noise_std)
 
     def get_ego_pos(self):
         """
         Retrieve ego vehicle position
-        :return: vehicle position
         """
         return self._ego_pos
 
     def get_ego_spd(self):
         """
         Retrieve ego vehicle speed
-        :return:
         """
         return self._speed
 
     def destroy(self):
         """
         Destroy the sensors
-        :return:
         """
         self.gnss.sensor.destroy()
         self.imu.sensor.destroy()

@@ -12,11 +12,10 @@ import sys
 def lprint(logfile, *argv):
     """
     Save string to log file.
-    Args:
-        logfile (File): The log file path.
-        *argv (string or number): the string that needs to be saved into the log file.
 
-    Returns:
+    Args:
+        -logfile (File): The log file path.
+        -*argv (string or number): the string that needs to be saved into the log file.
 
     """
 
