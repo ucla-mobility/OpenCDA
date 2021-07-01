@@ -8,34 +8,37 @@ import importlib
 
 class CavWorld(object):
     """
-    A customized world object to save all CDA vehicle information and shared ML models.
+    A customized world object to save all CDA vehicle
+    information and shared ML models.
 
     Parameters
     -apply_ml : boolean
-        whether apply ml/dl models in this simulation, please make sure 
+        whether apply ml/dl models in this simulation, please make sure
         you have install torch/sklearn before setting this to True.
-    
+
     Attributes
     -vehicle_id_set : set
         A set that stores vehicle IDs.
     -_vehicle_manager_dict : dict
         A dictionary that stores vehicle managers.
     -_platooning_dict : dict
-        A dictionary that stores platooning managers. 
+        A dictionary that stores platooning managers.
     -ml_manager : opencda object.
         The machine learning manager class.
     """
 
     def __init__(self, apply_ml=False):
-        
+
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
         self.ml_manager = None
 
         if apply_ml:
-            # we import in this way so the user don't need to install ml packages unless they require to
-            ml_manager = getattr(importlib.import_module("opencda.customize.ml_libs.ml_manager"), 'MLManager')
+            # we import in this way so the user don't need to install ml
+            # packages unless they require to
+            ml_manager = getattr(importlib.import_module(
+                "opencda.customize.ml_libs.ml_manager"), 'MLManager')
             # initialize the ml manager to load the DL/ML models into memory
             self.ml_manager = ml_manager()
 
@@ -44,10 +47,11 @@ class CavWorld(object):
         Update created CAV manager to the world.
 
         Args
-            -vehicle_manager (opencda object): The vehicle manager class. 
+            -vehicle_manager (opencda object): The vehicle manager class.
         """
         self.vehicle_id_set.add(vehicle_manager.vehicle.id)
-        self._vehicle_manager_dict.update({vehicle_manager.vid: vehicle_manager})
+        self._vehicle_manager_dict.update(
+            {vehicle_manager.vid: vehicle_manager})
 
     def update_platooning(self, platooning_manger):
         """
@@ -56,7 +60,8 @@ class CavWorld(object):
         Args
             -platooning_manger (opencda object): The platooning manager class.
         """
-        self._platooning_dict.update({platooning_manger.pmid: platooning_manger})
+        self._platooning_dict.update(
+            {platooning_manger.pmid: platooning_manger})
 
     def get_vehicle_managers(self):
         """
@@ -78,7 +83,8 @@ class CavWorld(object):
             -loc (carla.Location): vehicle location.
 
         Returns
-            -target_vm (vehicle_manager): The vehicle manager at the give location.
+            -target_vm (vehicle_manager): The vehicle manager
+             at the give location.
         """
 
         target_vm = None
