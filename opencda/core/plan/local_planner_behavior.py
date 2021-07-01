@@ -71,10 +71,6 @@ class LocalPlanner(object):
     # (e.g. within 80% of total distance)
 
     def __init__(self, agent, carla_map, config_yaml):
-        """
-        :param agent: agent that regulates the vehicle
-        :param config_yaml: local planner configuration file
-        """
         self._vehicle = agent.vehicle
         self._map = carla_map
 

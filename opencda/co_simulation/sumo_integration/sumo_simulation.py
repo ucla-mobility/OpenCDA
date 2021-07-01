@@ -20,7 +20,7 @@ import carla  # pylint: disable=import-error
 import sumolib  # pylint: disable=import-error
 import traci  # pylint: disable=import-error
 
-from co_simulation.sumo_integration.constants import INVALID_ACTOR_ID
+from opencda.co_simulation.sumo_integration.constants import INVALID_ACTOR_ID
 
 import lxml.etree as ET  # pylint: disable=import-error
 
