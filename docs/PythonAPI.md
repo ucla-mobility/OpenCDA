@@ -1,1815 +1,3650 @@
-# OpenCDA Python API Reference
-This reference contains all the details of the OpenCDA Python API. 
+# opencda.opencda_carla
+Description for this module: Used to reduce the dependency on CARLA api by mocking them in the same structure.
 
-## OpenCDA Module: co_simulation
-Co-simulation with SUMO, will be released in v0.2.
+## Location(x: float = 0, y: float = 0, z: float = 0)
+Stores a 3D location, and provides useful helper methods.
 
-## OpenCDA Module: core
-This is the core module of the OpenCDA framework that regulates the motion relatetd controls. 
+**Arguments:**
 
-### opencda.core.actuation
-This is the actuation function stack that controls CARLA ego vehicle. 
+### Attributes:
+### Ancestors 
+opencda.opencda_carla.Vector3D
 
-#### opencda.core.actuation.control_manager
-Controller interface.
+- <font color="#7fb800">from_simulator_location</font> (location)
+ 
+Creates a pylot Location from a simulator location.
 
-- **<font color="#f8805a">Classes</font>**
+**Arguments:**
 
-`ControlManager(control_config)`
-:   Interface to select different types of controller.
-    
-    Construct class
-    Args:
-        control_config(dict): Controller params.
+**Returns**
 
-    ### Methods
+## Rotation(pitch: float = 0, yaw: float = 0, roll: float = 0)
+Used to represent the rotation of an actor or obstacle.
 
-    `run_step(self, target_speed, waypoint)`
-    :
+**Arguments:**
 
-    `update_info(self, ego_pos, ego_speed)`
-    :
+### Attributes:
+- <font color="#7fb800">from_simulator_rotation</font> (rotation)
+ 
+Creates a pylot Rotation from a simulator rotation.
 
-#### opencda.core.actuation.pid_controller
-PID Control Class.
+**Arguments:**
 
-- **<font color="#f8805a">Classes</font>**
+*rotation:*  An instance of a simulator rotation.
 
-`Controller(args)`
-:   VehiclePIDController is the combination of two PID controllers
-    (lateral and longitudinal) to perform the
-    low level control a vehicle from client side
-    
-    Construct class
-    :param args: the parameters for pid controller
+**Returns**
 
-    ### Methods
+## Transform(location: opencda.opencda_carla.Location = None, rotation: opencda.opencda_carla.Rotation = None)
+A class that stores the location and rotation of an obstacle.
 
-    `dynamic_pid(self)`
-    :   Compute kp, kd, ki based on current speed
-        :return:
+**Arguments:**
 
-    `lat_run_step(self, target_location)`
-    :   Generate the throttle command based on current speed and target speed
-        :param target_location: target waypoint
-        :return: steering scalar
+### Attributes:
+- <font color="#7fb800">from_simulator_transform</font> (transform)
+ 
+Creates a pylot transform from a simulator transform.
 
-    `lon_run_step(self, target_speed)`
-    :   Generate the throttle command based on current speed and target speed
-        :param target_speed: target speed in km/h
-        :return: throttle scalar
+**Arguments:**
 
-    `run_step(self, target_speed, waypoint)`
-    :   Execute one step of control invoking both lateral and longitudinal
-        PID controllers to reach a target waypoint
-        at a given target_speed.
-        
-            :param target_speed: desired vehicle speed
-            :param waypoint: target location encoded as a waypoint
-            :return: control command
+*transform:*  A simulator transform.
 
-    `update_info(self, ego_pos, ego_spd)`
-    :   Update ego position and speed to controller.
-        :param ego_pos: ego position, carla.transform
-        :param ego_spd: ego speed, km/h
-        :return:
-### opencda.core.application 
-V2V, V2I application are all managed with this class.  
+**Returns**
 
-#### opencda.core.application - Platooning
-Here, we provide an implementation of Autonomous vehicle platooning based on finite state machine.
+## Vector3D(x: float = 0, y: float = 0, z: float = 0)
+Represents a 3D vector and provides useful helper functions.
 
-##### opencda.core.application.platooning.fsm
-Finite State Machine
+**Arguments:**
 
-- **<font color="#f8805a">Classes</font>**
+### Attributes:
+- <font color="#7fb800">from_simulator_vector</font> (vector)
+ 
+Creates a pylot Vector3D from a simulator 3D vector.
 
-`FSM(value, names=None, *, module=None, qualname=None, type=None, start=1)`
-:   An enumeration.
+**Arguments:**
 
-    ### Ancestors (in MRO)
+**Returns**
 
-    * enum.Enum
+# opencda.core.plan.drive_profile_plotting
+Description for this module: Tools to plot velocity, acceleration, and curvation.
 
-    ### Class variables
+## draw_acceleration_profile_single_plot(acceleration)
+Draw velocity profiles in a single plot.
 
-    `ABONDON`
-    :
+**Arguments:**
 
-    `BACK_JOINING`
-    :
+## draw_dist_gap_profile_singel_plot(gap_list)
+Draw distance gap profiles in a single plot.
 
-    `CUT_IN_TO_BACK`
-    :
+**Arguments:**
 
-    `DISABLE`
-    :
+## draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list, ttc_list)
+This is a specific function that draws 4 in 1 images for trajectory following task. 
 
-    `FRONT_JOINING`
-    :
+**Arguments:**
 
-    `JOINING`
-    :
+## draw_time_gap_profile_singel_plot(gap_list)
+Draw inter gap profiles in a single plot.
 
-    `JOINING_FINISHED`
-    :
+**Arguments:**
 
-    `LEADING_MODE`
-    :
+## draw_ttc_profile_single_plot(ttc_list)
+Draw ttc.
 
-    `MAINTINING`
-    :
+**Arguments:**
 
-    `MOVE_TO_POINT`
-    :
+## draw_velocity_profile_single_plot(velocity_list)
+Draw velocity profiles in a single plot.
 
-    `OPEN_GAP`
-    :
+**Arguments:**
 
-    `SEARCHING`
-    :
+# opencda.core.plan.collision_check
+Description for this module: This module is used to check collision possibility
 
-##### opencda.core.application.platooning.platoon_behavior_agent
-Behavior manager for platooning specifically
+## CollisionChecker(time_ahead=1.2, circle_radius=1.3, circle_offsets=None)
+The default collision checker module.
 
-- **<font color="#f8805a">Classes</font>**
+### Parameters
+- <font color="#f8805a">time_ahead</font> (float)
+ 
+how many seconds we look ahead in advance for collision check.
 
-`PlatooningBehaviorAgent(vehicle, vehicle_manager, v2x_manager, behavior_yaml, platoon_yaml, carla_map)`
-:   The behavior agent for platooning
-    
-    Construct class
-    :param vehicle: carla actor todo:remove this later
-    :param vehicle_manager: vehicle manager of this agent.
-    :param v2x_manager: communication manager
-    :param behavior_yaml: configure yaml file for normal behavior agent
-    :param platoon_yaml:  configure yaml file for platoon behavior agent
-    :param carla_map: Carla HD Map
-    :return
 
-    ### Ancestors (in MRO)
+- <font color="#f8805a">circle_radius</font> (float)
+ 
+The radius of the collision checking circle.
 
-    * opencda.core.plan.behavior_agent.BehaviorAgent
 
-    ### Methods
+- <font color="#f8805a">circle_offsets</font> (float)
+ 
+The offset between collision checking circle and the trajectory point.
 
-    `calculate_gap(self, distance)`
-    :   Calculate the current vehicle and frontal vehicle's time/distance gap
-        :param distance:  distance between the ego vehicle and frontal vehicle
-        :return:
 
-    `joining_finish_manager(self, insert_vehicle='front')`
-    :   Called when a joining is finish to update the platoon manager list.
-        :param insert_vehicle: indicate use the front or rear vehicle index to update the platoon manager list.
-        :return:
+### Methods 
+- <font color="#7fb800">adjacent_lane_collision_check</font> (self, ego_loc, target_wpt, overtake, world)
+ 
+Generate a straight line in the adjacent lane for collision detection during
 
-    `platooning_following_manager(self, inter_gap)`
-    :   Car following behavior in platooning with gap regulation
-        :param inter_gap: the gap designed for platooning
-        :return:
+**Arguments:**
 
-    `platooning_merge_management(self, frontal_vehicle_vm)`
-    :   Merge the vehicle into the platooning
-        :param frontal_vehicle_vm:
-        :return:
-
-    `run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True)`
-    :   Run a single step for navigation under platooning agent. Finite state machine is used to switch between
-        different platooning states.
-        Args:
-            target_speed (float): Target speed in km/h
-            collision_detector_enabled (bool): Whether collision detection enabled.
-            lane_change_allowed (bool): Whether lane change is allowed.
-        
-        Returns:
+*ego_loc (carla.Location):*  Ego Location.
 
-    `run_step_back_joining(self)`
-    :   Back-joining Algorithm
-        :return: control command and whether back joining finished
+*target_wpt (carla.Waypoint):*  the check point in the adjacent at a far distance.
 
-##### opencda.core.application.platooning.platoon_debug_helper
-Analysis + visualization functions for platooning.
+*overtake (bool):*  indicate whether this is an overtake or normal lane change behavior.
 
-- **<font color="#f8805a">Classes</font>**
+*world (carla.World):*  CARLA Simulation world, used to draw debug lines.
 
-`PlatoonDebugHelper(actor_id)`
-:   This class aims to save statistics for platoon behaviour
-    Attributes:
-        time_gap_list (list): The list containing intra-time-gap(s) of all time-steps
-        dist_gap_list(list): The list containing distance gap(s) of all time-steps
+**Returns**
 
-    ### Ancestors (in MRO)
+*rx (list):*  the x coordinates of the collision check line in the adjacent lane
 
-    * opencda.core.plan.planer_debug_helper.PlanDebugHelper
-
-##### opencda.core.application.platooning.platooning_manager
-Platooning Manager.
-
-- **<font color="#f8805a">Classes</font>**
-
-`PlatooningManager(config_yaml, cav_world)`
-:   Platooning manager for vehicle managers
-    
-    Construct class
-    :param config_yaml:
-    :param cav_world: CAV world object
-
-    ### Methods
-
-    `add_member(self, vehicle_manager, leader=False)`
-    :   Add memeber to the current platooning
-        :param leader: whether this cav is a leader
-        :param vehicle_manager:
-        :return:
-
-    `cal_center_loc(self)`
-    :   Calculate center location of the platoon
-        :return:
-
-    `destroy(self)`
-    :   Destroy vehicles
-        :return:
-
-    `evaluate(self)`
-    :
-
-    `reset_speed(self)`
-    :   After joining request accepted for certain steps, the platoon will return to the origin speed.
-        :return:
-
-    `response_joining_request(self, request_loc)`
-    :   Identify whether to accept the joining request based on capacity.
-        Args:
-            request_loc (carla.Location): request vehicle location.
-        
-        Returns:
-
-    `run_step(self)`
-    :   Run a step for each vehicles.
-        :return:
-
-    `set_destination(self, destination)`
-    :   Set desination of the vehicle managers in the platoon.
-        TODO: Currently we assume all vehicles in a platoon will have the same destination
-        :return:
-
-    `set_lead(self, vehicle_manager)`
-    :   Set the leader of the platooning
-        :param vehicle_manager:
-        :return:
-
-    `set_member(self, vehicle_manager, index, lead=False)`
-    :   Set member at specific index
-        :param lead:
-        :param vehicle_manager:
-        :param index:
-        :return:
-
-    `update_information(self)`
-    :   Update CAV world information for every member in the list.
-        :return:
-
-    `update_member_order(self)`
-    :   Update the members' front and rear vehicle.
-        This should be called whenever new member added to the platoon list
-        :return:
-
-##### opencda.core.application.platooning.platooning_plugin
-Platooning plugin for communication and track FSM.
-
-- **<font color="#f8805a">Classes</font>**
-
-`PlatooningPlugin(search_range, cda_enabled)`
-:   Platooning Plugin
-    
-    Construct class
-    :param search_range:
-    :param cda_enabled:
-
-    ### Methods
-
-    `match_platoon(self, cav_world)`
-    :   A naive way to find the best position to join a platoon
-        :param cav_world: an object containing all existing platoons
-        :return: platoon found or not, closest platoon member team id, and a list containing the vehicle managers
-
-    `reset(self)`
-    :   Reset to the origin status
-        :return:
-
-    `search_platoon(self, ego_pos, cav_world)`
-    :   Search platoon candidate in the range
-        :param ego_pos:
-        :param cav_world:
-        :return: the uuid of platoon member, platoon object
-
-    `set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False)`
-    :   Set platooning status
-        :param platooning_object: platooning manager todo: remove this later
-        :param platooning_id: platoon id the cav belongs to
-        :param in_id: the position in the platoon, etc. 0 represents leader and 1 represents the second position
-        :param leader: indicate whether this cav is a leader in platoon
-        :return:
-
-    `set_status(self, status)`
-    :   Set FSM status
-        :param status:
-        :return:
-
-    `update_info(self, ego_pos, ego_spd)`
-    :   Update the ego position and speed
-        :param ego_pos: ego position, carla.Transform
-        :param ego_spd: ego speed, km/h
-        :return:
-### opencda.core.common 
-This module regulates simulation related objects in the CARLA simulation world. 
-
-#### opencda.core.common.cav_world
-Class that regulates the CARLA simulation world.
-
-- **<font color="#f8805a">Classes</font>**
-
-`CavWorld(apply_ml=False)`
-:   A customized world object to save all CDA vehicle information and shared ML models
-    :return:
-    
-    Construct class.
-    Args:
-        apply_ml (bool): whether apply ml/dl models in this simulation, please make sure
-                         you have install torch/sklearn before setting this to True.
-
-    ### Methods
-
-    `get_platoon_dict(self)`
-    :   Return existing platoons
-        :return:
-
-    `get_vehicle_managers(self)`
-    :   Return vehicle manager dictionary
-        :return:
-
-    `locate_vehicle_manager(self, loc)`
-    :   Locate the vehicle manager based on the given location.
-        Args:
-        loc (carla.Location): vehicle location.
-        
-        Returns:
-        (VehicleManager): The vehicle manager at the give location.
-
-    `update_platooning(self, platooning_manger)`
-    :   Add created platooning
-        :param platooning_manger:
-        :return:
-
-    `update_vehicle_manager(self, vehicle_manager)`
-    :   Update created CAV manager to the world
-        :param vehicle_manager:
-        :return:
-
-#### opencda.core.common.misc
-Module with auxiliary functions.
-
-- **<font color="#f8805a">Functions</font>**
-
-`cal_distance_angle(target_location, current_location, orientation)`
-:   Calculate the vehicle current relative distance to target location
-    :param target_location:
-    :param current_location:
-    :param orientation:
-    :return: distance and angle
-
-    
-`compute_distance(location_1, location_2)`
-:   Euclidean distance between 3D points
-    
-        :param location_1: 3D points
-        :param location_2: 3D points
-
-    
-`compute_magnitude_angle(target_location, current_location, orientation)`
-:   Compute relative angle and distance between a target_location and a current_location
-    
-        :param target_location: location of the target object
-        :param current_location: location of the reference object
-        :param orientation: orientation of the reference object
-        :return: a tuple composed by the distance to the object and the angle between both objects
-
-    
-`distance_vehicle(waypoint, vehicle_transform)`
-:   Returns the 2D distance from a waypoint to a vehicle
-    
-        :param waypoint: actual waypoint
-        :param vehicle_transform: transform of the target vehicle
-
-    
-`draw_trajetory_points(world, waypoints, z=0.25, color=<carla.libcarla.Color object>, lt=5, size=0.1)`
-:   Draw a list of trajetory points
-    :param size:
-    :param lt:
-    :param color:
-    :param world:
-    :param waypoints:
-    :param z:
-    :return:
-
-    
-`draw_waypoints(world, waypoints, z=0.5)`
-:   Draw a list of waypoints at a certain height given in z.
-    
-        :param world: carla.world object
-        :param waypoints: list or iterable container with the waypoints to draw
-        :param z: height in meters
-
-    
-`get_acc(vehicle, meters=False)`
-:   Compute speed of a vehicle in Km/h.
-    
-        :param meters: use m/s or km/h
-        :param vehicle: the vehicle for which speed is calculated
-        :return: speed as a float in Km/h
-
-    
-`get_speed(vehicle, meters=False)`
-:   Compute speed of a vehicle in Km/h.
-    
-        :param meters: use m/s or km/h
-        :param vehicle: the vehicle for which speed is calculated
-        :return: speed as a float in Km/h
-
-    
-`is_within_distance(target_location, current_location, orientation, max_distance, d_angle_th_up, d_angle_th_low=0)`
-:   Check if a target object is within a certain distance from a reference object.
-    A vehicle in front would be something around 0 deg, while one behind around 180 deg.
-    
-        :param target_location: location of the target object
-        :param current_location: location of the reference object
-        :param orientation: orientation of the reference object
-        :param max_distance: maximum allowed distance
-        :param d_angle_th_up: upper thereshold for angle
-        :param d_angle_th_low: low thereshold for angle (optional, default is 0)
-        :return: True if target object is within max_distance ahead of the reference object
-
-    
-`is_within_distance_ahead(target_transform, current_transform, max_distance)`
-:   Check if a target object is within a certain distance in front of a reference object.
-    
-    :param target_transform: location of the target object
-    :param current_transform: location of the reference object
-    :param orientation: orientation of the reference object
-    :param max_distance: maximum allowed distance
-    :return: True if target object is within max_distance ahead of the reference object
-
-    
-`positive(num)`
-:   Return the given number if positive, else 0
-    
-        :param num: value to check
-
-    
-`vector(location_1, location_2)`
-:   Returns the unit vector from location_1 to location_2
-    
-        :param location_1, location_2: carla.Location objects
-
-#### opencda.core.common.v2x_manager
-Communication manager for cooperation.
-
-- **<font color="#f8805a">Classes</font>**
-
-`V2XManager(cav_world, config_yaml)`
-:   V2X Manager for platooning, cooperative perception and so on
-    
-    Construct class
-    :param config_yaml: configuration yaml file
-
-    ### Methods
-
-    `add_platoon_blacklist(self, pmid)`
-    :   Add an existing platoon to current blacklist
-        :param pmid: platoon id
-        :return:
-
-    `get_platoon_front_rear(self)`
-    :   Get the ego vehicle's front and rear cav in the platoon
-        :return:
-
-    `get_platoon_manager(self)`
-    :   Retrieve the platoon manager the cav belongs to and the corresponding id
-        :return:
-
-    `get_platoon_status(self)`
-    :   Retrive the FSM status for platooning application
-        :return:
-
-    `in_platoon(self)`
-    :   Check whether the vehicle is inside the platoon
-        :return: bool, flag indication whether in a platoon
-
-    `match_platoon(self)`
-    :   A naive way to find the best position to join a platoon
-        :return:
-
-    `set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False)`
-    :   Set platooning status
-        :param platooning_object: platooning world that contains all platoon information todo: remove this later
-        :param platooning_id: platoon id the cav belongs to
-        :param in_id: the position in the platoon, etc. 0 represents leader and 1 represents the second position
-        :param leader: indicate whether this cav is a leader in platoon
-        :return:
-
-    `set_platoon_front(self, vm)`
-    :   Set the frontal vehicle to another vehicle
-        :param vm: vehicle manager
-        :return:
-
-    `set_platoon_rear(self, vm)`
-    :   Set the rear vehicle to another vehicle
-        :param vm:
-        :return:
-
-    `set_platoon_status(self, status)`
-    :   Set the cav to a different fsm status
-        :param status: fsm status
-        :return:
-
-    `update_info(self, ego_pos, ego_spd)`
-    :   Update all communication plugins with current localization info
-
-#### opencda.core.common.vehicle_manager
-Basic class of CAV.
-
-- **<font color="#f8805a">Classes</font>**
-
-
-`VehicleManager(vehicle, config_yaml, application, carla_map, cav_world)`
-:   A class manager to embed different modules with vehicle together
-    
-    Construction class
-    :param vehicle: carla actor
-    :param config_yaml: a dictionary that contains the parameters of the vehicle
-    :param application: application category, support:['single','platoon'] currently
-    :param carla_map: Carla HD Map
-    :param cav_world: CAV world object
-
-    ### Methods
-
-    `destroy(self)`
-    :   Destroy the actor vehicle
-        :return:
-
-    `run_step(self, target_speed=None)`
-    :   Execute one step of navigation.
-        :return:
-
-    `set_destination(self, start_location, end_location, clean=False, end_reset=True)`
-    :   Wrapper function to set global route
-        :param start_location:
-        :param end_location:
-        :param clean:
-        :param end_reset:
-        :return:
-
-    `update_info(self)`
-    :   Call perception and localization module to retrieve surrounding info an ego position.
-        :return:
-
-### opencda.core.plan 
-The main planing module for OpenCDA. 
-
-#### opencda.core.plan.behavior_agent
-This module implements an agent that roams around a track following random
-waypoints and avoiding other vehicles. The agent also responds to traffic lights,
-traffic signs, and has different possible configurations.
-
-- **<font color="#f8805a">Classes</font>**
-
-`BehaviorAgent(vehicle, carla_map, config_yaml)`
-:   A modulized version of BehaviorAgent
-    
-    Construct class
-    :param vehicle: carla actor
-    :param config_yaml: a dictionary containing all initialization params
-    provide customized function under customize/controller
-
-    ### Descendants
-
-    * opencda.core.application.platooning.platoon_behavior_agent.PlatooningBehaviorAgent
-
-    ### Methods
-
-    `add_white_list(self, vm)`
-    :   Add vehicle manager to
-        Args:
-            vm ():
-        
-        Returns:
-
-    `car_following_manager(self, vehicle, distance, target_speed=None)`
-    :   Module in charge of car-following behaviors when there's
-        someone in front of us.
-        
-            :param target_speed:
-            :param vehicle: car to follow
-            :param distance: distance from vehicle
-            :return control: carla.VehicleControl
-
-    `collision_manager(self, rx, ry, ryaw, waypoint, adjacent_check=False)`
-    :   This module is in charge of warning in case of a collision
-        :param adjacent_check: whether it is a check for adjacent lane
-        :param rx: x coordinates of plan path
-        :param ry: y coordinates of plan path
-        :param ryaw: yaw angle
-        :param waypoint: current waypoint of the agent
-        :return vehicle_state: True if there is a vehicle nearby, False if not
-        :return vehicle: nearby vehicle
-        :return distance: distance to nearby vehicle
-
-    `get_local_planner(self)`
-    :   return the local planner
-
-    `lane_change_management(self)`
-    :   Identify whether a potential hazard exits if operating lane change.
-        Returns:
-            bool: whether the lane change is dangerous
-
-    `overtake_management(self, obstacle_vehicle)`
-    :   Overtake behavior.
-        :param obstacle_vehicle: the vehicle
-        :return:
-
-    `reroute(self, spawn_points)`
-    :   This method implements re-routing for vehicles approaching its destination.
-        It finds a new target and computes another path to reach it.
-        
-            :param spawn_points: list of possible destinations for the agent
-
-    `run_step(self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True)`
-    :   Execute one step of navigation
-        :param collision_detector_enabled: whether to enable collision detection.
-        :param target_speed:  a manual order to achieve certain speed.
-        :param lane_change_allowed: whether lane change is allowed. This is passed from platoon behavior agent.
-        :return: control: carla.VehicleControl
-
-    `set_destination(self, start_location, end_location, clean=False, end_reset=True, clean_history=False)`
-    :   This method creates a list of waypoints from agent's position to destination location
-        based on the route returned by the global router.
-        
-            :param end_reset: indicates whether the new destination is a temporary destination
-            :param start_location: initial position
-            :param end_location: final position
-            :param clean: boolean to clean the waypoint queue
-            :param clean_history:
-
-    `traffic_light_manager(self, waypoint)`
-    :   This method is in charge of behaviors for red lights and stops.
-        
-        WARNING: What follows is a proxy to avoid having a car brake after running a yellow light.
-        This happens because the car is still under the influence of the semaphore,
-        even after passing it. So, the semaphore id is temporarely saved to
-        ignore it and go around this issue, until the car is near a new one.
-        
-            :param waypoint: current waypoint of the agent
-
-    `update_information(self, ego_pos, ego_speed, objects)`
-    :   Update the perception and localization information to the behavior agent.
-        Args:
-            ego_pos (carla.Transform): ego position from localization module.
-            ego_speed (float): km/h, ego speed.
-            objects (dictionary): Objects detection results from perception module.
-
-    `white_list_match(self, obstacles)`
-    :   Match the detected obstacles with the white list. Remove the obstacles that are in white list.
-        The white list contains all position of target platoon member for joining.
-        Args:
-            obstacles (list):  a list of carla.Vehicle or ObstacleVehicle
-        
-        Returns:
-            (list): the new list of obstacles.
-
-#### opencda.core.plan.collision_check
-This module is used to check collision possibility.
-- **<font color="#f8805a">Classes</font>**
-
-
-`CollisionChecker(time_ahead=1.2, circle_radius=1.3, circle_offsets=None)`
-:   Construction method
-    :param time_ahead: how many seconds we look ahead in advance for collision check
-    :param circle_offsets: the offset between collision checking circle and the trajectory point
-    :param circle_radius: The radius of the collision checking circle
-
-    ### Methods
-
-    `adjacent_lane_collision_check(self, ego_loc, target_wpt, overtake, world)`
-    :   Generate a straight line in the adjacent lane for collision detection during
-        overtake/lane change. Todo: current version may not work well on curved lane
-        Args:
-            ego_loc (carla.Location): Ego Location.
-            target_wpt (carla.Waypoint): the check point in the adjacent at a far distance.
-            overtake (bool): indicate whether this is an overtake or normal lane change behavior.
-            world (carla.World): CARLA Simulation world, used to draw debug lines.
-        
-        Returns:
-            list: the x coordinates of the collision check line in the adjacent lane
-            list: the y coordinates of the collision check line in the adjacent lane
-            list: the yaw angle of the the collision check line in the adjacent lane
-
-    `collision_circle_check(self, path_x, path_y, path_yaw, obstacle_vehicle, speed, adjacent_check=False)`
-    :   Use circled collision check to see whether potential hazard on the forwarding path
-        :param adjacent_check: always give full path for adjacent lane check
-        :param speed: ego vehicle speed in m/s
-        :param path_yaw: a list of yaw angles
-        :param path_x: a list of x coordinates
-        :param path_y: a loist of y coordinates
-        :param obstacle_vehicle: potention hazard vehicle on the way
-        :return:
-
-    `is_in_range(self, ego_pos, target_vehicle, candidate_vehicle, carla_map)`
-    :   Check whether there is a obstacle vehicle between target_vehicle and ego_vehicle during back_joining
-        :param carla_map: carla map
-        :param ego_pos: Ego vehicle position
-        :param target_vehicle: The vehicle that is suppose to be catched
-        :param candidate_vehicle: The possible obstacle vehicle blocking the ego vehicle and target vehicle
-        :return:
-
-#### opencda.core.plan.drive_profile_plotting
-Tools to plot velocity, acceleration, curvation.
-
-- **<font color="#f8805a">Functions</font>**
-
-`draw_acceleration_profile_single_plot(acceleration)`
-:   Draw velocity profiles in a single plot
-    :param acceleration:
-    :return:
-
-    
-`draw_dist_gap_profile_singel_plot(gap_list)`
-:   Draw distance gap profiles in a single plot
-    :param gap_list: time gap
-    :return:
-
-    
-`draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list)`
-:   This is a specific function that draws 4 in 1 images for trajectory following task
-    :param velocity_list:
-    :param distance_gap_list:
-    :param time_gap_list:
-    :param acceleration_list:
-    :return:
-
-    
-`draw_time_gap_profile_singel_plot(gap_list)`
-:   Draw inter gap profiles in a single plot
-    :param gap_list: time gap
-    :return:
-
-    
-`draw_ttc_profile_single_plot(ttc_list)`
-:   Draw ttc.
-    :param ttc_list: ttc
-    :return:
-
-    
-`draw_velocity_profile_single_plot(velocity_list)`
-:   Draw velocity profiles in a single plot
-    :param velocity_list:
-    :return:
-
-    
-`dump_data(data)`
-:   Dump data to json file
-    :param data: dictionary containing all stats
-    :return:
-
-#### opencda.core.plan.global_route_planner
-This module provides GlobalRoutePlanner implementation.
-
-- **<font color="#f8805a">Classes</font>**
-
-`GlobalRoutePlanner(dao)`
-:   This class provides a very high level route plan.
-    Instantiate the class by passing a reference to
-    A GlobalRoutePlannerDAO object.
-    
-    Constructor
-
-    ### Methods
-
-    `abstract_route_plan(self, origin, destination)`
-    :   The following function generates the route plan based on
-        origin      : carla.Location object of the route's start position
-        destination : carla.Location object of the route's end position
-        return      : list of turn by turn navigation decisions as
-        agents.navigation.local_planner.RoadOption elements
-        Possible values are STRAIGHT, LEFT, RIGHT, LANEFOLLOW, VOID
-        CHANGELANELEFT, CHANGELANERIGHT
-
-    `setup(self)`
-    :   Performs initial server data lookup for detailed topology
-        and builds graph representation of the world map.
-
-    `trace_route(self, origin, destination)`
-    :   This method returns list of (carla.Waypoint, RoadOption)
-        from origin to destination
-
-#### opencda.core.plan.global_route_planner_dao
-This module provides implementation for GlobalRoutePlannerDAO.
-
-- **<font color="#f8805a">Classes</font>**
-
-`GlobalRoutePlannerDAO(wmap, sampling_resolution)`
-:   This class is the data access layer for fetching data
-    from the carla server instance for GlobalRoutePlanner
-    
-    Constructor method.
-    
-        :param wmap: carla.world object
-        :param sampling_resolution: sampling distance between waypoints
-
-    ### Methods
-
-    `get_resolution(self)`
-    :   Accessor for self._sampling_resolution
-
-    `get_topology(self)`
-    :   Accessor for topology.
-        This function retrieves topology from the server as a list of
-        road segments as pairs of waypoint objects, and processes the
-        topology into a list of dictionary objects.
-        
-            :return topology: list of dictionary objects with the following attributes
-                entry   -   waypoint of entry point of road segment
-                entryxyz-   (x,y,z) of entry point of road segment
-                exit    -   waypoint of exit point of road segment
-                exitxyz -   (x,y,z) of exit point of road segment
-                path    -   list of waypoints separated by 1m from entry
-                            to exit
-
-    `get_waypoint(self, location)`
-    :   The method returns waypoint at given location
-        
-            :param location: vehicle location
-            :return waypoint: generated waypoint close to location
-
-#### opencda.core.plan.local_planner_behavior
-This module contains a local planner to perform low-level waypoint following based on PID controllers.
-
-- **<font color="#f8805a">Classes</font>**
-
-`LocalPlanner(agent, carla_map, config_yaml)`
-:   LocalPlanner implements the basic behavior of following a trajectory
-    of waypoints that is generated on-the-fly.
-    The low-level motion of the vehicle is computed by using two PID controllers,
-    one is used for the lateral control
-    and the other for the longitudinal control (cruise speed).
-    
-    When multiple paths are available (intersections)
-    this local planner makes a random choice.
-    
-    :param agent: agent that regulates the vehicle
-    :param config_yaml: local planner configuration file
-
-    ### Methods
-
-    `generate_path(self)`
-    :   Generate the smooth path using cubic spline
-        :return: rx, ry, ryaw, rk: list of planned path points' x,y coordinates, yaw angle and curvature
-
-    `generate_trajectory(self, rx, ry, rk)`
-    :   Sampling the generated path and assign speed to each point
-        :param rx: x coordinates of planning path
-        :param ry: y coordinates of planning path
-        :param rk: curvature of planning path
-        :param debug: whether to draw the whole plan path
-        :return:
-
-    `get_trajetory(self)`
-    :   Get the trajetory
-        :return:
-
-    `pop_buffer(self, vehicle_transform)`
-    :   Remove waypoints achieved
-        :return:
-
-    `run_step(self, rx, ry, rk, target_speed=None, trajectory=None, following=False)`
-    :   Execute one step of local planning which involves
-        running the longitudinal and lateral PID controllers to
-        follow the smooth waypoints trajectory.
-        
-            :param rx: generated path x coordinates
-            :param ry: generated path y coordinates
-            :param rk: generated path curvatures
-            :param following: whether the vehicle is under following status
-            :param trajectory: pre-generated trajectory only for following vehicles in the platooning
-            :param target_speed: desired speed
-            :return: next trajectory point's target speed and waypoint
-
-    `set_global_plan(self, current_plan, clean=False)`
-    :   Sets new global plan.
-        
-            :param clean:
-            :param current_plan: list of waypoints in the actual plan
-
-    `update_information(self, ego_pos, ego_speed)`
-    :   Update the ego position and speed for trajectory planner.
-        Args:
-            ego_pos (carla.Transform): Ego position from localization module.
-            ego_speed (float): Ego speed(km/h) from localization module.
-        
-        Returns:
-
-`RoadOption(value, names=None, *, module=None, qualname=None, type=None, start=1)`
-:   RoadOption represents the possible topological configurations
-    when moving from a segment of lane to other.
-
-    ### Ancestors (in MRO)
-
-    * enum.Enum
-
-    ### Class variables
-
-    `CHANGELANELEFT`
-    :
-
-    `CHANGELANERIGHT`
-    :
-
-    `LANEFOLLOW`
-    :
-
-    `LEFT`
-    :
-
-    `RIGHT`
-    :
-
-    `STRAIGHT`
-    :
-
-    `VOID`
-    :
-
-#### opencda.core.plan.planer_debug_helper
-Analysis + Visualization functions for planning.
-
-- **<font color="#f8805a">Classes</font>**
-
-`PlanDebugHelper(actor_id)`
-:   This class aims to save statistics for planner behaviour
-    Attributes:
-        speed_list (list): The list containing speed info(m/s) of all time-steps
-        acc_list(list): The list containing acceleration info(m^2/s) of all time-steps
-        ttc_list(list): The list containing ttc info(s) for all time-steps
-        count(int): Used to count how many simulation steps have been executed.
-
-    ### Descendants
-
-    * opencda.core.application.platooning.platoon_debug_helper.PlatoonDebugHelper
-
-    ### Methods
-
-    `evaluate(self)`
-    :
-
-    `update(self, ego_speed, ttc)`
-    :   Update the speed info.
-        Args:
-            ego_speed(km/h): Ego speed.
-            ttc(s): time to collision.
-        Returns:
-
-#### opencda.core.plan.spline
-Cubic spline planner.
-
-- **<font color="#f8805a">Functions</font>**
-
-`calc_spline_course(x, y, ds=0.1)`
-:   Calculate the spline based on x,y location and delta time ds.
-
-- **<font color="#f8805a">Classes</font>**
-
-`Spline(x, y)`
-:   Cubic Spline class
-
-    ### Methods
-
-    `calc(self, t)`
-    :   Calc position
-        
-        if t is outside of the input x, return None
-
-    `calcd(self, t)`
-    :   Calc first derivative
-        
-        if t is outside of the input x, return None
-
-    `calcdd(self, t)`
-    :   Calc second derivative
-
-`Spline2D(x, y)`
-:   2D Cubic Spline class
-
-    ### Methods
-
-    `calc_curvature(self, s)`
-    :   calc curvature
-
-    `calc_position(self, s)`
-    :   calc position
-
-    `calc_yaw(self, s)`
-    :   calc yaw
-
-
-### opencda.core.sensing 
-This is the sensing stack module of the OpenCDA.
-
-#### opencda.core.sensing.localization.
-The localization functions are implemented in this class. 
-
-##### opencda.core.senesing.localization.coordinate_transform
-Functions to transfer coordinates under different coordinate system.
-
-- **<font color="#f8805a">Functions</font>**
-
-`geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0)`
-:   Convert WG84 to ENU. The origin of the ENU should pass the geo reference.
-    Note this function is a writen by reversing the official API transform_to_geo.
-    :param lat: current latitude
-    :param lon: current longitude
-    :param alt: current altitude
-    :param lat_0: geo_ref latitude
-    :param lon_0: geo_ref longitude
-    :param alt_0: geo_ref altitude
-    :return:
-
-##### opencda.core.sensing.localization.extented_kalman_filter
-Use Extended Kalman Filter on GPS + IMU for better localization.
-
-- **<font color="#f8805a">Classes</font>**
-
-`ExtentedKalmanFilter(dt)`
-:   Kalman Filter implementation for gps + imu
-    
-    Construct class
-    Args:
-        dt(float): unit time step for simulation.
-
-    ### Methods
-
-    `jacob_f(self, x, u)`
-    :   Jacobian of Motion Model motion model
-        x_{t+1} = x_t+v*dt*cos(yaw)
-        y_{t+1} = y_t+v*dt*sin(yaw)
-        yaw_{t+1} = yaw_t+omega*dt
-        v_{t+1} = v{t}
-        so
-        dx/dyaw = -v*dt*sin(yaw)
-        dx/dv = dt*cos(yaw)
-        dy/dyaw = v*dt*cos(yaw)
-        dy/dv = dt*sin(yaw)
-
-    `motion_model(self, x, u)`
-    :   Predict current position and yaw based on previous result.
-        X = F * X_prev + B * u
-        Args:
-            x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
-            u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
-        
-        Returns:
-          np.array: predicted state.
-
-    `observation_model(self, x)`
-    :   Project the state matrix to sensor measurement matrix.
-        Args:
-            x (np.array): [x, y, yaw, v], shape: (4. 1).
-        
-        Returns:
-            np.array: predicted measurement.
-
-    `run_step(self, x, y, heading, velocity, yaw_rate_imu)`
-    :   Apply EKF on current measurement and previous prediction
-        :param x: x(esu) coordinate from gnss sensor at current timestamp
-        :param y: y(esu) coordinate from gnss sensor at current timestamp
-        :param heading: heading direction at current timestamp
-        :param velocity: current speed
-        :param yaw_rate_imu: yaw rate rad/s from IMU sensor
-        :return: corrected x, y, heading, velocity
-
-    `run_step_init(self, x, y, heading, velocity)`
-    :   Initalization for states
-        :param x:
-        :param y:
-        :param heading:
-        :param velocity:
-        :return:
-
-##### opencda.core.sensing.localization.kalman_filter
-Use Kalman Filter on GPS + IMU for better localization. Reference: https://www.bzarg.com/p/how-a-kalman-filter-works-in-pictures/
-
-- **<font color="#f8805a">Classes</font>**
-
-`KalmanFilter(dt)`
-:   Kalman Filter implementation for gps + imu
-    
-    Construct class
-    Args:
-        dt(float): unit time step for simulation.
-
-    ### Methods
-
-    `motion_model(self, x, u)`
-    :   Predict current position and yaw based on previous result.
-        X = F * X_prev + B * u
-        Args:
-            x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
-            u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
-        
-        Returns:
-          np.array: predicted state.
-
-    `observation_model(self, x)`
-    :   Project the state matrix to sensor measurement matrix.
-        Args:
-            x (np.array): [x, y, yaw, v], shape: (4. 1).
-        
-        Returns:
-            np.array: predicted measurement.
-
-    `run_step(self, x, y, heading, velocity, yaw_rate_imu)`
-    :   Apply KF on current measurement and previous prediction
-        :param x: x(esu) coordinate from gnss sensor at current timestamp
-        :param y: y(esu) coordinate from gnss sensor at current timestamp
-        :param heading: heading direction at current timestamp
-        :param velocity: current speed
-        :param yaw_rate_imu: yaw rate rad/s from IMU sensor
-        :return: corrected x, y, heading
-
-    `run_step_init(self, x, y, heading, velocity)`
-    :   Initial state filling.
-        Args:
-            x ():
-            y ():
-            heading ():
-            velocity ():
-        
-        Returns:
-
-##### opencda.core.sensing.localization.localization_debug_helper
-Visualization tools for localization results.
-
-- **<font color="#f8805a">Classes</font>**
-
-`LocDebugHelper(config_yaml, actor_id)`
-:   This class aims to help users debugging their localization algorithms.
-    
-    Users can apply this class to draw the x, y coordinate trajectory, yaw angle
-     and vehicle speed from GNSS raw measurements, Kalman filter(or any other filter),
-     and the groundtruth measurements. Error plotting is also enabled.
-    
-    Attributes:
-        show_animation (bool):
-        x_scale(float):
-        y_scale(float):
-    
-    Args:
-        config_yaml (dict):
-        actor_id(int):
-
-    ### Methods
-
-    `evaluate(self)`
-    :   Plot the localization related data points.
-        Args:
-        
-        Returns:
-
-    `run_step(self, gnss_x, gnss_y, gnss_yaw, gnss_spd, filter_x, filter_y, filter_yaw, filter_spd, gt_x, gt_y, gt_yaw, gt_spd)`
-    :   Run a single step for DebugHelper to save and animate(optional) the localization data.
-        Args:
-            gnss_x (float):
-            gnss_y (float):
-            gnss_yaw (float):
-            gnss_spd (float):
-            filter_x (float):
-            filter_y (float):
-            filter_yaw (float):
-            filter_spd (float):
-            gt_x (float):
-            gt_y (float):
-            gt_yaw (float):
-            gt_spd ()float:
-        
-        Returns:
-
-##### opencda.core.sensing.localization.localization_manager
-Manager class for localization module.
-
-- **<font color="#f8805a">Classes</font>**
-
-`GnssSensor(vehicle, config)`
-:   Class for gnss sensors
-    
-    Construct class
-    :param vehicle: carla actor
-    :param config: gnss configuration
-
-`ImuSensor(vehicle)`
-:   IMU Sensor
-    
-    Construct class
-    :param vehicle: Carla Actor
-
-`LocalizationManager(vehicle, config_yaml, carla_map)`
-:   The core class that manages localization estimation.
-    
-    Construction class
-    :param vehicle: carla actor
-    :param config_yaml: configuration related to localization
-
-    ### Methods
-
-    `add_heading_direction_noise(self, heading_direction)`
-    :   Add synthetic noise to heading direction.
-        :param heading_direction: groundtruth heading_direction obtained from the server.
-        :return: heading direction with noise.
-
-    `add_speed_noise(self, speed)`
-    :   Add gaussian white noise to the current speed.
-        Args:
-            speed (float): m/s, current speed.
-        
-        Returns:
-            float: the speed with noise added.
-
-    `destroy(self)`
-    :   Destroy the sensors
-        :return:
-
-    `get_ego_pos(self)`
-    :   Retrieve ego vehicle position
-        :return: vehicle position
-
-    `get_ego_spd(self)`
-    :   Retrieve ego vehicle speed
-        :return:
-
-    `localize(self)`
-    :   Currently implemented in a naive way.
-        :return:
-
-#### opencda.core.sensing.perception
-The perception functions are implemented in this class. 
-
-##### opencda.core.senesing.perception.o3d_lidar_libs
-Utility functions for 3d lidar visualization and processing by utilizing open3d.
-
-- **<font color="#f8805a">Functions</font>**
-
-`o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_sensor)`
-:   Utilize the 3D lidar points to extend the 2D bounding box from camera to 3D bounding box under world coordinates.
-    Args:
-        objects (dict): The dictionary contains all object detection result.
-        yolo_bbx (torch.Tensor): Object detection bounding box at current photo from yolov5,
-                                 shape:(n, [x1, y1, x2, y2, label]).
-        lidar_3d (np.ndarray): Raw 3D lidar points in lidar coordinate system.
-        projected_lidar (np.ndarray): 3D lidar points projected to the camera space.
-        lidar_sensor (carla.Sensor): The lidar sensor.
-    
-    Returns:
-        objects: dict
-            The update object dictionary that contains 3d bounding boxes.
-
-    
-`o3d_pointcloud_encode(raw_data, point_cloud)`
-:   Encode the raw point cloud to Open3d PointCloud object.
-    Args:
-        raw_data (np.ndarray): Raw lidar points (N, (x, y, z, i)) obtained from lidar sensor.
-        point_cloud (o3d.PointCloud):  Open3d PointCloud.
-    
-    Returns:
-        (o3d.PointCloud): PointCloud with added points.
-
-    
-`o3d_visualizer_init(actor_id)`
-:   Initialize the visualizer.
-    Args:
-        actor_id (int): Vehicle's id.
-    Returns:
-        (o3d.visualizer): Initialize Open3d visualizer.
-
-    
-`o3d_visualizer_show(vis, count, point_cloud, objects)`
-:   Visualize the point cloud at runtime.
-    Args:
-        vis (o3d.Visualizer): Visualization interface.
-        count (int): current step since simulation started.
-        point_cloud (o3d.PointCLoud): Open3d point clouds.
-        objects (dict): The dictionary containing objects.
-    Returns:
-
-##### opencda.core.senesing.perception.obstacle_vehicle
-Obstacle vehicle class to save object detection results.
-
-- **<font color="#f8805a">Functions</font>**
-
-`is_vehicle_cococlass(label)`
-:   Check whether the label belongs to the vehicle class according to coco dataset.
-    Args:
-        label(int):
-    
-    Returns:
-        is_vehicle: bool
-            whether this label belongs to the vehicle class
-
-- **<font color="#f8805a">Classes</font>**
-
-`BoundingBox(corners)`
-:   Bounding box class for obstacle vehicle.
-    
-    Construct class.
-    Args:
-        corners (nd.nparray): Eight corners of the bounding box. shape:(8, 3)
-
-`ObstacleVehicle(corners, o3d_bbx, vehicle=None, lidar=None)`
-:   A class for obstacle vehicle. The attributes are designed to match with carla.Vehicle class
-    
-    Construct class.
-    Args:
-        corners (nd.nparray): Eight corners of the bounding box. shape:(8, 3).
-        o3d_bbx (open3d.AlignedBoundingBox): The bounding box object in Open3d. This is mainly used for
-        visualization.
-        vehicle(carla.Vehicle): carla.Vehicle object.
-        lidar(carla.sensor.lidar): lidar sensor.
-
-    ### Methods
-
-    `get_location(self)`
-    :
-
-    `get_transform(self)`
-    :
-
-    `get_velocity(self)`
-    :
-
-    `set_vehicle(self, vehicle, lidar)`
-    :   Assign the attributes from carla.Vehicle to ObstacleVehicle
-        Args:
-            vehicle(carla.Vehicle): carla.Vehicle object.
-            lidar(carla.sensor.lidar): lidar sensor, used to project world coordinates to sensor coordinates.
-        Returns:
-
-    `set_velocity(self, velocity)`
-    :   Set the velocity of the vehicle.
-        Args:
-            velocity(carla.Vector3D): velocity in 3d vector format.
-        
-        Returns:
-
-`StaticObstacle(corner, o3d_bbx)`
-:   Currently, we regard all static obstacles such as stop signs and traffic light as the same class.
-    
-    Construct class.
-    Args:
-        corner (nd.nparray): Eight corners of the bounding box. shape:(8, 3)
-        o3d_bbx (open3d.AlignedBoundingBox): The bounding box object in Open3d. This is mainly used for
-        visualization.
-
-##### opencda.core.senesing.perception.perception_manager
-Manager class for the perception module.
-
-- **<font color="#f8805a">Classes</font>**
-
-
-`CameraSensor(vehicle, position='front')`
-:   Class for rgb camera.
-    
-    Construct class.
-    Args:
-        vehicle (carla.Vehicle): Carla actor.
-        position (string): the camera mounted position, only front, left and right supported.
-
-`LidarSensor(vehicle, config_yaml)`
-:   Lidar sensor manager.
-    
-    Construct class.
-    Args:
-        vehicle (carla.Vehicle): The attached vehicle.
-        config_yaml (dict): Configuration for lidar.
-
-`PerceptionManager(vehicle, config_yaml, ml_manager)`
-:   Perception manager mainly for object detection
-    
-    Construct class.
-    Args:
-        vehicle (carla.Actor): The carla vehicle.
-        config_yaml (dict):  The configuration yaml dictionary.
-        ml_manager(MlManager): Machine learning manager from CAV World.
-
-    ### Methods
-
-    `activate_mode(self, objects)`
-    :   Use Yolov5 + Lidar fusion to detect objects.
-        Args:
-            objects(dict): object dictionary
-        
-        Returns:
-            objects: dict
-                The updated object dictionary.
-
-    `deactivate_mode(self, objects)`
-    :   Obstacle detection under perception deactivation mode.
-        Args:
-            objects(dict): object dictionary
-        Returns:
-
-    `destroy(self)`
-    :   Destroy sensors.
-        Returns:
-
-    `detect(self, ego_pos)`
-    :   Detect surrounding objects. Currently only vehicle detection supported.
-        Args:
-            ego_pos (carla.Transform): Vehicle ego position
-        
-        Returns:
-            List of carla.Vehicle or ObstacleVehicle
-
-    `dist(self, v)`
-    :   A fast method to retrieve the obstable distance the ego vehicle from the server directly.
-        Args:
-            v (carla.vehicle):
-        
-        Returns:
-            float: distance
-
-    `speed_retrieve(self, objects)`
-    :   We don't implement any obstacle speed calculation algorithm. The speed will be retrieved from
-        the server directly.
-        Args:
-            objects(dict): The dictionary contains the objects.
-        
-        Returns:
-
-    `visualize_3d_bbx_front_camera(self, objects, rgb_image)`
-    :   Visualize the 3d bounding box on frontal camera image.
-        Args:
-            objects (dict): a dictionary containing all detected objects.
-            rgb_image (np.ndarray):camera image.
-        
-        Returns:
-
-##### opencda.core.senesing.perception.sensor_transformation
-Class that contains the transformations between world and different sensors.
-
-- **<font color="#f8805a">Variables</font>**
-
-`VID_RANGE`
-:   Part 1: Camera Related Transformation
-
-- **<font color="#f8805a">Functions</font>**
-
-`bbx_to_world(cords, vehicle)`
-:   Convert bounding box coordinate at vehicle reference to world reference.
-    Args:
-        cords (np.ndarray): Bounding box coordinates with 8 vertices.
-        vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-    
-    Returns:
-        bb_world_cords: np.ndarray
-            Bounding box coordinates under word reference.
-
-    
-`create_bb_points(vehicle)`
-:   Extract the eight vertices of the bounding box from the vehicle.
-    Args:
-        vehicle (carla.Vehicle or ObstacleVehicle):
-    
-    Returns:
-        (np.ndarray): 3d bounding box.
-
-    
-`get_2d_bb(vehicle, sensor, senosr_transform)`
-:   Summarize 2D bounding box creation
-    Args:
-         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-         sensor (carla.sensor.camera.rgb): The CARLA sensor object.
-         senosr_transform (carla.Transform): sensor position in the world
-    
-    Returns:
-        (np.ndarray): 2d bounding box in camera image
-
-    
-`get_bounding_box(vehicle, sensor, sensor_transform)`
-:   Get vehicle bounding box and project to sensor image
-    Args:
-         vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-         sensor (carla.sensor.camera.rgb): The CARLA sensor object.
-         sensor_transform (carla.Transform): sensor position in the world
-    
-    Returns:
-         (np.ndarray): Bounding box coordinates in sensor image.
-
-    
-`get_camera_intrinsic(sensor)`
-:   Retrieve the camera intrinsic matrix
-    Args:
-        sensor (carla.sensor.camera.rgb): The CARLA sensor object.
-    
-    Returns:
-        np.ndarray: 2D intrinsic matrix
-
-    
-`p3d_to_p2d_bb(p3d_bb)`
-:   Draw 2D bounding box (4 vertices) from 3D bounding box (8 vertices) in image.
-    2D bounding box is represented by two corner points
-    Args:
-        p3d_bb ():
-    
-    Returns:
-
-    
-`project_lidar_to_camera(lidar, camera, point_cloud, rgb_image)`
-:   Project lidar to camera space.
-    Args:
-        lidar (carla.Sensor): Lidar sensor.
-        camera (carla.Sensor): Camera seonsor.
-        point_cloud (np.ndarray): cloud points, (x, y, z, intensity).
-        rgb_image (np.ndarray): rgb image from camera.
-    
-    Returns:
-        (np.ndarray): new rgb image with lidar points projected.
-        (np.ndarray): point clouds projected to camera space.
-
-    
-`sensor_to_world(cords, sensor_transform)`
-:   Project 
-    Args:
-        cords (np.ndarray): Coordinates under sensor reference.
-        sensor_transform (carla.Transform): sensor position in the world
-    Returns:
-        world_cords: np.ndarray
-            Coordinates projected to world space.
-
-    
-`vehicle_to_sensor(cords, vehicle, sensor_transform)`
-:   Transform coordinates from vehicle reference to sensor reference
-    Args:
-        cords (np.ndarray): Coordinates under vehicle reference, shape (4, n)
-        vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-        sensor_transform (carla.Transform): sensor position in the world, shape(3, 1)
-    
-    Returns:
-        (np.ndarray): Coordinates in sensor reference.
-
-    
-`world_to_sensor(cords, sensor_transform)`
-:   Transform coordinate from world reference to sensor reference.
-    Args:
-        cords (np.ndarray): Coordinates under world reference, shape:(4, n).
-        sensor_transform (carla.Transform): sensor position in the world, shape:(3, 1).
-    
-    Returns:
-        sensor_cords: np.ndarray
-            Coordinates in sensor reference.
-
-    
-`x_to_world_transformation(transform)`
-:   Get the transformation matrix from x(it can be vehicle or sensor) coordinates to world coordinate.
-    Args:
-        transform (carla.Transform): The transform that contains location and rotation.
-    
-    Returns:
-        matrix: np.ndarray
-            The transformation matrix
-
-## OpenCDA Module: customize
-This is the module that handles customized content (i.e., controllers, learning methods, etc.).
-
-### opencda.customize.ml_libs
-The manager class for machine learning libraries.
-
-#### opencda.customize.ml_libs.ml_manager
-Since multiple CAV normally use the same ML/DL model, here we have this class to enable different
-CAVs share the same model to avoid duplicate memory consumption.
-
-- **<font color="#f8805a">Variables</font>**
-
-`MLManager()`
-:   A class that should contain all the ML models you want to initialize.
-    
-    Construction class.
-
-    ### Methods
-
-    `draw_2d_box(self, result, rgb_image, index)`
-    :   Draw 2d bounding box based on the yolo detection.
-        Args:
-            result (yolo.Result):Detection result from yolo 5.
-            rgb_image (np.ndarray): Camera rgb image.
-            index(int): Indicate the index
-        
-        Returns:
-            (np.ndarray): camera image with bbx drawn.
-
-## OpenCDA Module: scenario_testing
-This is the module that regulates all the scenario related python scripts, utility functions and configuration files. 
-Scenario defination scripts locate at this directory. 
-
-### config_yaml 
-
-- **<font color="#f8805a">Directory</font>**
-
-This is the directory that contains configuration files for each scenario. 
-
-### opencda.scenario_testing.evaluations
-Class for scenario evalution functions.
-
-#### opencda.scenario_testing.evaluations.evaluate_manager
-The manager class for scenario evaluation.
-
-- **<font color="#f8805a">Class</font>**
-
-`EvaluationManager(cav_world)`
-:   Evaluation manager to manage the analysis of the results for different modules.
-        
-    
-    Construct class
-    Args:
-        cav_world (opencda.CavWorld): The CavWorld object that contains all CAVs' information
-
-    ### Methods
-
-    `evaluate(self)`
-    :   Evaluate performance of all modules by plotting and writing the statistics into the log file.
-        Returns:
-
-    `kinematics_eval(self, log_file)`
-    :   vehicle kinematics related evaluation.
-        Args:
-            log_file (File): The log file to write the data.
-        
-        Returns:
-
-    `localization_eval(self, log_file)`
-    :   Localization module evaluation.
-        Args:
-            log_file (File): The log file to write the data.
-        
-        Returns:
-
-    `platooning_eval(self, log_file)`
-    :   Platooning evaluation.
-        Args:
-            log_file (File): The log file to write the data.
-        
-        Returns:
-
-#### opencda.scenario_testing.evaluations.evaluate_manager
-Utility functions for evaluation.
-
-- **<font color="#f8805a">Functions</font>**
-
-`lprint(logfile, *argv)`
-:   Save string to log file.
-    Args:
-        logfile (File): The log file path.
-        *argv (string or number): the string that needs to be saved into the log file.
-    
-    Returns:
-
-### opencda.scenario_testing.utils
-Module for scenario related utility functions.
-
-#### opencda.scenario_testing.utils.customized_map_api
-Loading world from customized map
-
-- **<font color="#f8805a">Functions</font>**
-
-`load_customized_world(xodr_path, client)`
-:   Load .xodr file and return the carla world object
-    :param xodr_path: path to the xodr file
-    :param client: created client
-    :return:
-
-    
-`spawn_helper_2lanefree(carla_map, coefficient)`
-:   A helper function to locate the valid spawn point on the merge lane.
-    :param carla_map: the 2lanefreeway map
-    :param coefficient: a single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position
-    is in the middle of the merge lane
-    :return: carla transform
-
-    
-`spawn_helper_2lanefree_complete(carla_map, coefficient)`
-:   A helper function to locate the valid spawn point on the merge lane.
-    :param carla_map: the 2lanefreeway map
-    :param coefficient: a single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position
-    is in the middle of the merge lane
-    :return: carla transform
-
-- **<font color="#f8805a">Classes</font>**
-`bcolors()`
-:   
-
-    ### Class variables
-
-    `BOLD`
-    :
-
-    `ENDC`
-    :
-
-    `FAIL`
-    :
-
-    `HEADER`
-    :
-
-    `OKBLUE`
-    :
-
-    `OKCYAN`
-    :
-
-    `OKGREEN`
-    :
-
-    `UNDERLINE`
-    :
-
-    `WARNING`
-    :
-
-#### opencda.scenario_testing.utils.sim_api
-Simulation API for create simulation world, vehicle manager and so on.
-
-- **<font color="#f8805a">Functions</font>**
-
-`car_blueprint_filter(blueprints)`
-:   Filter out the uncommon vehicles
-    :return:
-
-    
-`createPlatoonManagers(world, carla_map, scenario_params, apply_ml, map_helper=None)`
-:   Create Platooning Managers based on given params.
-    Args:
-    world (carla.World): World from CARLA simulator.
-    carla_map (carla.Map): Map obtained from CARLA server.
-    scenario_params (dict): Platoon paramters.
-    apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn required to install if set to true.
-    map_helper (function): Specific function to convert certain parameters to spawn position in certain map.
-    
-    Returns:
-        platoon_list list (list)
-        cav_world (carla.World)
-
-    
-`createSimulationWorld(simulation_config, xodr_path=None, town=None)`
-:   Create client and simulation world
-    :param simulation_config: configuration dictionary for simulation
-    :param xodr_path: optional, used only when customized map needed
-    :param town: default town name if not using customized map, eg. 'Town06'
-    :return: client, simulation world, origin setting
-
-    
-`createTrafficManager(client, world, traffic_config)`
-:   Create background traffic
-    :param client:
-    :param world:
-    :param traffic_config:
-    :return:
-
-    
-`createVehicleManager(world, scenario_params, application, cav_world, carla_map, map_helper=None)`
-:   Create single CAV manager
-    :param world: simulation world
-    :param scenario_params: scenario configuration
-    :param application: the application purpose, a list, eg. ['single']
-    :param cav_world: object containing all cav info
-    :param carla_map: carla HD Map
-    :param map_helper: A function used for conveniently set the spawn position depending on different maps
-    :return: a list of vehicle managers
-
-    
-`destroyActors(world)`
-:   Destroy all actors in the world
-    :param world:
-    :return:
-
-#### opencda.scenario_testing.utils.yaml_utils
-Used to load and write yaml files.
-
-- **<font color="#f8805a">Functions</font>**
-
-`load_yaml(file)`
-:   load yaml file and return a dictionary
-    :param file: yaml file path
-    :return: a dictionary that contains defined parameters
-
----
-
-
-
-
-**Note:**
-The current OpenCDA Module is developed specificlly for OpenCDA version 1.0, please refer to the corresponding software version.
+*ry (list):*  the y coordinates of the collision check line in the adjacent lane
+
+*ryaw (list):*  the yaw angle of the the collision check line in the adjacent lane
+
+- <font color="#7fb800">collision_circle_check</font> (self, path_x, path_y, path_yaw, obstacle_vehicle, speed, adjacent_check=False)
+ 
+Use circled collision check to see whether potential hazard on the forwarding path.
+
+**Arguments:**
+
+*adjacent_check (boolean):*  Indicator of whether do adjacent check. Note: always give full path for adjacent lane check.
+
+*speed (float):*  ego vehicle speed in m/s.
+
+*path_yaw (float):*  a list of yaw angles
+
+*path_x (list):*  a list of x coordinates
+
+*path_y (list):*  a list of y coordinates
+
+*obstacle_vehicle (carla.vehicle):*  potention hazard vehicle on the way
+
+**Returns**
+
+*collision_free (boolean):*  Flag indicate whether the current range is collision free.
+
+- <font color="#7fb800">is_in_range</font> (self, ego_pos, target_vehicle, candidate_vehicle, carla_map)
+ 
+Check whether there is a obstacle vehicle between target_vehicle and ego_vehicle during back_joining.
+
+**Arguments:**
+
+*carla_map (carla.map):*  carla map  of the current simulation world.
+
+*ego_pos (carla.transform):*  Ego vehicle position.
+
+*target_vehicle (carla.vehicle):*  The vehicle that is suppose to be catched.
+
+*candidate_vehicle (carla.vehicle):*  The possible obstacle vehicle blocking the ego vehicle and target vehicle.
+
+**Returns**
+
+*detection result (boolean):*  Indicator of whther the target vehicle is in range
+
+# opencda.core.plan.spline
+Description for this module: Cubic spline planner
+
+## calc_spline_course(x, y, ds=0.1)
+Caculate 2D splice course.
+
+**Arguments:**
+
+**Returns**
+
+## main()
+Main function to calculate spline and visulize the results.
+
+## Spline(x, y)
+Cubic Spline class for calculte curvature (Author: Atsushi Sakai(@Atsushi_twi)).
+
+### Parameters
+- <font color="#f8805a">x</font> (float)
+ 
+The x coordinate.
+
+
+- <font color="#f8805a">y</font> (float)
+ 
+The y coordinate.
+
+
+### Attributes
+- <font color="#f8805a">b</font> (float)
+ 
+The spline coefficient b.
+
+
+- <font color="#f8805a">c</font> (float)
+ 
+The spline coefficient c.
+
+
+- <font color="#f8805a">d</font> (float)
+ 
+The spline coefficient d.
+
+
+- <font color="#f8805a">w</font> (float)
+ 
+The spline coefficient w.
+
+
+- <font color="#f8805a">nx</font> (float)
+ 
+The dimension of x.
+
+
+- <font color="#f8805a">h</font> (float )
+ 
+The n-th discrete difference along the x-axis.
+
+
+### Methods 
+- <font color="#7fb800">calc</font> (self, t)
+ 
+Calc position
+
+**Arguments:**
+
+* t (float):*  if t is outside of the input x, return None
+
+**Returns**
+
+* result (float):*  The calcualtion result of position. If t is outside the range of x, return None.
+
+- <font color="#7fb800">calcd</font> (self, t)
+ 
+Calc first derivative. If t is outside of the input x, return None.
+
+- <font color="#7fb800">calcdd</font> (self, t)
+ 
+Calc second derivative, If t is outside of the input x, return None.
+
+## Spline2D(x, y)
+2D Cubic Spline class for calculte curvature (Author: Atsushi Sakai(@Atsushi_twi)).
+
+### Parameters
+- <font color="#f8805a">x</font> (float)
+ 
+The x coordinate.
+
+
+- <font color="#f8805a">y</font> (float)
+ 
+The y coordinate.
+
+
+### Attributes
+- <font color="#f8805a">b</font> (float)
+ 
+The spline coefficient b.
+
+
+- <font color="#f8805a">c</font> (float)
+ 
+The spline coefficient c.
+
+
+- <font color="#f8805a">d</font> (float)
+ 
+The spline coefficient d.
+
+
+- <font color="#f8805a">w</font> (float)
+ 
+The spline coefficient w.
+
+
+- <font color="#f8805a">nx</font> (float)
+ 
+The dimension of x.
+
+
+- <font color="#f8805a">h</font> (float )
+ 
+The n-th discrete difference along the x-axis.
+
+
+### Methods 
+- <font color="#7fb800">calc_curvature</font> (self, s)
+ 
+Calculate curvature.
+
+- <font color="#7fb800">calc_position</font> (self, s)
+ 
+Calculate position.
+
+- <font color="#7fb800">calc_yaw</font> (self, s)
+ 
+Calculate yaw.
+# opencda.core.plan.behavior_agent
+Description for this module: This module implements an agent that roams around a track following random
+
+## BehaviorAgent(vehicle, carla_map, config_yaml)
+A modulized version of carla BehaviorAgent.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+
+
+- <font color="#f8805a">carla_map</font> (carla.map)
+ 
+The carla HD map for simulation world.
+
+
+- <font color="#f8805a">config</font> (dict)
+ 
+The configuration dictionary of the localization module.
+
+
+### Attributes
+- <font color="#f8805a">_ego_pos</font> (carla.position)
+ 
+Posiion of the ego vehicle. 
+
+
+- <font color="#f8805a">_ego_speed</font> (float )
+ 
+Speed of the ego vehicle. 
+
+
+- <font color="#f8805a">_map</font> (carla.map)
+ 
+The HD map of the current simulation world.
+
+
+- <font color="#f8805a">max_speed</font> (float)
+ 
+The current speed limit of the ego vehicles.
+
+
+- <font color="#f8805a">break_distance</font> (float)
+ 
+The current distance needed for ego vehicle to reach a steady stop.
+
+
+- <font color="#f8805a">_collision_check</font> (collisionchecker)
+ 
+A collision check class to estimate the collision with front obstacle.
+
+
+- <font color="#f8805a">ignore_traffic_light</font> (boolean)
+ 
+Boolean indicator of whether to ignore traffic light.
+
+
+- <font color="#f8805a">overtake_allowed</font> (boolean)
+ 
+Boolean indicator of whether to allow overtake.
+
+
+- <font color="#f8805a">_local_planner</font> (LocalPlanner)
+ 
+A carla local planner class for behavior planning.
+
+
+- <font color="#f8805a">lane_change_allowed</font> (boolean)
+ 
+Boolean indicator of whether the lane change is allowed.
+
+
+- <font color="#f8805a">white_list</font> (list)
+ 
+The white list contains all position of target platoon member for joining.
+
+
+- <font color="#f8805a">debug_helper</font> (PlanDebugHelper)
+ 
+The helper class that help with the debug functions.
+
+
+### Methods 
+- <font color="#7fb800">add_white_list</font> (self, vm)
+ 
+Add vehicle manager to white list.
+
+- <font color="#7fb800">car_following_manager</font> (self, vehicle, distance, target_speed=None)
+ 
+Module in charge of car-following behaviors when there's
+
+#  Module in charge of car-following behaviors when there's
+**Arguments:**
+
+*target_speed (float):*  The target car following speed.
+
+*vehicle (carla.vehicle):*  Leading vehicle to follow.
+
+*distance (float):*  distance from leading vehicle.
+
+*control (carla.VehicleControl):*  Vehicle control of the next step.
+
+**Returns**
+
+*target_speed (float):*  The target speed for the next step.
+
+*target_loc (carla.location):*  The target location for the next step.
+
+- <font color="#7fb800">collision_manager</font> (self, rx, ry, ryaw, waypoint, adjacent_check=False)
+ 
+This module is in charge of warning in case of a collision.
+
+**Arguments:**
+
+**Returns**
+
+- <font color="#7fb800">get_local_planner</font> (self)
+ 
+return the local planner
+
+- <font color="#7fb800">lane_change_management</font> (self)
+ 
+Identify whether a potential hazard exits if operating lane change.
+
+**Returns**
+
+- <font color="#7fb800">overtake_management</font> (self, obstacle_vehicle)
+ 
+Overtake behavior.
+
+**Arguments:**
+
+- <font color="#7fb800">reroute</font> (self, spawn_points)
+ 
+This method implements re-routing for vehicles approaching its destination.
+
+**Arguments:**
+
+- <font color="#7fb800">run_step</font> (self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True)
+ 
+Execute one step of navigation
+
+**Arguments:**
+
+**Returns**
+
+- <font color="#7fb800">set_destination</font> (self, start_location, end_location, clean=False, end_reset=True, clean_history=False)
+ 
+This method creates a list of waypoints from agent's position to destination location
+
+**Arguments:**
+
+*end_reset (boolean):*  Flag to reset the waypoint queue.
+
+*start_location (carla.location):*  initial position.
+
+*end_location (carla.location):*  final position.
+
+*clean (boolean):*  Flag to clean the waypoint queue.
+
+*clean_history (boolean):*  Flag to clean the waypoint history.
+
+- <font color="#7fb800">traffic_light_manager</font> (self, waypoint)
+ 
+This method is in charge of behaviors for red lights and stops.
+
+**Arguments:**
+
+*waypoint (carla.waypoint):*  current waypoint of the agent.
+
+- <font color="#7fb800">update_information</font> (self, ego_pos, ego_speed, objects)
+ 
+Update the perception and localization information to the behavior agent.
+
+**Arguments:**
+
+*ego_pos (carla.Transform):*  ego position from localization module.
+
+*ego_speed (float):*  km/h, ego speed.
+
+*objects (dictionary):*  Objects detection results from perception module.
+
+- <font color="#7fb800">white_list_match</font> (self, obstacles)
+ 
+Match the detected obstacles with the white list. Remove the obstacles that are in white list.
+
+**Arguments:**
+
+*obstacles (list):*   a list of carla.Vehicle or ObstacleVehicle
+
+**Returns**
+
+*new_obstacle_list (list):*  the new list of obstacles
+
+# opencda.core.plan.global_route_planner
+Description for this module: This module provides GlobalRoutePlanner implementation.
+
+## GlobalRoutePlanner(dao)
+This class provides a very high level route plan.
+
+### Parameters
+- <font color="#f8805a">dao</font> (carla.dao)
+ 
+A global plan that contains routes from start to end.
+
+
+### Attributes
+- <font color="#f8805a">_topology</font> (carla.topology)
+ 
+The topology graph of the current routes.
+
+
+- <font color="#f8805a">_graph</font> (nx.DiGraph )
+ 
+The node-edge graph of the current routes.
+
+
+- <font color="#f8805a">_id_map</font> (dict)
+ 
+A map constructed with road segment IDs.
+
+
+- <font color="#f8805a">_road_id_to_edge</font> (list)
+ 
+A mapping that reference road it to edge in the graph.  
+
+
+- <font color="#f8805a">_intersection_end_node</font> (int)
+ 
+The node ID of at the end of the intersection.    
+
+
+- <font color="#f8805a">_previous_decision</font> (carla.RoadOption)
+ 
+The previous behavioral option of the ego vehicle.
+
+
+### Methods 
+- <font color="#7fb800">abstract_route_plan</font> (self, origin, destination)
+ 
+The function that generates the route plan based on origin and destination.
+
+**Arguments:**
+
+*origin (carla.Location):*  object of the route's start position.
+
+*destination (carla.Location):*   object of the route's end position.
+
+**Returns**
+
+* plan (list):*  List of turn by turn navigation decisions as agents.navigation.local_planner.RoadOption.
+
+- <font color="#7fb800">setup</font> (self)
+ 
+Performs initial server data lookup for detailed topology
+
+- <font color="#7fb800">trace_route</font> (self, origin, destination)
+ 
+This method returns list of (carla.Waypoint, RoadOption)
+
+# opencda.core.plan.global_route_planner_dao
+Description for this module: This module provides implementation for GlobalRoutePlannerDAO
+
+## GlobalRoutePlannerDAO(wmap, sampling_resolution)
+This class is the data access layer for fetching data from the carla server instance for GlobalRoutePlanner.
+
+### Parameters
+- <font color="#f8805a">wmap</font> (carla.world)
+ 
+The current carla simulation world.
+
+
+- <font color="#f8805a">sampling_resolution</font> (float)
+ 
+sampling distance between waypoints.
+
+
+### Methods 
+- <font color="#7fb800">get_resolution</font> (self)
+ 
+Return the sampling resolution.
+
+- <font color="#7fb800">get_topology</font> (self)
+ 
+Accessor for topology.
+
+- <font color="#7fb800">get_waypoint</font> (self, location)
+ 
+The method returns waypoint at given location.
+
+**Arguments:**
+
+*location (carla.lcoation):*  Vehicle location.
+
+**Returns**
+
+*waypoint (carla.waypoint):*  Newly generated waypoint close to location
+
+# opencda.core.plan.local_planner_behavior
+Description for this module: This module contains a local planner to perform
+
+## LocalPlanner(agent, carla_map, config_yaml)
+LocalPlanner implements the basic behavior of following a trajectory of waypoints that is generated on-the-fly.
+
+### Parameters
+- <font color="#f8805a">agent</font> (carla.agent)
+ 
+The carla.agent that applying vehicle contorl.
+
+
+- <font color="#f8805a">carla_map</font> (carla.map)
+ 
+The HD map of the current simulation world.
+
+
+- <font color="#f8805a">config</font> (dict)
+ 
+The configuration dictionary of the trajectory planning module.
+
+
+### Attributes
+- <font color="#f8805a">_vehicle</font> (carla.vehicle)
+ 
+The caral vehicle objcet.
+
+
+- <font color="#f8805a">_ego_pos</font> (carla.position )
+ 
+The current position of the ego vehicle.
+
+
+- <font color="#f8805a">_ego_speed</font> (float)
+ 
+The current speed of the ego vehicle.
+
+
+- <font color="#f8805a">waypoints_queue</font> (deque)
+ 
+The waypoint deque of the current plan.
+
+
+- <font color="#f8805a">_waypoint_buffer</font> (deque)
+ 
+A buffer deque to store waypoints of the next steps.
+
+
+- <font color="#f8805a">_long_plan_debug</font> (list)
+ 
+A list that stores the waypoints of global plan for debug purposes.
+
+
+- <font color="#f8805a">_trajectory_buffer</font> (deque)
+ 
+A deque buffer that stores the current trajectory.
+
+
+- <font color="#f8805a">_history_buffer</font> (deque)
+ 
+A deque buffer that stores the trajectory history of the ego vehicle.
+
+
+- <font color="#f8805a">lane_change</font> (boolean)
+ 
+A indicator used to identify whether lane change is operated
+
+
+- <font color="#f8805a">lane_id_change</font> (boolean)
+ 
+In some corner cases, the id is not changed but we regard it as lane change due to large lateral diff.
+
+
+### Methods 
+- <font color="#7fb800">generate_path</font> (self)
+ 
+Generate the smooth path using cubic spline.
+
+**Returns**
+
+*rx (list):*  List of planned path points' x coordinates.
+
+*ry (list):*  List of planned path points' y coordinates.
+
+*ryaw (list):*  List of planned path points' yaw angles.
+
+*rk (list):*  List of planned path points' curvatures.
+
+- <font color="#7fb800">generate_trajectory</font> (self, rx, ry, rk)
+ 
+Sampling the generated path and assign speed to each point.
+
+**Arguments:**
+
+*rx (list):*  List of planned path points' x coordinates.
+
+*ry (list):*  List of planned path points' y coordinates.
+
+*rk (list):*  List of planned path points' curvatures.
+
+*debug (boolean):*  whether to draw the whole plan path
+
+- <font color="#7fb800">get_trajetory</font> (self)
+ 
+Get the trajetory.
+
+- <font color="#7fb800">pop_buffer</font> (self, vehicle_transform)
+ 
+Remove waypoints the ego vehicle has achieved.
+
+- <font color="#7fb800">run_step</font> (self, rx, ry, rk, target_speed=None, trajectory=None, following=False)
+ 
+Execute one step of local planning which involves
+
+**Arguments:**
+
+*rx (list):*  List of planned path points' x coordinates.
+
+*ry (list):*  List of planned path points' y coordinates.
+
+*ryaw (list):*  List of planned path points' yaw angles.
+
+*rk (list):*  List of planned path points' curvatures.
+
+*following (boolean):*  Indicator of whether the vehicle is under following status.
+
+*trajectory (list):*  Pre-generated car-following trajectory only for platoon members.
+
+*target_speed (float):*  The ego vehicle's desired speed.
+
+**Returns**
+
+*speed (float):*  Next trajectory point's target speed
+
+*waypoint (carla.waypoint):*  Next trajectory point's waypoint.
+
+- <font color="#7fb800">set_global_plan</font> (self, current_plan, clean=False)
+ 
+Sets new global plan.
+
+**Arguments:**
+
+*clean (boolean):*  Indicator of whether to clear the global plan.
+
+*current_plan (list):*  list of waypoints in the actual plan.
+
+- <font color="#7fb800">update_information</font> (self, ego_pos, ego_speed)
+ 
+Update the ego position and speed for trajectory planner.
+
+**Arguments:**
+
+*ego_pos (carla.Transform):*  Ego position from localization module.
+
+*ego_speed (float):*  Ego speed(km/h) from localization module.
+
+## RoadOption(value, names=None, *, module=None, qualname=None, type=None, start=1)
+RoadOption represents the possible topological configurations when moving from a segment of lane to other.
+
+### Ancestors 
+enum.Enum
+
+### Class variables 
+*CHANGELANELEFT*
+
+*CHANGELANERIGHT*
+
+*LANEFOLLOW*
+
+*LEFT*
+
+*RIGHT*
+
+*STRAIGHT*
+
+*VOID*
+
+# opencda.core.plan.planer_debug_helper
+Description for this module: Analysis + Visualization functions for planning
+
+## PlanDebugHelper(actor_id)
+This class aims to save statistics for planner behaviour.
+
+### Parameters:
+- <font color="#f8805a">actor_id</font> (int)
+ 
+The actor ID of the target vehicle for bebuging. 
+
+
+### Attributes
+- <font color="#f8805a">speed_list</font> (list )
+ 
+The list containing speed info(m/s) of all time-steps.
+
+
+- <font color="#f8805a">acc_list</font> (list)
+ 
+The list containing acceleration info(m^2/s) of all time-steps.
+
+
+- <font color="#f8805a">ttc_list</font> (list)
+ 
+The list containing ttc info(s) for all time-steps.
+
+
+- <font color="#f8805a">count</font> (int )
+ 
+Used to count how many simulation steps have been executed.
+
+
+### Methods 
+- <font color="#7fb800">evaluate</font> (self)
+ 
+Evaluate the target vehicle and visulize the plot.
+
+**Returns**
+
+*figure (matplotlib.pyplot.figure):*  The target vehicle's planning profile (velocity, acceleration, and ttc).
+
+*perform_txt (txt file):*  The target vehicle's planning profile as text files.
+
+- <font color="#7fb800">update</font> (self, ego_speed, ttc)
+ 
+Update the speed info.
+
+**Arguments:**
+
+*ego_speed (float):*  Ego speed in km/h.
+
+*ttc (flot):*  Time to collision in seconds
+
+# opencda.core.sensing.localization.kalman_filter
+Description for this module: Use Kalman Filter on GPS + IMU for better localization.
+
+## KalmanFilter(dt)
+Kalman Filter implementation for gps and imu. 
+
+### Parameters
+- <font color="#f8805a">dt</font> (float)
+ 
+The step time for kalman filter calculation.
+
+
+### Attributes
+- <font color="#f8805a">Q</font> (numpy.array)
+ 
+predict state covariance.
+
+
+- <font color="#f8805a">R</font> (numpy.array)
+ 
+Observation x,y position covariance.
+
+
+- <font color="#f8805a">time_step</font> (float)
+ 
+The step time for kalman filter calculation.
+
+
+- <font color="#f8805a">xEst</font> (numpy.array)
+ 
+Estimated x values.
+
+
+- <font color="#f8805a">PEst</font> (numpy.array)
+ 
+The estimated P values.
+
+
+**Arguments:**
+
+### Methods 
+- <font color="#7fb800">motion_model</font> (self, x, u)
+ 
+Predict current position and yaw based on previous result (X = F * X_prev + B * u).
+
+**Arguments:**
+
+*x (np.array) [x_prev, y_prev, yaw_prev, v_prev], shape:*  (4, 1).
+
+*u (np.array):*  [v_current, imu_yaw_rate], shape:(2, 1).
+
+**Returns**
+
+*x (np.array):*  predicted state.
+
+- <font color="#7fb800">observation_model</font> (self, x)
+ 
+Project the state matrix to sensor measurement matrix.
+
+**Arguments:**
+
+*x (np.array):*  [x, y, yaw, v], shape: (4. 1).
+
+**Returns**
+
+*z (np.array):*  predicted measurement.
+
+- <font color="#7fb800">run_step</font> (self, x, y, heading, velocity, yaw_rate_imu)
+ 
+Apply KF on current measurement and previous prediction.
+
+**Arguments:**
+
+*x (float):*  x(esu) coordinate from gnss sensor at current timestamp.
+
+*y (float):*  y(esu) coordinate from gnss sensor at current timestamp.
+
+*heading (float):*  heading direction at current timestamp.
+
+*velocity (float):*  current speed.
+
+*yaw_rate_imu (float):*  yaw rate rad/s from IMU sensor.
+
+**Returns**
+
+*Xest (np.array):*  The corrected x, y, heading, and velocity information.
+
+- <font color="#7fb800">run_step_init</font> (self, x, y, heading, velocity)
+ 
+Initial state filling.
+
+**Arguments:**
+
+*x (float):*  The x coordinate.
+
+*y (float):*  The y coordinate.
+
+*heading (float):*  The heading direction.
+
+*velocity (flaot):*  The velocity speed
+
+# opencda.core.sensing.localization.localization_debug_helper
+Description for this module: Visualization tools for localization
+
+## LocDebugHelper(config_yaml, actor_id)
+This class aims to help users debugging their localization algorithms.
+
+### Attributes
+### Methods 
+- <font color="#7fb800">evaluate</font> (self)
+ 
+Plot the localization related data points.
+
+**Returns**
+
+*figures(matplotlib.pyplot.plot):*  The plot of localization related figures.
+
+*perform_txt(txt file):*  The localization related datas saved as text file.
+
+- <font color="#7fb800">run_step</font> (self, gnss_x, gnss_y, gnss_yaw, gnss_spd, filter_x, filter_y, filter_yaw, filter_spd, gt_x, gt_y, gt_yaw, gt_spd)
+ 
+Run a single step for DebugHelper to save and animate(optional) the localization data.
+
+**Arguments:**
+
+*gnss_x (float):*  GNSS detected x coordinate. 
+
+*gnss_y (float):*  GNSS detected y coordinate. 
+
+*gnss_yaw (float):*  GNSS detected yaw angle. 
+
+*gnss_spd (float):*  GNSS detected speed value. 
+
+*filter_x (float):*  Filtered x coordinates. 
+
+*filter_y (float):*  Filtered y coordinates. 
+
+*filter_yaw (float):*  Filtered yaw angle. 
+
+*filter_spd (float):*  Filtered speed value. 
+
+*gt_x (float):*  The ground truth x coordinate.
+
+*gt_y (float):*  The ground truth y coordinate.
+
+*gt_yaw (float):*  The ground truth yaw angle.
+
+*gt_spd (float):*  The ground truth speed value
+
+# opencda.core.sensing.localization.coordinate_transform
+Description for this module: Functions to transfer coordinates under different coordinate system
+
+## geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0)
+Convert WG84 to ENU. The origin of the ENU should pass the geo reference.
+
+**Arguments:**
+
+**Returns**
+
+# opencda.core.sensing.localization.localization_manager
+Description for this module: Localization module
+
+## GnssSensor(vehicle, config)
+The default GNSS sensor module.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+
+
+- <font color="#f8805a">config</font> (dict)
+ 
+The configuration dictionary of the localization module.
+
+
+### Attributes
+- <font color="#f8805a">world</font> (carla.world)
+ 
+The caral world of the current vehicle.
+
+
+- <font color="#f8805a">blueprint</font> (carla.blueprint )
+ 
+The current blueprint of the sensor actor.
+
+
+- <font color="#f8805a">weak_self</font> (opencda Object)
+ 
+A weak reference point to avoid circular reference.
+
+
+- <font color="#f8805a">sensor</font> (CARLA actor)
+ 
+The current sensor actors that will be attach to the vehicles.
+
+
+## ImuSensor(vehicle)
+Default ImuSensor module.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+
+
+### Attributes
+- <font color="#f8805a">world</font> (carla.world)
+ 
+The caral world of the current vehicle.
+
+
+- <font color="#f8805a">blueprint</font> (carla.blueprint )
+ 
+The current blueprint of the sensor actor.
+
+
+- <font color="#f8805a">weak_self</font> (opencda Object)
+ 
+A weak reference point to avoid circular reference.
+
+
+- <font color="#f8805a">sensor</font> (CARLA actor)
+ 
+The current sensor actors that will be attach to the vehicles.
+
+
+## LocalizationManager(vehicle, config_yaml, carla_map)
+Default localization module.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+
+
+- <font color="#f8805a">config_yaml</font> (dict)
+ 
+The configuration dictionary of the localization module.
+
+
+- <font color="#f8805a">carla_map</font> (carla.Map)
+ 
+The carla HDMap. We need this to find the map origin to
+
+
+### Attributes
+- <font color="#f8805a">gnss</font> (opencda object)
+ 
+GNSS sensor manager for spawning gnss sensor and listen to the data
+
+
+- <font color="#f8805a">ImuSensor</font> (opencda object)
+ 
+Imu sensor manager for spawning gnss sensor and listen to the data
+
+
+- <font color="#f8805a">kf</font> (opencda object)
+ 
+The filter used to fuse different sensors.
+
+
+- <font color="#f8805a">debug_helper</font> (opencda object)
+ 
+The debug helper is used to visualize the accuracy of
+
+
+### Methods 
+- <font color="#7fb800">add_heading_direction_noise</font> (self, heading_direction)
+ 
+Add synthetic noise to heading direction.
+
+**Arguments:**
+
+*heading_direction (float):*  groundtruth heading_direction obtained from the server.
+
+**Returns**
+
+*heading_direction (float):*  heading direction with noise.
+
+- <font color="#7fb800">add_speed_noise</font> (self, speed)
+ 
+Add gaussian white noise to the current speed.
+
+**Arguments:**
+
+*speed (float):*  m/s, current speed.
+
+**Returns**
+
+*speed (float):*  the speed with noise.
+
+- <font color="#7fb800">destroy</font> (self)
+ 
+Destroy the sensors
+
+- <font color="#7fb800">get_ego_pos</font> (self)
+ 
+Retrieve ego vehicle position
+
+- <font color="#7fb800">get_ego_spd</font> (self)
+ 
+Retrieve ego vehicle speed
+
+- <font color="#7fb800">localize</font> (self)
+ 
+Currently implemented in a naive way.
+# opencda.core.sensing.perception.obstacle_vehicle
+Description for this module: Obstacle vehicle class to save object detection.
+
+## is_vehicle_cococlass(label)
+Check whether the label belongs to the vehicle class according to coco dataset.
+
+**Arguments:**
+
+**Returns**
+
+## BoundingBox(corners)
+Bounding box class for obstacle vehicle.
+
+- <font color="#f8805a">corners</font> (nd.nparray)
+ 
+Eight corners of the bounding box. (shape:(8, 3))
+
+
+### Attributes:
+- <font color="#f8805a">location</font> (carla.location)
+ 
+The location of the object.
+
+
+- <font color="#f8805a">extent</font> (carla.vector3D)
+ 
+The extent of  the object.
+
+
+## ObstacleVehicle(corners, o3d_bbx, vehicle=None, lidar=None)
+A class for obstacle vehicle. The attributes are designed to match with carla.Vehicle class.
+
+### Parameters: 
+- <font color="#f8805a">corners</font> (nd.nparray)
+ 
+Eight corners of the bounding box. (shape:(8, 3))
+
+
+- <font color="#f8805a">o3d_bbx</font> (pen3d.AlignedBoundingBox)
+ 
+The bounding box object in Open3d. This is mainly used forvisualization.
+
+
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle object.
+
+
+- <font color="#f8805a">lidar</font> (carla.sensor.lidar)
+ 
+The lidar sensor.
+
+
+### Attributes:
+- <font color="#f8805a">bounding_box</font> (BoundingBox)
+ 
+Bounding box of the osbject vehicle. 
+
+
+- <font color="#f8805a">location</font> (carla.location)
+ 
+The location of the object.
+
+
+- <font color="#f8805a">velocty</font> (carla.Vector3D vehicle.)
+ 
+Velocity of the object vehicle.
+
+
+### Methods 
+- <font color="#7fb800">get_location</font> (self)
+ 
+Return the location of the object vehicle.
+
+- <font color="#7fb800">get_transform</font> (self)
+ 
+Return the transform of the object vehicle.
+
+- <font color="#7fb800">get_velocity</font> (self)
+ 
+Return the velocity of the object vehicle.
+
+- <font color="#7fb800">set_vehicle</font> (self, vehicle, lidar)
+ 
+Assign the attributes from carla.Vehicle to ObstacleVehicle.
+
+**Arguments:**
+
+*vehicle(carla.Vehicle):*  The carla.Vehicle object.
+
+*lidar(carla.sensor.lidar):*  The lidar sensor, used to project world coordinates to sensor coordinates.
+
+- <font color="#7fb800">set_velocity</font> (self, velocity)
+ 
+Set the velocity of the vehicle.
+
+**Arguments:**
+
+*velocity(carla.Vector3D):*  The target velocity in 3d vector format.
+
+## StaticObstacle(corner, o3d_bbx)
+The general class for obstacles. Currently, we regard all static obstacles such as stop signs and traffic light as the same class.
+
+### Parameters 
+- <font color="#f8805a">corner</font> (nd.nparray)
+ 
+Eight corners of the bounding box (shape:(8, 3)).
+
+
+- <font color="#f8805a">o3d_bbx</font> (open3d.AlignedBoundingBox)
+ 
+The bounding box object in Open3d. This is mainly used for visualization.
+
+
+### Attributes
+- <font color="#f8805a">bounding_box</font> (BoundingBox)
+ 
+Bounding box of the osbject vehicle. 
+
+
+# opencda.core.sensing.perception.o3d_lidar_libs
+Description for this module: Utility functions for 3d lidar visualization and processing by utilizing open3d.
+
+## o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_sensor)
+Utilize the 3D lidar points to extend the 2D bounding box from camera to 3D bounding box under world coordinates.
+
+**Arguments:**
+
+**Returns**
+
+## o3d_pointcloud_encode(raw_data, point_cloud)
+Encode the raw point cloud to Open3d PointCloud object.
+
+**Arguments:**
+
+## o3d_visualizer_init(actor_id)
+Initialize the visualizer.
+
+**Arguments:**
+
+**Returns**
+
+## o3d_visualizer_show(vis, count, point_cloud, objects)
+Visualize the point cloud at runtime.
+
+**Arguments:**
+
+# opencda.core.sensing.perception.perception_manager
+Description for this module: Perception module
+
+## CameraSensor(vehicle, position='front')
+Class for rgb camera.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn sensors.
+
+
+- <font color="#f8805a">position</font> (string)
+ 
+Indicates the sensor is a front or rear camera. option: front, left, right.
+
+
+### Attributes
+- <font color="#f8805a">image</font> (np.ndarray)
+ 
+Current received image.
+
+
+- <font color="#f8805a">sensor</font> (CARLA actor)
+ 
+The current sensor actors that will be attach to the vehicles.
+
+
+## LidarSensor(vehicle, config_yaml)
+Lidar sensor manager.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn sensors.
+
+
+- <font color="#f8805a">config_yaml</font> (dict)
+ 
+Configuration for lidar sensor.
+
+
+### Attributes
+- <font color="#f8805a">o3d_pointcloud</font> (o3d.PointCloud)
+ 
+Recieved point cloud saved in o3d.PointCloud format.
+
+
+- <font color="#f8805a">sensor</font> (CARLA actor)
+ 
+The current sensor actors that will be attach to the vehicles.
+
+
+**Arguments:**
+
+## PerceptionManager(vehicle, config_yaml, ml_manager)
+Default perception module. Currenly only used to detect vehicles.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn sensors.
+
+
+- <font color="#f8805a">config_yaml</font> (dict)
+ 
+Configuration for lidar sensor.
+
+
+- <font color="#f8805a"> ml_manage</font> (opencda object)
+ 
+Ml manager includes all loaded trained perception models.
+
+
+### Attributes
+- <font color="#f8805a">ml_manager</font> (opencda object)
+ 
+weak reference of the ML Manager.
+
+
+- <font color="#f8805a">activate</font> (bool)
+ 
+Whether perception algorithms are activated. If not, load object
+
+
+- <font color="#f8805a">lida</font> (opencda object)
+ 
+Lidar sensor manager.
+
+
+- <font color="#f8805a">rgb_camer</font> (opencda object)
+ 
+Camera manager.
+
+
+**Arguments:**
+
+### Methods 
+- <font color="#7fb800">activate_mode</font> (self, objects)
+ 
+Use Yolov5 + Lidar fusion to detect objects.
+
+**Arguments:**
+
+**Returns**
+
+- <font color="#7fb800">deactivate_mode</font> (self, objects)
+ 
+Obstacle detection under perception deactivation mode.
+
+**Arguments:**
+
+**Returns**
+
+- <font color="#7fb800">destroy</font> (self)
+ 
+Destroy sensors.
+
+**Returns**
+
+- <font color="#7fb800">detect</font> (self, ego_pos)
+ 
+Detect surrounding objects. Currently only vehicle detection supported.
+
+**Arguments:**
+
+**Returns**
+
+- <font color="#7fb800">dist</font> (self, v)
+ 
+A fast method to retrieve the obstable distance the ego vehicle from the server directly.
+
+**Arguments:**
+
+**Returns**
+
+- <font color="#7fb800">speed_retrieve</font> (self, objects)
+ 
+We don't implement any obstacle speed calculation algorithm. The speed will be retrieved from
+
+**Arguments:**
+
+**Returns**
+
+- <font color="#7fb800">visualize_3d_bbx_front_camera</font> (self, objects, rgb_image)
+ 
+Visualize the 3d bounding box on frontal camera image.
+
+**Arguments:**
+
+**Returns**
+
+# opencda.core.sensing.perception.sensor_transformation
+Description for this module: This script contains the transformations between world and different sensors.
+
+## bbx_to_world(cords, vehicle)
+Convert bounding box coordinate at vehicle reference to world reference.
+
+**Arguments:**
+
+**Returns**
+
+## create_bb_points(vehicle)
+Extract the eight vertices of the bounding box from the vehicle.
+
+**Arguments:**
+
+**Returns**
+
+## get_2d_bb(vehicle, sensor, senosr_transform)
+Summarize 2D bounding box creation
+
+**Arguments:**
+
+**Returns**
+
+## get_bounding_box(vehicle, camera, sensor_transform)
+Get vehicle bounding box and project to sensor image.
+
+**Arguments:**
+
+**Returns**
+
+## get_camera_intrinsic(sensor)
+Retrieve the camera intrinsic matrix
+
+**Arguments:**
+
+**Returns**
+
+## p3d_to_p2d_bb(p3d_bb)
+Draw 2D bounding box (4 vertices) from 3D bounding box (8 vertices) in image.
+
+**Arguments:**
+
+**Returns**
+
+## project_lidar_to_camera(lidar, camera, point_cloud, rgb_image)
+Project lidar to camera space.
+
+**Arguments:**
+
+**Returns**
+
+## sensor_to_world(cords, sensor_transform)
+Project
+
+**Arguments:**
+
+**Returns**
+
+## vehicle_to_sensor(cords, vehicle, sensor_transform)
+Transform coordinates from vehicle reference to sensor reference
+
+**Arguments:**
+
+**Returns**
+
+## world_to_sensor(cords, sensor_transform)
+Transform coordinate from world reference to sensor reference.
+
+**Arguments:**
+
+**Returns**
+
+## x_to_world_transformation(transform)
+Get the transformation matrix from x(it can be vehicle or sensor) coordinates to world coordinate.
+
+**Arguments:**
+
+**Returns**
+
+# opencda.core.application.platooning.fsm
+Description for this module: Finite State Machine
+
+## FSM(value, names=None, *, module=None, qualname=None, type=None, start=1)
+The finite state machine class for platooning. These classes are used to indicate
+
+### Attributes
+- <font color="#f8805a">SEARCHING</font> (int)
+ 
+The vehicle is not in any platoon and currently searching one to join.
+
+
+- <font color="#f8805a">OPEN_GAP</font> (int)
+ 
+The platoon member is increasing the gap for other vehicle to merge.
+
+
+- <font color="#f8805a">MOVE_TO_POINT</font> (int)
+ 
+The merging vehicle is moving to the meeting points for joining.
+
+
+- <font color="#f8805a">JOINING</font> (int)
+ 
+The merging vehicle is operating the joining maneuver(lane change).
+
+
+- <font color="#f8805a">MAINTINING</font> (int)
+ 
+The platoon member is following the leader and maintain the time gap.
+
+
+- <font color="#f8805a">BACK_JOINING</font> (int)
+ 
+The merging vehicle is in back-join state.
+
+
+- <font color="#f8805a">CUT_IN_TO_BACK</font> (int)
+ 
+The merging vehicle abandons cut-in-join and switch to back join.
+
+
+- <font color="#f8805a">JOINING_FINISHED</font> (int)
+ 
+Indicate the joining finished and the vehicle will switch to maintaining state.
+
+
+- <font color="#f8805a">LEADING_MODE</font> (int)
+ 
+The vehicle is the platoon leader.
+
+
+- <font color="#f8805a">ABONDO</font> ()
+ 
+Current joining is abandoned.
+
+
+- <font color="#f8805a">DISABL</font> ()
+ 
+V2X is not available and thus won't join any platoon.
+
+
+### Ancestors 
+enum.Enum
+
+### Class variables 
+*ABONDON*
+
+*BACK_JOINING*
+
+*CUT_IN_TO_BACK*
+
+*DISABLE*
+
+*FRONT_JOINING*
+
+*JOINING*
+
+*JOINING_FINISHED*
+
+*LEADING_MODE*
+
+*MAINTINING*
+
+*MOVE_TO_POINT*
+
+*OPEN_GAP*
+
+*SEARCHING*
+
+# opencda.core.application.platooning.platooning_plugin
+Description for this module: Platooning plugin for communication and track FSM
+
+## PlatooningPlugin(search_range, cda_enabled)
+Platooning plugin inside the V2X manager.
+
+### Parameters
+- <font color="#f8805a">search_range</font> (float)
+ 
+The search range of the communication equipment.
+
+
+- <font color="#f8805a">cda_enabled</font> (boolean)
+ 
+Whether connectivity is supported.
+
+
+### Attributes
+- <font color="#f8805a">leader</font> (boolean)
+ 
+Boolean indicator of the platoon leader status.
+
+
+- <font color="#f8805a">platooning_object</font> (opencda object )
+ 
+The current platoon object.
+
+
+- <font color="#f8805a">platooning_id</font> (int)
+ 
+The current platoon ID.
+
+
+- <font color="#f8805a">in_id</font> (int)
+ 
+The position in the platoon.
+
+
+- <font color="#f8805a">status</font> (enum)
+ 
+The current platooning status.
+
+
+- <font color="#f8805a">ego_pos</font> (carla.transformation)
+ 
+The current position (i.e., location and rotation) of the ego vehicle.
+
+
+- <font color="#f8805a">ego_spd</font> (float)
+ 
+The current speed(km/h) of the ego vehicle.
+
+
+- <font color="#f8805a">platooning_blacklist</font> (list)
+ 
+The platoon in the black list won't be considered again.
+
+
+- <font color="#f8805a">front_vehicle</font> (opencda object)
+ 
+The front vehicle manager of the ego vehicle.
+
+
+- <font color="#f8805a">rear_vechile</font> (opencda object)
+ 
+The rear vehicle manager of the ego vehicle.
+
+
+### Methods 
+- <font color="#7fb800">match_platoon</font> (self, cav_world)
+ 
+A naive way to find the best position to join a platoon
+
+**Arguments:**
+
+*cav_world (carla.world):*  Current simulation world.
+
+**Returns**
+
+*(boolean):*  The boolean indicator of matching result. 
+
+*min_index (int):*  The minimum index inside the selected platoon.
+
+*platoon_vehicle_list (list):*  The list of platoon vehicle memebers.
+
+- <font color="#7fb800">reset</font> (self)
+ 
+Reset to the origin status.
+
+- <font color="#7fb800">search_platoon</font> (self, ego_pos, cav_world)
+ 
+Search platoon candidate in the range
+
+**Arguments:**
+
+*ego_pos (carla.transformation):*  Current position of the ego vehicle.
+
+*cav_world (carla.world):*  Current simulation world.
+
+**Returns**
+
+*pmid (int):*  Platoon manager ID.
+
+*pm (opencda object):*  Platoon manager ID.
+
+- <font color="#7fb800">set_platoon</font> (self, in_id, platooning_object=None, platooning_id=None, leader=False)
+ 
+Set platooning status
+
+**Arguments:**
+
+*in_id (int):*  Inner platoon ID of the vehicle.
+
+*platooning_object (opencda object):*  The current platoon object.
+
+*platooning_id (int):*  The current platoon ID.
+
+*leader (boolean):*  Boolean indicator of the platoon leader status.
+
+- <font color="#7fb800">set_status</font> (self, status)
+ 
+Set FSM status
+
+**Arguments:**
+
+*status (string):*  The current platooning status.
+
+- <font color="#7fb800">update_info</font> (self, ego_pos, ego_spd)
+ 
+Update the ego position and speed
+
+**Arguments:**
+
+*heading_direction:*  groundtruth heading_direction obtained from the server.
+
+*dummy_variable:*  dummy variable to test multiple return/args.
+
+*dummy_variable:*  dummy variable to test multiple return/args.
+
+*dummy_variable:*  dummy variable to test multiple return/args.
+
+**Returns**
+
+*heading_direction:*  heading direction with noise.
+
+*dummy_variable:*  dummy variable to test multiple return/args
+
+# opencda.core.application.platooning.platoon_debug_helper
+Description for this module: Analysis + visualization functions for platooning
+
+## PlatoonDebugHelper(actor_id)
+This class aims to save statistics for platoon behaviour
+
+### Parameters
+- <font color="#f8805a">actor_id</font> (int)
+ 
+The actor ID of the selected vehcile.
+
+
+### Attributes
+- <font color="#f8805a">time_gap_list</font> (list )
+ 
+The list containing intra-time-gap(s) of all time-steps.
+
+
+- <font color="#f8805a">dist_gap_list</font> (list )
+ 
+The list containing distance gap(s) of all time-steps.
+
+
+### Ancestors 
+opencda.core.plan.planer_debug_helper.PlanDebugHelper
+
+### Methods 
+- <font color="#7fb800">update</font> (self, ego_speed, ttc, time_gap=None, dist_gap=None)
+ 
+Update the platoon related vehicle information.
+
+**Arguments:**
+
+*ego_speed (float):*  Ego vehcile speed.
+
+*ttc (flaot):*  Ego vehicle time-to-collision.
+
+*time_gap (float):*  Ego vehicle time gap with the front vehicle.
+
+*dist_gap (float):*  Ego vehicle distance gap with front vehicle
+
+# opencda.core.application.platooning.platoon_behavior_agent
+Description for this module: Behavior manager for platooning specifically
+
+## PlatooningBehaviorAgent(vehicle, vehicle_manager, v2x_manager, behavior_yaml, platoon_yaml, carla_map)
+Platoon behavior agent that inherits the single vehicle behavior agent.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla vehicle.
+
+
+- <font color="#f8805a">vehicle_manager</font> (opencda object)
+ 
+The vehicle manager, used when joining platoon finished.
+
+
+- <font color="#f8805a">v2x_manager</font> (opencda object)
+ 
+Used to received and deliver information.
+
+
+- <font color="#f8805a">behavior_yaml</font> (dict)
+ 
+The configuration dictionary for BehaviorAgent.
+
+
+- <font color="#f8805a">platoon_yaml</font> (dict.)
+ 
+The configuration dictionary for platoon behavior.
+
+
+- <font color="#f8805a">carla_map</font> (carla.Map)
+ 
+The HD Map used in the simulation.
+
+
+### Attributes
+- <font color="#f8805a">vehicle_manager</font> (opencda object)
+ 
+The vehicle manager, used when joining platoon finished.
+
+
+- <font color="#f8805a">v2x_manager</font> (opencda object)
+ 
+Used to received and deliver information.
+
+
+- <font color="#f8805a">debug_helper</font> (opencda Object)
+ 
+A debug helper used to record the driving performance during platooning.
+
+
+- <font color="#f8805a">inter_gap</font> (float)
+ 
+The desired time gap between each platoon member.
+
+
+### Ancestors 
+opencda.core.plan.behavior_agent.BehaviorAgent
+
+### Methods 
+- <font color="#7fb800">calculate_gap</font> (self, distance)
+ 
+Calculate the current vehicle and frontal vehicle's time/distance gap.
+
+**Arguments:**
+
+*distance (float):*   distance between the ego vehicle and frontal vehicle
+
+- <font color="#7fb800">joining_finish_manager</font> (self, insert_vehicle='front')
+ 
+Called when a joining is finish to update the platoon manager list.
+
+**Arguments:**
+
+*insert_vehicle (string):*  indicate use the front or rear vehicle index to update the platoon manager list.
+
+- <font color="#7fb800">platooning_following_manager</font> (self, inter_gap)
+ 
+Car following behavior in platooning with gap regulation.
+
+**Arguments:**
+
+* inter_gap (float):*  the gap designed for platooning
+
+- <font color="#7fb800">platooning_merge_management</font> (self, frontal_vehicle_vm)
+ 
+Merge the vehicle into the platooning.
+
+**Arguments:**
+
+*frontal_vehicle_vm (opencda object):*  The vehivlel manager of the front vehicle.
+
+**Returns**
+
+*target_speed (float):*  The target speed for ego vehicle.
+
+*target_waypoint (carla.waypoint):*  The target waaypoint for ego vehcile.
+
+- <font color="#7fb800">run_step</font> (self, target_speed=None, collision_detector_enabled=True, lane_change_allowed=True)
+ 
+Run a single step for navigation under platooning agent. Finite state machine is used to switch between
+
+**Arguments:**
+
+*target_speed (float):*  Target speed in km/h
+
+*collision_detector_enabled (bool):*  Whether collision detection enabled.
+
+*ane_change_allowed (bool):*  Whether lane change is allowed.
+
+- <font color="#7fb800">run_step_back_joining</font> (self)
+ 
+Back-joining Algorithm.
+
+**    Back-joining Algorithm.
+
+**Returns**
+
+*control command (opencda object):*  control command for bacj joining.
+
+*back join status (enum):*  FSM back joining status.
+
+- <font color="#7fb800">run_step_cut_in_joining</font> (self)
+ 
+Check if the vehicle has been joined successfully.
+
+- <font color="#7fb800">run_step_cut_in_move2point</font> (self)
+ 
+The vehicle is trying to get to the move in point.
+
+**Arguments:**
+
+*target_speed (float):*  The target speed for ego vehile.
+
+*target_waypoint (carla.waypoint):*  The waypoint for ego vehile.
+
+*next FSM state (enum):*  The next finite state machine state.
+
+- <font color="#7fb800">run_step_front_joining</font> (self)
+ 
+Front-joining algorithm.
+
+**Returns**
+
+*control command (opencda object):*  control command for bacj joining.
+
+*back join status (enum):*  FSM back joining status.
+
+- <font color="#7fb800">run_step_maintaining</font> (self)
+ 
+Next step behavior planning for speed maintaining.
+
+- <font color="#7fb800">run_step_open_gap</font> (self)
+ 
+Open gap for cut-in vehicle.
+
+- <font color="#7fb800">update_information</font> (self, ego_pos, ego_speed, objects)
+ 
+Update the perception and localization information to the behavior agent.
+
+**Arguments:**
+
+*ego_pos (carla.Transform):*  ego position from localization module.
+
+*ego_speed (float):*  km/h, ego speed.
+
+*objects (dictionary):*  Objects detection results from perception module
+
+# opencda.core.application.platooning.platooning_manager
+Description for this module: Platooning Manager
+
+## PlatooningManager(config_yaml, cav_world)
+Platoon manager. Used to manage all vehicle managers inside the platoon.
+
+### Parameters
+- <font color="#f8805a">config_yaml</font> (dict)
+ 
+The configuration dictionary for platoon.
+
+
+- <font color="#f8805a">cav_world</font> (opencda object)
+ 
+CAV world that stores all CAV information.
+
+
+### Attributes
+- <font color="#f8805a">pmid</font> (int)
+ 
+The  platooning manager ID.
+
+
+- <font color="#f8805a">vehicle_manager_list</font> (list)
+ 
+A list of all vehciel managers within the platoon.
+
+
+- <font color="#f8805a">destination</font> (carla.location)
+ 
+The destiantion of the current plan.
+
+
+- <font color="#f8805a">center_loc</font> (carla.location)
+ 
+The center location of the platoon.
+
+
+- <font color="#f8805a">leader_target_speed</font> (float)
+ 
+The speed of the leader vehicle.
+
+
+- <font color="#f8805a">origin_leader_target_speed</font> (float)
+ 
+The original planned target speed of the platoon leader.
+
+
+- <font color="#f8805a">recover_speed_counter</font> (int)
+ 
+The counter that record the number of speed recovery attempts.
+
+
+### Methods 
+- <font color="#7fb800">add_member</font> (self, vehicle_manager, leader=False)
+ 
+Add memeber to the current platooning
+
+**Arguments:**
+
+*leader (boolean):*  Indicator of whether this cav is a leader.
+
+*vehicle_manager (opencda object):*  The vehicle manager class.
+
+- <font color="#7fb800">cal_center_loc</font> (self)
+ 
+Calculate and update center location of the platoon.
+
+- <font color="#7fb800">destroy</font> (self)
+ 
+Destroy platoon vehicles actors inside simulation world.
+
+- <font color="#7fb800">evaluate</font> (self)
+ 
+Used to save all members' statistics.
+
+- <font color="#7fb800">reset_speed</font> (self)
+ 
+After joining request accepted for certain steps, the platoon will return to the origin speed.
+
+- <font color="#7fb800">response_joining_request</font> (self, request_loc)
+ 
+Identify whether to accept the joining request based on capacity.
+
+**Arguments:**
+
+*request_loc (carla.Location):*  request vehicle location.
+
+**Returns**
+
+*response (boolean):*  Indicator of whether the joining request is accepted.
+
+- <font color="#7fb800">run_step</font> (self)
+ 
+Run one control step for each vehicles.
+
+- <font color="#7fb800">set_destination</font> (self, destination)
+ 
+Set desination of the vehicle managers in the platoon.
+
+- <font color="#7fb800">set_lead</font> (self, vehicle_manager)
+ 
+Set the leader of the platooning
+
+**Arguments:**
+
+*vehicle_manager (opencda object):*  The vehicle manager class.
+
+- <font color="#7fb800">set_member</font> (self, vehicle_manager, index, lead=False)
+ 
+Set member at specific index
+
+**Arguments:**
+
+*lead (boolean):*  Indicator of whether this cav is a leader.
+
+*vehicle_manager (opencda object):*  The vehicle manager class.
+
+*index (int):*  The platoon index of the current vehicle.
+
+- <font color="#7fb800">update_information</font> (self)
+ 
+Update CAV world information for every member in the list.
+
+- <font color="#7fb800">update_member_order</font> (self)
+ 
+Update the members' front and rear vehicle.
+
+# opencda.core.actuation.pid_controller
+Description for this module: PID Control Class
+
+## Controller(args)
+PID Controller implementation.
+
+### Parameters
+- <font color="#f8805a">args</font> (dict)
+ 
+The configuration dictionary parsed from yaml file.
+
+
+### Attributes
+- <font color="#f8805a">_lon_ebuffer</font> (deque)
+ 
+A deque buffer that stores longitudinal control errors.
+
+
+- <font color="#f8805a">_lat_ebuffer</font> (deque)
+ 
+A deque buffer that stores latitudinal control errors.
+
+
+- <font color="#f8805a">current_transform</font> (carla.transform)
+ 
+Current ego vehicle transformation in CARLA world(i.e., location and rotation).
+
+
+- <font color="#f8805a">current_speed</font> (float)
+ 
+Current ego vehicle speed .
+
+
+- <font color="#f8805a">past_steering</font> (float)
+ 
+Sterring angle from previous control step.
+
+
+### Methods 
+- <font color="#7fb800">dynamic_pid</font> (self)
+ 
+Compute kp, kd, ki based on current speed
+
+- <font color="#7fb800">lat_run_step</font> (self, target_location)
+ 
+Generate the throttle command based on current speed and target speed
+
+**Arguments:**
+
+*target_location (carla.loaction):*  Target location of the ego vehicle.
+
+**Returns**
+
+*current_steering (float):*  Desired steering angle value for the current step to achieve target location.
+
+- <font color="#7fb800">lon_run_step</font> (self, target_speed)
+ 
+Generate the throttle command based on current speed and target speed
+
+**Arguments:**
+
+*target_speed (float):*  Target speed of the ego vehicle.
+
+**Returns**
+
+*acceleration (float):*  Desired acceleration value for the current step to achieve target speed.
+
+- <font color="#7fb800">run_step</font> (self, target_speed, waypoint)
+ 
+Execute one step of control invoking both lateral and longitudinal
+
+**Arguments:**
+
+*target_speed (float):*  Target speed of the ego vehicle.
+
+*target_location (carla.loaction):*  Target location of the ego vehicle.
+
+**Returns**
+
+*control (carla.VehicleControl):*  Desired vehicle control command for the current step.
+
+- <font color="#7fb800">update_info</font> (self, ego_pos, ego_spd)
+ 
+Update ego position and speed to controller.
+
+**Arguments:**
+
+*ego_pos (carla.location):*  Position of the ego vehicle.
+
+*ego_spd (float):*  Speed of the ego vehicle
+
+# opencda.core.actuation.control_manager
+Description for this module: Controller interface
+
+## ControlManager(control_config)
+Controller manager that is used to choose and call different controller's functions.
+
+### Parameters
+- <font color="#f8805a">control_config</font> (dict)
+ 
+The configuration dictionary of the control manager module.
+
+
+### Attributes
+- <font color="#f8805a">controller</font> (opencda object.)
+ 
+The controller object of the OpenCDA framwork.
+
+
+### Methods 
+- <font color="#7fb800">run_step</font> (self, target_speed, waypoint)
+ 
+Execute current controller step.
+
+- <font color="#7fb800">update_info</font> (self, ego_pos, ego_speed)
+ 
+Update ego vehicle information for controller.
+# opencda.core.common.vehicle_manager
+Description for this module: Basic class of CAV
+
+## VehicleManager(vehicle, config_yaml, application, carla_map, cav_world)
+A class manager to embed different modules with vehicle together.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+
+
+- <font color="#f8805a">config</font> (dict)
+ 
+The configuration dictionary of the localization module.
+
+
+- <font color="#f8805a">application</font> (list)
+ 
+The application category, currently support:['single','platoon'].
+
+
+- <font color="#f8805a">carla_map</font> (carla.Map)
+ 
+The CARLA simulation map.
+
+
+- <font color="#f8805a">cav_world</font> (opencda object)
+ 
+CAV World.
+
+
+### Attributes
+- <font color="#f8805a">v2x_manager</font> (opencda object)
+ 
+The current V2X manageer. 
+
+
+- <font color="#f8805a">localizer</font> (opencda object)
+ 
+The current localization manageer. 
+
+
+- <font color="#f8805a">perception_manager</font> (opencda object)
+ 
+The current V2X perception manageer. 
+
+
+- <font color="#f8805a">agent</font> (opencda object)
+ 
+The current carla agent that handles the basic control of ego vehicle.
+
+
+- <font color="#f8805a">controller</font> (opencda object)
+ 
+The current control manager.
+
+
+### Methods 
+- <font color="#7fb800">destroy</font> (self)
+ 
+Destroy the actor vehicle
+
+- <font color="#7fb800">run_step</font> (self, target_speed=None)
+ 
+Execute one step of navigation.
+
+- <font color="#7fb800">set_destination</font> (self, start_location, end_location, clean=False, end_reset=True)
+ 
+Wrapper function to set global route
+
+**Arguments:**
+
+*start_location (carla.location):*  The start location of the current task.
+
+*end_location (carla.location):*  The destination location of the current task.
+
+*clean (boolean):*  Indicator of whether clean waypoint queue.
+
+*end_reset (boolean):*  Indicator of whether reset the end location.
+
+- <font color="#7fb800">update_info</font> (self)
+ 
+Call perception and localization module to retrieve surrounding info an ego position.
+# opencda.core.common.misc
+Description for this module: Module with auxiliary functions.
+
+# with auxiliary functions.
+## cal_distance_angle(target_location, current_location, orientation)
+Calculate the vehicle current relative distance to target location.
+
+**Arguments:**
+
+**Returns**
+
+## compute_distance(location_1, location_2)
+Euclidean distance between 3D points.
+
+**Arguments:**
+
+## compute_magnitude_angle(target_location, current_location, orientation)
+Compute relative angle and distance between a target_location and a current_location.
+
+**Arguments:**
+
+**Returns**
+
+## distance_vehicle(waypoint, vehicle_transform)
+Returns the 2D distance from a waypoint to a vehicle
+
+**Arguments:**
+
+## draw_trajetory_points(world, waypoints, z=0.25, color=<carla.libcarla.Color object>, lt=5, size=0.1, arrow_size=0.1)
+Draw a list of trajetory points
+
+**Arguments:**
+
+## draw_waypoints(world, waypoints, z=0.5)
+Draw a list of waypoints at a certain height given in z.
+
+**Arguments:**
+
+## get_acc(vehicle, meters=False)
+Compute acceleration of a vehicle.
+
+**Arguments:**
+
+**Returns**
+
+## get_speed(vehicle, meters=False)
+Compute speed of a vehicle in Km/h.
+
+**Arguments:**
+
+**Returns**
+
+## is_within_distance(target_location, current_location, orientation, max_distance, d_angle_th_up, d_angle_th_low=0)
+Check if a target object is within a certain distance from a reference object.
+
+**Arguments:**
+
+**Returns**
+
+## is_within_distance_ahead(target_transform, current_transform, max_distance)
+Check if a target object is within a certain distance in front of a reference object.
+
+**Arguments:**
+
+**Returns**
+
+## positive(num)
+Return the given number if positive, else 0
+
+## vector(location_1, location_2)
+Returns the unit vector from location_1 to location_2.
+
+**Arguments:**
+
+# opencda.core.common.cav_world
+Description for this module: 
+
+## CavWorld(apply_ml=False)
+A customized world object to save all CDA vehicle information and shared ML models.
+
+### Parameters
+- <font color="#f8805a">apply_ml</font> (boolean)
+ 
+whether apply ml/dl models in this simulation, please make sure 
+
+
+### Attributes
+- <font color="#f8805a">vehicle_id_set</font> (set)
+ 
+A set that stores vehicle IDs.
+
+
+- <font color="#f8805a">_vehicle_manager_dict</font> (dict)
+ 
+A dictionary that stores vehicle managers.
+
+
+- <font color="#f8805a">_platooning_dict</font> (dict)
+ 
+A dictionary that stores platooning managers. 
+
+
+- <font color="#f8805a">ml_manager</font> (opencda object.)
+ 
+The machine learning manager class.
+
+
+### Methods 
+- <font color="#7fb800">get_platoon_dict</font> (self)
+ 
+Return existing platoons.
+
+- <font color="#7fb800">get_vehicle_managers</font> (self)
+ 
+Return vehicle manager dictionary.
+
+- <font color="#7fb800">locate_vehicle_manager</font> (self, loc)
+ 
+Locate the vehicle manager based on the given location.
+
+**Arguments:**
+
+*loc (carla.Location):*  vehicle location.
+
+**Returns**
+
+*target_vm (vehicle_manager):*  The vehicle manager at the give location.
+
+- <font color="#7fb800">update_platooning</font> (self, platooning_manger)
+ 
+Add created platooning.
+
+**Arguments:**
+
+*platooning_manger (opencda object):*  The platooning manager class.
+
+- <font color="#7fb800">update_vehicle_manager</font> (self, vehicle_manager)
+ 
+Update created CAV manager to the world.
+
+**Arguments:**
+
+*vehicle_manager (opencda object):*  The vehicle manager class
+
+# opencda.core.common.v2x_manager
+Description for this module: Communication manager for cooperation
+
+## V2XManager(cav_world, config_yaml)
+V2X Manager for platooning, cooperative perception and so on.
+
+### Parameters
+- <font color="#f8805a">cav_world</font> (opencda object)
+ 
+CAV world.
+
+
+- <font color="#f8805a">config_yaml</font> (dict)
+ 
+The configuration dictionary of the v2x module.
+
+
+### Attributes
+- <font color="#f8805a">_recieved_buffer</font> (dict)
+ 
+A buffer for receive data.
+
+
+- <font color="#f8805a">platooning_plugin</font> (opencda object)
+ 
+The platooning plugin for communication during platooning.
+
+
+### Methods 
+- <font color="#7fb800">add_platoon_blacklist</font> (self, pmid)
+ 
+Add an existing platoon to current blacklist.
+
+**Arguments:**
+
+* pmid (int):* The target platoon manager ID.
+
+- <font color="#7fb800">get_platoon_front_rear</font> (self)
+ 
+Get the ego vehicle's front and rear cav in the platoon
+
+- <font color="#7fb800">get_platoon_manager</font> (self)
+ 
+Retrieve the platoon manager the cav belongs to and the corresponding id
+
+- <font color="#7fb800">get_platoon_status</font> (self)
+ 
+Retrive the FSM status for platooning application
+
+- <font color="#7fb800">in_platoon</font> (self)
+ 
+Check whether the vehicle is inside the platoon.
+
+**Arguments:**
+
+* detection result (bool):*  Flag indication whether in a platoon.
+
+- <font color="#7fb800">match_platoon</font> (self)
+ 
+A naive way to find the best position to join a platoon.
+
+- <font color="#7fb800">set_platoon</font> (self, in_id, platooning_object=None, platooning_id=None, leader=False)
+ 
+Set platooning status
+
+**Arguments:**
+
+- <font color="#7fb800">set_platoon_front</font> (self, vm)
+ 
+Set the frontal vehicle to another vehicle
+
+**Arguments:**
+
+- <font color="#7fb800">set_platoon_rear</font> (self, vm)
+ 
+Set the rear vehicle to another vehicle
+
+**Arguments:**
+
+* vm (vehicle manager):* The target vehicle manager.
+
+- <font color="#7fb800">set_platoon_status</font> (self, status)
+ 
+Set the cav to a different fsm status.
+
+**Arguments:**
+
+*status (string):*  fsm status.
+
+- <font color="#7fb800">update_info</font> (self, ego_pos, ego_spd)
+ 
+Update all communication plugins with current localization info.
+# opencda.customize.core.sensing.localization.extented_kalman_filter
+Description for this module: Use Extended Kalman Filter on GPS + IMU for better localization.
+
+## ExtentedKalmanFilter(dt)
+Extended Kalman Filter implementation for gps and imu.
+
+### Parameters
+- <font color="#f8805a">dt</font> (float)
+ 
+The step time for kalman filter calculation.
+
+
+### Attributes
+- <font color="#f8805a">Q</font> (numpy.array)
+ 
+predict state covariance.
+
+
+- <font color="#f8805a">R</font> (numpy.array)
+ 
+Observation x,y position covariance.
+
+
+- <font color="#f8805a">time_step</font> (float)
+ 
+The step time for kalman filter calculation.
+
+
+- <font color="#f8805a">xEst</font> (numpy.array)
+ 
+Estimated x values.
+
+
+- <font color="#f8805a">PEst</font> (numpy.array)
+ 
+The estimated P values.
+
+
+### Methods 
+- <font color="#7fb800">jacob_f</font> (self, x, u)
+ 
+Jacobian of Motion Model motion model
+
+**Arguments:**
+
+*x (np.array):*  Input X array.
+
+**Returns**
+
+*jF (np.array):*   Jacobian of Motion Model motion model.
+
+- <font color="#7fb800">motion_model</font> (self, x, u)
+ 
+Predict current position and yaw based on previous result (X = F * X_prev + B * u).
+
+**Arguments:**
+
+*x (np.array):*  [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
+
+*u (np.array):*  [v_current, imu_yaw_rate], shape:(2, 1).
+
+**Returns**
+
+- <font color="#7fb800">observation_model</font> (self, x)
+ 
+Project the state.array to sensor measurement.array.
+
+**Arguments:**
+
+*x (np.array):*  [x, y, yaw, v], shape: (4. 1).
+
+**Returns**
+
+*z (np.array):*  predicted measurement.
+
+- <font color="#7fb800">run_step</font> (self, x, y, heading, velocity, yaw_rate_imu)
+ 
+Apply EKF on current measurement and previous prediction.
+
+**Arguments:**
+
+*x (float):*  x(esu) coordinate from gnss sensor at current timestamp.
+
+*y (float):*  y(esu) coordinate from gnss sensor at current timestamp.
+
+*heading (float):*  heading direction at current timestamp.
+
+*velocity (float):*  current speed.
+
+*yaw_rate_imu (float):*  yaw rate rad/s from IMU sensor.
+
+**Returns**
+
+* xEST (np.array):*  The corrected x, y, heading, and velocity information.
+
+- <font color="#7fb800">run_step_init</font> (self, x, y, heading, velocity)
+ 
+Initalization for states.
+
+**Arguments:**
+
+*x (float):*  The X coordinate.
+
+*y (float):*  Tehe y coordinate.
+
+*heading (float):*  The heading direction. 
+
+*velocity (float):*  The velocity
+
+# opencda.customize.core.sensing.localization.localization_manager
+Description for this module: Customized Localization Module.
+
+# zed Localization Module.
+## CustomizedLocalizationManager(vehicle, config_yaml, carla_map)
+Customized Localization module to replace the default module.
+
+### Parameters
+- <font color="#f8805a">vehicle</font> (carla.Vehicle)
+ 
+The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
+
+
+- <font color="#f8805a">config_yam</font> (dict)
+ 
+The configuration dictionary of the localization module.
+
+
+- <font color="#f8805a">carla_ma</font> (carla.Map)
+ 
+The carla HDMap. We need this to find the map origin to convert wg84 to enu coordinate system.
+
+
+### Attributes
+- <font color="#f8805a">kf</font> (opencda object)
+ 
+The filter used to fuse different sensors.
+
+
+### Ancestors 
+opencda.core.sensing.localization.localization_manager.LocalizationManager
+# opencda.customize.ml_libs.ml_manager
+Description for this module: Since multiple CAV normally use the same ML/DL model, here we have this class to enable different
+
+## is_vehicle_cococlass(label)
+Check whether the label belongs to the vehicle class according to coco dataset.
+
+**Arguments:**
+
+**Returns**
+
+## MLManager()
+A class that should contain all the ML models you want to initialize.
+
+### Attributes
+- <font color="#f8805a">object_detector</font> (torch_detector)
+ 
+The YoloV5 detector load from pytorch.
+
+
+### Methods 
+- <font color="#7fb800">draw_2d_box</font> (self, result, rgb_image, index)
+ 
+Draw 2d bounding box based on the yolo detection.
+
+**Arguments:**
+
+*result (yolo.Result):* Detection result from yolo 5.
+
+*rgb_image (np.ndarray):*  Camera rgb image.
+
+*index(int):*  Indicate the index.
+
+**Returns**
+
+*rgb_image (np.ndarray):*  camera image with bbx drawn
+
+# opencda.scenario_testing.platoon_joining_2lanefree_carla
+Description for this module: Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway simplified map sorely with carla
+
+## run_scenario(opt, config_yaml)
+# opencda.scenario_testing.platoon_joining_2lanefreecomplete_carla
+Description for this module: Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway sorely with carla
+
+## run_scenario(opt, config_yaml)
+# opencda.scenario_testing.platoon_joining_town06_carla
+Description for this module: Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway sorely with carla
+
+## run_scenario(opt, config_yaml)
+# opencda.scenario_testing.single_town06_carla
+Description for this module: Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway simplified map sorely with carla
+
+## run_scenario(opt, config_yaml)
+# opencda.scenario_testing.single_2lanefree_carla
+Description for this module: Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway simplified map sorely with carla
+
+## run_scenario(opt, config_yaml)
+# opencda.scenario_testing.platoon_stability_2lanefree_carla
+Description for this module: Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway simplified map sorely with carla
+
+## run_scenario(opt, config_yaml)
+# opencda.scenario_testing.evaluations.utils
+Description for this module: Utility functions for evaluation.
+
+## lprint(logfile, *argv)
+Save string to log file.
+
+**Arguments:**
+
+# opencda.scenario_testing.evaluations.evaluate_manager
+Description for this module: Evaluation manager.
+
+## EvaluationManager(cav_world)
+Evaluation manager to manage the analysis of the results for different modules.
+
+**Arguments:**
+
+- <font color="#f8805a">cav_world</font> (opencda.CavWorld))
+ 
+The CavWorld object that contains all CAVs' information.
+
+
+### Methods 
+- <font color="#7fb800">evaluate</font> (self)
+ 
+Evaluate performance of all modules by plotting and writing the statistics into the log file.
+
+- <font color="#7fb800">kinematics_eval</font> (self, log_file)
+ 
+vehicle kinematics related evaluation.
+
+**Arguments:**
+
+*log_file (File):*  The log file to write the data.
+
+- <font color="#7fb800">localization_eval</font> (self, log_file)
+ 
+Localization module evaluation.
+
+**Arguments:**
+
+*log_file (File):*  The log file to write the data.
+
+- <font color="#7fb800">platooning_eval</font> (self, log_file)
+ 
+Platooning evaluation.
+
+**Arguments:**
+
+*log_file (File):*  The log file to write the data
+
+# opencda.scenario_testing.utils.sim_api
+Description for this module: Simulation API for create simulation world, vehicle manager and so on
+
+## car_blueprint_filter(blueprints)
+Exclude the uncommon vehicles from the default CARLA blueprint library (i.e., isetta, carlacola, cybertruck, t2).
+
+## createPlatoonManagers(world, carla_map, scenario_params, apply_ml, map_helper=None)
+Create Platooning Managers based on given params.
+
+**Arguments:**
+
+**Returns**
+
+## createSimulationWorld(simulation_config, xodr_path=None, town=None)
+Create client and simulation world.
+
+**Arguments:**
+
+## createTrafficManager(client, world, traffic_config)
+Create background traffic.
+
+**Arguments:**
+
+**Returns**
+
+## createVehicleManager(world, scenario_params, application, cav_world, carla_map, map_helper=None)
+Create single CAV manager.
+
+**Arguments:**
+
+**Returns**
+
+## destroyActors(world)
+Destroy all actors in the world.
+# opencda.scenario_testing.utils.yaml_utils
+Description for this module: Used to load and write yaml files
+
+## load_yaml(file)
+Load yaml file and return a dictionary.
+
+**Arguments:**
+
+**Returns**
+
+# opencda.scenario_testing.utils.customized_map_api
+Description for this module: Loading world from customized map
+
+## load_customized_world(xodr_path, client)
+Load .xodr file and return the carla world object
+
+**Arguments:**
+
+## spawn_helper_2lanefree(carla_map, coefficient)
+A helper function to locate the valid spawn point on the merge lane.
+
+**Arguments:**
+
+**Returns**
+
+## spawn_helper_2lanefree_complete(carla_map, coefficient)
+A helper function to locate the valid spawn point on the merge lane.
+
+**Arguments:**
+
+**Returns**
+
+## bcolors()
+
+
+### Class variables 
+*BOLD*
+
+*ENDC*
+
+*FAIL*
+
+*HEADER*
+
+*OKBLUE*
+
+*OKCYAN*
+
+*OKGREEN*
+
+*UNDERLINE*
+
+*WARNING*
+
+# opencda.co_simulation.sumo_integration.constants
+Description for this module: This module defines constants used for the sumo-carla co-simulation.
+# opencda.co_simulation.sumo_integration.bridge_helper
+Description for this module: This module provides a helper for the co-simulation between sumo and carla .
+
+## BridgeHelper()
+BridgeHelper provides methos to ease the co-simulation between sumo and carla.
+
+### Class variables 
+*blueprint_library*
+
+*data_json*
+
+*dir_path*
+
+*f*
+
+*offset*
+
+- <font color="#7fb800">get_carla_blueprint</font> (sumo_actor, sync_color=False)
+ 
+Returns an appropriate blueprint based on the received sumo actor.
+
+**Returns**
+
+- <font color="#7fb800">get_carla_lights_state</font> (current_carla_lights, sumo_lights)
+ 
+Returns carla vehicle light state based on sumo signals.
+
+**Returns**
+
+- <font color="#7fb800">get_carla_traffic_light_state</font> (sumo_tl_state)
+ 
+Returns carla traffic light state based on sumo traffic light state.
+
+**Returns**
+
+- <font color="#7fb800">get_carla_transform</font> (in_sumo_transform, extent)
+ 
+Returns carla transform based on sumo transform.
+
+**Returns**
+
+- <font color="#7fb800">get_sumo_lights_state</font> (current_sumo_lights, carla_lights)
+ 
+Returns sumo signals based on carla vehicle light state.
+
+**Returns**
+
+- <font color="#7fb800">get_sumo_traffic_light_state</font> (carla_tl_state)
+ 
+Returns sumo traffic light state based on carla traffic light state.
+
+**Returns**
+
+- <font color="#7fb800">get_sumo_transform</font> (in_carla_transform, extent)
+ 
+Returns sumo transform based on carla transform.
+
+**Returns**
+
+- <font color="#7fb800">get_sumo_vtype</font> (carla_actor)
+ 
+Returns an appropriate vtype based on the type id and attributes.
+**Returns**
+
+# opencda.co_simulation.sumo_integration.carla_simulation
+Description for this module: This module is responsible for the management of the carla simulation.
+
+## CarlaSimulation(host, port, step_length, xdor_path)
+CarlaSimulation is responsible for the management of the carla simulation.
+
+*traffic_light_ids*
+
+### Methods 
+- <font color="#7fb800">close</font> (self)
+ 
+Closes carla client.
+
+- <font color="#7fb800">destroy_actor</font> (self, actor_id)
+ 
+Destroys the given actor.
+
+- <font color="#7fb800">get_actor</font> (self, actor_id)
+ 
+Accessor for carla actor.
+
+- <font color="#7fb800">get_actor_light_state</font> (self, actor_id)
+ 
+Accessor for carla actor light state.
+
+- <font color="#7fb800">get_traffic_light_state</font> (self, landmark_id)
+ 
+Accessor for traffic light state.
+
+- <font color="#7fb800">spawn_actor</font> (self, blueprint, transform)
+ 
+Spawns a new actor.
+
+- <font color="#7fb800">switch_off_traffic_lights</font> (self)
+ 
+Switch off all traffic lights.
+
+- <font color="#7fb800">synchronize_traffic_light</font> (self, landmark_id, state)
+ 
+Updates traffic light state.
+
+- <font color="#7fb800">synchronize_vehicle</font> (self, vehicle_id, transform, lights=None)
+ 
+Updates vehicle state.
+
+- <font color="#7fb800">tick</font> (self)
+ 
+Tick to carla simulation.
+# opencda.co_simulation.sumo_integration.sumo_simulation
+Description for this module: This module is responsible for the management of the sumo simulation.
+
+## SumoActor(type_id, vclass, transform, signals, extent, color)
+SumoActor(type_id, vclass, transform, signals, extent, color)
+
+### Ancestors 
+builtins.tuple
+
+*color*
+
+*extent*
+
+*signals*
+
+*transform*
+
+*type_id*
+
+*vclass*
+
+## SumoActorClass(value, names=None, *, module=None, qualname=None, type=None, start=1)
+SumoActorClass enumerates the different sumo actor classes.
+
+### Ancestors 
+builtins.tuple
+
+### Class variables 
+*ARMY*
+
+*AUTHORITY*
+
+*BICYCLE*
+
+*BUS*
+
+*COACH*
+
+*CUSTOM1*
+
+*CUSTOM2*
+
+*DELIVERY*
+
+*EMERGENCY*
+
+*EVEHICLE*
+
+*HOV*
+
+*IGNORING*
+
+*MOPED*
+
+*MOTORCYCLE*
+
+*PASSENGER*
+
+*PEDESTRIAN*
+
+*PRIVATE*
+
+*RAIL*
+
+*RAIL_ELECTRIC*
+
+*RAIL_FAST*
+
+*RAIL_URBAN*
+
+*SHIP*
+
+*TAXI*
+
+*TRAILER*
+
+*TRAM*
+
+*TRUCK*
+
+*VIP*
+
+## SumoSignalState()
+SumoSignalState contains the different traffic light states.
+
+### Class variables 
+*GREEN*
+
+*GREEN_RIGHT_TURN*
+
+*GREEN_WITHOUT_PRIORITY*
+
+*OFF*
+
+*OFF_BLINKING*
+
+*RED*
+
+*RED_YELLOW*
+
+*YELLOW*
+
+## SumoSimulation(cfg_file, step_length, host=None, port=None, sumo_gui=False, client_order=1)
+SumoSimulation is responsible for the management of the sumo simulation.
+
+- <font color="#7fb800">close</font> ()
+ 
+Closes traci client.
+
+- <font color="#7fb800">destroy_actor</font> (actor_id)
+ 
+Destroys the given actor.
+
+- <font color="#7fb800">get_actor</font> (actor_id)
+ 
+Accessor for sumo actor.
+
+- <font color="#7fb800">subscribe</font> (actor_id)
+ 
+Subscribe the given actor to the following variables:
+
+- <font color="#7fb800">unsubscribe</font> (actor_id)
+ 
+Unsubscribe the given actor from receiving updated information each step.
+
+*traffic_light_ids*
+
+### Methods 
+- <font color="#7fb800">get_net_offset</font> (self)
+ 
+Accessor for sumo net offset.
+
+- <font color="#7fb800">get_traffic_light_state</font> (self, landmark_id)
+ 
+Accessor for traffic light state.
+
+- <font color="#7fb800">spawn_actor</font> (self, type_id, color=None)
+ 
+Spawns a new actor.
+
+- <font color="#7fb800">switch_off_traffic_lights</font> (self)
+ 
+Switch off all traffic lights.
+
+- <font color="#7fb800">synchronize_traffic_light</font> (self, landmark_id, state)
+ 
+Updates traffic light state.
+
+- <font color="#7fb800">synchronize_vehicle</font> (self, vehicle_id, transform, signals=None)
+ 
+Updates vehicle state.
+
+- <font color="#7fb800">tick</font> (self)
+ 
+Tick to sumo simulation.
+
+## SumoTLLogic(tlid, states, parameters)
+SumoTLLogic holds the data relative to a traffic light in sumo.
+
+### Methods 
+- <font color="#7fb800">get_all_landmarks</font> (self)
+ 
+Returns all the landmarks associated with this traffic light.
+
+**Returns**
+
+- <font color="#7fb800">get_all_signals</font> (self)
+ 
+Returns all the signals of the traffic light.
+
+**Returns**
+
+- <font color="#7fb800">get_associated_signals</font> (self, landmark_id)
+ 
+Returns all the signals associated with the given landmark.
+
+**Returns**
+
+- <font color="#7fb800">get_number_signals</font> (self)
+ 
+Returns number of internal signals of the traffic light.
+
+**Returns**
+
+## SumoTLManager()
+SumoTLManager is responsible for the management of the sumo traffic lights (i.e., keeps control
+
+- <font color="#7fb800">subscribe</font> (tlid)
+ 
+Subscribe the given traffic ligth to the following variables:
+
+- <font color="#7fb800">unsubscribe</font> (tlid)
+ 
+Unsubscribe the given traffic ligth from receiving updated information each step.
+
+### Methods 
+- <font color="#7fb800">get_all_associated_signals</font> (self, landmark_id)
+ 
+Returns all the signals associated with the given landmark.
+
+**Returns**
+
+- <font color="#7fb800">get_all_landmarks</font> (self)
+ 
+Returns all the landmarks associated with this traffic light.
+
+**Returns**
+
+- <font color="#7fb800">get_all_signals</font> (self)
+ 
+Returns all the signals of the traffic light.
+
+**Returns**
+
+- <font color="#7fb800">get_state</font> (self, landmark_id)
+ 
+Returns the traffic light state of the signals associated with the given landmark.
+
+**Returns**
+
+- <font color="#7fb800">set_state</font> (self, landmark_id, state)
+ 
+Updates the state of all the signals associated with the given landmark.
+
+- <font color="#7fb800">switch_off</font> (self)
+ 
+Switch off all traffic lights.
+
+- <font color="#7fb800">tick</font> (self)
+ 
+Tick to sumo simulation.
+
+## SumoVehSignal()
+SumoVehSignal contains the different sumo vehicle signals.
+
+### Class variables 
+*BACKDRIVE*
+
+*BLINKER_EMERGENCY*
+
+*BLINKER_LEFT*
+
+*BLINKER_RIGHT*
+
+*BRAKELIGHT*
+
+*DOOR_OPEN_LEFT*
+
+*DOOR_OPEN_RIGHT*
+
+*EMERGENCY_BLUE*
+
+*EMERGENCY_RED*
+
+*EMERGENCY_YELLOW*
+
+*FOGLIGHT*
+
+*FRONTLIGHT*
+
+*HIGHBEAM*
+
+*WIPER*
+
+# opencda.co_simulation.sumo_src.intersectionController
+Description for this module: 
+
+## IntersectionController(intersection, zip_flag=True)
+
+
+### Methods 
+- <font color="#7fb800">addPlatoon</font> (self, platoon)
+ 
+Adds a platoon to this intersection controller
+
+- <font color="#7fb800">calculateNewReservedTime</font> (self, pv, reservedTime)
+ 
+Calculates the time that is needed to be reserved for a given platoon or vehicle (pv)
+
+- <font color="#7fb800">findAndAddReleventPlatoons</font> (self, platoons)
+ 
+Finds platoons in the given list that can be managed by this controller, then
+
+- <font color="#7fb800">getNewSpeed</font> (self, pv, reservedTime)
+ 
+Gets the speed the platoon or vehicle should adhere to in order to pass through the intersection safely
+
+- <font color="#7fb800">getVehicleZipOrderThroughJunc</font> (self)
+ 
+Gets the order that a platoon should [pass through the junction if zipping is enabled
+
+- <font color="#7fb800">removeIrreleventPlatoons</font> (self)
+ 
+Function to remove any platoons from the intersection that have either left the sphere of influence or left the map
+
+- <font color="#7fb800">removePlatoon</font> (self, platoon)
+ 
+Removes a platoon from this controller and then resets its behaviour to default
+
+- <font color="#7fb800">update</font> (self)
+ 
+Performs various functions to update the junction's state.
+
+# opencda.co_simulation.sumo_src.platoon
+Description for this module: Created on Tue Dec 1, 2020
+
+## Platoon(startingVehicles)
+Create a platoon, setting default values for all variables
+
+### Methods 
+- <font color="#7fb800">addControlledLanes</font> (self, lanes)
+ 
+
+- <font color="#7fb800">addVehicle</font> (self, vehicle, index)
+ 
+Adds a single vehicle to this platoon at the index provided
+
+- <font color="#7fb800">canMerge</font> (self)
+ 
+Returns True if this platoon can currently merge with another
+
+**Returns**
+
+- <font color="#7fb800">checkVehiclePathsConverge</font> (self, vehicles)
+ 
+
+- <font color="#7fb800">disband</font> (self)
+ 
+Marks a platoon as dead and returns vehicles to normal
+
+- <font color="#7fb800">getAcceleration</font> (self)
+ 
+
+- <font color="#7fb800">getAllVehicles</font> (self)
+ 
+Retrieve the list of all the vehicles in this platoon
+
+- <font color="#7fb800">getAllVehiclesByName</font> (self)
+ 
+Retrieve the list of all the vehicles in this platoon by name
+
+- <font color="#7fb800">getID</font> (self)
+ 
+Generates and returns a unique ID for this platoon
+
+- <font color="#7fb800">getLane</font> (self)
+ 
+
+- <font color="#7fb800">getLanePositionFromFront</font> (self, lane=None)
+ 
+
+- <font color="#7fb800">getLanesOfAllVehicles</font> (self)
+ 
+
+- <font color="#7fb800">getLeadVehicle</font> (self)
+ 
+
+- <font color="#7fb800">getLength</font> (self)
+ 
+Gets the total length of the platoon
+
+- <font color="#7fb800">getLengthOfSingleVehicle</font> (self)
+ 
+
+- <font color="#7fb800">getMaxSpeed</font> (self)
+ 
+Gets the maximum speed of the platoon
+
+- <font color="#7fb800">getMergePosition</font> (self, relVeh, vehicle, direction)
+ 
+Get the merge position and relevant vehicle(s)
+
+- <font color="#7fb800">getNumberOfVehicles</font> (self)
+ 
+
+- <font color="#7fb800">getSpeed</font> (self)
+ 
+
+- <font color="#7fb800">getTargetSpeed</font> (self)
+ 
+
+- <font color="#7fb800">isActive</font> (self)
+ 
+Is the platoon currently active within the scenario
+
+- <font color="#7fb800">mergePlatoon</font> (self, platoon)
+ 
+Merges the given platoon into the current platoon
+
+- <font color="#7fb800">removeControlledLanes</font> (self, lanes)
+ 
+Removes the lanes from the platoon that were previously being controlled by an
+
+- <font color="#7fb800">removeTargetSpeed</font> (self)
+ 
+Removes the target speed from this platoon
+
+- <font color="#7fb800">removeVehicle</font> (self, v)
+ 
+
+- <font color="#7fb800">setEligibleForMerging</font> (self, canMerge)
+ 
+
+- <font color="#7fb800">setGap</font> (self, gap)
+ 
+Set the gap between vehicles in the platoon
+
+- <font color="#7fb800">setSpeedMode</font> (self, speedMode)
+ 
+Set the speed mode for every vehicle in the platoon.
+
+- <font color="#7fb800">setTargetSpeed</font> (self, speed)
+ 
+Sets a manual target speed for this platoon (normally determined by the lead
+
+- <font color="#7fb800">startBehaviour</font> (self, vehicles)
+ 
+A function to start platooning a specific set of vehicles
+
+- <font color="#7fb800">stopBehaviour</font> (self)
+ 
+Stops vehicles exhibiting platoon behaviour, if they are
+
+- <font color="#7fb800">update</font> (self)
+ 
+Performs updates to maintain the platoon
+
+- <font color="#7fb800">updateIsActive</font> (self)
+ 
+Is Active Update, if not disband
+# opencda.co_simulation.sumo_src.utils
+Description for this module: 
+
+## add_vehicle(vid, position, lane, speed, cacc_spacing, real_engine=False)
+Adds a vehicle to the simulation
+
+## change_lane(vid, lane)
+Let a vehicle change lane without respecting any safety distance
+
+## communicate(topology)
+Performs data transfer between vehicles, i.e., fetching data from
+
+## get_distance(v1, v2)
+Returns the distance between two vehicles, removing the length
+
+## get_par(vid, par)
+Shorthand for the getParameter method
+
+## get_par_new(vid)
+@Author: Yi
+
+## get_pos(vid)
+@Author: Yi
+
+## running(demo_mode, step, max_step)
+Returns whether the demo should continue to run or not. If demo_mode is
+
+## set_par(vid, par, value)
+Shorthand for the setParameter method
+
+## start_sumo(config_file, already_running)
+Starts or restarts sumo with the given configuration file
+
+# opencda.co_simulation.sumo_src.vehicle
+Description for this module: Created on Tue Dec 1, 2020
+
+## Vehicle(vehicle)
+
+
+### Methods 
+- <font color="#7fb800">changeLane</font> (self, laneID, mode_num)
+ 
+
+- <font color="#7fb800">getAcceleration</font> (self)
+ 
+
+- <font color="#7fb800">getClosestDistances</font> (self, veh)
+ 
+
+- <font color="#7fb800">getContext</font> (self)
+ 
+
+- <font color="#7fb800">getDistance</font> (self, vehicle)
+ 
+
+- <font color="#7fb800">getEdge</font> (self)
+ 
+
+- <font color="#7fb800">getFollower</font> (self, range=20)
+ 
+
+- <font color="#7fb800">getLane</font> (self)
+ 
+
+- <font color="#7fb800">getLaneIndex</font> (self)
+ 
+
+- <font color="#7fb800">getLanePosition</font> (self)
+ 
+
+- <font color="#7fb800">getLanePositionFromFront</font> (self)
+ 
+
+- <font color="#7fb800">getLeader</font> (self, range=20)
+ 
+
+- <font color="#7fb800">getLeftFollower</font> (self)
+ 
+
+- <font color="#7fb800">getLeftLeader</font> (self)
+ 
+
+- <font color="#7fb800">getLength</font> (self)
+ 
+
+- <font color="#7fb800">getMaxSpeed</font> (self)
+ 
+
+- <font color="#7fb800">getName</font> (self)
+ 
+
+- <font color="#7fb800">getPosition</font> (self)
+ 
+
+- <font color="#7fb800">getRemainingRoute</font> (self)
+ 
+
+- <font color="#7fb800">getRightFollower</font> (self)
+ 
+
+- <font color="#7fb800">getRightLeader</font> (self)
+ 
+
+- <font color="#7fb800">getRoute</font> (self)
+ 
+
+- <font color="#7fb800">getSpeed</font> (self)
+ 
+
+- <font color="#7fb800">getState</font> (self)
+ 
+
+- <font color="#7fb800">getTargetLane</font> (self)
+ 
+
+- <font color="#7fb800">getTau</font> (self)
+ 
+
+- <font color="#7fb800">isActive</font> (self)
+ 
+
+- <font color="#7fb800">setColor</font> (self, color)
+ 
+
+- <font color="#7fb800">setImperfection</font> (self, imperfection)
+ 
+
+- <font color="#7fb800">setInActive</font> (self)
+ 
+
+- <font color="#7fb800">setMinGap</font> (self, minGap)
+ 
+
+- <font color="#7fb800">setSpeed</font> (self, speed)
+ 
+
+- <font color="#7fb800">setSpeedFactor</font> (self, speedFactor)
+ 
+
+- <font color="#7fb800">setSpeedMode</font> (self, speedMode)
+ 
+
+- <font color="#7fb800">setState</font> (self, state)
+ 
+
+- <font color="#7fb800">setTargetLane</font> (self, targetLane)
+ 
+
+- <font color="#7fb800">setTau</font> (self, tau)
+ 
+
+# opencda.co_simulation.sumo_src.ccparams
+Description for this module: 
+
+## pack(*args)
+
+
+## unpack(string)
+# opencda.co_simulation.sumo_src.simlib
+Description for this module: 
+
+## flatten(l)
+
+
+## setUpSimulation(configFile, trafficScale=1)
+# opencda.co_simulation.sumo_src.simulationmanager
+Description for this module: Created on Tue Dec 1, 2020
+
+## SimulationManager(pCreation=True, iCoordination=True, iZipping=True)
+
+
+### Methods 
+- <font color="#7fb800">addNewVehicle</font> (self, vehicleID, vehicle)
+ 
+
+- <font color="#7fb800">add_vehicles</font> (self, n, real_engine=False)
+ 
+Adds a platoon of n vehicles to the simulation, plus an additional one
+
+- <font color="#7fb800">checkPlatoonsNearbyAndUpdate</font> (self, platoon)
+ 
+
+- <font color="#7fb800">createPlatoon</font> (self, vehicles)
+ 
+
+- <font color="#7fb800">getActivePlatoons</font> (self)
+ 
+
+- <font color="#7fb800">getAllVehicleNames</font> (self)
+ 
+
+- <font color="#7fb800">getAllVehicles</font> (self)
+ 
+
+- <font color="#7fb800">getAllVehiclesInPlatoons</font> (self)
+ 
+
+- <font color="#7fb800">getAverageLengthOfAllPlatoons</font> (self)
+ 
+
+- <font color="#7fb800">getPlatoonByLane</font> (self, lane)
+ 
+
+- <font color="#7fb800">getPlatoonByVehicle</font> (self, v)
+ 
+
+- <font color="#7fb800">getReleventPlatoon</font> (self, vehicle)
+ 
+
+- <font color="#7fb800">getVehicleByID</font> (self, vehicleID)
+ 
+
+- <font color="#7fb800">getVehicleType</font> (self, vehicleID)
+ 
+
+- <font color="#7fb800">handleSimulationStep</font> (self, time)
+ 
+Handle sumo simulation for each step
+
