@@ -2,7 +2,7 @@
 """
 Use Extended Kalman Filter on GPS + IMU for better localization.
 """
-# Author: Runsheng Xu <rxx3386@ucla.edu>, credit to Kartik Madhira <kartikmadhira1@gmail.com>
+# Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
 import math
@@ -16,7 +16,7 @@ class ExtentedKalmanFilter(object):
     Parameters
     -dt : float
         The step time for kalman filter calculation.
-    
+
     Attributes
     -Q : numpy.array
         predict state covariance.
@@ -31,7 +31,7 @@ class ExtentedKalmanFilter(object):
     """
 
     def __init__(self, dt):
-       
+
         self.Q = np.diag([
             0.2,  # variance of location on x-axis
             0.2,  # variance of location on y-axis
@@ -39,7 +39,7 @@ class ExtentedKalmanFilter(object):
             0.001  # variance of velocity
         ]) ** 2  # predict state covariance
 
-        self.R = np.diag([0.5, 0.5, 0.2]) ** 2  # Observation x,y position covariance
+        self.R = np.diag([0.5, 0.5, 0.2]) ** 2
 
         self.time_step = dt
 
@@ -48,8 +48,9 @@ class ExtentedKalmanFilter(object):
 
     def motion_model(self, x, u):
         """
-        Predict current position and yaw based on previous result (X = F * X_prev + B * u).
-        
+        Predict current position and yaw based on previous result
+        (X = F * X_prev + B * u).
+
         Args:
             -x (np.array): [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
             -u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
@@ -75,17 +76,19 @@ class ExtentedKalmanFilter(object):
         """
         Jacobian of Motion Model motion model
 
-        Args: 
+        Args:
             -x (np.array): Input X array.
-        Returns: 
+        Returns:
             -jF (np.array):  Jacobian of Motion Model motion model.
 
         """
         yaw = x[2, 0]
         v = u[0, 0]
         jF = np.array([
-            [1.0, 0.0, -self.time_step * v * math.sin(yaw), self.time_step * math.cos(yaw)],
-            [0.0, 1.0, self.time_step * v * math.cos(yaw), self.time_step * math.sin(yaw)],
+            [1.0, 0.0, -self.time_step * v * math.sin(yaw),
+             self.time_step * math.cos(yaw)],
+            [0.0, 1.0, self.time_step * v * math.cos(yaw),
+             self.time_step * math.sin(yaw)],
             [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, 0.0, 1.0]])
 
@@ -119,9 +122,9 @@ class ExtentedKalmanFilter(object):
         Args:
             -x (float): The X coordinate.
             -y (float): Tehe y coordinate.
-            -heading (float): The heading direction. 
+            -heading (float): The heading direction.
             -velocity (float): The velocity.
-        
+
         """
         self.xEst[0] = x
         self.xEst[1] = y
@@ -131,15 +134,18 @@ class ExtentedKalmanFilter(object):
     def run_step(self, x, y, heading, velocity, yaw_rate_imu):
         """
         Apply EKF on current measurement and previous prediction.
-        
+
         Args:
-            -x (float): x(esu) coordinate from gnss sensor at current timestamp.
-            -y (float): y(esu) coordinate from gnss sensor at current timestamp.
+            -x (float): x(esu) coordinate from
+             gnss sensor at current timestamp.
+            -y (float): y(esu) coordinate from
+             gnss sensor at current timestamp.
             -heading (float): heading direction at current timestamp.
             -velocity (float): current speed.
             -yaw_rate_imu (float): yaw rate rad/s from IMU sensor.
         Returns:
-            - xEST (np.array): The corrected x, y, heading, and velocity information.
+            - xEST (np.array): The corrected x, y, heading,
+              and velocity information.
         """
 
         # gps observation
@@ -164,4 +170,7 @@ class ExtentedKalmanFilter(object):
         self.xEst = xPred + K @ y
         self.PEst = (np.eye(len(self.xEst)) - K @ jH) @ PPred
 
-        return self.xEst[0][0], self.xEst[1][0], self.xEst[2][0], self.xEst[3][0]
+        return self.xEst[0][0], \
+            self.xEst[1][0], \
+            self.xEst[2][0], \
+            self.xEst[3][0]

@@ -64,17 +64,19 @@ def spawn_helper_2lanefree(carla_map, coefficient):
 
     Args:
         -carla_map (carla.map): the 2lanefreeway map
-        -coefficient (float): A single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position is in the middle of the merge lane.
+        -coefficient (float): A single scalar indicating where is the
+         spawn point, eg. 0.5 represents the spawn position is in the
+         middle of the merge lane.
     Returns:
         -transform_point (carla.transform): The desired spawn points.
     """
 
     all_deafault_spawn = carla_map.get_spawn_points()
     transform_point = all_deafault_spawn[11]
-    transform_point.location.x = transform_point.location.x + \
-                             coefficient * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
-    transform_point.location.y = transform_point.location.y + \
-                             coefficient * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+    transform_point.location.x = transform_point.location.x + coefficient * \
+        (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+    transform_point.location.y = transform_point.location.y + coefficient * \
+        (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
 
     return transform_point
 
@@ -85,8 +87,10 @@ def spawn_helper_2lanefree_complete(carla_map, coefficient):
 
     Args:
         -carla_map (carla.map): The 2lanefreeway map.
-        -coefficient (float): A single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position is in the middle of the merge lane.
-    Returns: 
+        -coefficient (float): A single scalar indicating where is the
+         spawn point, eg. 0.5 represents the spawn position is in the
+         middle of the merge lane.
+    Returns:
         -transform_point (carla.transform): The desired spawn points.
     """
 

@@ -15,7 +15,7 @@ def load_yaml(file):
 
     Args:
         -file (string): yaml file path.
-    Returns: 
+    Returns:
         - param (dict): A dictionary that contains defined parameters.
     """
 

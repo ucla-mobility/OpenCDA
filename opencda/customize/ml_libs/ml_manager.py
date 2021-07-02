@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Since multiple CAV normally use the same ML/DL model, here we have this class to enable different
-CAVs share the same model to avoid duplicate memory consumption.
+Since multiple CAV normally use the same ML/DL model,
+here we have this class to enable different CAVs share the same model to
+ avoid duplicate memory consumption.
 """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
@@ -20,7 +21,7 @@ class MLManager(object):
     Attributes
     -object_detector : torch_detector
         The YoloV5 detector load from pytorch.
-    
+
     """
 
     def __init__(self):
@@ -56,17 +57,23 @@ class MLManager(object):
             if is_vehicle_cococlass(label):
                 label_name = 'vehicle'
 
-            x1, y1, x2, y2 = int(detection[0]), int(detection[1]), int(detection[2]), int(detection[3])
+            x1, y1, x2, y2 = int(
+                detection[0]), int(
+                detection[1]), int(
+                detection[2]), int(
+                detection[3])
             cv2.rectangle(rgb_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
             # draw text on it
-            cv2.putText(rgb_image, label_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 1)
+            cv2.putText(rgb_image, label_name, (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 1)
 
         return rgb_image
 
 
 def is_vehicle_cococlass(label):
     """
-    Check whether the label belongs to the vehicle class according to coco dataset.
+    Check whether the label belongs to the vehicle class according
+    to coco dataset.
     Args:
         -label(int): yolo detection prediction.
     Returns:

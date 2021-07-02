@@ -7,39 +7,39 @@ Evaluation manager.
 # License: MIT
 
 import os
-import sys
 from datetime import datetime
-
-import matplotlib.pyplot as plt
-
 from opencda.scenario_testing.evaluations.utils import lprint
 
 
 class EvaluationManager(object):
     """
-    Evaluation manager to manage the analysis of the results for different modules.
+    Evaluation manager to manage the analysis of the
+    results for different modules.
 
     Args:
     -cav_world : opencda.CavWorld)
-    	The CavWorld object that contains all CAVs' information.
+        The CavWorld object that contains all CAVs' information.
     """
 
     def __init__(self, cav_world):
-       
+
         self.cav_world = cav_world
 
         current_path = os.path.dirname(os.path.realpath(__file__))
         current_time = datetime.now()
-        # we create a folder for every single simulation based on the current time
+        # we create a folder for every single simulation based on the current
+        # time
         current_time = current_time.strftime("_%Y_%m_%d_%H_%M_%S")
 
-        self.eval_save_path = os.path.join(current_path, '../../../evaluation_outputs', current_time)
+        self.eval_save_path = os.path.join(
+            current_path, '../../../evaluation_outputs', current_time)
         if not os.path.exists(self.eval_save_path):
             os.makedirs(self.eval_save_path)
 
     def evaluate(self):
         """
-        Evaluate performance of all modules by plotting and writing the statistics into the log file.
+        Evaluate performance of all modules by plotting and writing the
+        statistics into the log file.
         """
         log_file = os.path.join(self.eval_save_path, 'log.txt')
 
@@ -69,7 +69,10 @@ class EvaluationManager(object):
             figure, perform_txt = loc_debug_helper.evaluate()
 
             # save plotting
-            figure_save_path = os.path.join(self.eval_save_path, '%d_kinematics_plotting.png' % actor_id)
+            figure_save_path = os.path.join(
+                self.eval_save_path,
+                '%d_kinematics_plotting.png' %
+                actor_id)
             figure.savefig(figure_save_path, dpi=100)
 
             lprint(log_file, perform_txt)
@@ -90,7 +93,10 @@ class EvaluationManager(object):
             figure, perform_txt = loc_debug_helper.evaluate()
 
             # save plotting
-            figure_save_path = os.path.join(self.eval_save_path, '%d_localization_plotting.png' % actor_id)
+            figure_save_path = os.path.join(
+                self.eval_save_path,
+                '%d_localization_plotting.png' %
+                actor_id)
             figure.savefig(figure_save_path, dpi=100)
 
             # save log txt
@@ -99,7 +105,7 @@ class EvaluationManager(object):
     def platooning_eval(self, log_file):
         """
         Platooning evaluation.
-        
+
         Args:
             -log_file (File): The log file to write the data.
 
@@ -111,9 +117,11 @@ class EvaluationManager(object):
             figure, perform_txt = pm.evaluate()
 
             # save plotting
-            figure_save_path = os.path.join(self.eval_save_path, '%s_platoon_plotting.png' % pmid)
+            figure_save_path = os.path.join(
+                self.eval_save_path,
+                '%s_platoon_plotting.png' %
+                pmid)
             figure.savefig(figure_save_path, dpi=100)
 
             # save log txt
             lprint(log_file, perform_txt)
-
