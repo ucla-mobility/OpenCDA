@@ -11,8 +11,9 @@ from enum import Enum
 
 class FSM(Enum):
     """
-    The finite state machine class for platooning. These classes are used to indicate
-    the current status of the CAV during platooning.
+    The finite state machine class for platooning.
+    These classes are used to indicate the current status
+    of the CAV during platooning.
 
     Attributes
     -SEARCHING : int
@@ -30,7 +31,8 @@ class FSM(Enum):
     -CUT_IN_TO_BACK : int
         The merging vehicle abandons cut-in-join and switch to back join.
     -JOINING_FINISHED : int
-        Indicate the joining finished and the vehicle will switch to maintaining state.
+        Indicate the joining finished and the
+        vehicle will switch to maintaining state.
     -LEADING_MODE : int
         The vehicle is the platoon leader.
     -ABONDON:

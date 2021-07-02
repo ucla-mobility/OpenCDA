@@ -19,13 +19,13 @@ import opencda.core.plan.drive_profile_plotting as open_plt
 class PlatooningManager(object):
     """
     Platoon manager. Used to manage all vehicle managers inside the platoon.
-    
+
     Parameters
     -config_yaml : dict
         The configuration dictionary for platoon.
     -cav_world : opencda object
         CAV world that stores all CAV information.
-    
+
     Attributes
     -pmid : int
         The  platooning manager ID.
@@ -44,7 +44,7 @@ class PlatooningManager(object):
     """
 
     def __init__(self, config_yaml, cav_world):
-    
+
         self.pmid = str(uuid.uuid1())
 
         self.vehicle_manager_list = []
@@ -71,7 +71,8 @@ class PlatooningManager(object):
         self.add_member(vehicle_manager, leader=True)
 
         # this variable is used to control leader speed
-        self.origin_leader_target_speed = vehicle_manager.agent.max_speed - vehicle_manager.agent.speed_lim_dist
+        self.origin_leader_target_speed = vehicle_manager.agent.max_speed - \
+            vehicle_manager.agent.speed_lim_dist
 
     def add_member(self, vehicle_manager, leader=False):
         """
@@ -83,10 +84,12 @@ class PlatooningManager(object):
         :return:
         """
         self.vehicle_manager_list.append(vehicle_manager)
-        vehicle_manager.v2x_manager.set_platoon(len(self.vehicle_manager_list)-1,
-                                                platooning_object=self,
-                                                platooning_id=self.pmid,
-                                                leader=leader)
+        vehicle_manager.v2x_manager.set_platoon(
+            len(
+                self.vehicle_manager_list) - 1,
+            platooning_object=self,
+            platooning_id=self.pmid,
+            leader=leader)
 
     def set_member(self, vehicle_manager, index, lead=False):
         """
@@ -107,12 +110,18 @@ class PlatooningManager(object):
         """
         Calculate and update center location of the platoon.
         """
-        v1_ego_transform = self.vehicle_manager_list[0].localizer.get_ego_pos()
-        v2_ego_transform = self.vehicle_manager_list[-1].localizer.get_ego_pos()
+        v1_ego_transform = \
+            self.vehicle_manager_list[0].localizer.get_ego_pos()
+        v2_ego_transform = \
+            self.vehicle_manager_list[-1].localizer.get_ego_pos()
 
-        self.center_loc = carla.Location(x=(v1_ego_transform.location.x + v2_ego_transform.location.x)/2,
-                                         y=(v1_ego_transform.location.y + v2_ego_transform.location.y)/2,
-                                         z=(v1_ego_transform.location.z + v2_ego_transform.location.z)/2)
+        self.center_loc = carla.Location(x=(v1_ego_transform.location.x +
+                                            v2_ego_transform.location.x) /
+                                         2, y=(v1_ego_transform.location.y +
+                                               v2_ego_transform.location.y) /
+                                         2, z=(v1_ego_transform.location.z +
+                                               v2_ego_transform.location.z) /
+                                         2)
 
     def update_member_order(self):
         """
@@ -122,15 +131,18 @@ class PlatooningManager(object):
         for i, vm in enumerate(self.vehicle_manager_list):
             if i != 0:
                 vm.v2x_manager.set_platoon(i, leader=False)
-                vm.v2x_manager.set_platoon_front(self.vehicle_manager_list[i-1])
-            if i != len(self.vehicle_manager_list)-1:
+                vm.v2x_manager.set_platoon_front(
+                    self.vehicle_manager_list[i - 1])
+            if i != len(self.vehicle_manager_list) - 1:
                 leader = True if i == 0 else False
                 vm.v2x_manager.set_platoon(i, leader=leader)
-                vm.v2x_manager.set_platoon_rear(self.vehicle_manager_list[i+1])
+                vm.v2x_manager.set_platoon_rear(
+                    self.vehicle_manager_list[i + 1])
 
     def reset_speed(self):
         """
-        After joining request accepted for certain steps, the platoon will return to the origin speed.
+        After joining request accepted for certain steps,
+         the platoon will return to the origin speed.
         """
         if self.recover_speed_counter <= 0:
             self.leader_target_speed = self.origin_leader_target_speed
@@ -144,18 +156,21 @@ class PlatooningManager(object):
             -request_loc (carla.Location): request vehicle location.
 
         Returns:
-            -response (boolean): Indicator of whether the joining request is accepted. 
+            -response (boolean): Indicator of whether the
+            joining request is accepted.
 
         """
         if len(self.vehicle_manager_list) >= self.maximum_capacity:
             return False
         else:
-            # when the platoon accept a joining request,by default it will decrease the speed
-            # so the merging vehicle can better catch up with
+            # when the platoon accept a joining request,by default
+            # it will decrease the speed so the merging vehicle
+            # can better catch up with
             self.leader_target_speed = self.origin_leader_target_speed - 5
             self.recover_speed_counter = 200
 
-            # find the corresponding vehicle manager and add it to the leader's whitelist
+            # find the corresponding vehicle manager and add it to the leader's
+            # whitelist
             request_vm = self.cav_world.locate_vehicle_manager(request_loc)
             self.vehicle_manager_list[0].agent.add_white_list(request_vm)
 
@@ -168,7 +183,8 @@ class PlatooningManager(object):
         self.destination = destination
         for i in range(len(self.vehicle_manager_list)):
             self.vehicle_manager_list[i].set_destination(
-                self.vehicle_manager_list[i].vehicle.get_location(), destination, clean=True)
+                self.vehicle_manager_list[i].vehicle.get_location(),
+                destination, clean=True)
 
     def update_information(self):
         """
@@ -186,7 +202,8 @@ class PlatooningManager(object):
         """
         control_list = []
         for i in range(len(self.vehicle_manager_list)):
-            control = self.vehicle_manager_list[i].run_step(self.leader_target_speed)
+            control = self.vehicle_manager_list[i].run_step(
+                self.leader_target_speed)
             control_list.append(control)
 
         for (i, control) in enumerate(control_list):
@@ -198,7 +215,7 @@ class PlatooningManager(object):
         """
         Used to save all members' statistics.
         """
-        
+
         velocity_list = []
         acceleration_list = []
         time_gap_list = []
@@ -210,24 +227,30 @@ class PlatooningManager(object):
             vm = self.vehicle_manager_list[i]
             debug_helper = vm.agent.debug_helper
 
-            # we need to filter out the first 100 data points since the vehicles
-            # spawn at the beginning have no velocity and thus make the time gap close to infinite
+            # we need to filter out the first 100 data points
+            # since the vehicles spawn at the beginning have
+            # no velocity and thus make the time gap close to infinite
 
             velocity_list += debug_helper.speed_list
             acceleration_list += debug_helper.acc_list
             time_gap_list += debug_helper.time_gap_list
             distance_gap_list += debug_helper.dist_gap_list
 
-            time_gap_list_tmp = np.array(debug_helper.time_gap_list)
-            time_gap_list_tmp = time_gap_list_tmp[time_gap_list_tmp < 100]
-            distance_gap_list_tmp = np.array(debug_helper.dist_gap_list)
-            distance_gap_list_tmp = distance_gap_list_tmp[distance_gap_list_tmp < 100]
+            time_gap_list_tmp = \
+                np.array(debug_helper.time_gap_list)
+            time_gap_list_tmp = \
+                time_gap_list_tmp[time_gap_list_tmp < 100]
+            distance_gap_list_tmp = \
+                np.array(debug_helper.dist_gap_list)
+            distance_gap_list_tmp = \
+                distance_gap_list_tmp[distance_gap_list_tmp < 100]
 
-            perform_txt += '\n Platoon member ID:%d, Actor ID:%d : \n' % (i, vm.vehicle.id)
-            perform_txt += 'Time gap mean: %f, std: %f \n' % (np.mean(time_gap_list_tmp),
-                                                              np.std(time_gap_list_tmp))
-            perform_txt += 'Distance gap mean: %f, std: %f \n' %(np.mean(distance_gap_list_tmp),
-                                                                 np.std(distance_gap_list_tmp))
+            perform_txt += '\n Platoon member ID:%d, Actor ID:%d : \n' % (
+                i, vm.vehicle.id)
+            perform_txt += 'Time gap mean: %f, std: %f \n' % (
+                np.mean(time_gap_list_tmp), np.std(time_gap_list_tmp))
+            perform_txt += 'Distance gap mean: %f, std: %f \n' % (
+                np.mean(distance_gap_list_tmp), np.std(distance_gap_list_tmp))
 
         figure = plt.figure()
 
@@ -245,7 +268,9 @@ class PlatooningManager(object):
 
         label = []
         for i in range(1, len(velocity_list) + 1):
-            label.append('Leading Vehicle, id: %d' % int(i - 1) if i == 1 else 'Platoon member, id: %d' % int(i - 1))
+            label.append('Leading Vehicle, id: %d' %
+                         int(i - 1) if i == 1 else 'Platoon member, id: %d' %
+                         int(i - 1))
 
         figure.legend(label, loc='upper right')
 

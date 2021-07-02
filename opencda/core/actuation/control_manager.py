@@ -5,23 +5,18 @@ Controller interface
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-from collections import deque
-
-import math
 import importlib
-
-import numpy as np
-import carla
 
 
 class ControlManager(object):
     """
-    Controller manager that is used to choose and call different controller's functions.
-    
+    Controller manager that is used to choose
+     and call different controller's functions.
+
     Parameters
     -control_config : dict
         The configuration dictionary of the control manager module.
-    
+
     Attributes
     -controller : opencda object.
         The controller object of the OpenCDA framwork.
@@ -29,7 +24,10 @@ class ControlManager(object):
 
     def __init__(self, control_config):
         controller_type = control_config['type']
-        controller = getattr(importlib.import_module("opencda.core.actuation.%s" % controller_type), 'Controller')
+        controller = getattr(
+            importlib.import_module(
+                "opencda.core.actuation.%s" %
+                controller_type), 'Controller')
         self.controller = controller(control_config['args'])
 
     def update_info(self, ego_pos, ego_speed):
