@@ -15,21 +15,21 @@ import opencda.core.plan.drive_profile_plotting as open_plt
 class PlanDebugHelper(object):
     """
     This class aims to save statistics for planner behaviour.
-    
+
     Parameters:
     -actor_id : int
-        The actor ID of the target vehicle for bebuging. 
+        The actor ID of the target vehicle for bebuging.
 
     Attributes
-    -speed_list : list 
+    -speed_list : list
         The list containing speed info(m/s) of all time-steps.
     -acc_list : list
         The list containing acceleration info(m^2/s) of all time-steps.
     -ttc_list : list
         The list containing ttc info(s) for all time-steps.
-    -count : int 
+    -count : int
         Used to count how many simulation steps have been executed.
-    
+
     """
 
     def __init__(self, actor_id):
@@ -49,22 +49,26 @@ class PlanDebugHelper(object):
 
         """
         self.count += 1
-        # at the very beginning, the vehicle is in a spawn state, so we should filter out the first 100 data points.
+        # at the very beginning, the vehicle is in a spawn state, so we should
+        # filter out the first 100 data points.
         if self.count > 100:
             self.speed_list[0].append(ego_speed / 3.6)
             if len(self.speed_list[0]) <= 1:
                 self.acc_list[0].append(0)
             else:
                 # todo: time-step hardcoded
-                self.acc_list[0].append((self.speed_list[0][-1] - self.speed_list[0][-2]) / 0.05)
+                self.acc_list[0].append(
+                    (self.speed_list[0][-1] - self.speed_list[0][-2]) / 0.05)
             self.ttc_list[0].append(ttc)
 
     def evaluate(self):
         """
         Evaluate the target vehicle and visulize the plot.
         Returns:
-            -figure (matplotlib.pyplot.figure): The target vehicle's planning profile (velocity, acceleration, and ttc).
-            -perform_txt (txt file): The target vehicle's planning profile as text files.
+            -figure (matplotlib.pyplot.figure): The target vehicle's planning
+             profile (velocity, acceleration, and ttc).
+            -perform_txt (txt file): The target vehicle's planning profile
+            as text files.
 
         """
         warnings.filterwarnings('ignore')

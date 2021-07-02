@@ -11,14 +11,15 @@ import bisect
 
 class Spline:
     """
-    Cubic Spline class for calculte curvature (Author: Atsushi Sakai(@Atsushi_twi)).
+    Cubic Spline class for calculte curvature
+     (Author: Atsushi Sakai(@Atsushi_twi)).
 
     Parameters
     -x : float
         The x coordinate.
     -y : float
         The y coordinate.
-    
+
     Attributes
     -b : float
         The spline coefficient b.
@@ -30,7 +31,7 @@ class Spline:
         The spline coefficient w.
     -nx : float
         The dimension of x.
-    -h : float 
+    -h : float
         The n-th discrete difference along the x-axis.
     """
 
@@ -66,7 +67,8 @@ class Spline:
         Args:
             - t (float): if t is outside of the input x, return None
         Returns:
-            - result (float): The calcualtion result of position. If t is outside the range of x, return None.
+            - result (float): The calcualtion result of position.
+              If t is outside the range of x, return None.
 
         """
 
@@ -149,14 +151,15 @@ class Spline:
 
 class Spline2D:
     """
-    2D Cubic Spline class for calculte curvature (Author: Atsushi Sakai(@Atsushi_twi)).
+    2D Cubic Spline class for calculte curvature
+     (Author: Atsushi Sakai(@Atsushi_twi)).
 
     Parameters
     -x : float
         The x coordinate.
     -y : float
         The y coordinate.
-    
+
     Attributes
     -b : float
         The spline coefficient b.
@@ -168,7 +171,7 @@ class Spline2D:
         The spline coefficient w.
     -nx : float
         The dimension of x.
-    -h : float 
+    -h : float
         The n-th discrete difference along the x-axis.
 
     """
@@ -220,8 +223,8 @@ def calc_spline_course(x, y, ds=0.1):
     """
     Caculate 2D splice course.
 
-    Args: 
-        -x (float): The x coordinate of the input point. 
+    Args:
+        -x (float): The x coordinate of the input point.
         -y (float): The y coordinate of the input point.
         -ds (flost): The s step value. Default value equals to 0.1.
 
@@ -246,7 +249,7 @@ def calc_spline_course(x, y, ds=0.1):
     return rx, ry, ryaw, rk, s
 
 
-def main():  
+def main():
     """
     Main function to calculate spline and visulize the results.
     """
