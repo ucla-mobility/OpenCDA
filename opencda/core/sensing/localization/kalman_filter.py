@@ -12,12 +12,12 @@ import numpy as np
 
 class KalmanFilter(object):
     """
-    Kalman Filter implementation for gps and imu. 
+    Kalman Filter implementation for gps and imu.
 
     Parameters
     -dt : float
         The step time for kalman filter calculation.
-    
+
     Attributes
     -Q : numpy.array
         predict state covariance.
@@ -45,7 +45,8 @@ class KalmanFilter(object):
             0.001  # variance of velocity
         ]) ** 2  # predict state covariance
 
-        self.R = np.diag([0.5, 0.5, 0.2]) ** 2  # Observation x,y position covariance
+        # Observation x,y position covariance
+        self.R = np.diag([0.5, 0.5, 0.2]) ** 2
 
         self.time_step = dt
 
@@ -54,7 +55,8 @@ class KalmanFilter(object):
 
     def motion_model(self, x, u):
         """
-        Predict current position and yaw based on previous result (X = F * X_prev + B * u).
+        Predict current position and yaw based on
+        previous result (X = F * X_prev + B * u).
         Args:
             -x (np.array) [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
             -u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
@@ -104,7 +106,7 @@ class KalmanFilter(object):
             -x (float): The x coordinate.
             -y (float): The y coordinate.
             -heading (float): The heading direction.
-            -velocity (flaot): The velocity speed. 
+            -velocity (flaot): The velocity speed.
 
         """
         self.xEst[0] = x
@@ -117,13 +119,14 @@ class KalmanFilter(object):
         Apply KF on current measurement and previous prediction.
 
         Args:
-            -x (float): x(esu) coordinate from gnss sensor at current timestamp.
-            -y (float): y(esu) coordinate from gnss sensor at current timestamp.
+            -x (float): x(esu) coordinate from gnss sensor at current timestamp
+            -y (float): y(esu) coordinate from gnss sensor at current timestamp
             -heading (float): heading direction at current timestamp.
             -velocity (float): current speed.
             -yaw_rate_imu (float): yaw rate rad/s from IMU sensor.
-        Returns: 
-            -Xest (np.array): The corrected x, y, heading, and velocity information.
+        Returns:
+            -Xest (np.array): The corrected x, y,
+            heading, and velocity information.
         """
         # gps observation
         z = np.array([x, y, heading]).reshape(3, 1)
@@ -156,4 +159,7 @@ class KalmanFilter(object):
         self.xEst = xPred + K @ y
         self.PEst = K @ H @ PPred
 
-        return self.xEst[0][0], self.xEst[1][0], self.xEst[2][0], self.xEst[3][0]
+        return self.xEst[0][0], \
+            self.xEst[1][0], \
+            self.xEst[2][0],\
+            self.xEst[3][0]

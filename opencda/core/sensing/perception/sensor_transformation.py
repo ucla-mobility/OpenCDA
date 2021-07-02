@@ -2,7 +2,6 @@
 """
 This script contains the transformations between world and different sensors.
 """
-# Credit to https://github.com/MukhlasAdib/CARLA-2DBBox/blob/master/carla_vehicle_annotator.py
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
@@ -13,7 +12,6 @@ from opencda.opencda_carla import Transform
 
 VIRIDIS = np.array(cm.get_cmap('viridis').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
-
 
 
 def get_camera_intrinsic(sensor):
@@ -32,7 +30,8 @@ def get_camera_intrinsic(sensor):
     matrix_k = np.identity(3)
     matrix_k[0, 2] = VIEW_WIDTH / 2.0
     matrix_k[1, 2] = VIEW_HEIGHT / 2.0
-    matrix_k[0, 0] = matrix_k[1, 1] = VIEW_WIDTH / (2.0 * np.tan(VIEW_FOV * np.pi / 360.0))
+    matrix_k[0, 0] = matrix_k[1, 1] = VIEW_WIDTH / \
+        (2.0 * np.tan(VIEW_FOV * np.pi / 360.0))
 
     return matrix_k
 
@@ -41,7 +40,7 @@ def create_bb_points(vehicle):
     """
     Extract the eight vertices of the bounding box from the vehicle.
     Args:
-        -vehicle (carla.Vehicle or ObstacleVehicle): The object vehicle. 
+        -vehicle (carla.Vehicle or ObstacleVehicle): The object vehicle.
 
     Returns:
         - bbx(np.ndarray): 3d bounding box.
@@ -63,9 +62,11 @@ def create_bb_points(vehicle):
 
 def x_to_world_transformation(transform):
     """
-    Get the transformation matrix from x(it can be vehicle or sensor) coordinates to world coordinate.
+    Get the transformation matrix from x(it can be vehicle or sensor)
+     coordinates to world coordinate.
     Args:
-        -transform (carla.Transform): The transform that contains location and rotation.
+        -transform (carla.Transform): The transform that contains
+        location and rotation.
 
     Returns:
         -matrix (np.ndarray): The transformation matrix
@@ -105,11 +106,13 @@ def bbx_to_world(cords, vehicle):
     """
     Convert bounding box coordinate at vehicle reference to world reference.
     Args:
-        -cords (np.ndarray): Bounding box coordinates with 8 vertices, shape (n, 4).
+        -cords (np.ndarray): Bounding box coordinates with 8 vertices,
+         shape (n, 4).
         -vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
 
     Returns:
-        -bb_world_cords (np.ndarray): Bounding box coordinates under word reference.
+        -bb_world_cords (np.ndarray): Bounding box coordinates
+        under word reference.
     """
 
     bb_transform = Transform(vehicle.bounding_box.location)
@@ -122,7 +125,8 @@ def bbx_to_world(cords, vehicle):
     # bounding box to world transformation matrix
     bb_world_matrix = np.dot(vehicle_world_matrix, bb_vehicle_matrix)
 
-    # 8 vertices are relative to bbx center, thus multiply with bbx_2_world to get the world coords.
+    # 8 vertices are relative to bbx center, thus multiply with bbx_2_world to
+    # get the world coords.
     bb_world_cords = np.dot(bb_world_matrix, np.transpose(cords))
 
     return bb_world_cords
@@ -133,7 +137,8 @@ def world_to_sensor(cords, sensor_transform):
     Transform coordinate from world reference to sensor reference.
     Args:
         -cords (np.ndarray): Coordinates under world reference, shape:(4, n).
-        -sensor_transform (carla.Transform): sensor position in the world, shape:(3, 1).
+        -sensor_transform (carla.Transform): sensor position in the world,
+        shape:(3, 1).
 
     Returns:
         -sensor_cords(np.ndarray): Coordinates in sensor reference.
@@ -166,7 +171,8 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
     Args:
         -cords (np.ndarray): Coordinates under vehicle reference, shape (n, 4).
         -vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-        -sensor_transform (carla.Transform): sensor position in the world, shape(3, 1).
+        -sensor_transform (carla.Transform): sensor position in the world,
+         shape(3, 1).
 
     Returns:
         -(np.ndarray): Coordinates in sensor reference, shape(4, n).
@@ -211,10 +217,10 @@ def get_bounding_box(vehicle, camera, sensor_transform):
 
 def p3d_to_p2d_bb(p3d_bb):
     """
-    Draw 2D bounding box (4 vertices) from 3D bounding box (8 vertices) in image.
+    Draw 2D bounding box (4 vertices) from 3D bounding box (8 vertices).
     2D bounding box is represented by two corner points
     Args:
-        -p3d_bb (np.array): The objective 3D bounding box. 
+        -p3d_bb (np.array): The objective 3D bounding box.
 
     Returns:
 
@@ -319,9 +325,11 @@ def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
     color_map = np.array([
         np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 0]) * 255.0,
         np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 1]) * 255.0,
-        np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 2]) * 255.0]).astype(np.int).T
+        np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 2]) * 255.0]).\
+        astype(np.int).T
 
     for i in range(len(new_points_2d)):
-        rgb_image[v_coord[i] - 1: v_coord[i] + 1, u_coord[i] - 1: u_coord[i] + 1] = color_map[i]
+        rgb_image[v_coord[i] - 1: v_coord[i] + 1,
+                  u_coord[i] - 1: u_coord[i] + 1] = color_map[i]
 
     return rgb_image, points_2d

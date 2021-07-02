@@ -15,7 +15,8 @@ def lprint(logfile, *argv):
 
     Args:
         -logfile (File): The log file path.
-        -*argv (string or number): the string that needs to be saved into the log file.
+        -*argv (string or number): the string that needs to be saved
+        into the log file.
 
     """
 
@@ -29,4 +30,3 @@ def lprint(logfile, *argv):
 
     with open(logfile, 'a') as out:
         out.write(arg_all + '\n')
-

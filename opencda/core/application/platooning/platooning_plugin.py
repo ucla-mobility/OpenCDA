@@ -15,17 +15,17 @@ from opencda.core.application.platooning.fsm import FSM
 class PlatooningPlugin(object):
     """
     Platooning plugin inside the V2X manager.
-    
+
     Parameters
     -search_range : float
         The search range of the communication equipment.
     -cda_enabled : boolean
         Whether connectivity is supported.
-    
+
     Attributes
     -leader : boolean
         Boolean indicator of the platoon leader status.
-    -platooning_object : opencda object 
+    -platooning_object : opencda object
         The current platoon object.
     -platooning_id : int
         The current platoon ID.
@@ -73,7 +73,8 @@ class PlatooningPlugin(object):
         Update the ego position and speed
 
         Args:
-            -heading_direction: groundtruth heading_direction obtained from the server.
+            -heading_direction: groundtruth heading_direction
+                                obtained from the server.
             -dummy_variable: dummy variable to test multiple return/args.
             -dummy_variable: dummy variable to test multiple return/args.
             -dummy_variable: dummy variable to test multiple return/args.
@@ -96,10 +97,15 @@ class PlatooningPlugin(object):
         self.platooning_id = None
         self.in_id = None
 
-    def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
+    def set_platoon(
+            self,
+            in_id,
+            platooning_object=None,
+            platooning_id=None,
+            leader=False):
         """
         Set platooning status
-        
+
         Args:
             -in_id (int): Inner platoon ID of the vehicle.
             -platooning_object (opencda object): The current platoon object.
@@ -109,7 +115,9 @@ class PlatooningPlugin(object):
         if in_id is None:
             if not self.cda_enabled:
                 self.set_status(FSM.DISABLE)
-                warnings.warn("CDA feature is disabled, can not activate platooning application ")
+                warnings.warn(
+                    "CDA feature is disabled, can not activate platooning"
+                    " application ")
             else:
                 self.set_status(FSM.SEARCHING)
             return
@@ -129,7 +137,7 @@ class PlatooningPlugin(object):
     def set_status(self, status):
         """
         Set FSM status
-        
+
         Args:
             -status (string): The current platooning status.
         """
@@ -138,9 +146,9 @@ class PlatooningPlugin(object):
     def search_platoon(self, ego_pos, cav_world):
         """
         Search platoon candidate in the range
-        
+
         Args:
-            -ego_pos (carla.transformation): Current position of the ego vehicle.
+            -ego_pos (carla.transformation): Ego vehicle current position.
             -cav_world (carla.world): Current simulation world.
         Returns:
             -pmid (int): Platoon manager ID.
@@ -149,7 +157,8 @@ class PlatooningPlugin(object):
         platoon_manager_dict = cav_world.get_platoon_dict()
         for pmid, pm in platoon_manager_dict.items():
             for vm in pm.vehicle_manager_list:
-                distance = compute_distance(ego_pos, vm.localizer.get_ego_pos().location)
+                distance = compute_distance(
+                    ego_pos, vm.localizer.get_ego_pos().location)
                 if distance < self.search_range:
                     return pmid, pm
         return None, None
@@ -157,11 +166,11 @@ class PlatooningPlugin(object):
     def match_platoon(self, cav_world):
         """
         A naive way to find the best position to join a platoon
-        
+
         Args:
             -cav_world (carla.world): Current simulation world.
         Returns:
-            -(boolean): The boolean indicator of matching result. 
+            -(boolean): The boolean indicator of matching result.
             -min_index (int): The minimum index inside the selected platoon.
             -platoon_vehicle_list (list): The list of platoon vehicle memebers.
         """
@@ -189,8 +198,8 @@ class PlatooningPlugin(object):
         platoon_vehicle_list = []
 
         for (i, vehicle_manager) in enumerate(pm.vehicle_manager_list):
-            distance, angle = cal_distance_angle(vehicle_manager.vehicle.get_location(),
-                                                 cur_loc, cur_yaw)
+            distance, angle = cal_distance_angle(
+                vehicle_manager.vehicle.get_location(), cur_loc, cur_yaw)
             platoon_vehicle_list.append(vehicle_manager)
 
             if distance < min_distance:

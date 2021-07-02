@@ -15,18 +15,18 @@ import carla
 class Controller:
     """
     PID Controller implementation.
-    
+
     Parameters
     -args : dict
         The configuration dictionary parsed from yaml file.
-    
+
     Attributes
     -_lon_ebuffer : deque
         A deque buffer that stores longitudinal control errors.
     -_lat_ebuffer : deque
         A deque buffer that stores latitudinal control errors.
     -current_transform : carla.transform
-        Current ego vehicle transformation in CARLA world(i.e., location and rotation).
+        Current ego vehicle transformation in CARLA world.
     -current_speed : float
         Current ego vehicle speed .
     -past_steering : float
@@ -91,7 +91,8 @@ class Controller:
         Args:
             -target_speed (float): Target speed of the ego vehicle.
         Returns:
-            -acceleration (float): Desired acceleration value for the current step to achieve target speed.
+            -acceleration (float): Desired acceleration value for the
+                                   current step to achieve target speed.
         """
         error = target_speed - self.current_speed
         self._lat_ebuffer.append(error)
@@ -103,26 +104,35 @@ class Controller:
             _de = 0.0
             _ie = 0.0
 
-        return np.clip((self._lat_k_p * error) + (self._lat_k_d * _de) + (self._lat_k_i * _ie), -1.0, 1.0)
+        return np.clip((self._lat_k_p * error) +
+                       (self._lat_k_d * _de) +
+                       (self._lat_k_i * _ie),
+                       -1.0, 1.0)
 
     def lat_run_step(self, target_location):
         """
         Generate the throttle command based on current speed and target speed
-        
+
         Args:
-            -target_location (carla.loaction): Target location of the ego vehicle.
+            -target_location (carla.loaction): Target location.
         Returns:
-            -current_steering (float): Desired steering angle value for the current step to achieve target location.
+            -current_steering (float): Desired steering angle value
+            for the current step to achieve target location.
         """
         v_begin = self.current_transform.location
-        v_end = v_begin + carla.Location(x=math.cos(math.radians(self.current_transform.rotation.yaw)),
-                                         y=math.sin(math.radians(self.current_transform.rotation.yaw)))
+        v_end = v_begin + carla.Location(
+            x=math.cos(
+                math.radians(
+                    self.current_transform.rotation.yaw)), y=math.sin(
+                math.radians(
+                    self.current_transform.rotation.yaw)))
         v_vec = np.array([v_end.x - v_begin.x, v_end.y - v_begin.y, 0.0])
         w_vec = np.array([target_location.x -
                           v_begin.x, target_location.y -
                           v_begin.y, 0.0])
-        _dot = math.acos(np.clip(np.dot(w_vec, v_vec) /
-                                 (np.linalg.norm(w_vec) * np.linalg.norm(v_vec)), -1.0, 1.0))
+        _dot = math.acos(np.clip(np.dot(
+            w_vec, v_vec) / (np.linalg.norm(w_vec) * np.linalg.norm(v_vec)),
+                                 -1.0, 1.0))
         _cross = np.cross(v_vec, w_vec)
 
         if _cross[2] < 0:
@@ -136,7 +146,8 @@ class Controller:
             _de = 0.0
             _ie = 0.0
 
-        return np.clip((self._lat_k_p * _dot) + (self._lat_k_d * _de) + (self._lat_k_i * _ie), -1.0, 1.0)
+        return np.clip((self._lat_k_p * _dot) + (self._lat_k_d *
+                       _de) + (self._lat_k_i * _ie), -1.0, 1.0)
 
     def run_step(self, target_speed, waypoint):
         """
@@ -146,16 +157,17 @@ class Controller:
 
         Args:
             -target_speed (float): Target speed of the ego vehicle.
-            -target_location (carla.loaction): Target location of the ego vehicle.
+            -target_location (carla.loaction): Target location.
         Returns:
-            -control (carla.VehicleControl): Desired vehicle control command for the current step.
+            -control (carla.VehicleControl): Desired vehicle control
+             command for the current step.
 
         """
         # control class for carla vehicle
         control = carla.VehicleControl()
 
         # emergency stop
-        if target_speed==0 or waypoint==None:
+        if target_speed == 0 or waypoint is None:
             control.steer = 0.0
             control.throttle = 0.0
             control.brake = 1.0
@@ -172,7 +184,8 @@ class Controller:
             control.throttle = 0.0
             control.brake = min(abs(acceleration), self.max_brake)
 
-        # Steering regulation: changes cannot happen abruptly, can't steer too much.
+        # Steering regulation: changes cannot happen abruptly, can't steer too
+        # much.
         if current_steering > self.past_steering + 0.2:
             current_steering = self.past_steering + 0.2
         elif current_steering < self.past_steering - 0.2:

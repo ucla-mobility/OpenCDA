@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Scenario testing: merging vehicle joining a platoon in the customized 2-lane freeway sorely with carla
-Warning: You have to load the 2lanefreecomplete map into your ue4 editor before running this
+Scenario testing: merging vehicle joining a platoon in the customized 2-lane
+freeway sorely with carla Warning: You have to load the 2lanefreecomplete
+map into your ue4 editor before running this
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
-
-import argparse
 
 import carla
 
 import opencda.scenario_testing.utils.sim_api as sim_api
 import opencda.scenario_testing.utils.customized_map_api as map_api
 
-from opencda.scenario_testing.evaluations.evaluate_manager import EvaluationManager
+from opencda.scenario_testing.evaluations.evaluate_manager import \
+    EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import load_yaml
 
 
@@ -23,20 +23,28 @@ def run_scenario(opt, config_yaml):
 
         # create simulation world
         simulation_config = scenario_params['world']
-        client, world, carla_map, origin_settings = sim_api.createSimulationWorld(simulation_config)
+        client, world, carla_map, origin_settings = \
+            sim_api.createSimulationWorld(
+                simulation_config)
         # create background traffic in carla
-        traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
-                                                                    scenario_params['carla_traffic_manager'])
+        traffic_manager, bg_veh_list = sim_api.createTrafficManager(
+            client, world, scenario_params['carla_traffic_manager'])
 
         if opt.record:
-            client.start_recorder("platoon_joining_2lanefreecomplete_carla.log", True)
+            client.start_recorder(
+                "platoon_joining_2lanefreecomplete_carla.log", True)
 
         # create platoon members
-        platoon_list, cav_world = sim_api.createPlatoonManagers(world, carla_map, scenario_params,
-                                                                apply_ml=opt.apply_ml)
+        platoon_list, cav_world = sim_api.createPlatoonManagers(
+            world, carla_map, scenario_params, apply_ml=opt.apply_ml)
         # create single cavs
-        single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], cav_world,
-                                                       carla_map, map_api.spawn_helper_2lanefree_complete)
+        single_cav_list = sim_api.createVehicleManager(
+            world,
+            scenario_params,
+            ['platooning'],
+            cav_world,
+            carla_map,
+            map_api.spawn_helper_2lanefree_complete)
 
         # create evaluation manager
         eval_manager = EvaluationManager(cav_world)
@@ -48,8 +56,14 @@ def run_scenario(opt, config_yaml):
         while True:
             world.tick()
             transform = spectator_vehicle.get_transform()
-            spectator.set_transform(carla.Transform(transform.location + carla.Location(z=60),
-                                                    carla.Rotation(pitch=-90)))
+            spectator.set_transform(
+                carla.Transform(
+                    transform.location +
+                    carla.Location(
+                        z=60),
+                    carla.Rotation(
+                        pitch=-
+                        90)))
             for platoon in platoon_list:
                 platoon.update_information()
                 platoon.run_step()

@@ -5,7 +5,6 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import json
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -36,7 +35,7 @@ def draw_acceleration_profile_single_plot(acceleration):
 
     Args:
         -acceleration (list): The vehicle acceleration profile saved in a list.
-    
+
     """
 
     for i, v in enumerate(acceleration):
@@ -54,11 +53,13 @@ def draw_acceleration_profile_single_plot(acceleration):
 def draw_ttc_profile_single_plot(ttc_list):
     """
     Draw ttc.
-    
+
     Args:
-        -ttc_list (list): The vehicle time to collision profile saved in a list.
+        -ttc_list (list): The vehicle time to
+         collision profile saved in a list.
     """
-    # this is used to find the merging vehicle position since its inter gap length is always smaller
+    # this is used to find the merging vehicle position since its inter gap
+    # length is always smaller
 
     for i, v in enumerate(ttc_list):
         x_s = np.arange(len(v)) * 0.05
@@ -77,7 +78,7 @@ def draw_time_gap_profile_singel_plot(gap_list):
 
     Args:
         -gap_list (list): The vehicle front time gap profile saved in a list.
-   
+
     """
 
     for i, v in enumerate(gap_list):
@@ -96,7 +97,8 @@ def draw_dist_gap_profile_singel_plot(gap_list):
     Draw distance gap profiles in a single plot.
 
     Args:
-        -gap_list (list): The vehicle front distance gap profile saved in a list.
+        -gap_list (list): The vehicle front distance gap
+         profile saved in a list.
     """
     for i, v in enumerate(gap_list):
         x_s = np.arange(len(v)) * 0.05
@@ -109,15 +111,23 @@ def draw_dist_gap_profile_singel_plot(gap_list):
     fig.set_size_inches(11, 5)
 
 
-def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_list, ttc_list):
+def draw_sub_plot(
+        velocity_list,
+        acceleration_list,
+        time_gap_list,
+        distance_gap_list,
+        ttc_list):
     """
-    This is a specific function that draws 4 in 1 images for trajectory following task. 
+    This is a specific function that draws 4 in 1 images
+    for trajectory following task.
 
-    Args: 
+    Args:
         -velocity_list (list): The vehicle velocity profile saved in a list.
-        -distance_gap_list (list): The vehicle distance gap profile saved in a list.
+        -distance_gap_list (list): The vehicle distance gap
+         profile saved in a list.
         -time_gap_list (list): The vehicle time gap profile saved in a list.
-        -acceleration_list (list): The vehicle acceleration profile saved in a list.
+        -acceleration_list (list): The vehicle acceleration
+         profile saved in a list.
         -ttc_list (list): The ttc list.
 
     """
@@ -138,8 +148,10 @@ def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_
     draw_dist_gap_profile_singel_plot(distance_gap_list)
 
     label = []
-    for i in range(1, len(velocity_list)+1):
-        label.append('Leading Vehicle, id: %d' % int(i - 1) if i == 1 else 'Following Vehicle, id: %d' % int(i - 1))
+    for i in range(1, len(velocity_list) + 1):
+        label.append('Leading Vehicle, id: %d' %
+                     int(i - 1) if i == 1 else 'Following Vehicle, id: %d' %
+                     int(i - 1))
 
     fig.legend(label, loc='upper right')
 
@@ -148,5 +160,10 @@ def draw_sub_plot(velocity_list, acceleration_list, time_gap_list, distance_gap_
 
 if __name__ == '__main__':
     velocity_list = [[23, 25, 25, 44, 66], [44, 55, 25, 22, 33]]
-    fig = draw_sub_plot(velocity_list, velocity_list, velocity_list, velocity_list, velocity_list)
+    fig = draw_sub_plot(
+        velocity_list,
+        velocity_list,
+        velocity_list,
+        velocity_list,
+        velocity_list)
     plt.show()

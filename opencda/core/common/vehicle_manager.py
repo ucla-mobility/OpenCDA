@@ -7,12 +7,18 @@ Basic class of CAV
 
 import uuid
 
-from opencda.core.actuation.control_manager import ControlManager
-from opencda.core.application.platooning.platoon_behavior_agent import PlatooningBehaviorAgent
-from opencda.core.common.v2x_manager import V2XManager
-from opencda.core.sensing.localization.localization_manager import LocalizationManager
-from opencda.core.sensing.perception.perception_manager import PerceptionManager
-from opencda.core.plan.behavior_agent import BehaviorAgent
+from opencda.core.actuation.control_manager \
+    import ControlManager
+from opencda.core.application.platooning.platoon_behavior_agent\
+    import PlatooningBehaviorAgent
+from opencda.core.common.v2x_manager \
+    import V2XManager
+from opencda.core.sensing.localization.localization_manager \
+    import LocalizationManager
+from opencda.core.sensing.perception.perception_manager \
+    import PerceptionManager
+from opencda.core.plan.behavior_agent \
+    import BehaviorAgent
 
 
 class VehicleManager(object):
@@ -30,22 +36,28 @@ class VehicleManager(object):
         The CARLA simulation map.
     -cav_world : opencda object
         CAV World.
-    
+
     Attributes
     -v2x_manager : opencda object
-        The current V2X manageer. 
+        The current V2X manageer.
     -localizer : opencda object
-        The current localization manageer. 
+        The current localization manageer.
     -perception_manager : opencda object
-        The current V2X perception manageer. 
+        The current V2X perception manageer.
     -agent : opencda object
         The current carla agent that handles the basic control of ego vehicle.
     -controller : opencda object
         The current control manager.
     """
 
-    def __init__(self, vehicle, config_yaml, application, carla_map, cav_world):
-        
+    def __init__(
+            self,
+            vehicle,
+            config_yaml,
+            application,
+            carla_map,
+            cav_world):
+
         # an unique uuid for this vehicle
         self.vid = str(uuid.uuid1())
         self.vehicle = vehicle
@@ -60,16 +72,23 @@ class VehicleManager(object):
         # v2x module
         self.v2x_manager = V2XManager(cav_world, v2x_config)
         # localization module
-        self.localizer = LocalizationManager(vehicle, sensing_config['localization'], carla_map)
+        self.localizer = LocalizationManager(
+            vehicle, sensing_config['localization'], carla_map)
         # perception module
-        self.perception_manager = PerceptionManager(vehicle, sensing_config['perception'], cav_world.ml_manager)
+        self.perception_manager = PerceptionManager(
+            vehicle, sensing_config['perception'], cav_world.ml_manager)
         # behavior agent
         self.agent = None
 
         if 'platooning' in application:
             platoon_config = config_yaml['platoon']
-            self.agent = PlatooningBehaviorAgent(vehicle, self, self.v2x_manager,
-                                                 behavior_config, platoon_config, carla_map)
+            self.agent = PlatooningBehaviorAgent(
+                vehicle,
+                self,
+                self.v2x_manager,
+                behavior_config,
+                platoon_config,
+                carla_map)
         else:
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
 
@@ -77,21 +96,28 @@ class VehicleManager(object):
 
         cav_world.update_vehicle_manager(self)
 
-    def set_destination(self, start_location, end_location, clean=False, end_reset=True):
+    def set_destination(
+            self,
+            start_location,
+            end_location,
+            clean=False,
+            end_reset=True):
         """
         Wrapper function to set global route
 
         Args:
-            -start_location (carla.location): The start location of the current task.
-            -end_location (carla.location): The destination location of the current task.
+            -start_location (carla.location): The start location.
+            -end_location (carla.location): The destination location.
             -clean (boolean): Indicator of whether clean waypoint queue.
             -end_reset (boolean): Indicator of whether reset the end location.
         """
-        self.agent.set_destination(start_location, end_location, clean, end_reset)
+        self.agent.set_destination(
+            start_location, end_location, clean, end_reset)
 
     def update_info(self):
         """
-        Call perception and localization module to retrieve surrounding info an ego position.
+        Call perception and localization module to
+        retrieve surrounding info an ego position.
         """
         # localization
         self.localizer.localize()

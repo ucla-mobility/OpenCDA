@@ -12,25 +12,27 @@ import carla
 import numpy as np
 
 from opencda.core.common.misc import get_speed
-from opencda.core.sensing.localization.localization_debug_helper import LocDebugHelper
+from opencda.core.sensing.localization.localization_debug_helper \
+    import LocDebugHelper
 from opencda.core.sensing.localization.kalman_filter import KalmanFilter
-from opencda.core.sensing.localization.coordinate_transform import geo_to_transform
+from opencda.core.sensing.localization.coordinate_transform \
+    import geo_to_transform
 
 
 class GnssSensor(object):
     """
     The default GNSS sensor module.
-    
+
     Parameters
     -vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
     -config : dict
         The configuration dictionary of the localization module.
-    
+
     Attributes
     -world : carla.world
         The caral world of the current vehicle.
-    -blueprint : carla.blueprint 
+    -blueprint : carla.blueprint
         The current blueprint of the sensor actor.
     -weak_self : opencda Object
         A weak reference point to avoid circular reference.
@@ -43,18 +45,33 @@ class GnssSensor(object):
         blueprint = world.get_blueprint_library().find('sensor.other.gnss')
 
         # set the noise for gps
-        blueprint.set_attribute('noise_alt_stddev', str(config['noise_alt_stddev']))
-        blueprint.set_attribute('noise_lat_stddev', str(config['noise_lat_stddev']))
-        blueprint.set_attribute('noise_lon_stddev', str(config['noise_lon_stddev']))
+        blueprint.set_attribute(
+            'noise_alt_stddev', str(
+                config['noise_alt_stddev']))
+        blueprint.set_attribute(
+            'noise_lat_stddev', str(
+                config['noise_lat_stddev']))
+        blueprint.set_attribute(
+            'noise_lon_stddev', str(
+                config['noise_lon_stddev']))
         # spawn the sensor
-        self.sensor = world.spawn_actor(blueprint, carla.Transform(carla.Location(x=0.0, y=0.0, z=0.0)),
-                                        attach_to=vehicle, attachment_type=carla.AttachmentType.Rigid)
+        self.sensor = world.spawn_actor(
+            blueprint,
+            carla.Transform(
+                carla.Location(
+                    x=0.0,
+                    y=0.0,
+                    z=0.0)),
+            attach_to=vehicle,
+            attachment_type=carla.AttachmentType.Rigid)
 
         # latitude and longitude at current timestamp
         self.lat, self.lon, self.alt, self.timestamp = 0.0, 0.0, 0.0, 0.0
         # create weak reference to avoid circular reference
         weak_self = weakref.ref(self)
-        self.sensor.listen(lambda event: GnssSensor._on_gnss_event(weak_self, event))
+        self.sensor.listen(
+            lambda event: GnssSensor._on_gnss_event(
+                weak_self, event))
 
     @staticmethod
     def _on_gnss_event(weak_self, event):
@@ -71,7 +88,7 @@ class GnssSensor(object):
 class ImuSensor(object):
     """
     Default ImuSensor module.
-    
+
     Parameters
     -vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
@@ -79,7 +96,7 @@ class ImuSensor(object):
     Attributes
     -world : carla.world
         The caral world of the current vehicle.
-    -blueprint : carla.blueprint 
+    -blueprint : carla.blueprint
         The current blueprint of the sensor actor.
     -weak_self : opencda Object
         A weak reference point to avoid circular reference.
@@ -95,13 +112,15 @@ class ImuSensor(object):
 
         weak_self = weakref.ref(self)
         self.sensor.listen(
-            lambda sensor_data: ImuSensor._IMU_callback(weak_self, sensor_data))
+            lambda sensor_data: ImuSensor._IMU_callback(
+                weak_self, sensor_data))
         self.gyroscope = None
 
     @staticmethod
     def _IMU_callback(weak_self, sensor_data):
         """
-        IMU method that returns the 3-D (x,y,z) acceleration and gyroscope values.
+        IMU method that returns the 3-D (x,y,z)
+        acceleration and gyroscope values.
         """
         self = weak_self()
         if not self:
@@ -123,7 +142,7 @@ class ImuSensor(object):
 class LocalizationManager(object):
     """
     Default localization module.
-    
+
     Parameters
     -vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
@@ -132,7 +151,7 @@ class LocalizationManager(object):
     -carla_map : carla.Map
         The carla HDMap. We need this to find the map origin to
         convert wg84 to enu coordinate system.
-    
+
     Attributes
     -gnss : opencda object
         GNSS sensor manager for spawning gnss sensor and listen to the data
@@ -152,7 +171,8 @@ class LocalizationManager(object):
         self.vehicle = vehicle
         self.activate = config_yaml['activate']
         self.map = carla_map
-        self.geo_ref = self.map.transform_to_geolocation(carla.Location(x=0, y=0, z=0))
+        self.geo_ref = self.map.transform_to_geolocation(
+            carla.Location(x=0, y=0, z=0))
 
         # speed and transform and current timestamp
         self._ego_pos = None
@@ -166,7 +186,8 @@ class LocalizationManager(object):
         self.imu = ImuSensor(vehicle)
 
         # heading direction noise
-        self.heading_noise_std = config_yaml['gnss']['heading_direction_stddev']
+        self.heading_noise_std = \
+            config_yaml['gnss']['heading_direction_stddev']
         self.speed_noise_std = config_yaml['gnss']['speed_stddev']
 
         self.dt = config_yaml['dt']
@@ -174,7 +195,8 @@ class LocalizationManager(object):
         self.kf = KalmanFilter(self.dt)
 
         # DebugHelper
-        self.debug_helper = LocDebugHelper(config_yaml['debug_helper'], self.vehicle.id)
+        self.debug_helper = LocDebugHelper(
+            config_yaml['debug_helper'], self.vehicle.id)
 
     def localize(self):
         """
@@ -189,8 +211,11 @@ class LocalizationManager(object):
             speed_noise = self.add_speed_noise(speed_true)
 
             # gnss coordinates under ESU(Unreal coordinate system)
-            x, y, z = geo_to_transform(self.gnss.lat, self.gnss.lon, self.gnss.alt,
-                                       self.geo_ref.latitude, self.geo_ref.longitude, 0.0)
+            x, y, z = geo_to_transform(self.gnss.lat,
+                                       self.gnss.lon,
+                                       self.gnss.alt,
+                                       self.geo_ref.latitude,
+                                       self.geo_ref.longitude, 0.0)
 
             # only use this for debugging purpose
             location = self.vehicle.get_transform().location
@@ -203,21 +228,36 @@ class LocalizationManager(object):
             if len(self._ego_pos_history) == 0:
                 x_kf, y_kf, heading_angle_kf = x, y, heading_angle
                 self._speed = speed_true
-                self.kf.run_step_init(x, y, np.deg2rad(heading_angle), self._speed / 3.6)
+                self.kf.run_step_init(
+                    x, y, np.deg2rad(heading_angle), self._speed / 3.6)
             else:
-                x_kf, y_kf, heading_angle_kf, speed_kf = self.kf.run_step(x, y, np.deg2rad(heading_angle),
-                                                                           speed_noise / 3.6, self.imu.gyroscope[2])
+                x_kf, y_kf, heading_angle_kf, speed_kf = self.kf.run_step(
+                    x, y, np.deg2rad(heading_angle),
+                    speed_noise / 3.6,
+                    self.imu.gyroscope[2])
                 self._speed = speed_kf * 3.6
                 heading_angle_kf = np.rad2deg(heading_angle_kf)
 
             # add data to debug helper
-            self.debug_helper.run_step(x, y, heading_angle, speed_noise,
-                                       x_kf, y_kf, heading_angle_kf, self._speed,
-                                       location.x, location.y, rotation.yaw, speed_true)
+            self.debug_helper.run_step(
+                x,
+                y,
+                heading_angle,
+                speed_noise,
+                x_kf,
+                y_kf,
+                heading_angle_kf,
+                self._speed,
+                location.x,
+                location.y,
+                rotation.yaw,
+                speed_true)
 
             # the final pose of the vehicle
-            self._ego_pos = carla.Transform(carla.Location(x=x_kf, y=y_kf, z=z),
-                                            carla.Rotation(pitch=0, yaw=heading_angle_kf, roll=0))
+            self._ego_pos = carla.Transform(
+                carla.Location(
+                    x=x_kf, y=y_kf, z=z), carla.Rotation(
+                    pitch=0, yaw=heading_angle_kf, roll=0))
 
             # save the track for future use
             self._ego_pos_history.append(self._ego_pos)
@@ -228,7 +268,8 @@ class LocalizationManager(object):
         Add synthetic noise to heading direction.
 
         Args:
-            -heading_direction (float): groundtruth heading_direction obtained from the server.
+            -heading_direction (float): groundtruth heading_direction
+             obtained from the server.
         Returns:
             -heading_direction (float): heading direction with noise.
         """
@@ -240,7 +281,7 @@ class LocalizationManager(object):
 
         Args:
             -speed (float): m/s, current speed.
-            
+
         Returns:
             -speed (float): the speed with noise.
         """
