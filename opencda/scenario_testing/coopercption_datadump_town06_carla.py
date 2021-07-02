@@ -35,7 +35,8 @@ def run_scenario(opt, config_yaml):
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
         single_cav_list = sim_api.createVehicleManager(
-            world, scenario_params, ['single'], cav_world, carla_map)
+            world, scenario_params, ['single'], cav_world, carla_map,
+            data_dump=True)
 
         # create evaluation manager
         eval_manager = \

@@ -40,7 +40,7 @@ def load_yaml(file):
 
     # load current time for data dumping and evaluation
     current_time = datetime.now()
-    current_time = current_time.strftime("_%Y_%m_%d_%H_%M_%S")
+    current_time = current_time.strftime("%Y_%m_%d_%H_%M_%S")
 
     param['current_time'] = current_time
 

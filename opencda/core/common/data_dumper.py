@@ -38,7 +38,12 @@ class DataDumper:
     save_parent_folder : str
         The parent folder to save all data related to a specific vehicle.
 
+    count : int
+        Used to count how many steps have been executed. We dump data
+        every 10 steps.
+
     """
+
     def __init__(self,
                  perception_manager,
                  localization_manager,
@@ -60,16 +65,24 @@ class DataDumper:
         if not os.path.exists(self.save_parent_folder):
             os.makedirs(self.save_parent_folder)
 
+        self.count = 0
+
     def run_step(self):
         """
         Dump data at running time.
-        Returns
-        -------
-
         """
+        self.count += 1
+        # we ignore the first 30 steps
+        if self.count < 30:
+            return
+
+        # save data for every 5 steps
+        if self.count % 5 != 0:
+            return
+
         for (i, camera) in enumerate(self.rgb_camera):
 
-            timestamp = camera.timestamp
+            frame = camera.frame
             image = camera.image
 
             if i == 0:
@@ -79,7 +92,8 @@ class DataDumper:
             else:
                 camera_position = 'left'
 
-            image_name = str(timestamp) + '_' + camera_position + '.png'
+            image_name = '06%d' % frame + '_' + camera_position + '.png'
 
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
+

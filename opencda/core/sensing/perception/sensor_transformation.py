@@ -282,8 +282,18 @@ def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
     # transform lidar points from lidar space to world space
     world_points = np.dot(lidar_2_world, local_lidar_points)
 
-    # project world points to camera space
+    # project lidar world points to camera space
     sensor_points = world_to_sensor(world_points, camera.get_transform())
+
+    # New we must change from UE4's coordinate system to an "standard"
+    # camera coordinate system (the same used by OpenCV):
+
+    # ^ z                       . z
+    # |                        /
+    # |              to:      +-------> x
+    # | . x                   |
+    # |/                      |
+    # +-------> y             v y
 
     # (x, y ,z) -> (y, -z, x)
     point_in_camera_coords = np.array([

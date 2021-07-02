@@ -181,6 +181,11 @@ class VehicleManager(object):
         """
         target_speed, target_pos = self.agent.run_step(target_speed)
         control = self.controller.run_step(target_speed, target_pos)
+
+        # dump data
+        if self.data_dumper:
+            self.data_dumper.run_step()
+
         return control
 
     def destroy(self):
