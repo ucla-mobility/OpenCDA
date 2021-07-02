@@ -170,7 +170,7 @@ class LidarSensor(object):
 
     @staticmethod
     def _on_data_event(weak_self, event):
-        """CAMERA  method"""
+        """Lidar  method"""
         self = weak_self()
         if not self:
             return
