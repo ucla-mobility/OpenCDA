@@ -9,6 +9,7 @@ Dumping sensor data.
 import os
 
 import cv2
+import open3d as o3d
 
 
 class DataDumper:
@@ -35,6 +36,9 @@ class DataDumper:
         A list of opencda.CameraSensor that containing all rgb sensor data
         of the managed vehicle.
 
+    lidar ; opencda object
+        The lidar manager from perception manager.
+
     save_parent_folder : str
         The parent folder to save all data related to a specific vehicle.
 
@@ -51,6 +55,7 @@ class DataDumper:
                  save_time):
 
         self.rgb_camera = perception_manager.rgb_camera
+        self.lidar = perception_manager.lidar
 
         self.save_time = save_time
         self.vehicle_id = vehicle_id
