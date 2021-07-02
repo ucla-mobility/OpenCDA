@@ -10,6 +10,7 @@ import os
 
 import cv2
 import open3d as o3d
+import numpy as np
 
 
 class DataDumper:
@@ -97,8 +98,29 @@ class DataDumper:
             else:
                 camera_position = 'left'
 
-            image_name = '06%d' % frame + '_' + camera_position + '.png'
+            image_name = '%06d' % frame + '_' + camera_position + '.png'
 
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
 
+        point_cloud = self.lidar.data
+        frame = self.lidar.frame
+
+        point_xyz = point_cloud[:, :-1]
+        point_intensity = point_cloud[:, -1]
+        point_intensity = np.c_[
+            point_intensity,
+            np.zeros_like(point_intensity),
+            np.zeros_like(point_intensity)
+        ]
+
+        o3d_pcd = o3d.geometry.PointCloud()
+        o3d_pcd.points = o3d.utility.Vector3dVector(point_xyz)
+        o3d_pcd.colors = o3d.utility.Vector3dVector(point_intensity)
+
+        # write to pcd file
+        pcd_name = '%06d' % frame + '.pcd'
+        o3d.io.write_point_cloud(os.path.join(self.save_parent_folder,
+                                              pcd_name),
+                                 pointcloud=o3d_pcd,
+                                 write_ascii=True)
