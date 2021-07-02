@@ -20,17 +20,31 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     """
     Create client and simulation world.
 
-    Args:
-        -simulation_config (dict): configuration dictionary for simulation
-        -xodr_path (string): optional, used only when customized map needed
-        -town (string): default town name if not using customized map,
-         eg. 'Town06'
+    Parameters
+    ----------
+    simulation_config : dict
+        Configuration dictionary for simulation.
 
-    Return:
-        -client (carla.client): The client that is running the CARLA simulation
-        -world (carla.world): The current simulation world.
-        -map (carla.map): The map of the current simulation world.
-        -origin setting (string): The settings of the current simulation world.
+    xodr_path : str
+        optional, the path to the customized map(xodr file)
+
+    town : str
+        Town name if not using customized map, eg. 'Town06'.
+
+    Returns
+    -------
+    client : carla.client
+        The client that is running the CARLA simulation
+
+    world : carla.world
+        The current simulation world.
+
+    map : carla.map
+        The HD Map of the current simulation.
+
+    origin_settings : dict
+        The origin setting of the simulation server.
+
     """
 
     client = carla.Client('localhost', simulation_config['client_port'])
@@ -90,16 +104,25 @@ def createTrafficManager(client, world, traffic_config):
     """
     Create background traffic.
 
-    Args:
-        -client (carla.client): The client that is running
-         the CARLA simulation.
-        -world (carla.world): The current simulation world.
-        -traffic_config (dict): The simulation configuration file.
-    Returns:
-        -tm (carla.trafficmanager): The traffic manager that is
-         controlling the background traffic.
-        -bg_list (list): A list that contains all
-         the background traffic vehicles.
+    Parameters
+    ----------
+    client : carla.client
+        The client connect to carla server.
+
+    world : carla.world
+        Carla server.
+
+    traffic_config : dict
+        Configuration for traffic parameters.
+
+    Returns
+    -------
+    tm : carla.traffic_manager
+        Carla traffic manager.
+
+    bg_list : list
+        The list that contains all the background traffic vehicles.
+
     """
 
     tm = client.get_trafficmanager()
@@ -145,24 +168,36 @@ def createPlatoonManagers(
         carla_map,
         scenario_params,
         apply_ml,
-        map_helper=None):
+        map_helper=None,
+        data_dump=False):
     """
-    Create Platooning Managers based on given params.
+    Create a list of platoons.
+    Parameters
+    ----------
+    world : carla.world
+        Carla server object.
 
-    Args:
-        -world (carla.World): World from CARLA simulator.
-        -carla_map (carla.Map): Map obtained from CARLA server.
-        -scenario_params (dict): Platoon paramters.
-        -apply_ml (bool): whether ml/dl model is included. Pytorch/sklearn
-         required to install if set to true.
-        -map_helper (function): Specific function to convert certain
-         parameters to spawn position in certain map.
+    scenario_params : dict
+        Scenario configuration.
 
-    Returns:
-           -platoon_list (list): A list contains all platoon members.
-           -cav_world (carla.World): The current simulation world.
+    carla_map : carla.map
+        Carla HD Map.
+
+    apply_ml : bool
+        Whether shared ML model needs to be imported in this simulation.
+
+    map_helper : function
+        A function to help spawn vehicle on a specific position in a specific
+        map.
+
+    data_dump : bool
+        Whether to dump sensor data.
+
+    Returns
+    -------
+    single_cav_list : list
+        A list contains all single CAVs' vehicle manager.
     """
-
     platoon_list = []
     cav_world = CavWorld(apply_ml)
 
@@ -193,7 +228,11 @@ def createPlatoonManagers(
 
             # create vehicle manager for each cav
             vehicle_manager = VehicleManager(
-                vehicle, cav, ['platooning'], carla_map, cav_world)
+                vehicle, cav, ['platooning'],
+                carla_map, cav_world,
+                current_time=scenario_params['current_time'],
+                data_dumping=data_dump)
+
             # add the vehicle manager to platoon
             if j == 0:
                 platoon_manager.set_lead(vehicle_manager)
@@ -218,56 +257,82 @@ def createVehicleManager(
         application,
         cav_world,
         carla_map,
-        map_helper=None):
+        map_helper=None,
+        data_dump=False):
     """
-    Create single CAV manager.
+    Create a list of single CAVs.
+    Parameters
+    ----------
+    world : carla.world
+        Carla server object.
 
-    Args:
-        -world (carla.world): simulation world.
-        -scenario_params (dict): scenario configuration.
-        -application (string): the application purpose, a list, eg. ['single'].
-        -cav_world (carla.world): object containing all cav info.
-        -carla_map (carla.map): carla HD Map.
-        -map_helper (opencda.map_helper): A function used for conveniently
-         set the spawn position depending on different maps.
-    Returns:
-        -single_cav_list (list): A list of vehicle managers.
+    scenario_params : dict
+        Scenario configuration.
+
+    application : list
+        The application purpose, a list, eg. ['single'], ['platoon'].
+
+    cav_world : opencda object
+        An object that contains all information of the CAVs and shared
+        ML models.
+
+    carla_map : carla.map
+        Carla HD Map.
+
+    map_helper : function
+        A function to help spawn vehicle on a specific position in a specific
+        map.
+
+    data_dump : bool
+        Whether to dump sensor data.
+
+    Returns
+    -------
+    single_cav_list : list
+        A list contains all single CAVs' vehicle manager.
     """
 
     cav_vehicle_bp = \
         world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
     single_cav_list = []
 
-    for i, cav in enumerate(scenario_params['scenario']['single_cav_list']):
+    for i, cav_config in enumerate(
+            scenario_params['scenario']['single_cav_list']):
 
         # if the spawn position is a single scalar, we need to use map helper
         # to transfer to spawn transform
-        if 'spawn_special' not in cav:
+        if 'spawn_special' not in cav_config:
             spawn_transform = carla.Transform(
                 carla.Location(
-                    x=cav['spawn_position'][0],
-                    y=cav['spawn_position'][1],
-                    z=cav['spawn_position'][2]),
+                    x=cav_config['spawn_position'][0],
+                    y=cav_config['spawn_position'][1],
+                    z=cav_config['spawn_position'][2]),
                 carla.Rotation(
-                    pitch=cav['spawn_position'][5],
-                    yaw=cav['spawn_position'][4],
-                    roll=cav['spawn_position'][3]))
+                    pitch=cav_config['spawn_position'][5],
+                    yaw=cav_config['spawn_position'][4],
+                    roll=cav_config['spawn_position'][3]))
         else:
-            spawn_transform = map_helper(carla_map, *cav['spawn_special'])
+            spawn_transform = map_helper(carla_map,
+                                         *cav_config['spawn_special'])
 
         cav_vehicle_bp.set_attribute('color', '0, 0, 0')
         vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
         # create vehicle manager for each cav
         vehicle_manager = VehicleManager(
-            vehicle, cav, application, carla_map, cav_world)
+            vehicle, cav_config,
+            application, carla_map,
+            cav_world,
+            current_time=scenario_params['current_time'],
+            data_dumping=data_dump)
+
         world.tick()
 
         vehicle_manager.v2x_manager.set_platoon(None)
 
-        destination = carla.Location(x=cav['destination'][0],
-                                     y=cav['destination'][1],
-                                     z=cav['destination'][2])
+        destination = carla.Location(x=cav_config['destination'][0],
+                                     y=cav_config['destination'][1],
+                                     z=cav_config['destination'][2])
         vehicle_manager.update_info()
         vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),
                                         destination,

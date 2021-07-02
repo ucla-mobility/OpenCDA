@@ -47,7 +47,11 @@ def run_scenario(opt, config_yaml):
             map_api.spawn_helper_2lanefree_complete)
 
         # create evaluation manager
-        eval_manager = EvaluationManager(cav_world)
+        eval_manager = \
+            EvaluationManager(cav_world,
+                              script_name='platoon_joining_2lanefreecomplete'
+                                          '_carla',
+                              current_time=scenario_params['current_time'])
 
         spectator = world.get_spectator()
         spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle

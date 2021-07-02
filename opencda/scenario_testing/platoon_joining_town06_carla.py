@@ -39,7 +39,10 @@ def run_scenario(opt, config_yaml):
             world, scenario_params, ['platooning'], cav_world, carla_map)
 
         # create evaluation manager
-        eval_manager = EvaluationManager(cav_world)
+        eval_manager = \
+            EvaluationManager(cav_world,
+                              script_name='platoon_joining_town06_carla',
+                              current_time=scenario_params['current_time'])
 
         spectator = world.get_spectator()
         # fix the spectator on a certain car

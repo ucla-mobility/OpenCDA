@@ -51,7 +51,10 @@ def run_scenario(opt, config_yaml):
             map_api.spawn_helper_2lanefree)
 
         # create evaluation manager
-        eval_manager = EvaluationManager(cav_world)
+        eval_manager = \
+            EvaluationManager(cav_world,
+                              script_name='single_2lanefree_carla',
+                              current_time=scenario_params['current_time'])
 
         spectator = world.get_spectator()
         # run steps

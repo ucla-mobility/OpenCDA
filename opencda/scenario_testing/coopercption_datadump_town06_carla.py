@@ -38,10 +38,9 @@ def run_scenario(opt, config_yaml):
             world, scenario_params, ['single'], cav_world, carla_map)
 
         # create evaluation manager
-        # create evaluation manager
         eval_manager = \
             EvaluationManager(cav_world,
-                              script_name='single_town06_carla',
+                              script_name='coopercption_datadump_twon06_carla',
                               current_time=scenario_params['current_time'])
 
         spectator = world.get_spectator()

@@ -52,7 +52,10 @@ def run_scenario(opt, config_yaml):
             carla_map,
             map_api.spawn_helper_2lanefree)
 
-        eval_manager = EvaluationManager(cav_world)
+        eval_manager = \
+            EvaluationManager(cav_world,
+                              script_name='platoon_joining_2lanefree_carla',
+                              current_time=scenario_params['current_time'])
 
         spectator = world.get_spectator()
         spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle

@@ -17,20 +17,27 @@ class Controller:
     PID Controller implementation.
 
     Parameters
-    -args : dict
+    ----------
+    args : dict
         The configuration dictionary parsed from yaml file.
 
     Attributes
-    -_lon_ebuffer : deque
+    ----------
+    _lon_ebuffer : deque
         A deque buffer that stores longitudinal control errors.
-    -_lat_ebuffer : deque
+
+    _lat_ebuffer : deque
         A deque buffer that stores latitudinal control errors.
-    -current_transform : carla.transform
+
+    current_transform : carla.transform
         Current ego vehicle transformation in CARLA world.
-    -current_speed : float
-        Current ego vehicle speed .
-    -past_steering : float
+
+    current_speed : float
+        Current ego vehicle speed.
+
+    past_steering : float
         Sterring angle from previous control step.
+
     """
 
     def __init__(self, args):
@@ -67,7 +74,7 @@ class Controller:
 
     def dynamic_pid(self):
         """
-        Compute kp, kd, ki based on current speed
+        Compute kp, kd, ki based on current speed.
         """
         pass
 
@@ -75,10 +82,19 @@ class Controller:
         """
         Update ego position and speed to controller.
 
-        Args:
-            -ego_pos (carla.location): Position of the ego vehicle.
-            -ego_spd (float): Speed of the ego vehicle.
+        Parameters
+        ----------
+        ego_pos : carla.location
+            Position of the ego vehicle.
+
+        ego_spd : float
+            Speed of the ego vehicle
+
+        Returns
+        -------
+
         """
+
         self.current_transform = ego_pos
         self.current_speed = ego_spd
         if self.dynamic:
@@ -86,13 +102,18 @@ class Controller:
 
     def lon_run_step(self, target_speed):
         """
-        Generate the throttle command based on current speed and target speed
 
-        Args:
-            -target_speed (float): Target speed of the ego vehicle.
-        Returns:
-            -acceleration (float): Desired acceleration value for the
-                                   current step to achieve target speed.
+        Parameters
+        ----------
+        target_speed : float
+            Target speed of the ego vehicle.
+
+        Returns
+        -------
+        acceleration : float
+            Desired acceleration value for the current step
+            to achieve target speed.
+
         """
         error = target_speed - self.current_speed
         self._lat_ebuffer.append(error)
@@ -109,15 +130,30 @@ class Controller:
                        (self._lat_k_i * _ie),
                        -1.0, 1.0)
 
+    """
+    Generate the throttle command based on current speed and target speed
+
+    Args:
+        -target_location (carla.loaction): Target location.
+    Returns:
+        -current_steering (float): Desired steering angle value
+        for the current step to achieve target location.
+    """
     def lat_run_step(self, target_location):
         """
         Generate the throttle command based on current speed and target speed
 
-        Args:
-            -target_location (carla.loaction): Target location.
-        Returns:
-            -current_steering (float): Desired steering angle value
-            for the current step to achieve target location.
+        Parameters
+        ----------
+        target_location : carla.location
+            Target location.
+
+        Returns
+        -------
+        current_steering : float
+        Desired steering angle value for the current step to
+        achieve target location.
+
         """
         v_begin = self.current_transform.location
         v_end = v_begin + carla.Location(
@@ -152,15 +188,20 @@ class Controller:
     def run_step(self, target_speed, waypoint):
         """
         Execute one step of control invoking both lateral and longitudinal
-        PID controllers to reach a target waypoint
-        at a given target_speed.
+        PID controllers to reach a target waypoint at a given target_speed.
 
-        Args:
-            -target_speed (float): Target speed of the ego vehicle.
-            -target_location (carla.loaction): Target location.
-        Returns:
-            -control (carla.VehicleControl): Desired vehicle control
-             command for the current step.
+        Parameters
+        ----------
+        target_speed : float
+            Target speed of the ego vehicle.
+
+        waypoint : carla.loaction
+            Target location.
+
+        Returns
+        -------
+        control : carla.VehicleControl
+            Desired vehicle control command for the current step.
 
         """
         # control class for carla vehicle

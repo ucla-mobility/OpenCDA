@@ -16,23 +16,32 @@ class EvaluationManager(object):
     Evaluation manager to manage the analysis of the
     results for different modules.
 
-    Args:
-    -cav_world : opencda.CavWorld)
+    Parameters
+    ----------
+    cav_world : opencda object
         The CavWorld object that contains all CAVs' information.
+
+    script_name : str
+        The current scenario testing name. E.g, single_town06_carla
+
+    current_time : str
+        Current timestamp, used to name the output folder.
+
+    Attributes
+    ----------
+    eval_save_path : str
+        The final output folder name.
+
     """
 
-    def __init__(self, cav_world):
-
+    def __init__(self, cav_world, script_name, current_time):
         self.cav_world = cav_world
 
         current_path = os.path.dirname(os.path.realpath(__file__))
-        current_time = datetime.now()
-        # we create a folder for every single simulation based on the current
-        # time
-        current_time = current_time.strftime("_%Y_%m_%d_%H_%M_%S")
 
         self.eval_save_path = os.path.join(
-            current_path, '../../../evaluation_outputs', current_time)
+            current_path, '../../../evaluation_outputs',
+            script_name + '_' + current_time)
         if not os.path.exists(self.eval_save_path):
             os.makedirs(self.eval_save_path)
 

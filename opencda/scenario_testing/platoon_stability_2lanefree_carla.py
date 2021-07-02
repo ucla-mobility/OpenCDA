@@ -50,8 +50,10 @@ def run_scenario(opt, config_yaml):
         spectator = world.get_spectator()
         spectator_vehicle = platoon_list[0].vehicle_manager_list[0].vehicle
 
-        eval_manager = EvaluationManager(cav_world)
-
+        eval_manager = \
+            EvaluationManager(cav_world,
+                              script_name='platon_stability',
+                              current_time=scenario_params['current_time'])
         # adjusting leader speed
         leader_speed_profile = \
             scenario_params['platoon_base']['leader_speeds_profile']

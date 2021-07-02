@@ -7,16 +7,21 @@ Used to load and write yaml files
 
 import re
 import yaml
+from datetime import datetime
 
 
 def load_yaml(file):
     """
     Load yaml file and return a dictionary.
+    Parameters
+    ----------
+    file : string
+        yaml file path.
 
-    Args:
-        -file (string): yaml file path.
-    Returns:
-        - param (dict): A dictionary that contains defined parameters.
+    Returns
+    -------
+    param : dict
+        A dictionary that contains defined parameters.
     """
 
     stream = open(file, 'r')
@@ -32,5 +37,11 @@ def load_yaml(file):
         |\\.(?:nan|NaN|NAN))$''', re.X),
         list(u'-+0123456789.'))
     param = yaml.load(stream, Loader=loader)
+
+    # load current time for data dumping and evaluation
+    current_time = datetime.now()
+    current_time = current_time.strftime("_%Y_%m_%d_%H_%M_%S")
+
+    param['current_time'] = current_time
 
     return param
