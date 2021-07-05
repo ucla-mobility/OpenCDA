@@ -26,32 +26,31 @@ def run_scenario(opt, config_yaml):
             current_path,
             '../assets/2lane_freeway_simplified/map_v7.6_12ft_lane.xodr')
 
-        # create simulation world
-        simulation_config = scenario_params['world']
-        client, world, carla_map, origin_settings = \
-            sim_api.createSimulationWorld(
-                simulation_config, xodr_path)
+        # create scenario manager
+        scenario_manager = sim_api.ScenarioManager(scenario_params,
+                                                   opt.apply_ml,
+                                                   xodr_path=xodr_path)
 
         if opt.record:
-            client.start_recorder("platoon_joining_2lanefree_carla.log", True)
-
-        # create background traffic in carla
-        traffic_manager, bg_veh_list = sim_api.createTrafficManager(
-            client, world, scenario_params['carla_traffic_manager'])
+            scenario_manager.client. \
+                start_recorder("single_town06_carla.log", True)
 
         # create platoon members
-        platoon_list, cav_world = sim_api.createPlatoonManagers(
-            world, carla_map, scenario_params, apply_ml=opt.apply_ml)
+        platoon_list = scenario_manager.create_platoon_manager()
+
+        # create traffic flow if any
+        traffic_manager, bg_veh_list = \
+            scenario_manager.create_traffic_carla()
 
         if len(platoon_list) > 1:
             sys.exit("In this scenario testing, "
                      "only single platoon is allowed.")
 
-        spectator = world.get_spectator()
+        spectator = scenario_manager.world.get_spectator()
         spectator_vehicle = platoon_list[0].vehicle_manager_list[0].vehicle
 
         eval_manager = \
-            EvaluationManager(cav_world,
+            EvaluationManager(scenario_manager.cav_world,
                               script_name='platon_stability',
                               current_time=scenario_params['current_time'])
         # adjusting leader speed
@@ -70,7 +69,7 @@ def run_scenario(opt, config_yaml):
 
         # run steps
         while True:
-            world.tick()
+            scenario_manager.world.tick()
             transform = spectator_vehicle.get_transform()
             spectator.set_transform(
                 carla.Transform(
@@ -161,9 +160,9 @@ def run_scenario(opt, config_yaml):
         eval_manager.evaluate()
 
         if opt.record:
-            client.stop_recorder()
+            scenario_manager.client.stop_recorder()
 
-        world.apply_settings(origin_settings)
+        scenario_manager.world.apply_settings(scenario_manager.origin_settings)
 
         for platoon in platoon_list:
             platoon.destroy()

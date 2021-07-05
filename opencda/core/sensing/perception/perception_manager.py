@@ -320,7 +320,7 @@ class PerceptionManager(object):
         # retrieve current cameras and lidar data
         rgb_images = []
         for rgb_camera in self.rgb_camera:
-            time.sleep(0.001)
+            time.sleep(0.0015)
             rgb_images.append(
                 cv2.cvtColor(
                     np.array(
@@ -409,7 +409,7 @@ class PerceptionManager(object):
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
-            time.sleep(0.001)
+            time.sleep(0.0015)
             # we only visualiz the frontal camera
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image

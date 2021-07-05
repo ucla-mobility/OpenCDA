@@ -134,7 +134,7 @@ scenario:
             <<: *base_behavior
             local_planner:
               <<: *base_local_planner
-              debug_trajectory: true
+              debug_trajectory: false
               debug: false
         - <<: *vehicle_base
           spawn_position: [111.7194, 139.51, 0.3, 0, 0, 0]
@@ -179,7 +179,7 @@ scenario:
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: true
+          debug_trajectory: false
           debug: false
 
 

@@ -19,44 +19,45 @@ def run_scenario(opt, config_yaml):
     try:
         scenario_params = load_yaml(config_yaml)
 
-        # create simulation world
-        simulation_config = scenario_params['world']
-        client, world, carla_map, origin_settings = \
-            sim_api.createSimulationWorld(
-                simulation_config, town='Town06')
-
-        if opt.record:
-            client.start_recorder("single_town06_carla.log", True)
-
-        # create background traffic in carla
-        traffic_manager, bg_veh_list = sim_api.createTrafficManager(
-            client, world, scenario_params['carla_traffic_manager'])
-
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
-        single_cav_list = sim_api.createVehicleManager(
-            world, scenario_params, ['single'], cav_world, carla_map,
-            data_dump=True)
+
+        # create scenario manager
+        scenario_manager = sim_api.ScenarioManager(scenario_params,
+                                                   opt.apply_ml,
+                                                   town='Town06',
+                                                   cav_world=cav_world)
+
+        if opt.record:
+            scenario_manager.client. \
+                start_recorder("single_town06_carla.log", True)
+
+        single_cav_list = \
+            scenario_manager.create_vehicle_manager(application=['single'],
+                                                    data_dump=True)
+
+        # create background traffic in carla
+        traffic_manager, bg_veh_list = \
+            scenario_manager.create_traffic_carla()
 
         # create evaluation manager
         eval_manager = \
-            EvaluationManager(cav_world,
-                              script_name='coopercption_datadump_twon06_carla',
+            EvaluationManager(scenario_manager.cav_world,
+                              script_name='single_2lanefree_carla',
                               current_time=scenario_params['current_time'])
 
-        spectator = world.get_spectator()
+        spectator = scenario_manager.world.get_spectator()
         # run steps
         while True:
-            world.tick()
+            scenario_manager.world.tick()
             transform = single_cav_list[0].vehicle.get_transform()
-            spectator.set_transform(
-                carla.Transform(
-                    transform.location +
-                    carla.Location(
-                        z=50),
-                    carla.Rotation(
-                        pitch=-
-                        90)))
+            spectator.set_transform(carla.Transform(
+                transform.location +
+                carla.Location(
+                    z=50),
+                carla.Rotation(
+                    pitch=-
+                    90)))
 
             for i, single_cav in enumerate(single_cav_list):
                 single_cav.update_info()
@@ -65,12 +66,14 @@ def run_scenario(opt, config_yaml):
 
     finally:
         eval_manager.evaluate()
-        if opt.record:
-            client.stop_recorder()
 
-        world.apply_settings(origin_settings)
+        if opt.record:
+            scenario_manager.client.stop_recorder()
+
+        scenario_manager.world.apply_settings(scenario_manager.origin_settings)
 
         for v in single_cav_list:
             v.destroy()
         for v in bg_veh_list:
             v.destroy()
+
