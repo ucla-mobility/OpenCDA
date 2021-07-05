@@ -94,7 +94,7 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   random: true # whether to random select vehicles' color and model
-  vehicle_list:
+  vehicle_list:  # a number or a list
     - spawn_position: [-330, 8.3, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-320, 4.8, 0.3, 0, 0, 0]
@@ -103,7 +103,9 @@ carla_traffic_manager:
       vehicle_speed_perc: -100
     - spawn_position: [-280, 4.8, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
-  range: [-400, -300, 4.5, 8.5] # used only when vehicle_list is a number
+  # Used only when vehicle_list is a number.
+  # x_min, x_max, y_min, y_max, x_step, y_step
+  range: [-400, -300, 4.5, 8.5, 10, 4]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:

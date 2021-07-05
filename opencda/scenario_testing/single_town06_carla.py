@@ -28,16 +28,15 @@ def run_scenario(opt, config_yaml):
         if opt.record:
             client.start_recorder("single_town06_carla.log", True)
 
-        # create background traffic in carla
-        traffic_manager, bg_veh_list = sim_api.createTrafficManager(
-            client, world, scenario_params['carla_traffic_manager'])
-
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
         single_cav_list = sim_api.createVehicleManager(
             world, scenario_params, ['single'], cav_world, carla_map)
 
-        # create evaluation manager
+        # create background traffic in carla
+        traffic_manager, bg_veh_list = sim_api.createTrafficManager(
+            client, world, scenario_params['carla_traffic_manager'])
+
         # create evaluation manager
         eval_manager = \
             EvaluationManager(cav_world,

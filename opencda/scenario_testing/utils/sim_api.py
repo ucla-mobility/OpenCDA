@@ -4,8 +4,11 @@ Simulation API for create simulation world, vehicle manager and so on
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
-import sys
+
+import math
 import random
+import sys
+from random import shuffle
 
 import carla
 
@@ -114,10 +117,8 @@ def car_blueprint_filter(blueprint_library):
         blueprint_library.find('vehicle.citroen.c3'),
         blueprint_library.find('vehicle.mustang.mustang'),
         blueprint_library.find('vehicle.tesla.model3'),
-        blueprint_library.find('vehicle.harley-davidson.low_rider'),
         blueprint_library.find('vehicle.lincoln.mkz2017'),
         blueprint_library.find('vehicle.seat.leon'),
-        blueprint_library.find('vehicle.yamaha.yzf'),
         blueprint_library.find('vehicle.nissan.patrol'),
         blueprint_library.find('vehicle.nissan.micra'),
     ]
@@ -187,6 +188,104 @@ def spawn_vehicles_by_list(world, tm, traffic_config, bg_list):
     return bg_list
 
 
+def spawn_vehicle_by_range(world, tm, carla_map, traffic_config, bg_list):
+    """
+    Spawn the traffic vehicles by the given range.
+
+    Parameters
+    ----------
+    world : carla.World
+        Simulation server.
+
+    tm : carla.TrafficManager
+        Traffic manager.
+
+    carla_map : carla.Map
+        Carla HD Map.
+
+    traffic_config : dict
+        Background traffic configuration.
+
+    bg_list : list
+        The list contains all background traffic.
+
+    Returns
+    -------
+    bg_list : list
+        Update traffic list.
+    """
+    blueprint_library = world.get_blueprint_library()
+
+    ego_vehicle_random_list = car_blueprint_filter(blueprint_library)
+    # if not random select, we always choose lincoln.mkz with green color
+    ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
+
+    spawn_num = traffic_config['vehicle_list']
+    spawn_range = traffic_config['range']
+
+    x_min, x_max, y_min, y_max = \
+        math.floor(spawn_range[0]), math.ceil(spawn_range[1]), \
+        math.floor(spawn_range[2]), math.ceil(spawn_range[3])
+
+    spawn_set = set()
+
+    for x in range(x_min, x_max, int(spawn_range[4])):
+        for y in range(y_min, y_max, int(spawn_range[5])):
+            location = carla.Location(x=x, y=y, z=0.3)
+            way_point = carla_map.get_waypoint(location).transform
+
+            spawn_set.add((way_point.location.x,
+                           way_point.location.y,
+                           way_point.location.z,
+                           way_point.rotation.roll,
+                           way_point.rotation.yaw,
+                           way_point.rotation.pitch))
+    count = 0
+    spawn_list = list(spawn_set)
+    shuffle(spawn_list)
+
+    while count < spawn_num:
+        if len(spawn_list) == 0:
+            break
+
+        coordinates = spawn_list[0]
+        spawn_list.pop(0)
+
+        spawn_transform = carla.Transform(carla.Location(x=coordinates[0],
+                                                         y=coordinates[1],
+                                                         z=coordinates[2]+0.3),
+                                          carla.Rotation(roll=coordinates[3],
+                                                         yaw=coordinates[4],
+                                                         pitch=coordinates[5]))
+        if not traffic_config['random']:
+            ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+
+        else:
+            ego_vehicle_bp = random.choice(ego_vehicle_random_list)
+
+            color = random.choice(
+                ego_vehicle_bp.get_attribute('color').recommended_values)
+            ego_vehicle_bp.set_attribute('color', color)
+
+        vehicle = world.try_spawn_actor(ego_vehicle_bp, spawn_transform)
+
+        if not vehicle:
+            continue
+
+        vehicle.set_autopilot(True, 8000)
+        tm.auto_lane_change(vehicle, traffic_config['auto_lane_change'])
+
+        # each vehicle have slight different speed
+        tm.vehicle_percentage_speed_difference(
+                vehicle,
+                traffic_config['global_speed_perc'] + random.randint(-30, 30))
+
+        bg_list.append(vehicle)
+        count += 1
+
+    return bg_list
+
+
 def createTrafficManager(client, world, traffic_config):
     """
     Create background traffic.
@@ -221,9 +320,17 @@ def createTrafficManager(client, world, traffic_config):
     tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
 
     bg_list = []
+    carla_map = world.get_map()
 
     if isinstance(traffic_config['vehicle_list'], list):
         bg_list = spawn_vehicles_by_list(world, tm, traffic_config, bg_list)
+
+    elif isinstance(traffic_config['vehicle_list'], int):
+        bg_list = spawn_vehicle_by_range(world, tm, carla_map, traffic_config,
+                                         bg_list)
+
+    else:
+        sys.exit('Traffic vehicle list param has to be a list or int!')
 
     return tm, bg_list
 

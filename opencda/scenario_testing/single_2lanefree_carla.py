@@ -36,10 +36,6 @@ def run_scenario(opt, config_yaml):
         if opt.record:
             client.start_recorder("single_2lanefree_carla.log", True)
 
-        # create background traffic in carla
-        traffic_manager, bg_veh_list = sim_api.createTrafficManager(
-            client, world, scenario_params['carla_traffic_manager'])
-
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
         single_cav_list = sim_api.createVehicleManager(
@@ -49,6 +45,10 @@ def run_scenario(opt, config_yaml):
             cav_world,
             carla_map,
             map_api.spawn_helper_2lanefree)
+
+        # create background traffic in carla
+        traffic_manager, bg_veh_list = sim_api.createTrafficManager(
+            client, world, scenario_params['carla_traffic_manager'])
 
         # create evaluation manager
         eval_manager = \
