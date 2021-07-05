@@ -103,6 +103,7 @@ carla_traffic_manager:
       vehicle_speed_perc: -100
     - spawn_position: [-280, 4.8, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
+  range: [-400, -300, 4.5, 8.5] # used only when vehicle_list is a number
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:

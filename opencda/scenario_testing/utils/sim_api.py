@@ -124,41 +124,29 @@ def car_blueprint_filter(blueprint_library):
     return blueprints
 
 
-def createTrafficManager(client, world, traffic_config):
+def spawn_vehicles_by_list(world, tm, traffic_config, bg_list):
     """
-    Create background traffic.
+    Spawn the traffic vehicles by the given list.
 
     Parameters
     ----------
-    client : carla.client
-        The client connect to carla server.
+    world : carla.World
+        Simulation server.
 
-    world : carla.world
-        Carla server.
+    tm : carla.TrafficManager
+        Traffic manager.
 
     traffic_config : dict
-        Configuration for traffic parameters.
+        Background traffic configuration.
+
+    bg_list : list
+        The list contains all background traffic.
 
     Returns
     -------
-    tm : carla.traffic_manager
-        Carla traffic manager.
-
     bg_list : list
-        The list that contains all the background traffic vehicles.
-
+        Update traffic list.
     """
-
-    tm = client.get_trafficmanager()
-
-    tm.set_global_distance_to_leading_vehicle(
-        traffic_config['global_distance'])
-    tm.set_synchronous_mode(traffic_config['sync_mode'])
-    tm.set_osm_mode(traffic_config['set_osm_mode'])
-    tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
-
-    bg_list = []
-
     blueprint_library = world.get_blueprint_library()
 
     ego_vehicle_random_list = car_blueprint_filter(blueprint_library)
@@ -195,6 +183,47 @@ def createTrafficManager(client, world, traffic_config):
         tm.auto_lane_change(vehicle, traffic_config['auto_lane_change'])
 
         bg_list.append(vehicle)
+
+    return bg_list
+
+
+def createTrafficManager(client, world, traffic_config):
+    """
+    Create background traffic.
+
+    Parameters
+    ----------
+    client : carla.client
+        The client connect to carla server.
+
+    world : carla.world
+        Carla server.
+
+    traffic_config : dict
+        Configuration for traffic parameters.
+
+    Returns
+    -------
+    tm : carla.traffic_manager
+        Carla traffic manager.
+
+    bg_list : list
+        The list that contains all the background traffic vehicles.
+
+    """
+
+    tm = client.get_trafficmanager()
+
+    tm.set_global_distance_to_leading_vehicle(
+        traffic_config['global_distance'])
+    tm.set_synchronous_mode(traffic_config['sync_mode'])
+    tm.set_osm_mode(traffic_config['set_osm_mode'])
+    tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
+
+    bg_list = []
+
+    if isinstance(traffic_config['vehicle_list'], list):
+        bg_list = spawn_vehicles_by_list(world, tm, traffic_config, bg_list)
 
     return tm, bg_list
 
