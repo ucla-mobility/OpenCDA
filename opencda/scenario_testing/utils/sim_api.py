@@ -5,6 +5,7 @@ Simulation API for create simulation world, vehicle manager and so on
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 import sys
+import random
 
 import carla
 
@@ -83,20 +84,43 @@ def createSimulationWorld(simulation_config, xodr_path=None, town=None):
     return client, world, world.get_map(), origin_settings
 
 
-def car_blueprint_filter(blueprints):
+def car_blueprint_filter(blueprint_library):
     """
     Exclude the uncommon vehicles from the default CARLA blueprint library
     (i.e., isetta, carlacola, cybertruck, t2).
+
+    Parameters
+    ----------
+    blueprint_library : carla.blueprint_library
+        The blueprint library that contains all models.
+
+    Returns
+    -------
+    blueprints : list
+        The list of suitable blueprints for vehicles.
     """
-    blueprints = [x for x in blueprints if int(
-        x.get_attribute('number_of_wheels')) == 4]
-    blueprints = [x for x in blueprints if not x.id.endswith('isetta')]
-    blueprints = [x for x in blueprints if not x.id.endswith('carlacola')]
-    blueprints = [x for x in blueprints if not x.id.endswith('cybertruck')]
-    blueprints = [x for x in blueprints if not x.id.endswith('t2')]
 
-    blueprints = sorted(blueprints, key=lambda bp: bp.id)
-
+    blueprints = [
+        blueprint_library.find('vehicle.audi.a2'),
+        blueprint_library.find('vehicle.audi.tt'),
+        blueprint_library.find('vehicle.dodge_charger.police'),
+        blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+        blueprint_library.find('vehicle.chevrolet.impala'),
+        blueprint_library.find('vehicle.mini.cooperst'),
+        blueprint_library.find('vehicle.audi.etron'),
+        blueprint_library.find('vehicle.mercedes-benz.coupe'),
+        blueprint_library.find('vehicle.bmw.grandtourer'),
+        blueprint_library.find('vehicle.toyota.prius'),
+        blueprint_library.find('vehicle.citroen.c3'),
+        blueprint_library.find('vehicle.mustang.mustang'),
+        blueprint_library.find('vehicle.tesla.model3'),
+        blueprint_library.find('vehicle.harley-davidson.low_rider'),
+        blueprint_library.find('vehicle.lincoln.mkz2017'),
+        blueprint_library.find('vehicle.seat.leon'),
+        blueprint_library.find('vehicle.yamaha.yzf'),
+        blueprint_library.find('vehicle.nissan.patrol'),
+        blueprint_library.find('vehicle.nissan.micra'),
+    ]
     return blueprints
 
 
@@ -136,7 +160,9 @@ def createTrafficManager(client, world, traffic_config):
     bg_list = []
 
     blueprint_library = world.get_blueprint_library()
-    # todo: traffic model should be random
+
+    ego_vehicle_random_list = car_blueprint_filter(blueprint_library)
+    # if not random select, we always choose lincoln.mkz with green color
     ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
 
     for i, vehicle_config in enumerate(traffic_config['vehicle_list']):
@@ -149,7 +175,17 @@ def createTrafficManager(client, world, traffic_config):
                 pitch=vehicle_config['spawn_position'][5],
                 yaw=vehicle_config['spawn_position'][4],
                 roll=vehicle_config['spawn_position'][3]))
-        ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+
+        if not traffic_config['random']:
+            ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+
+        else:
+            ego_vehicle_bp = random.choice(ego_vehicle_random_list)
+
+            color = random.choice(
+                ego_vehicle_bp.get_attribute('color').recommended_values)
+            ego_vehicle_bp.set_attribute('color', color)
+
         vehicle = world.spawn_actor(ego_vehicle_bp, spawn_transform)
         vehicle.set_autopilot(True, 8000)
 
@@ -172,6 +208,7 @@ def createPlatoonManagers(
         data_dump=False):
     """
     Create a list of platoons.
+
     Parameters
     ----------
     world : carla.world
@@ -223,7 +260,7 @@ def createPlatoonManagers(
             else:
                 spawn_transform = map_helper(carla_map, *cav['spawn_special'])
 
-            cav_vehicle_bp.set_attribute('color', '0, 0, 0')
+            cav_vehicle_bp.set_attribute('color', '0, 0, 255')
             vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
             # create vehicle manager for each cav
@@ -315,7 +352,7 @@ def createVehicleManager(
             spawn_transform = map_helper(carla_map,
                                          *cav_config['spawn_special'])
 
-        cav_vehicle_bp.set_attribute('color', '0, 0, 0')
+        cav_vehicle_bp.set_attribute('color', '0, 0, 255')
         vehicle = world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
         # create vehicle manager for each cav
