@@ -103,6 +103,7 @@ carla_traffic_manager:
   global_speed_perc: -300
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
+  random: false # whether to random select vehicles' color and model
   vehicle_list:
     - spawn_position: [-285, 7.5, 0.3, 0, 0, 0]
     - spawn_position: [-310, 7.5, 0.3, 0, 0, 0]

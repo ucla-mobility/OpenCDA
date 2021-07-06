@@ -25,22 +25,25 @@ from opencda.core.sensing.perception.o3d_lidar_libs import \
 
 class CameraSensor(object):
     """
-    Class for rgb camera.
+    Camera manager.
 
     Parameters
-    -vehicle : carla.Vehicle
+    ----------
+    vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn sensors.
-    -position : string
+
+    position : str
         Indicates the sensor is a front or rear camera. option:
         front, left, right.
 
     Attributes
-    -image : np.ndarray
-        Current received image.
-    -sensor : CARLA actor
-        The current sensor actors that will be attach to the vehicles.
-    """
+    ----------
+    image : np.ndarray
+        Current received rgb image.
+    sensor : carla.sensor
+        The carla sensor that mounts at the vehicle.
 
+    """
     def __init__(self, vehicle, position='front'):
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
@@ -72,6 +75,7 @@ class CameraSensor(object):
 
         self.image = None
         self.timstamp = None
+        self.frame = 0
         weak_self = weakref.ref(self)
         self.sensor.listen(
             lambda event: CameraSensor._on_rgb_image_event(
@@ -93,6 +97,7 @@ class CameraSensor(object):
         image = image[:, :, :3]
 
         self.image = image
+        self.frame = event.frame
         self.timestamp = event.timestamp
 
 
@@ -101,25 +106,24 @@ class LidarSensor(object):
     Lidar sensor manager.
 
     Parameters
-    -vehicle : carla.Vehicle
-        The carla.Vehicle. We need this class to spawn sensors.
-    -config_yaml : dict
-        Configuration for lidar sensor.
+    ----------
+    vehicle : carla.Vehicle
+        carla Vehicle, we need this to spawn sensors.
+
+    config_yaml : dict
+        Configuration dictionary for lidar.
 
     Attributes
-    -o3d_pointcloud : o3d.PointCloud
-        Recieved point cloud saved in o3d.PointCloud format.
-    -sensor : CARLA actor
-        The current sensor actors that will be attach to the vehicles.
+    ----------
+    o3d_pointcloud : 03d object
+        Received point cloud, saved in o3d.Pointcloud format.
+
+    sensor : carla.sensor
+        Lidar sensor that will be attached to the vehicle.
+
     """
 
     def __init__(self, vehicle, config_yaml):
-        """
-        Construct class.
-        Args:
-            vehicle (carla.Vehicle): The attached vehicle.
-            config_yaml (dict): Configuration for lidar.
-        """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.lidar.ray_cast')
 
@@ -155,6 +159,7 @@ class LidarSensor(object):
         # lidar data
         self.data = None
         self.timestamp = None
+        self.frame = 0
         # open3d point cloud object
         self.o3d_pointcloud = o3d.geometry.PointCloud()
 
@@ -165,7 +170,7 @@ class LidarSensor(object):
 
     @staticmethod
     def _on_data_event(weak_self, event):
-        """CAMERA  method"""
+        """Lidar  method"""
         self = weak_self()
         if not self:
             return
@@ -176,6 +181,7 @@ class LidarSensor(object):
         data = np.reshape(data, (int(data.shape[0] / 4), 4))
 
         self.data = data
+        self.frame = event.frame
         self.timestamp = event.timestamp
 
 
@@ -184,33 +190,30 @@ class PerceptionManager(object):
     Default perception module. Currenly only used to detect vehicles.
 
     Parameters
-    -vehicle : carla.Vehicle
-        The carla.Vehicle. We need this class to spawn sensors.
-    -config_yaml : dict
-        Configuration for perception.
-    - ml_manager: opencda object
-        Ml manager includes all loaded trained perception models.
+    ----------
+    vehicle : carla.Vehicle
+        carla Vehicle, we need this to spawn sensors.
+
+    config_yaml : dict
+        Configuration dictionary for perception.
+
+    ml_manager : opencda object
+        Shared ML library and models across all CAVs.
 
     Attributes
-    -ml_manager : opencda object
-        weak reference of the ML Manager.
-    -activate : bool
-        Whether perception algorithms are activated. If not, load object
-        coordinates directly from the server.
-    -lidar: opencda object
+    ----------
+    lidar : opencda object
         Lidar sensor manager.
-    -rgb_camera: opencda object
-        Camera manager.
+
+    rgb_camera : opencda object
+        RGB camera manager.
+
+    o3d_vis : o3d object
+        Open3d pointcloud visualizer.
+
     """
 
     def __init__(self, vehicle, config_yaml, ml_manager):
-        """
-        Construct class.
-        Args:
-            vehicle (carla.Actor): The carla vehicle.
-            config_yaml (dict):  The configuration yaml dictionary.
-            ml_manager(MlManager): Machine learning manager from CAV World.
-        """
         self.vehicle = vehicle
 
         self.activate = config_yaml['activate']
@@ -254,25 +257,35 @@ class PerceptionManager(object):
 
     def dist(self, v):
         """
-        A fast method to retrieve the obstable distance the ego
+        A fast method to retrieve the obstacle distance the ego
         vehicle from the server directly.
-        Args:
-            v (carla.vehicle):
 
-        Returns:
-            float: distance
+        Parameters
+        ----------
+        v : carla.vehicle
+            The obstacle vehicle.
 
+        Returns
+        -------
+        distance : float
+            The distance between ego and the obstacle vehicle.
         """
         return v.get_location().distance(self.ego_pos.location)
 
     def detect(self, ego_pos):
         """
         Detect surrounding objects. Currently only vehicle detection supported.
-        Args:
-            ego_pos (carla.Transform): Vehicle ego position
 
-        Returns:
-            List of carla.Vehicle or ObstacleVehicle
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego vehicle pose.
+
+        Returns
+        -------
+        objects : list
+            A list that contains all detected obstacle vehicles.
+
         """
         self.ego_pos = ego_pos
 
@@ -291,17 +304,23 @@ class PerceptionManager(object):
     def activate_mode(self, objects):
         """
         Use Yolov5 + Lidar fusion to detect objects.
-        Args:
-            objects(dict): object dictionary
 
-        Returns:
-            objects: dict
-                The updated object dictionary.
+        Parameters
+        ----------
+        objects : dict
+            The dictionary that contains all category of detected objects.
+            The key is the object category name and value is its 3d coordinates
+            and confidence.
+
+        Returns
+        -------
+         objects: dict
+            Updated object dictionary.
         """
         # retrieve current cameras and lidar data
         rgb_images = []
         for rgb_camera in self.rgb_camera:
-            time.sleep(0.001)
+            time.sleep(0.0015)
             rgb_images.append(
                 cv2.cvtColor(
                     np.array(
@@ -358,11 +377,19 @@ class PerceptionManager(object):
 
     def deactivate_mode(self, objects):
         """
-        Obstacle detection under perception deactivation mode.
-        Args:
-            objects(dict): object dictionary
-        Returns:
+        Object detection using server information directly.
 
+        Parameters
+        ----------
+        objects : dict
+            The dictionary that contains all category of detected objects.
+            The key is the object category name and value is its 3d coordinates
+            and confidence.
+
+        Returns
+        -------
+         objects: dict
+            Updated object dictionary.
         """
         world = self.vehicle.get_world()
 
@@ -382,7 +409,7 @@ class PerceptionManager(object):
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
-            time.sleep(0.001)
+            time.sleep(0.0015)
             # we only visualiz the frontal camera
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
@@ -410,11 +437,14 @@ class PerceptionManager(object):
     def visualize_3d_bbx_front_camera(self, objects, rgb_image):
         """
         Visualize the 3d bounding box on frontal camera image.
-        Args:
-            objects (dict): a dictionary containing all detected objects.
-            rgb_image (np.ndarray):camera image.
 
-        Returns:
+        Parameters
+        ----------
+        objects : dict
+            The object dictionary.
+
+        rgb_image : np.ndarray
+            Received rgb image at current timestamp.
 
         """
         for v in objects['vehicles']:
@@ -438,11 +468,11 @@ class PerceptionManager(object):
         """
         We don't implement any obstacle speed calculation algorithm.
         The speed will be retrieved from the server directly.
-        Args:
-            objects(dict): The dictionary contains the objects.
 
-        Returns:
-
+        Parameters
+        ----------
+        objects : dict
+            The dictionary contains the objects.
         """
         if 'vehicles' not in objects:
             return
@@ -469,15 +499,16 @@ class PerceptionManager(object):
     def destroy(self):
         """
         Destroy sensors.
-        Returns:
-
         """
         if self.rgb_camera:
             for rgb_camera in self.rgb_camera:
                 rgb_camera.sensor.destroy()
+
         if self.lidar:
             self.lidar.sensor.destroy()
+
         if self.camera_visualize:
             cv2.destroyAllWindows()
+
         if self.lidar_visualize:
             self.o3d_vis.destroy_window()

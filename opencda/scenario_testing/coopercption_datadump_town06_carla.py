@@ -6,13 +6,9 @@ customized 2-lane freeway simplified map sorely with carla
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
-import os
-
 import carla
 
 import opencda.scenario_testing.utils.sim_api as sim_api
-import opencda.scenario_testing.utils.customized_map_api as map_api
-
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
@@ -22,27 +18,23 @@ from opencda.scenario_testing.utils.yaml_utils import load_yaml
 def run_scenario(opt, config_yaml):
     try:
         scenario_params = load_yaml(config_yaml)
-        current_path = os.path.dirname(os.path.realpath(__file__))
-        xodr_path = os.path.join(
-            current_path,
-            '../assets/2lane_freeway_simplified/map_v7.6_12ft_lane.xodr')
 
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
+
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
-                                                   xodr_path=xodr_path,
+                                                   town='Town06',
                                                    cav_world=cav_world)
 
         if opt.record:
             scenario_manager.client. \
-                start_recorder("single_2lanefree_carla.log", True)
+                start_recorder("single_town06_carla.log", True)
 
         single_cav_list = \
             scenario_manager.create_vehicle_manager(application=['single'],
-                                                    map_helper=map_api.
-                                                    spawn_helper_2lanefree)
+                                                    data_dump=True)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = \
@@ -84,3 +76,4 @@ def run_scenario(opt, config_yaml):
             v.destroy()
         for v in bg_veh_list:
             v.destroy()
+

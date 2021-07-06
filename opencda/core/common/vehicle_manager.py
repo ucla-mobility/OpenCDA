@@ -19,6 +19,7 @@ from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
+from opencda.core.common.data_dumper import DataDumper
 
 
 class VehicleManager(object):
@@ -26,28 +27,48 @@ class VehicleManager(object):
     A class manager to embed different modules with vehicle together.
 
     Parameters
-    -vehicle : carla.Vehicle
+    ----------
+    vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
-    -config : dict
+
+    config_yaml : dict
         The configuration dictionary of the localization module.
-    -application : list
+
+    application : list
         The application category, currently support:['single','platoon'].
-    -carla_map : carla.Map
+
+    carla_map : carla.Map
         The CARLA simulation map.
-    -cav_world : opencda object
+
+    cav_world : opencda object
         CAV World.
 
+    current_time : str
+        Timestamp of the simulation beginning.
+
+    data_dumping : bool
+        Indicates whether to dump sensor data during simulation.
+
     Attributes
-    -v2x_manager : opencda object
-        The current V2X manageer.
-    -localizer : opencda object
-        The current localization manageer.
-    -perception_manager : opencda object
-        The current V2X perception manageer.
-    -agent : opencda object
-        The current carla agent that handles the basic control of ego vehicle.
-    -controller : opencda object
+    ----------
+    v2x_manager : opencda object
+        The current V2X manager.
+
+    localizer : opencda object
+        The current localization manager.
+
+    perception_manager : opencda object
+        The current V2X perception manager.
+
+    agent : opencda object
+        The current carla agent that handles the basic behavior
+         planning of ego vehicle.
+
+    controller : opencda object
         The current control manager.
+
+    data_dumper : opencda object
+        Used for dumping sensor data.
     """
 
     def __init__(
@@ -56,7 +77,9 @@ class VehicleManager(object):
             config_yaml,
             application,
             carla_map,
-            cav_world):
+            cav_world,
+            current_time='',
+            data_dumping=False):
 
         # an unique uuid for this vehicle
         self.vid = str(uuid.uuid1())
@@ -94,6 +117,14 @@ class VehicleManager(object):
 
         self.controller = ControlManager(control_config)
 
+        if data_dumping:
+            self.data_dumper = DataDumper(self.perception_manager,
+                                          self.localizer,
+                                          vehicle.id,
+                                          save_time=current_time)
+        else:
+            self.data_dumper = None
+
         cav_world.update_vehicle_manager(self)
 
     def set_destination(
@@ -103,14 +134,26 @@ class VehicleManager(object):
             clean=False,
             end_reset=True):
         """
-        Wrapper function to set global route
+        Set global route.
 
-        Args:
-            -start_location (carla.location): The start location.
-            -end_location (carla.location): The destination location.
-            -clean (boolean): Indicator of whether clean waypoint queue.
-            -end_reset (boolean): Indicator of whether reset the end location.
+        Parameters
+        ----------
+        start_location : carla.location
+            The CAV start location.
+
+        end_location : carla.location
+            The CAV destination.
+
+        clean : bool
+             Indicator of whether clean waypoint queue.
+
+        end_reset : bool
+            Indicator of whether reset the end location.
+
+        Returns
+        -------
         """
+
         self.agent.set_destination(
             start_location, end_location, clean, end_reset)
 
@@ -138,6 +181,11 @@ class VehicleManager(object):
         """
         target_speed, target_pos = self.agent.run_step(target_speed)
         control = self.controller.run_step(target_speed, target_pos)
+
+        # dump data
+        if self.data_dumper:
+            self.data_dumper.run_step()
+
         return control
 
     def destroy(self):
