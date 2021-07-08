@@ -24,28 +24,30 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     Platoon behavior agent that inherits the single vehicle behavior agent.
 
     Parameters
-    -vehicle : carla.Vehicle
+    ----------
+    vehicle : carla.Vehicle
         The carla vehicle.
-    -vehicle_manager : opencda object
+    vehicle_manager : opencda object
         The vehicle manager, used when joining platoon finished.
-    -v2x_manager : opencda object
+    v2x_manager : opencda object
         Used to received and deliver information.
-    -behavior_yaml : dict
+    behavior_yaml : dict
         The configuration dictionary for BehaviorAgent.
-    -platoon_yaml : dict.
+    platoon_yaml : dict.
         The configuration dictionary for platoon behavior.
-    -carla_map : carla.Map
+    carla_map : carla.Map
         The HD Map used in the simulation.
 
     Attributes
-    -vehicle_manager : opencda object
+    ----------
+    -ehicle_manager : opencda object
         The weak reference of the vehicle manager,
          used when joining platoon finished.
-    -v2x_manager : opencda object
+    v2x_manager : opencda object
         The weak reference of the v2x_manager
-    -debug_helper : opencda Object
+    debug_helper : opencda Object
         A debug helper used to record the driving performance during platooning
-    -inter_gap : float
+    inter_gap : float
         The desired time gap between each platoon member.
     """
 
@@ -96,11 +98,15 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         Run a single step for navigation under platooning agent.
         Finite state machine is used to switch between different
         platooning states.
-        Args:
-            -target_speed (float): Target speed in km/h
-            -collision_detector_enabled (bool): Whether collision
-             detection enabled.
-            -ane_change_allowed (bool): Whether lane change is allowed.
+
+        Parameters
+        ----------
+        target_speed : float
+            Target speed in km/h
+        collision_detector_enabled : bool
+            Whether collision detection enabled.
+        lane_change_allowed : bool
+            Whether lane change is allowed.
         """
         # reset time gap and distance gap record at the beginning
         self.time_gap = 100.0

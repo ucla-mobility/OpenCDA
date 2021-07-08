@@ -11,14 +11,16 @@ import importlib
 class ControlManager(object):
     """
     Controller manager that is used to choose
-     and call different controller's functions.
+    and call different controller's functions.
 
     Parameters
-    -control_config : dict
+    ----------
+    control_config : dict
         The configuration dictionary of the control manager module.
 
     Attributes
-    -controller : opencda object.
+    ----------
+    controller : opencda object.
         The controller object of the OpenCDA framwork.
     """
 
