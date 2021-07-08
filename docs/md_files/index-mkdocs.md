@@ -27,7 +27,7 @@ OpenCDA Github</a>
     * [Step4: Run simulation loop](OpenCDA_tutorial.md#step4-keep-the-simulation-loop-running)
     * [Step5: Evaluation](OpenCDA_tutorial.md#step5-evaluation)
     * [Customize your own modules](OpenCDA_tutorial.md#customize-your-own-algorithms)
-* [PythonAPI](PythonAPI.md)
+* [PythonAPI](modules.rst)
 
 
 If you use OpenCDA for academic research, you are highly encouraged to cite our paper:  

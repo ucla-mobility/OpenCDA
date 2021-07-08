@@ -41,22 +41,17 @@ scenario_params = load_yaml(config_yaml)
 
 # setup the simulation server configuration
 simulation_config = scenario_params['world']
-client, world, carla_map, origin_settings = sim_api.createSimulationWorld(
-    simulation_config, 'town06')
+client, world, carla_map, origin_settings = sim_api.createSimulationWorld(simulation_config, 'town06')
 
 # create background traffic in carla
 traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
-                                                            scenario_params[
-                                                                'carla_traffic_manager'])
+                                                            scenario_params['carla_traffic_manager'])
 
 # create platoon members
-platoon_list, cav_world = sim_api.createPlatoonManagers(world, carla_map,
-                                                        scenario_params,
-                                                        opt.apply_ml)
+platoon_list, cav_world = sim_api.createPlatoonManagers(world, carla_map, scenario_params, opt.apply_ml)
 
 # create single cavs
-single_cav_list = sim_api.createVehicleManager(world, scenario_params,
-                                               ['platooning'], cav_world,
+single_cav_list = sim_api.createVehicleManager(world, scenario_params, ['platooning'], cav_world,
                                                carla_map)
 
 
