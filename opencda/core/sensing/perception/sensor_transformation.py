@@ -229,16 +229,6 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
     return sensor_cord
 
 
-    """
-    Get vehicle bounding box and project to sensor image.
-    Args:
-        -vehicle (carla.vehicle or ObstacleVehicle): vehicle object.
-        -camera (carla.sensor.camera.rgb): The CARLA sensor object.
-        -sensor_transform (carla.Transform): sensor position in the world
-
-    Returns:
-        -camera_bbox (np.ndarray): Bounding box coordinates in sensor image.
-    """
 def get_bounding_box(vehicle, camera, sensor_transform):
     """
     Get vehicle bounding box and project to sensor image.

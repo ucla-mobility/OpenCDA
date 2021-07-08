@@ -490,6 +490,10 @@ class PerceptionManager:
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
 
+        # use semantic lidar to filter out vehicles out of the range
+        if self.data_dump:
+            vehicle_list = self.filter_vehicle_out_sensor(vehicle_list)
+
         # convert carla.Vehicle to opencda.ObstacleVehicle if lidar
         # visualization is required.
         if self.lidar:
@@ -526,6 +530,40 @@ class PerceptionManager:
                 objects)
 
         return objects
+
+    def filter_vehicle_out_sensor(self, vehicle_list):
+        """
+        By utilizing semantic lidar, we can retrieve the objects that
+        are in the lidar detection range from the server.
+        This function is important for collect training data for object
+        detection as it can filter out the objects out of the senor range.
+
+        Parameters
+        ----------
+        vehicle_list : list
+            The list contains all vehicles information retrieves from the
+            server.
+
+        Returns
+        -------
+        new_vehicle_list : list
+            The list that filters out the out of scope vehicles.
+
+        """
+        semantic_idx = self.semantic_lidar.obj_idx
+        semantic_tag = self.semantic_lidar.obj_tag
+
+        # label 10 is the vehicle
+        vehicle_idx = semantic_idx[semantic_tag == 10]
+        # each individual instance id
+        vehicle_unique_id = list(np.unique(vehicle_idx))
+
+        new_vehicle_list = []
+        for veh in vehicle_list:
+            if veh.id in vehicle_unique_id:
+                new_vehicle_list.append(veh)
+
+        return new_vehicle_list
 
     def visualize_3d_bbx_front_camera(self, objects, rgb_image):
         """
@@ -605,3 +643,6 @@ class PerceptionManager:
 
         if self.lidar_visualize:
             self.o3d_vis.destroy_window()
+
+        if self.data_dump:
+            self.semantic_lidar.sensor.destroy()
