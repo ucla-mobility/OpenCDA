@@ -23,7 +23,7 @@ from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_camera_lidar_fusion
 
 
-class CameraSensor(object):
+class CameraSensor:
     """
     Camera manager.
 
@@ -101,7 +101,7 @@ class CameraSensor(object):
         self.timestamp = event.timestamp
 
 
-class LidarSensor(object):
+class LidarSensor:
     """
     Lidar sensor manager.
 
@@ -185,7 +185,91 @@ class LidarSensor(object):
         self.timestamp = event.timestamp
 
 
-class PerceptionManager(object):
+class SemanticLidarSensor:
+    """
+    Semantic lidar sensor manager. This class is used when data dumping
+    is needed.
+
+    Parameters
+    ----------
+    vehicle : carla.Vehicle
+        carla Vehicle, we need this to spawn sensors.
+
+    config_yaml : dict
+        Configuration dictionary, the same as the normal lidar.
+
+    Attributes
+    ----------
+    o3d_pointcloud : 03d object
+        Received point cloud, saved in o3d.Pointcloud format.
+
+    sensor : carla.sensor
+        Lidar sensor that will be attached to the vehicle.
+
+
+    """
+    def __init__(self, vehicle, config_yaml):
+        world = vehicle.get_world()
+        blueprint =\
+            world.get_blueprint_library().\
+                find('sensor.lidar.ray_cast_semantic')
+
+        # set attribute based on the configuration
+        blueprint.set_attribute('upper_fov', str(config_yaml['upper_fov']))
+        blueprint.set_attribute('lower_fov', str(config_yaml['lower_fov']))
+        blueprint.set_attribute('channels', str(config_yaml['channels']))
+        blueprint.set_attribute('range', str(config_yaml['range']))
+        blueprint.set_attribute(
+            'points_per_second', str(
+                config_yaml['points_per_second']))
+        blueprint.set_attribute(
+            'rotation_frequency', str(
+                config_yaml['rotation_frequency']))
+
+        # spawn sensor on vehicle
+        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.8))
+        self.sensor = world.spawn_actor(
+            blueprint, spawn_point, attach_to=vehicle)
+
+        # lidar data
+        self.points = None
+        self.obj_idx = None
+        self.obj_tag = None
+
+        self.timestamp = None
+        self.frame = 0
+        # open3d point cloud object
+        self.o3d_pointcloud = o3d.geometry.PointCloud()
+
+        weak_self = weakref.ref(self)
+        self.sensor.listen(
+            lambda event: SemanticLidarSensor._on_data_event(
+                weak_self, event))
+
+    @staticmethod
+    def _on_data_event(weak_self, event):
+        """Semantic Lidar  method"""
+        self = weak_self()
+        if not self:
+            return
+
+        # shape:(n, 6)
+        data = np.frombuffer(event.raw_data, dtype=np.dtype([
+            ('x', np.float32), ('y', np.float32), ('z', np.float32),
+            ('CosAngle', np.float32), ('ObjIdx', np.uint32),
+            ('ObjTag', np.uint32)]))
+
+        # (x, y, z, intensity)
+        self.points = np.array([data['x'], data['y'], data['z']]).T
+        self.obj_tag = np.array(data['ObjTag'])
+        self.obj_idx = np.array(data['ObjIdx'])
+
+        self.data = data
+        self.frame = event.frame
+        self.timestamp = event.timestamp
+
+
+class PerceptionManager:
     """
     Default perception module. Currenly only used to detect vehicles.
 
@@ -200,6 +284,9 @@ class PerceptionManager(object):
     ml_manager : opencda object
         Shared ML library and models across all CAVs.
 
+    data_dump : bool
+        Whether dumping data, if true, semantic lidar will be spawned.
+
     Attributes
     ----------
     lidar : opencda object
@@ -213,7 +300,7 @@ class PerceptionManager(object):
 
     """
 
-    def __init__(self, vehicle, config_yaml, ml_manager):
+    def __init__(self, vehicle, config_yaml, ml_manager, data_dump=False):
         self.vehicle = vehicle
 
         self.activate = config_yaml['activate']
@@ -249,6 +336,12 @@ class PerceptionManager(object):
         else:
             self.lidar = None
             self.o3d_vis = None
+
+        # if data dump is true, semantic lidar is also spawned
+        self.data_dump = data_dump
+        if data_dump:
+            self.semantic_lidar = SemanticLidarSensor(vehicle,
+                                                      config_yaml['lidar'])
 
         # count how many steps have been passed
         self.count = 0
