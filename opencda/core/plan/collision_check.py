@@ -19,11 +19,12 @@ class CollisionChecker:
     The default collision checker module.
 
     Parameters
-    -time_ahead : float
+    ----------
+    time_ahead : float
         how many seconds we look ahead in advance for collision check.
-    -circle_radius : float
+    circle_radius : float
         The radius of the collision checking circle.
-    -circle_offsets : float
+    circle_offsets : float
         The offset between collision checking circle and the trajectory point.
     """
 
@@ -43,18 +44,27 @@ class CollisionChecker:
             carla_map):
         """
         Check whether there is a obstacle vehicle between target_vehicle
-         and ego_vehicle during back_joining.
+        and ego_vehicle during back_joining.
 
-        Args:
-            -carla_map (carla.map): carla map  of the current simulation world.
-            -ego_pos (carla.transform): Ego vehicle position.
-            -target_vehicle (carla.vehicle): The vehicle that
-             is suppose to be catched.
-            -candidate_vehicle (carla.vehicle): The possible obstacle
-             vehicle blocking the ego vehicle and target vehicle.
-        Returns:
-            -detection result (boolean): Indicator of whther the
-             target vehicle is in range.
+        Parameters
+        ----------
+        carla_map : carla.map
+            Carla map  of the current simulation world.
+
+        ego_pos : carla.transform
+            Ego vehicle position.
+
+        target_vehicle : carla.vehicle
+            The target vehicle that ego vehicle trying to catch up with.
+
+        candidate_vehicle : carla.vehicle
+            The possible obstacle vehicle blocking the ego vehicle
+            and target vehicle.
+
+        Returns
+        -------
+        detection result : boolean
+        Indicator of whether the target vehicle is in range.
         """
         ego_loc = ego_pos.location
         target_loc = target_vehicle.get_location()
