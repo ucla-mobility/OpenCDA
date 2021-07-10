@@ -296,8 +296,7 @@ class PerceptionManager:
         RGB camera manager.
 
     o3d_vis : o3d object
-        Open3d pointcloud visualizer.
-
+        Open3d point cloud visualizer.
     """
 
     def __init__(self, vehicle, config_yaml, ml_manager, data_dump=False):
@@ -307,6 +306,10 @@ class PerceptionManager:
         self.camera_visualize = config_yaml['camera_visualize']
         self.camera_num = min(config_yaml['camera_num'], 3)
         self.lidar_visualize = config_yaml['lidar_visualize']
+
+        if self.activate and data_dump:
+            sys.exit("When you dump data, please deactivate the "
+                     "detection function for precise label.")
 
         if self.activate and not ml_manager:
             sys.exit(
@@ -345,8 +348,11 @@ class PerceptionManager:
 
         # count how many steps have been passed
         self.count = 0
-
+        # ego position
         self.ego_pos = None
+
+        # the dictionary contains all objects
+        self.objects = {}
 
     def dist(self, v):
         """
@@ -466,6 +472,8 @@ class PerceptionManager:
                 self.lidar.o3d_pointcloud,
                 objects)
 
+        self.objects = objects
+
         return objects
 
     def deactivate_mode(self, objects):
@@ -528,6 +536,8 @@ class PerceptionManager:
                 self.count,
                 self.lidar.o3d_pointcloud,
                 objects)
+
+        self.objects = objects
 
         return objects
 
@@ -617,6 +627,8 @@ class PerceptionManager:
             loc = v.get_location()
             for obstacle_vehicle in objects['vehicles']:
                 obstacle_speed = get_speed(obstacle_vehicle)
+                # if speed > 0, it represents that the vehicle
+                # has been already matched.
                 if obstacle_speed > 0:
                     continue
                 obstacle_loc = obstacle_vehicle.get_location()
@@ -626,6 +638,7 @@ class PerceptionManager:
                         loc.y -
                         obstacle_loc.y) <= 3.0:
                     obstacle_vehicle.set_velocity(v.get_velocity())
+                    obstacle_vehicle.set_carla_id(v.id)
 
     def destroy(self):
         """

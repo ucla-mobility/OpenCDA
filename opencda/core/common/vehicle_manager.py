@@ -101,9 +101,9 @@ class VehicleManager(object):
         self.perception_manager = PerceptionManager(
             vehicle, sensing_config['perception'], cav_world.ml_manager,
             data_dumping)
+
         # behavior agent
         self.agent = None
-
         if 'platooning' in application:
             platoon_config = config_yaml['platoon']
             self.agent = PlatooningBehaviorAgent(
@@ -116,6 +116,7 @@ class VehicleManager(object):
         else:
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
 
+        # Control module
         self.controller = ControlManager(control_config)
 
         if data_dumping:
@@ -185,7 +186,8 @@ class VehicleManager(object):
 
         # dump data
         if self.data_dumper:
-            self.data_dumper.run_step()
+            self.data_dumper.run_step(self.perception_manager,
+                                      self.localizer)
 
         return control
 

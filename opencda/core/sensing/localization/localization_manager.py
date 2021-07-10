@@ -239,19 +239,18 @@ class LocalizationManager(object):
                 heading_angle_kf = np.rad2deg(heading_angle_kf)
 
             # add data to debug helper
-            self.debug_helper.run_step(
-                x,
-                y,
-                heading_angle,
-                speed_noise,
-                x_kf,
-                y_kf,
-                heading_angle_kf,
-                self._speed,
-                location.x,
-                location.y,
-                rotation.yaw,
-                speed_true)
+            self.debug_helper.run_step(x,
+                                       y,
+                                       heading_angle,
+                                       speed_noise,
+                                       x_kf,
+                                       y_kf,
+                                       heading_angle_kf,
+                                       self._speed,
+                                       location.x,
+                                       location.y,
+                                       rotation.yaw,
+                                       speed_true)
 
             # the final pose of the vehicle
             self._ego_pos = carla.Transform(

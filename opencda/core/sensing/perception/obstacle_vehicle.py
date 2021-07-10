@@ -60,23 +60,36 @@ class ObstacleVehicle(object):
     A class for obstacle vehicle. The attributes are designed to match
     with carla.Vehicle class.
 
-    Parameters:
-    -corners : nd.nparray
+    Parameters
+    ----------
+    corners : nd.nparray
         Eight corners of the bounding box. shape:(8, 3).
-    -o3d_bbx : pen3d.AlignedBoundingBox
-        The bounding box object in Open3d. This is mainly used forvisualization
-    -vehicle : carla.Vehicle
+
+    o3d_bbx : pen3d.AlignedBoundingBox
+        The bounding box object in Open3d. This is mainly used for
+        visualization
+
+    vehicle : carla.Vehicle
         The carla.Vehicle object.
-    -lidar : carla.sensor.lidar
+
+    lidar : carla.sensor.lidar
         The lidar sensor.
 
-    Attributes:
-    -bounding_box : BoundingBox
+    Attributes
+    ----------
+    bounding_box : BoundingBox
         Bounding box of the osbject vehicle.
-    -location : carla.location
+
+    location : carla.location
         Location of the object.
-    -velocty : carla.Vector3D vehicle.
+
+    velocity : carla.Vector3D
         Velocity of the object vehicle.
+
+    carla_id : int
+        The obstacle vehicle's id. It should be the same with the
+        corresponding carla.Vehicle's id. If no carla vehicle is
+        matched with the obstacle vehicle, it should be -1.
     """
 
     def __init__(self, corners, o3d_bbx, vehicle=None, lidar=None):
@@ -85,6 +98,7 @@ class ObstacleVehicle(object):
             self.bounding_box = BoundingBox(corners)
             self.location = self.bounding_box.location
             self.o3d_bbx = o3d_bbx
+            self.carla_id = -1
             self.velocity = carla.Vector3D(0.0, 0.0, 0.0)
         else:
             self.set_vehicle(vehicle, lidar)
@@ -107,11 +121,25 @@ class ObstacleVehicle(object):
         """
         return self.velocity
 
+    def set_carla_id(self, id):
+        """
+        Set carla id according to the carla.vehicle.
+
+        Parameters
+        ----------
+        id : int
+            The id from the carla.vehicle.
+        """
+        self.carla_id = id
+
     def set_velocity(self, velocity):
         """
         Set the velocity of the vehicle.
-        Args:
-            -velocity(carla.Vector3D): The target velocity in 3d vector format.
+
+        Parameters
+        ----------
+        velocity : carla.Vector3D
+            The target velocity in 3d vector format.
 
         """
         self.velocity = velocity
@@ -120,14 +148,20 @@ class ObstacleVehicle(object):
         """
         Assign the attributes from carla.Vehicle to ObstacleVehicle.
 
-        Args:
-            -vehicle(carla.Vehicle): The carla.Vehicle object.
-            -lidar(carla.sensor.lidar): The lidar sensor,
-            used to project world coordinates to sensor coordinates.
+        Parameters
+        ----------
+        vehicle : carla.Vehicle
+            The carla.Vehicle object.
+
+        lidar : carla.sensor.lidar
+            The lidar sensor, it is used to project world coordinates to
+             sensor coordinates.
         """
         self.location = vehicle.get_location()
         self.transform = vehicle.get_transform()
         self.bounding_box = vehicle.bounding_box
+        self.carla_id = vehicle.id
+
         self.set_velocity(vehicle.get_velocity())
 
         # find the min and max boundary
@@ -170,16 +204,17 @@ class StaticObstacle(object):
      such as stop signs and traffic light as the same class.
 
     Parameters
-    -corner : nd.nparray
+    ----------
+    corner : nd.nparray
         Eight corners of the bounding box (shape:(8, 3)).
-    -o3d_bbx : open3d.AlignedBoundingBox
-        The bounding box object in Open3d.
-         This is mainly used for visualization.
+    o3d_bbx : open3d.AlignedBoundingBox
+        The bounding box object in Open3d.This is
+        mainly used for visualization.
 
     Attributes
-    -bounding_box : BoundingBox
+    ----------
+    bounding_box : BoundingBox
         Bounding box of the osbject vehicle.
-
     """
 
     def __init__(self, corner, o3d_bbx):

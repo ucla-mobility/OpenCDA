@@ -45,3 +45,21 @@ def load_yaml(file):
     param['current_time'] = current_time
 
     return param
+
+
+def save_yaml(data, save_name):
+    """
+    Save the dictionary into a yaml file.
+
+    Parameters
+    ----------
+    data : dict
+        The dictionary contains all data.
+
+    save_name : string
+        Full path of the output yaml file.
+    """
+
+    with open(save_name, 'w') as outfile:
+        yaml.dump(data, outfile)
+
