@@ -21,7 +21,7 @@ vehicle_base: &vehicle_base
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
-        range: 40
+        range: 50
         points_per_second: 100000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 10.0
@@ -105,6 +105,18 @@ scenario:
     - <<: *vehicle_base
       spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
       destination: [630, 145.51, 0.3]
+      v2x:
+        <<: *base_v2x
+        communication_range: 45
+      behavior:
+        <<: *base_behavior
+        local_planner:
+          <<: *base_local_planner
+          debug_trajectory: false
+          debug: false
+    - <<: *vehicle_base
+      spawn_position: [ 67.7194, 143.51, 0.3, 0, 0, 0 ]
+      destination: [ 630, 143.51, 0.3 ]
       v2x:
         <<: *base_v2x
         communication_range: 45

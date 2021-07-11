@@ -166,6 +166,7 @@ class DataDumper(object):
         dump_yml = {}
         vehicle_dict = {}
 
+        # dump obstacle vehicles first
         objects = perception_manager.objects
         vehicle_list = objects['vehicles']
 
@@ -192,6 +193,47 @@ class DataDumper(object):
             }})
 
         dump_yml.update({'vehicles': vehicle_dict})
+
+        # dump ego pose and speed
+        predicted_ego_pos = localization_manager.get_ego_pos()
+        true_ego_pos = localization_manager.vehicle.get_transform()
+        dump_yml.update({'predicted_ego_pos': [
+            predicted_ego_pos.location.x,
+            predicted_ego_pos.location.y,
+            predicted_ego_pos.location.z,
+            predicted_ego_pos.rotation.roll,
+            predicted_ego_pos.rotation.yaw,
+            predicted_ego_pos.rotation.pitch]})
+        dump_yml.update({'true_ego_pos': [
+            true_ego_pos.location.x,
+            true_ego_pos.location.y,
+            true_ego_pos.location.z,
+            true_ego_pos.rotation.roll,
+            true_ego_pos.rotation.yaw,
+            true_ego_pos.rotation.pitch]})
+        dump_yml.update({'ego_speed': localization_manager.get_ego_spd()})
+
+        # dump lidar sensor transformation
+        lidar_transformation = self.lidar.sensor.get_transform()
+        dump_yml.update({'lidar_pose': [
+            lidar_transformation.location.x,
+            lidar_transformation.location.y,
+            lidar_transformation.location.z,
+            lidar_transformation.rotation.roll,
+            lidar_transformation.rotation.yaw,
+            lidar_transformation.rotation.pitch]})
+
+        # dump camera sensor transformation
+        for (i, camera) in enumerate(self.rgb_camera):
+            camera_transformation = camera.sensor.get_transform()
+            dump_yml.update({'camera_%d' % i: [
+                camera_transformation.location.x,
+                camera_transformation.location.y,
+                camera_transformation.location.z,
+                camera_transformation.rotation.roll,
+                camera_transformation.rotation.yaw,
+                camera_transformation.rotation.pitch
+            ]})
 
         yml_name = '%06d' % frame + '.yaml'
         save_path = os.path.join(self.save_parent_folder,

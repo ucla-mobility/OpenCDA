@@ -218,7 +218,7 @@ class SemanticLidarSensor:
         blueprint.set_attribute('upper_fov', str(config_yaml['upper_fov']))
         blueprint.set_attribute('lower_fov', str(config_yaml['lower_fov']))
         blueprint.set_attribute('channels', str(config_yaml['channels']))
-        blueprint.set_attribute('range', str(config_yaml['range']))
+        blueprint.set_attribute('range', str(config_yaml['range'] - 10))
         blueprint.set_attribute(
             'points_per_second', str(
                 config_yaml['points_per_second']))
