@@ -13,13 +13,16 @@ class PlatoonDebugHelper(PlanDebugHelper):
     """This class aims to save statistics for platoon behaviour
 
     Parameters
-    -actor_id : int
+    ----------
+    actor_id : int
         The actor ID of the selected vehcile.
 
     Attributes
-    -time_gap_list : list
+    ----------
+    time_gap_list : list
         The list containing intra-time-gap(s) of all time-steps.
-    -dist_gap_list : list
+
+    dist_gap_list : list
         The list containing distance gap(s) of all time-steps.
     """
 
@@ -33,11 +36,19 @@ class PlatoonDebugHelper(PlanDebugHelper):
         """
         Update the platoon related vehicle information.
 
-        Args:
-            -ego_speed (float): Ego vehcile speed.
-            -ttc (flaot): Ego vehicle time-to-collision.
-            -time_gap (float): Ego vehicle time gap with the front vehicle.
-            -dist_gap (float): Ego vehicle distance gap with front vehicle.
+        Parameters
+        ----------
+        ego_speed : float
+            Ego vehcile speed.
+
+        ttc : float
+            Ego vehicle time-to-collision.
+
+        time_gap : float
+            Ego vehicle time gap with the front vehicle.
+
+        dist_gap : float
+            Ego vehicle distance gap with front vehicle.
         """
         super().update(ego_speed, ttc)
         # at the very beginning, the vehicle speed is 0, which causes
