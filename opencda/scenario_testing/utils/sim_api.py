@@ -165,6 +165,7 @@ class ScenarioManager:
         single_cav_list : list
             A list contains all single CAVs' vehicle manager.
         """
+        print('Creating single CAVs.')
         # By default, we use lincoln as our cav model.
         cav_vehicle_bp = \
             self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
@@ -234,6 +235,7 @@ class ScenarioManager:
         single_cav_list : list
             A list contains all single CAVs' vehicle manager.
         """
+        print('Creating platoons/')
         platoon_list = []
         self.cav_world = CavWorld(self.apply_ml)
 
@@ -455,6 +457,7 @@ class ScenarioManager:
         bg_list : list
             The list that contains all the background traffic vehicles.
         """
+        print('Spawning CARLA traffic flow.')
         traffic_config = self.scenario_params['carla_traffic_manager']
         tm = self.client.get_trafficmanager()
 
@@ -477,7 +480,7 @@ class ScenarioManager:
 
         else:
             sys.exit('Traffic vehicle list param has to be a list or int!')
-
+        print('CARLA traffic flow generated.')
         return tm, bg_list
 
     def destroyActors(self):

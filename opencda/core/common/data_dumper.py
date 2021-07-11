@@ -12,8 +12,11 @@ import cv2
 import open3d as o3d
 import numpy as np
 
+from opencda.core.common.misc import get_speed
+from opencda.scenario_testing.utils.yaml_utils import save_yaml
 
-class DataDumper:
+
+class DataDumper(object):
     """
     Data dumper class to save data in local disk.
 
@@ -73,19 +76,35 @@ class DataDumper:
 
         self.count = 0
 
-    def run_step(self):
+    def run_step(self, perception_manager, localization_manager):
         """
         Dump data at running time.
+
+        Parameters
+        ----------
+        perception_manager : opencda object
+            OpenCDA perception manager.
+
+        localization_manager : opencda object
+            OpenCDA localization manager.
         """
         self.count += 1
-        # we ignore the first 30 steps
-        if self.count < 30:
+        # we ignore the first 60 steps
+        if self.count < 60:
             return
 
         # save data for every 5 steps
         if self.count % 5 != 0:
             return
 
+        self.save_rgb_image()
+        self.save_lidar_points()
+        self.save_yaml_file(perception_manager, localization_manager)
+
+    def save_rgb_image(self):
+        """
+        Save camera rgb images to disk.
+        """
         for (i, camera) in enumerate(self.rgb_camera):
 
             frame = camera.frame
@@ -103,6 +122,10 @@ class DataDumper:
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
 
+    def save_lidar_points(self):
+        """
+        Save 3D lidar points to disk.
+        """
         point_cloud = self.lidar.data
         frame = self.lidar.frame
 
@@ -124,3 +147,96 @@ class DataDumper:
                                               pcd_name),
                                  pointcloud=o3d_pcd,
                                  write_ascii=True)
+
+    def save_yaml_file(self, perception_manager, localization_manager):
+        """
+        Save objects positions/spped, true ego position,
+        predicted ego position, sensor transformations.
+
+        Parameters
+        ----------
+        perception_manager : opencda object
+            OpenCDA perception manager.
+
+        localization_manager : opencda object
+            OpenCDA localization manager.
+        """
+        frame = self.lidar.frame
+
+        dump_yml = {}
+        vehicle_dict = {}
+
+        # dump obstacle vehicles first
+        objects = perception_manager.objects
+        vehicle_list = objects['vehicles']
+
+        for veh in vehicle_list:
+            veh_carla_id = veh.carla_id
+            veh_pos = veh.get_transform()
+            veh_bbx = veh.bounding_box
+            veh_speed = get_speed(veh)
+
+            assert veh_carla_id != -1, "Please turn off perception active" \
+                                       "mode if you are dumping data"
+
+            vehicle_dict.update({veh_carla_id: {
+                "center": [veh_pos.location.x,
+                           veh_pos.location.y,
+                           veh_pos.location.z],
+                "angle": [veh_pos.rotation.roll,
+                          veh_pos.rotation.yaw,
+                          veh_pos.rotation.pitch],
+                "extent": [veh_bbx.extent.x,
+                           veh_bbx.extent.y,
+                           veh_bbx.extent.z],
+                "speed": veh_speed
+            }})
+
+        dump_yml.update({'vehicles': vehicle_dict})
+
+        # dump ego pose and speed
+        predicted_ego_pos = localization_manager.get_ego_pos()
+        true_ego_pos = localization_manager.vehicle.get_transform()
+        dump_yml.update({'predicted_ego_pos': [
+            predicted_ego_pos.location.x,
+            predicted_ego_pos.location.y,
+            predicted_ego_pos.location.z,
+            predicted_ego_pos.rotation.roll,
+            predicted_ego_pos.rotation.yaw,
+            predicted_ego_pos.rotation.pitch]})
+        dump_yml.update({'true_ego_pos': [
+            true_ego_pos.location.x,
+            true_ego_pos.location.y,
+            true_ego_pos.location.z,
+            true_ego_pos.rotation.roll,
+            true_ego_pos.rotation.yaw,
+            true_ego_pos.rotation.pitch]})
+        dump_yml.update({'ego_speed': localization_manager.get_ego_spd()})
+
+        # dump lidar sensor transformation
+        lidar_transformation = self.lidar.sensor.get_transform()
+        dump_yml.update({'lidar_pose': [
+            lidar_transformation.location.x,
+            lidar_transformation.location.y,
+            lidar_transformation.location.z,
+            lidar_transformation.rotation.roll,
+            lidar_transformation.rotation.yaw,
+            lidar_transformation.rotation.pitch]})
+
+        # dump camera sensor transformation
+        for (i, camera) in enumerate(self.rgb_camera):
+            camera_transformation = camera.sensor.get_transform()
+            dump_yml.update({'camera_%d' % i: [
+                camera_transformation.location.x,
+                camera_transformation.location.y,
+                camera_transformation.location.z,
+                camera_transformation.rotation.roll,
+                camera_transformation.rotation.yaw,
+                camera_transformation.rotation.pitch
+            ]})
+
+        yml_name = '%06d' % frame + '.yaml'
+        save_path = os.path.join(self.save_parent_folder,
+                                 yml_name)
+
+        save_yaml(dump_yml, save_path)

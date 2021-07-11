@@ -40,7 +40,7 @@ vehicle_base: &vehicle_base
         heading_direction_stddev: 0.1 # degree
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
-        show_animation: true # whether to show real-time trajectory plotting
+        show_animation: false # whether to show real-time trajectory plotting
         x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
@@ -93,17 +93,11 @@ carla_traffic_manager:
   global_speed_perc: -100
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
-  random: false # whether to random select vehicles' color and model
-  vehicle_list:
-    - spawn_position: [101.7194, 139.51, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -200
-    - spawn_position: [57.7194, 143.51, 0.3, 0, 0, 0]
-    - spawn_position: [75.7194, 139.51, 0.3, 0, 0, 0]
-      vehicle_speed_perc: 0
-    - spawn_position: [161.7194, 139.51, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -300
-    - spawn_position: [ 141.7194, 136.51, 0.3, 0, 0, 0 ]
-      vehicle_speed_perc: -100
+  random: true # whether to random select vehicles' color and model
+  vehicle_list: 17  # a number or a list
+  # Used only when vehicle_list is a number.
+  # x_min, x_max, y_min, y_max, x_step, y_step
+  range: [ 50, 250, 135, 145, 20, 4]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
@@ -111,6 +105,18 @@ scenario:
     - <<: *vehicle_base
       spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
       destination: [630, 145.51, 0.3]
+      v2x:
+        <<: *base_v2x
+        communication_range: 45
+      behavior:
+        <<: *base_behavior
+        local_planner:
+          <<: *base_local_planner
+          debug_trajectory: false
+          debug: false
+    - <<: *vehicle_base
+      spawn_position: [ 67.7194, 143.51, 0.3, 0, 0, 0 ]
+      destination: [ 630, 143.51, 0.3 ]
       v2x:
         <<: *base_v2x
         communication_range: 45

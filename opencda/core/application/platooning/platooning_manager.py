@@ -21,25 +21,28 @@ class PlatooningManager(object):
     Platoon manager. Used to manage all vehicle managers inside the platoon.
 
     Parameters
-    -config_yaml : dict
+    ----------
+    config_yaml : dict
         The configuration dictionary for platoon.
-    -cav_world : opencda object
+
+    cav_world : opencda object
         CAV world that stores all CAV information.
 
     Attributes
-    -pmid : int
+    ----------
+    pmid : int
         The  platooning manager ID.
-    -vehicle_manager_list : list
+    vehicle_manager_list : list
         A list of all vehciel managers within the platoon.
-    -destination : carla.location
+    destination : carla.location
         The destiantion of the current plan.
-    -center_loc : carla.location
+    center_loc : carla.location
         The center location of the platoon.
-    -leader_target_speed : float
+    leader_target_speed : float
         The speed of the leader vehicle.
-    -origin_leader_target_speed : float
+    origin_leader_target_speed : float
         The original planned target speed of the platoon leader.
-    -recover_speed_counter : int
+    recover_speed_counter : int
         The counter that record the number of speed recovery attempts.
     """
 
@@ -65,8 +68,10 @@ class PlatooningManager(object):
         """
         Set the leader of the platooning
 
-        Args:
-            -vehicle_manager (opencda object): The vehicle manager class.
+        Parameters
+        __________
+        vehicle_manager : opencda object
+            The vehicle manager class.
         """
         self.add_member(vehicle_manager, leader=True)
 
@@ -78,10 +83,13 @@ class PlatooningManager(object):
         """
         Add memeber to the current platooning
 
-        Args:
-            -leader (boolean): Indicator of whether this cav is a leader.
-            -vehicle_manager (opencda object): The vehicle manager class.
-        :return:
+        Parameters
+        __________
+        leader : boolean
+            Indicator of whether this cav is a leader.
+
+        vehicle_manager : opencda object
+            The vehicle manager class.
         """
         self.vehicle_manager_list.append(vehicle_manager)
         vehicle_manager.v2x_manager.set_platoon(
@@ -95,10 +103,16 @@ class PlatooningManager(object):
         """
         Set member at specific index
 
-        Args:
-            -lead (boolean): Indicator of whether this cav is a leader.
-            -vehicle_manager (opencda object): The vehicle manager class.
-            -index (int): The platoon index of the current vehicle.
+        Parameters
+        ----------
+        lead : boolean
+            Indicator of whether this cav is a leader.
+
+        vehicle_manager : opencda object
+            The vehicle manager class.
+
+        index : int
+            The platoon index of the current vehicle.
         """
         self.vehicle_manager_list.insert(index, vehicle_manager)
         vehicle_manager.v2x_manager.set_platoon(index,
@@ -142,7 +156,7 @@ class PlatooningManager(object):
     def reset_speed(self):
         """
         After joining request accepted for certain steps,
-         the platoon will return to the origin speed.
+        the platoon will return to the origin speed.
         """
         if self.recover_speed_counter <= 0:
             self.leader_target_speed = self.origin_leader_target_speed
@@ -152,12 +166,16 @@ class PlatooningManager(object):
     def response_joining_request(self, request_loc):
         """
         Identify whether to accept the joining request based on capacity.
-        Args:
-            -request_loc (carla.Location): request vehicle location.
 
-        Returns:
-            -response (boolean): Indicator of whether the
-            joining request is accepted.
+        Parameters
+        ----------
+        request_loc : carla.Location)
+            Request vehicle location.
+
+        Returns
+        -------
+        response : boolean
+        Indicator of whether the joining request is accepted.
 
         """
         if len(self.vehicle_manager_list) >= self.maximum_capacity:
@@ -199,6 +217,11 @@ class PlatooningManager(object):
     def run_step(self):
         """
         Run one control step for each vehicles.
+
+        Returns
+        -------
+        control_list : list
+            The control command list for all vehicles.
         """
         control_list = []
         for i in range(len(self.vehicle_manager_list)):
@@ -214,6 +237,15 @@ class PlatooningManager(object):
     def evaluate(self):
         """
         Used to save all members' statistics.
+
+        Returns
+        -------
+        figure : matplotlib.figure
+            The figure drawing performance curve passed back to save to
+            the disk.
+
+        perform_txt : str
+            The string that contains all evaluation results to print out.
         """
 
         velocity_list = []

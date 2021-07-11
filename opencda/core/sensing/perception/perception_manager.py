@@ -23,7 +23,7 @@ from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_camera_lidar_fusion
 
 
-class CameraSensor(object):
+class CameraSensor:
     """
     Camera manager.
 
@@ -101,7 +101,7 @@ class CameraSensor(object):
         self.timestamp = event.timestamp
 
 
-class LidarSensor(object):
+class LidarSensor:
     """
     Lidar sensor manager.
 
@@ -185,7 +185,91 @@ class LidarSensor(object):
         self.timestamp = event.timestamp
 
 
-class PerceptionManager(object):
+class SemanticLidarSensor:
+    """
+    Semantic lidar sensor manager. This class is used when data dumping
+    is needed.
+
+    Parameters
+    ----------
+    vehicle : carla.Vehicle
+        carla Vehicle, we need this to spawn sensors.
+
+    config_yaml : dict
+        Configuration dictionary, the same as the normal lidar.
+
+    Attributes
+    ----------
+    o3d_pointcloud : 03d object
+        Received point cloud, saved in o3d.Pointcloud format.
+
+    sensor : carla.sensor
+        Lidar sensor that will be attached to the vehicle.
+
+
+    """
+    def __init__(self, vehicle, config_yaml):
+        world = vehicle.get_world()
+        blueprint =\
+            world.get_blueprint_library().\
+                find('sensor.lidar.ray_cast_semantic')
+
+        # set attribute based on the configuration
+        blueprint.set_attribute('upper_fov', str(config_yaml['upper_fov']))
+        blueprint.set_attribute('lower_fov', str(config_yaml['lower_fov']))
+        blueprint.set_attribute('channels', str(config_yaml['channels']))
+        blueprint.set_attribute('range', str(config_yaml['range'] - 10))
+        blueprint.set_attribute(
+            'points_per_second', str(
+                config_yaml['points_per_second']))
+        blueprint.set_attribute(
+            'rotation_frequency', str(
+                config_yaml['rotation_frequency']))
+
+        # spawn sensor on vehicle
+        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.8))
+        self.sensor = world.spawn_actor(
+            blueprint, spawn_point, attach_to=vehicle)
+
+        # lidar data
+        self.points = None
+        self.obj_idx = None
+        self.obj_tag = None
+
+        self.timestamp = None
+        self.frame = 0
+        # open3d point cloud object
+        self.o3d_pointcloud = o3d.geometry.PointCloud()
+
+        weak_self = weakref.ref(self)
+        self.sensor.listen(
+            lambda event: SemanticLidarSensor._on_data_event(
+                weak_self, event))
+
+    @staticmethod
+    def _on_data_event(weak_self, event):
+        """Semantic Lidar  method"""
+        self = weak_self()
+        if not self:
+            return
+
+        # shape:(n, 6)
+        data = np.frombuffer(event.raw_data, dtype=np.dtype([
+            ('x', np.float32), ('y', np.float32), ('z', np.float32),
+            ('CosAngle', np.float32), ('ObjIdx', np.uint32),
+            ('ObjTag', np.uint32)]))
+
+        # (x, y, z, intensity)
+        self.points = np.array([data['x'], data['y'], data['z']]).T
+        self.obj_tag = np.array(data['ObjTag'])
+        self.obj_idx = np.array(data['ObjIdx'])
+
+        self.data = data
+        self.frame = event.frame
+        self.timestamp = event.timestamp
+
+
+class PerceptionManager:
     """
     Default perception module. Currenly only used to detect vehicles.
 
@@ -200,6 +284,9 @@ class PerceptionManager(object):
     ml_manager : opencda object
         Shared ML library and models across all CAVs.
 
+    data_dump : bool
+        Whether dumping data, if true, semantic lidar will be spawned.
+
     Attributes
     ----------
     lidar : opencda object
@@ -209,17 +296,20 @@ class PerceptionManager(object):
         RGB camera manager.
 
     o3d_vis : o3d object
-        Open3d pointcloud visualizer.
-
+        Open3d point cloud visualizer.
     """
 
-    def __init__(self, vehicle, config_yaml, ml_manager):
+    def __init__(self, vehicle, config_yaml, ml_manager, data_dump=False):
         self.vehicle = vehicle
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
         self.camera_num = min(config_yaml['camera_num'], 3)
         self.lidar_visualize = config_yaml['lidar_visualize']
+
+        if self.activate and data_dump:
+            sys.exit("When you dump data, please deactivate the "
+                     "detection function for precise label.")
 
         if self.activate and not ml_manager:
             sys.exit(
@@ -250,10 +340,19 @@ class PerceptionManager(object):
             self.lidar = None
             self.o3d_vis = None
 
+        # if data dump is true, semantic lidar is also spawned
+        self.data_dump = data_dump
+        if data_dump:
+            self.semantic_lidar = SemanticLidarSensor(vehicle,
+                                                      config_yaml['lidar'])
+
         # count how many steps have been passed
         self.count = 0
-
+        # ego position
         self.ego_pos = None
+
+        # the dictionary contains all objects
+        self.objects = {}
 
     def dist(self, v):
         """
@@ -373,6 +472,8 @@ class PerceptionManager(object):
                 self.lidar.o3d_pointcloud,
                 objects)
 
+        self.objects = objects
+
         return objects
 
     def deactivate_mode(self, objects):
@@ -396,6 +497,10 @@ class PerceptionManager(object):
         vehicle_list = world.get_actors().filter("*vehicle*")
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
+
+        # use semantic lidar to filter out vehicles out of the range
+        if self.data_dump:
+            vehicle_list = self.filter_vehicle_out_sensor(vehicle_list)
 
         # convert carla.Vehicle to opencda.ObstacleVehicle if lidar
         # visualization is required.
@@ -432,7 +537,43 @@ class PerceptionManager(object):
                 self.lidar.o3d_pointcloud,
                 objects)
 
+        self.objects = objects
+
         return objects
+
+    def filter_vehicle_out_sensor(self, vehicle_list):
+        """
+        By utilizing semantic lidar, we can retrieve the objects that
+        are in the lidar detection range from the server.
+        This function is important for collect training data for object
+        detection as it can filter out the objects out of the senor range.
+
+        Parameters
+        ----------
+        vehicle_list : list
+            The list contains all vehicles information retrieves from the
+            server.
+
+        Returns
+        -------
+        new_vehicle_list : list
+            The list that filters out the out of scope vehicles.
+
+        """
+        semantic_idx = self.semantic_lidar.obj_idx
+        semantic_tag = self.semantic_lidar.obj_tag
+
+        # label 10 is the vehicle
+        vehicle_idx = semantic_idx[semantic_tag == 10]
+        # each individual instance id
+        vehicle_unique_id = list(np.unique(vehicle_idx))
+
+        new_vehicle_list = []
+        for veh in vehicle_list:
+            if veh.id in vehicle_unique_id:
+                new_vehicle_list.append(veh)
+
+        return new_vehicle_list
 
     def visualize_3d_bbx_front_camera(self, objects, rgb_image):
         """
@@ -486,6 +627,8 @@ class PerceptionManager(object):
             loc = v.get_location()
             for obstacle_vehicle in objects['vehicles']:
                 obstacle_speed = get_speed(obstacle_vehicle)
+                # if speed > 0, it represents that the vehicle
+                # has been already matched.
                 if obstacle_speed > 0:
                     continue
                 obstacle_loc = obstacle_vehicle.get_location()
@@ -495,6 +638,7 @@ class PerceptionManager(object):
                         loc.y -
                         obstacle_loc.y) <= 3.0:
                     obstacle_vehicle.set_velocity(v.get_velocity())
+                    obstacle_vehicle.set_carla_id(v.id)
 
     def destroy(self):
         """
@@ -512,3 +656,6 @@ class PerceptionManager(object):
 
         if self.lidar_visualize:
             self.o3d_vis.destroy_window()
+
+        if self.data_dump:
+            self.semantic_lidar.sensor.destroy()
