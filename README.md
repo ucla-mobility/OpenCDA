@@ -14,7 +14,7 @@ We welcome your contributions!
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) to see more details.
 
 ## Major Components
-![teaser](docs/images/OpenCDA_diagrams.png )
+![teaser](docs/md_files/images/OpenCDA_diagrams.png )
 
 OpenCDA  is composed of three major component: <strong>Cooperative Driving System</strong>,  <strong>Co-Simulation Tools</strong>,
 and  <strong>Scenario Manager</strong>.
@@ -22,7 +22,7 @@ and  <strong>Scenario Manager</strong>.
 Check the [OpenCDA Introduction](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_introduction/) for more details.
 
 ## Get Started
-![teaser](docs/images/platoon_joining_2lanefree_complete.gif)
+![teaser](docs/md_files/images/platoon_joining_2lanefree_complete.gif)
 ### Users Guide
 1. [Installation](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_installation)
 1. [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_getstarted)
@@ -39,7 +39,8 @@ We welcome your contributions.
  If you are using our framework for your development, please cite the following paper:
  ```bibtex
 @inproceedings{xu2021opencda,
-title={OpenCDA: An Open Cooperative Driving Automation Framework Integrated with Multi-resolution Simulations},
+title={OpenCDA:  An  Open  Cooperative  Driving  Automation  Framework
+Integrated  with  Co-Simulation},
 author={Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Jiaqi Ma},
 booktitle={2021 IEEE Intelligent Transportation Systems Conference (ITSC)},
 year={2021}

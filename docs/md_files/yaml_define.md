@@ -23,9 +23,14 @@ carla_traffic_manager: # define the background traffic controled by carla.Traffi
   global_speed_perc: -100 # define the default speed of traffic flow
   auto_lane_change: false # whether lane change is allowed in the traffic flow
   ...: # some other parameters
+  random: true # whether the car models of traffic flow are random selected
   vehicle_list: # define all human drive vehicles' position and individual speed
     - spawn_position: [x,y,z,pitch,yaw,roll]
       vehicle_speed_perc: -200 # this speed will overwrite the default traffic flow speed
+  # this is another we to define carla traffic flow by giving the number of
+  # spawn vehicles and the spawn range.
+  # vehicle_list : 10 
+  # range: [x1, y1, x2, y2]
     
 platoon_base: &platoon_base # define the platoon default characteristics
   max_capacity: 10

@@ -1,4 +1,4 @@
-opencda
+API Reference
 =======
 
 .. toctree::
