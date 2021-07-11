@@ -3,7 +3,7 @@ Current autonomous driving simulation platforms that support scene rendering and
 on single-vehicle intelligence, therefore, developing and testing Cooperative Driving Automation applications(e.g., cooperative perception,
 cooperative merge) under a realistic simulated environment becomes difficult.
  
- OpenCDA is created to fill such gap.
+OpenCDA is created to fill such gap. 
 
 ### Major Components
 ![teaser](images/OpenCDA_diagrams.png )
@@ -19,17 +19,18 @@ cooperative merge) under a realistic simulated environment becomes difficult.
  Through such lightweight configuration, researchers can conveniently test and evaluate their algorithms under different scenarios. In the next verision v0.2, 
  OpenScenario will be supported to trigger special events.
 
-### Features in current version
-* Support both cooperative driving automation and single autonomous vehicle development in CARLA simulator.
-* Default scenario database provided.
-* Convenient API provided to construct scenario and traffic flow(less than 5 lines of code). All parameters during simulation
-can be defined in yaml file.
-* Default algorithms installed for perception, localization, planning, control, platooning and cooperative merging.
-* Lossless and simultaneous communications between connected automated vehicles supported.
-* Highly modularized, users can replace the default modules with their own implementation easily.
-* Various visualization and performance analysis tools integrated.
+### Key Features
+The key features of OpenCDA can be summarized as <strong>CIFMB</strong>:
+* <strong>C</strong>onnectivity and <strong>C</strong>ooperation: OpenCDA supports various levels and categories of cooperation between CAVs in simulation.
+  This differentiates OpenCDA with other single vehicle automation tools.
+* <strong>I</strong>ntegration: OpenCDA integrates CARLA and SUMO together for realistic scene rendering, vehicle modeling and traffic simulation.
+* <strong>F</strong>ull-stack System: OpenCDA provides a full-stack software system that contains perception, localization, planning, control, and V2X communication modules.
+* <strong>M</strong>odularity: OpenCDA is highly modularized, enabling users to conveniently replace any default algorithms or protocols with their own customzied design. 
+* <strong>B</strong>enchmark: OpenCDA offers benchmark testing scenarios, state-of-the-art benchmark algorithms for all modules, benchmark testing road maps, and benchmark evaluation metrics.
 
 ### Planned features in the next version
-* Add SUMO and NS3 to the framework.
+* Add clean SUMO version to the pipeline(The functions have been finished, we are
+  cleaning the codes).
 * Cooperative localization implementation.
+* Cooperative perception implementation.
 
