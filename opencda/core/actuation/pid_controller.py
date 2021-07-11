@@ -130,15 +130,6 @@ class Controller:
                        (self._lat_k_i * _ie),
                        -1.0, 1.0)
 
-    """
-    Generate the throttle command based on current speed and target speed
-
-    Args:
-        -target_location (carla.loaction): Target location.
-    Returns:
-        -current_steering (float): Desired steering angle value
-        for the current step to achieve target location.
-    """
     def lat_run_step(self, target_location):
         """
         Generate the throttle command based on current speed and target speed

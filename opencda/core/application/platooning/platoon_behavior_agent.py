@@ -27,26 +27,35 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     ----------
     vehicle : carla.Vehicle
         The carla vehicle.
+
     vehicle_manager : opencda object
         The vehicle manager, used when joining platoon finished.
+
     v2x_manager : opencda object
         Used to received and deliver information.
+
     behavior_yaml : dict
         The configuration dictionary for BehaviorAgent.
+
     platoon_yaml : dict.
         The configuration dictionary for platoon behavior.
+
     carla_map : carla.Map
         The HD Map used in the simulation.
 
     Attributes
     ----------
-    -ehicle_manager : opencda object
-        The weak reference of the vehicle manager,
-         used when joining platoon finished.
+    vehicle_manager : opencda object
+        The weak reference of the vehicle manager, used when joining platoon
+        finished.
+
     v2x_manager : opencda object
         The weak reference of the v2x_manager
+
     debug_helper : opencda Object
-        A debug helper used to record the driving performance during platooning
+        A debug helper used to record the driving performance
+         during platooning
+
     inter_gap : float
         The desired time gap between each platoon member.
     """
@@ -103,8 +112,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         ----------
         target_speed : float
             Target speed in km/h
+
         collision_detector_enabled : bool
             Whether collision detection enabled.
+
         lane_change_allowed : bool
             Whether lane change is allowed.
         """
@@ -212,11 +223,17 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Update the perception and localization
         information to the behavior agent.
-        Args:
-            -ego_pos (carla.Transform): ego position from localization module.
-            -ego_speed (float): km/h, ego speed.
-            -objects (dictionary): Objects detection results from
-            perception module.
+
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego position from localization module.
+
+        ego_speed : float
+            km/h, ego speed.
+
+        objects : dictionary
+            Objects detection results from perception module.
         """
         # update localization information
         self._ego_speed = ego_speed
@@ -246,9 +263,11 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Called when a joining is finish to update the platoon manager list.
 
-        Args:
-            -insert_vehicle (string): indicate use the front or rear vehicle
-             index to update the platoon manager list.
+        Parameters
+        ----------
+        insert_vehicle : string
+            indicate use the front or rear vehicle index to update
+            the platoon manager list.
         """
         frontal_vehicle_manager, rear_vehicle_manager = \
             self.v2x_manager.get_platoon_front_rear()
@@ -268,9 +287,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Calculate the current vehicle and frontal vehicle's time/distance gap.
 
-        Args:
-            -distance (float):  distance between
-            the ego vehicle and frontal vehicle
+        Parameters
+        ----------
+        distance : float
+            Distance between the ego vehicle and frontal vehicle.
         """
         # we need to count the vehicle length in to calculate the gap
         boundingbox = self.vehicle.bounding_box
@@ -285,8 +305,10 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Car following behavior in platooning with gap regulation.
 
-        Args:
-            - inter_gap (float): the gap designed for platooning
+        Parameters
+        __________
+        inter_gap : float
+            The gap designed for platooning.
         """
 
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
@@ -385,13 +407,17 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Merge the vehicle into the platooning.
 
-        Args:
-            -frontal_vehicle_vm (opencda object): The vehivlel manager of the
-             front vehicle.
-        Returns:
-            -target_speed (float): The target speed for ego vehicle.
-            -target_waypoint (carla.waypoint): The target waaypoint for
-             ego vehcile.
+        Parameters
+        ----------
+        frontal_vehicle_vm : opencda object
+            The vehivle manager of the front vehicle.
+        Returns
+        -------
+        target_speed : float
+            The target speed for ego vehicle.
+
+        target_waypoint : carla.waypoint
+            The target waypoint for ego vehicle.
         """
         print("start merging !")
         self.lane_change_allowed = True
@@ -425,6 +451,14 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     def run_step_maintaining(self):
         """
         Next step behavior planning for speed maintaining.
+
+        Returns
+        -------
+        target_speed : float
+            The target speed for ego vehicle.
+
+        target_waypoint : carla.waypoint
+            The target waypoint for ego vehicle.
         """
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
         self.current_gap = self.inter_gap
@@ -460,10 +494,13 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         The vehicle is trying to get to the move in point.
 
-        Args:
-            -target_speed (float): The target speed for ego vehile.
-            -target_waypoint (carla.waypoint): The waypoint for ego vehile.
-            -next FSM state (enum): The next finite state machine state.
+        Returns
+        -------
+        target_speed : float
+            The target speed for ego vehicle.
+
+        target_waypoint : carla.waypoint
+            The target waypoint for ego vehicle.
         """
 
         frontal_vehicle_manager, rear_vehicle_vm = \
@@ -556,6 +593,14 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     def run_step_cut_in_joining(self):
         """
         Check if the vehicle has been joined successfully.
+
+        Returns
+        -------
+        target_speed : float
+            The target speed for ego vehicle.
+
+        target_waypoint : carla.waypoint
+            The target waypoint for ego vehicle.
         """
         print("merging speed %d" % self._ego_speed)
 
@@ -591,6 +636,14 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     def run_step_open_gap(self):
         """
         Open gap for cut-in vehicle.
+
+        Returns
+        -------
+        target_speed : float
+            The target speed for ego vehicle.
+
+        target_waypoint : carla.waypoint
+            The target waypoint for ego vehicle.
         """
         frontal_vehicle_manager, rear_vehicle_manager \
             = self.v2x_manager.get_platoon_front_rear()
@@ -618,9 +671,13 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Back-joining Algorithm.
 
-        Returns:
-            -control command (opencda object): control command.
-            -back join status (enum): FSM back joining status.
+        Returns
+        -------
+        target_speed : float
+            The target speed for ego vehicle.
+
+        target_waypoint : carla.waypoint
+            The target waypoint for ego vehicle.
         """
         frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
         # reset lane change flag every step
@@ -753,9 +810,13 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         """
         Front-joining algorithm.
 
-        Returns:
-            -control command (opencda object): control command.
-            -back join status (enum): FSM back joining status.
+        Returns
+        -------
+        target_speed : float
+            The target speed for ego vehicle.
+
+        target_waypoint : carla.waypoint
+            The target waypoint for ego vehicle.
         """
         _, rear_vehicle_manager = self.v2x_manager.get_platoon_front_rear()
         # get necessary information of the ego vehicle and target vehicle in
