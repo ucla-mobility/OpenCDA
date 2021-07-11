@@ -8,7 +8,6 @@ API Reference
     opencda.core.sensing.localization
     opencda.core.plan
     opencda.core.actuation
-    opencda.core.actuation
     opencda.core.common
     opencda.core.application.platooning
     opencda.customize.ml_libs

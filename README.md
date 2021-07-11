@@ -10,7 +10,7 @@ perception, localization, planning, control) on <strong>multi-resolution simulat
 
 OpenCDA is still under development, and many features are still in the future roadmap. 
 We welcome your contributions!
-
+ 
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) to see more details.
 
 ## Major Components
@@ -24,10 +24,10 @@ Check the [OpenCDA Introduction](https://opencda-documentation.readthedocs.io/en
 ## Get Started
 ![teaser](docs/md_files/images/platoon_joining_2lanefree_complete.gif)
 ### Users Guide
-1. [Installation](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_installation)
-1. [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_getstarted)
-1. [Tutorials](https://opencda-documentation.readthedocs.io/en/latest/OpenCDA_tutorial/)
-1. [Python API](https://opencda-documentation.readthedocs.io/en/latest/PythonAPI/)
+1. [Installation](https://opencda-documentation.readthedocs.io/en/latest/md_files/installation.html)
+1. [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/md_files/getstarted.html)
+1. [Tutorials](https://opencda-documentation.readthedocs.io/en/latest/md_files/tutorial.html)
+1. [Python API](https://opencda-documentation.readthedocs.io/en/latest/modules.html)
 
 ### Developer Guide
 We welcome your contributions.
