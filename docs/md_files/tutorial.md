@@ -35,30 +35,38 @@ and construct the scenario through `opencda sim_api and map_api`.
 import opencda.scenario_testing.utils.sim_api as sim_api
 import opencda.scenario_testing.utils.customized_map_api as map_api
 from opencda.scenario_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.evaluations.evaluate_manager import \
+    EvaluationManager
 
 # Aad yaml file into a dictionary
 scenario_params = load_yaml(config_yaml)
+# Create CAV world object to store all CAV VehicleManager info.
+# this is the key element to achieve cooperation
+cav_world = CavWorld(opt.apply_ml)
+# create scenario manager
+scenario_manager = sim_api.ScenarioManager(scenario_params,
+                                           opt.apply_ml,
+                                           town='Town06',
+                                           cav_world=cav_world)
+# create a list of platoon
+platoon_list = \
+    scenario_manager.create_platoon_manager(
+        map_helper=map_api.spawn_helper_2lanefree,
+        data_dump=False)
 
-# setup the simulation server configuration
-simulation_config = scenario_params['world']
-client, world, carla_map, origin_settings = sim_api.createSimulationWorld(
-    simulation_config, 'town06')
+# create a list of single CAV
+single_cav_list = \
+    scenario_manager.create_vehicle_manager(application=['single'])
 
-# create background traffic in carla
-traffic_manager, bg_veh_list = sim_api.createTrafficManager(client, world,
-                                                            scenario_params[
-                                                                'carla_traffic_manager'])
+# create background traffic under Carla
+traffic_manager, bg_veh_list = \
+    scenario_manager.create_traffic_carla()
 
-# create platoon members
-platoon_list, cav_world = sim_api.createPlatoonManagers(world, carla_map,
-                                                        scenario_params,
-                                                        opt.apply_ml)
-
-# create single cavs
-single_cav_list = sim_api.createVehicleManager(world, scenario_params,
-                                               ['platooning'], cav_world,
-                                               carla_map)
-
+# create the evaluation manager
+eval_manager = \
+    EvaluationManager(scenario_manager.cav_world,
+                      script_name='platoon_joining_town06_carla',
+                      current_time=scenario_params['current_time'])
 
 
 ```

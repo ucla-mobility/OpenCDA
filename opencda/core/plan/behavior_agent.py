@@ -28,38 +28,53 @@ class BehaviorAgent(object):
     A modulized version of carla BehaviorAgent.
 
     Parameters
-    -vehicle : carla.Vehicle
+    ----------
+    vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
-    -carla_map : carla.map
+
+    carla_map : carla.map
         The carla HD map for simulation world.
-    -config : dict
+
+    config : dict
         The configuration dictionary of the localization module.
 
     Attributes
-    -_ego_pos : carla.position
+    ----------
+    _ego_pos : carla.position
         Posiion of the ego vehicle.
-    -_ego_speed : float
+
+    _ego_speed : float
         Speed of the ego vehicle.
-    -_map : carla.map
+
+    _map : carla.map
         The HD map of the current simulation world.
-    -max_speed : float
+
+    max_speed : float
         The current speed limit of the ego vehicles.
-    -break_distance : float
+
+    break_distance : float
         The current distance needed for ego vehicle to reach a steady stop.
-    -_collision_check : collisionchecker
+
+    _collision_check : collisionchecker
         A collision check class to estimate the collision with front obstacle.
-    -ignore_traffic_light : boolean
+
+    ignore_traffic_light : boolean
         Boolean indicator of whether to ignore traffic light.
-    -overtake_allowed : boolean
+
+    overtake_allowed : boolean
         Boolean indicator of whether to allow overtake.
-    -_local_planner : LocalPlanner
+
+    _local_planner : LocalPlanner
         A carla local planner class for behavior planning.
-    -lane_change_allowed : boolean
+
+    lane_change_allowed : boolean
         Boolean indicator of whether the lane change is allowed.
-    -white_list : list
+
+    white_list : list
         The white list contains all position of target
         platoon member for joining.
-    -debug_helper : PlanDebugHelper
+
+    debug_helper : PlanDebugHelper
         The helper class that help with the debug functions.
     """
 
@@ -127,11 +142,16 @@ class BehaviorAgent(object):
         Update the perception and localization information
         to the behavior agent.
 
-        Args:
-            -ego_pos (carla.Transform): ego position from localization module.
-            -ego_speed (float): km/h, ego speed.
-            -objects (dictionary): Objects detection results from
-             perception module.
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego position from localization module.
+
+        ego_speed : float
+            km/h, ego speed.
+
+        objects : dict
+            Objects detection results from perception module.
         """
         # update localization information
         self._ego_speed = ego_speed
@@ -166,11 +186,15 @@ class BehaviorAgent(object):
         The white list contains all position of target platoon
         member for joining.
 
-        Args:
-            -obstacles (list):  a list of carla.Vehicle or ObstacleVehicle
+        Parameters
+        ----------
+        obstacles : list
+            A list of carla.Vehicle or ObstacleVehicle
 
-        Returns:
-            -new_obstacle_list (list): the new list of obstacles.
+        Returns
+        -------
+        new_obstacle_list : list
+            The new list of obstacles.
         """
         new_obstacle_list = []
 
@@ -214,12 +238,22 @@ class BehaviorAgent(object):
         position to destination location based on the route returned
         by the global router.
 
-        Args:
-            -end_reset (boolean): Flag to reset the waypoint queue.
-            -start_location (carla.location): initial position.
-            -end_location (carla.location): final position.
-            -clean (boolean): Flag to clean the waypoint queue.
-            -clean_history (boolean): Flag to clean the waypoint history.
+        Parameters
+        ----------
+        end_reset : bool
+            Flag to reset the waypoint queue.
+
+        start_location : carla.location
+            Initial position.
+
+        end_location : carla.location
+            Final position.
+
+        clean : bool
+            Flag to clean the waypoint queue.
+
+        clean_history : bool
+            Flag to clean the waypoint history.
         """
         if clean:
             self.get_local_planner().waypoints_queue.clear()
@@ -262,8 +296,10 @@ class BehaviorAgent(object):
         approaching its destination.  It finds a new target and
          computes another path to reach it.
 
-        Args:
-        -spawn_points (list): list of possible destinations for the agent.
+        Parameters
+        ----------
+        spawn_points : list
+            List of possible destinations for the agent.
         """
 
         print("Target almost reached, setting new destination...")
@@ -281,9 +317,13 @@ class BehaviorAgent(object):
         This method sets up a global router and returns the
         optimal route from start_waypoint to end_waypoint.
 
-        Args:
-            -start_waypoint (carla.waypoint): initial position.
-            -end_waypoint carla.waypoint: final position.
+        Parameters
+        ----------
+        start_waypoint : carla.waypoint
+            Initial position.
+
+        end_waypoint : carla.waypoint
+            Final position.
         """
         # Setting up global router
         if self._global_planner is None:
@@ -310,8 +350,10 @@ class BehaviorAgent(object):
         So, the semaphore id is temporarely saved to ignore it and go around
         this issue, until the car is near a new one.
 
-        Args:
-            -waypoint (carla.waypoint): current waypoint of the agent.
+        Parameters
+        ----------
+        waypoint : carla.waypoint
+            Current waypoint of the agent.
         """
 
         light_id = self.vehicle.get_traffic_light(
@@ -331,17 +373,22 @@ class BehaviorAgent(object):
         """
         This module is in charge of warning in case of a collision.
 
-        Args:
-        -adjacent_check (boolean): whether it is a check for adjacent lane.
-        -rx (float): x coordinates of plan path.
-        -ry (float): y coordinates of plan path.
-        -ryaw (float): yaw angle.
-        -waypoint (carla.waypoint): current waypoint of the agent.
-        -vehicle_state (string): True if there is a vehicle nearby,
-         False if not.
-        -vehicle (carla.vehicle): nearby vehicle.
-        Returns:
-        -distance (float): distance to nearby vehicle.
+        Parameters
+        ----------
+        rx : float
+            x coordinates of plan path.
+
+        ry : float
+            y coordinates of plan path.
+
+        ryaw : float
+            yaw angle.
+
+        waypoint : carla.waypoint
+            current waypoint of the agent.
+
+        adjacent_check : bool
+            Whether it is a check for adjacent lane.
         """
 
         def dist(v):
@@ -368,9 +415,15 @@ class BehaviorAgent(object):
         """
         Overtake behavior.
 
-        Args: -obstacle_vehicle (carla.vehicle): The obstacle vehicle.
-        Return: -vehicle_state (boolean): Flag indicating whether the
-        vehicle is in dangerous state.
+        Parameters
+        ----------
+        obstacle_vehicle : carla.vehicle
+            The obstacle vehicle.
+
+        Return
+        ------
+        vehicle_state : boolean
+            Flag indicating whether the vehicle is in dangerous state.
         """
         # obstacle vehicle's location
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
@@ -442,8 +495,10 @@ class BehaviorAgent(object):
         """
         Identify whether a potential hazard exits if operating lane change.
 
-        Returns:
-            vehicle_state (boolean): whether the lane change is dangerous
+        Returns
+        -------
+        vehicle_state : bool
+            Whether the lane change is dangerous.
         """
         ego_wpt = self._map.get_waypoint(self._ego_pos.location)
         ego_lane_id = ego_wpt.lane_id
@@ -472,14 +527,24 @@ class BehaviorAgent(object):
         Module in charge of car-following behaviors when there's
         someone in front of us.
 
-        Args:
-            -target_speed (float): The target car following speed.
-            -vehicle (carla.vehicle): Leading vehicle to follow.
-            -distance (float): distance from leading vehicle.
-            -control (carla.VehicleControl): Vehicle control of the next step.
-        Returns:
-            -target_speed (float): The target speed for the next step.
-            -target_loc (carla.location): The target location.
+        Parameters
+        ----------
+        vehicle : carla.vehicle)
+            Leading vehicle to follow.
+
+        distance : float
+            distance from leading vehicle.
+
+        target_speed : float
+            The target car following speed.
+
+        Returns
+        -------
+        target_speed : float
+            The target speed for the next step.
+
+        target_loc : carla.Location
+            The target location.
         """
         if not target_speed:
             target_speed = self.max_speed - self.speed_lim_dist
@@ -510,14 +575,22 @@ class BehaviorAgent(object):
         """
         Execute one step of navigation
 
-        Args:
-        -collision_detector_enabled (boolean): whether to enable
-        collision detection.
-        -target_speed (float):  a manual order to achieve certain speed.
-        -lane_change_allowed (boolean): whether lane change is allowed.
-         This is passed from platoon behavior agent.
-        Returns:
-        -control (carla.VehicleControl): Vehicle control of the next step.
+        Parameters
+        __________
+        collision_detector_enabled : bool
+            Whether to enable collision detection.
+
+        target_speed : float
+            A manual order to achieve certain speed.
+
+        lane_change_allowed : bool
+            Whether lane change is allowed. This is passed from
+            platoon behavior agent.
+
+        Returns
+        -------
+        control : carla.VehicleControl
+            Vehicle control of the next step.
         """
         # retrieve ego location
         ego_vehicle_loc = self._ego_pos.location

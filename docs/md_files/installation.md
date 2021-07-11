@@ -31,30 +31,12 @@ will retrieve all perception information from the simulation server directly.
 
 ###  1. CARLA Installation(0.9.11 required)
 
-There are three different  ways to install the CARLA simulator and either way is fine for using OpenCDA. <br>
+There are two different recommended ways to install the CARLA simulator and either way is fine for using OpenCDA. <br>
 ** Note: If you want to use the customized highway map with full assets(.fbx, .xml and .xodr) in OpenCDA, 
 you have to build from source. Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information.
 
-#### 1.1 Debian CARLA installation
 
-Set up the Debian repository in the system.
-```sh
-   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1AF1527DE64CB8D9
-   sudo add-apt-repository "deb [arch=amd64] http://dist.carla.org/carla $(lsb_release -sc) main"
-```
-Install CARLA and check for the installation in the `/opt/` folder.
-```sh
-   sudo apt-get update # Update the Debian package index
-   sudo apt-get install carla-simulator # Install the latest CARLA version, or update the current installation
-   cd /opt/carla-simulator # Open the folder where CARLA is installed
-```
-
-This repository contains CARLA 0.9.11 and later versions. To install a specific version add the version tag to the installation command.  
-```sh
-   sudo apt-get install carla-simulator=0.9.11
-```
-
-#### 1.2 Package installation
+#### 1.1 Package installation
 
 <div class="build-buttons">
 <p>
@@ -63,12 +45,12 @@ This repository contains CARLA 0.9.11 and later versions. To install a specific 
 </p>
 </div>
 
-OpenCDA is only tested at 0.9.11 and thus we highly recommend to use this version.
-To insall CARLA as a precompiled package, download and extract the release file. It contains a precompiled version of the simulator, the Python API module and some scripts to be used as examples. <br>
+OpenCDA is only tested at 0.9.11 and thus we highly recommend using this version.
+To install CARLA as a precompiled package, download and extract the release file. It contains a precompiled version of the simulator, the Python API module and some scripts to be used as examples. <br>
 ** Note: The  AdditionalMaps_0.9.11.tar.gz also need to be downloaded and extract to the CARLA repo to support
 scenario testings in Town06.
 
-#### 1.3 Build From Source
+#### 1.2 Build From Source
 
 For advanced CARLA usage that involves extensive customizations, [Build CARLA from Source](https://carla.readthedocs.io/en/latest/build_linux/) is also supported by OpenCDA. Though source build in 
 Windows OS is supported by CARLA, Ubuntu is the preferred OS as the OpenCDA was developoed in Ubuntu 18.04.  
@@ -118,7 +100,7 @@ This section is only needed for the users who want to test perception algorithms
 pytorch installed and it retrieves the object positions from the server directly. Once perception module is activated,
 then OpenCDA will use yolov5 with pytorch to run object detection. <br>
 To install pytorch based on your GPU and cuda version, go to the official pytorch website and install with conda command. Make
-sure you install pytorch >= 1.7.0
+sure you install pytorch >= 1.7.0. <strong>GPU Version highly recommended!</strong>
 <div class="build-buttons">
 <p>
 <a href="https://pytorch.org/" target="_blank" class="btn btn-neutral" title="Pytorch">

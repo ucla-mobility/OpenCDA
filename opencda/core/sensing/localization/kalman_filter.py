@@ -15,29 +15,29 @@ class KalmanFilter(object):
     Kalman Filter implementation for gps and imu.
 
     Parameters
-    -dt : float
+    ----------
+    dt : float
         The step time for kalman filter calculation.
 
     Attributes
-    -Q : numpy.array
+    ----------
+    Q : numpy.array
         predict state covariance.
-    -R : numpy.array
+
+    R : numpy.array
         Observation x,y position covariance.
-    -time_step : float
+
+    time_step : float
         The step time for kalman filter calculation.
-    -xEst : numpy.array
+
+    xEst : numpy.array
         Estimated x values.
-    -PEst : numpy.array
+
+    PEst : numpy.array
         The estimated P values.
     """
 
     def __init__(self, dt):
-        """
-        Construct class
-        Args:
-            dt(float): unit time step for simulation.
-        """
-
         self.Q = np.diag([
             0.2,  # variance of location on x-axis
             0.2,  # variance of location on y-axis
@@ -57,12 +57,19 @@ class KalmanFilter(object):
         """
         Predict current position and yaw based on
         previous result (X = F * X_prev + B * u).
-        Args:
-            -x (np.array) [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
-            -u (np.array): [v_current, imu_yaw_rate], shape:(2, 1).
 
-        Returns:
-            -x (np.array): predicted state.
+        Parameters
+        ----------
+        x : np.array
+            [x_prev, y_prev, yaw_prev, v_prev], shape: (4, 1).
+
+        u : np.array
+            [v_current, imu_yaw_rate], shape:(2, 1).
+
+        Returns
+        -------
+        x : np.array
+            Predicted state.
         """
         F = np.array([[1.0, 0, 0, 0],
                       [0, 1.0, 0, 0],
@@ -81,11 +88,16 @@ class KalmanFilter(object):
     def observation_model(self, x):
         """
         Project the state matrix to sensor measurement matrix.
-        Args:
-            -x (np.array): [x, y, yaw, v], shape: (4. 1).
 
-        Returns:
-            -z (np.array): predicted measurement.
+        Parameters
+        __________
+        x : np.array
+            [x, y, yaw, v], shape: (4. 1).
+
+        Returns
+        -------
+        z : np.array)
+            Predicted measurement.
 
         """
         H = np.array([
@@ -102,11 +114,19 @@ class KalmanFilter(object):
         """
         Initial state filling.
 
-        Args:
-            -x (float): The x coordinate.
-            -y (float): The y coordinate.
-            -heading (float): The heading direction.
-            -velocity (flaot): The velocity speed.
+        Parameters
+        ----------
+        x : float
+            The x coordinate.
+
+        y : float
+            The y coordinate.
+
+        heading : float
+            The heading direction.
+
+        velocity : float
+            The velocity speed.
 
         """
         self.xEst[0] = x
@@ -118,15 +138,27 @@ class KalmanFilter(object):
         """
         Apply KF on current measurement and previous prediction.
 
-        Args:
-            -x (float): x(esu) coordinate from gnss sensor at current timestamp
-            -y (float): y(esu) coordinate from gnss sensor at current timestamp
-            -heading (float): heading direction at current timestamp.
-            -velocity (float): current speed.
-            -yaw_rate_imu (float): yaw rate rad/s from IMU sensor.
-        Returns:
-            -Xest (np.array): The corrected x, y,
-            heading, and velocity information.
+        Parameters
+        ----------
+        x : float
+            x(esu) coordinate from gnss sensor at current timestamp
+
+        y : float
+            y(esu) coordinate from gnss sensor at current timestamp
+
+        heading : float
+            heading direction at current timestamp.
+
+        velocity : float
+            current speed.
+
+        yaw_rate_imu : float
+            yaw rate rad/s from IMU sensor.
+
+        Returns
+        -------
+        Xest : np.array
+            The corrected x, y, heading, and velocity information.
         """
         # gps observation
         z = np.array([x, y, heading]).reshape(3, 1)

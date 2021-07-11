@@ -10,5 +10,5 @@ nav:
     - Installation: OpenCDA_installation.md
     - Quick Start: OpenCDA_getstarted.md
     - Tutorials: OpenCDA_tutorial.md
-    - PythonAPI: PythonAPI.md
+    - PythonAPI: modules.rst
 

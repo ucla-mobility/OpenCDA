@@ -24,21 +24,28 @@ class GlobalRoutePlanner(object):
     A GlobalRoutePlannerDAO object.
 
     Parameters
-    -dao : carla.dao
+    ----------
+    dao : carla.dao
         A global plan that contains routes from start to end.
 
     Attributes
-    -_topology : carla.topology
+    ----------
+    _topology : carla.topology
         The topology graph of the current routes.
-    -_graph : nx.DiGraph
+
+    _graph : nx.DiGraph
         The node-edge graph of the current routes.
-    -_id_map : dict
+
+    _id_map : dict
         A map constructed with road segment IDs.
-    -_road_id_to_edge : list
+
+    _road_id_to_edge : list
         A mapping that reference road it to edge in the graph.
-    -_intersection_end_node : int
+
+    _intersection_end_node : int
         The node ID of at the end of the intersection.
-    -_previous_decision : carla.RoadOption
+
+    _previous_decision : carla.RoadOption
         The previous behavioral option of the ego vehicle.
     """
 

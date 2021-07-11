@@ -12,18 +12,23 @@ class CavWorld(object):
     information and shared ML models.
 
     Parameters
-    -apply_ml : boolean
-        whether apply ml/dl models in this simulation, please make sure
+    ----------
+    apply_ml : bool
+        Whether apply ml/dl models in this simulation, please make sure
         you have install torch/sklearn before setting this to True.
 
     Attributes
-    -vehicle_id_set : set
+    ----------
+    vehicle_id_set : set
         A set that stores vehicle IDs.
-    -_vehicle_manager_dict : dict
+
+    _vehicle_manager_dict : dict
         A dictionary that stores vehicle managers.
-    -_platooning_dict : dict
+
+    _platooning_dict : dict
         A dictionary that stores platooning managers.
-    -ml_manager : opencda object.
+
+    ml_manager : opencda object.
         The machine learning manager class.
     """
 
@@ -46,8 +51,10 @@ class CavWorld(object):
         """
         Update created CAV manager to the world.
 
-        Args
-            -vehicle_manager (opencda object): The vehicle manager class.
+        Parameters
+        ----------
+        vehicle_manager : opencda object
+            The vehicle manager class.
         """
         self.vehicle_id_set.add(vehicle_manager.vehicle.id)
         self._vehicle_manager_dict.update(
@@ -57,8 +64,10 @@ class CavWorld(object):
         """
         Add created platooning.
 
-        Args
-            -platooning_manger (opencda object): The platooning manager class.
+        Parameters
+        ----------
+        platooning_manger : opencda object
+            The platooning manager class.
         """
         self._platooning_dict.update(
             {platooning_manger.pmid: platooning_manger})
@@ -79,12 +88,15 @@ class CavWorld(object):
         """
         Locate the vehicle manager based on the given location.
 
-        Args
-            -loc (carla.Location): vehicle location.
+        Parameters
+        ----------
+        loc : carla.Location
+            Vehicle location.
 
         Returns
-            -target_vm (vehicle_manager): The vehicle manager
-             at the give location.
+        -------
+        target_vm : opencda object
+            The vehicle manager at the give location.
         """
 
         target_vm = None

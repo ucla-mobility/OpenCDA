@@ -10,7 +10,7 @@ import importlib
 
 class ControlManager(object):
     """
-    Controller manager that is used to choose
+    Controller manager that is used to select
     and call different controller's functions.
 
     Parameters

@@ -17,31 +17,43 @@ class PlatooningPlugin(object):
     Platooning plugin inside the V2X manager.
 
     Parameters
-    -search_range : float
+    ----------
+    search_range : float
         The search range of the communication equipment.
-    -cda_enabled : boolean
+
+    cda_enabled : boolean
         Whether connectivity is supported.
 
     Attributes
-    -leader : boolean
+    ----------
+    leader : boolean
         Boolean indicator of the platoon leader status.
-    -platooning_object : opencda object
+
+    platooning_object : opencda object
         The current platoon object.
-    -platooning_id : int
+
+    platooning_id : int
         The current platoon ID.
-    -in_id : int
+
+    in_id : int
         The position in the platoon.
-    -status : enum
+
+    status : enum
         The current platooning status.
-    -ego_pos : carla.transformation
+
+    ego_pos : carla.transformation
         The current position (i.e., location and rotation) of the ego vehicle.
-    -ego_spd : float
+
+    ego_spd : float
         The current speed(km/h) of the ego vehicle.
-    -platooning_blacklist : list
+
+    platooning_blacklist : list
         The platoon in the black list won't be considered again.
-    -front_vehicle : opencda object
+
+    front_vehicle : opencda object
         The front vehicle manager of the ego vehicle.
-    -rear_vechile : opencda object
+
+    rear_vechile : opencda object
         The rear vehicle manager of the ego vehicle.
     """
 
@@ -72,15 +84,13 @@ class PlatooningPlugin(object):
         """
         Update the ego position and speed
 
-        Args:
-            -heading_direction: groundtruth heading_direction
-                                obtained from the server.
-            -dummy_variable: dummy variable to test multiple return/args.
-            -dummy_variable: dummy variable to test multiple return/args.
-            -dummy_variable: dummy variable to test multiple return/args.
-        Returns:
-            -heading_direction: heading direction with noise.
-            -dummy_variable: dummy variable to test multiple return/args.
+        Parameters
+        ----------
+        ego_pos: carla.Transform
+            Ego pose.
+
+        ego_spd : float
+            Ego speed(km/h).
         """
         self.ego_pos = ego_pos
         self.ego_spd = ego_spd
@@ -104,13 +114,21 @@ class PlatooningPlugin(object):
             platooning_id=None,
             leader=False):
         """
-        Set platooning status
+        Set platooning status.
 
-        Args:
-            -in_id (int): Inner platoon ID of the vehicle.
-            -platooning_object (opencda object): The current platoon object.
-            -platooning_id (int): The current platoon ID.
-            -leader (boolean): Boolean indicator of the platoon leader status.
+        Parameters
+        ----------
+        in_id : int
+            Inner platoon ID of the vehicle.
+
+        platooning_object : opencda object
+            The current platoon object.
+
+        platooning_id : int
+            The current platoon ID.
+
+        leader : bool
+            Boolean indicator of the platoon leader status.
         """
         if in_id is None:
             if not self.cda_enabled:
@@ -138,8 +156,10 @@ class PlatooningPlugin(object):
         """
         Set FSM status
 
-        Args:
-            -status (string): The current platooning status.
+        Parameters
+        ----------
+        status : str
+            The current platooning status.
         """
         self.status = status
 
@@ -147,12 +167,20 @@ class PlatooningPlugin(object):
         """
         Search platoon candidate in the range
 
-        Args:
-            -ego_pos (carla.transformation): Ego vehicle current position.
-            -cav_world (carla.world): Current simulation world.
-        Returns:
-            -pmid (int): Platoon manager ID.
-            -pm (opencda object): Platoon manager ID.
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego vehicle current position.
+        cav_world : opencda object
+            Object that contains all information about CAVs.
+
+        Returns
+        -------
+        pmid : int
+            Platoon manager ID.
+
+        pm : opencda object
+            Platoon manager ID.
         """
         platoon_manager_dict = cav_world.get_platoon_dict()
         for pmid, pm in platoon_manager_dict.items():
@@ -167,12 +195,21 @@ class PlatooningPlugin(object):
         """
         A naive way to find the best position to join a platoon
 
-        Args:
-            -cav_world (carla.world): Current simulation world.
-        Returns:
-            -(boolean): The boolean indicator of matching result.
-            -min_index (int): The minimum index inside the selected platoon.
-            -platoon_vehicle_list (list): The list of platoon vehicle memebers.
+        Parameters
+        ----------
+        cav_world : opencda object
+            Object that contains all information about CAVs.
+
+        Returns
+        -------
+        matched : bool
+            The boolean indicator of matching result.
+
+        min_index : int
+            The minimum index inside the selected platoon.
+
+        platoon_vehicle_list : list
+            The list of platoon members.
         """
 
         # make sure the previous status won't influence current one

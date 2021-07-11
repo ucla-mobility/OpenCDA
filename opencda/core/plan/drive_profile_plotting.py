@@ -13,8 +13,10 @@ def draw_velocity_profile_single_plot(velocity_list):
     """
     Draw velocity profiles in a single plot.
 
-    Args:
-        -velocity_list (list): The vehicle velocity profile saved in a list.
+    Parameters
+    ----------
+    velocity_list : list
+         The vehicle velocity profile saved in a list.
     """
 
     for i, v in enumerate(velocity_list):
@@ -33,8 +35,10 @@ def draw_acceleration_profile_single_plot(acceleration):
     """
     Draw velocity profiles in a single plot.
 
-    Args:
-        -acceleration (list): The vehicle acceleration profile saved in a list.
+    Parameters
+    ----------
+    acceleration : list
+        The vehicle acceleration profile saved in a list.
 
     """
 
@@ -54,9 +58,10 @@ def draw_ttc_profile_single_plot(ttc_list):
     """
     Draw ttc.
 
-    Args:
-        -ttc_list (list): The vehicle time to
-         collision profile saved in a list.
+    Parameters
+    ----------
+    ttc_list : list
+        The vehicle time to collision profile saved in a list.
     """
     # this is used to find the merging vehicle position since its inter gap
     # length is always smaller
@@ -76,8 +81,10 @@ def draw_time_gap_profile_singel_plot(gap_list):
     """
     Draw inter gap profiles in a single plot.
 
-    Args:
-        -gap_list (list): The vehicle front time gap profile saved in a list.
+    Parameters
+    __________
+    gap_list : list
+        The vehicle front time gap profile saved in a list.
 
     """
 
@@ -96,9 +103,10 @@ def draw_dist_gap_profile_singel_plot(gap_list):
     """
     Draw distance gap profiles in a single plot.
 
-    Args:
-        -gap_list (list): The vehicle front distance gap
-         profile saved in a list.
+    Parameters
+    __________
+    gap_list : list
+        The vehicle front distance gap profile saved in a list.
     """
     for i, v in enumerate(gap_list):
         x_s = np.arange(len(v)) * 0.05
@@ -121,14 +129,22 @@ def draw_sub_plot(
     This is a specific function that draws 4 in 1 images
     for trajectory following task.
 
-    Args:
-        -velocity_list (list): The vehicle velocity profile saved in a list.
-        -distance_gap_list (list): The vehicle distance gap
-         profile saved in a list.
-        -time_gap_list (list): The vehicle time gap profile saved in a list.
-        -acceleration_list (list): The vehicle acceleration
-         profile saved in a list.
-        -ttc_list (list): The ttc list.
+    Parameters
+    ----------
+    velocity_list : list
+        The vehicle velocity profile saved in a list.
+
+    distance_gap_list : list
+        The vehicle distance gap profile saved in a list.
+
+    time_gap_list : list
+        The vehicle time gap profile saved in a list.
+
+    acceleration_list : list
+        The vehicle acceleration profile saved in a list.
+
+    ttc_list : list
+        The ttc list.
 
     """
     fig = plt.figure()
@@ -156,14 +172,3 @@ def draw_sub_plot(
     fig.legend(label, loc='upper right')
 
     return fig
-
-
-if __name__ == '__main__':
-    velocity_list = [[23, 25, 25, 44, 66], [44, 55, 25, 22, 33]]
-    fig = draw_sub_plot(
-        velocity_list,
-        velocity_list,
-        velocity_list,
-        velocity_list,
-        velocity_list)
-    plt.show()
