@@ -28,19 +28,19 @@ for latest release.
    modules
 
 
-.. Citing OpenCDA
-.. ============
 
-If you use OpenCDA for academic research, you are highly encouraged to cite our paper:
+**Citing OpenCDA**\ :
 
-``bibtex``
+If you use OpenCDA in a scientific publication, we would appreciate
+citations to the following paper::
 
-``@inproceedings{xu2021opencda,```
-``title={OpenCDA: An Open Cooperative Driving Automation Framework Integrated with Multi-resolution Simulations}, ```
-``author={Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Jiaqi Ma}, ```
-``booktitle={2021 IEEE Intelligent Transportation Systems Conference (ITSC)}, ```
-``year={2021} ```
-``}```
+    @inproceedings{xu2021opencda,
+      author  = {Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Hao Xiang, Jiaqi Ma},
+      title   = {OpenCDA:  An  Open  Cooperative  Driving  Automation
+      Framework Integrated  with  Co-Simulation},
+      booktitle = {2021 IEEE Intelligent Transportation Systems Conference (ITSC)},
+      year    = {2021}
+    }
 
 Indices and tables
 ==================

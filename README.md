@@ -50,7 +50,8 @@ year={2021}
 ## Future Plans(v0.2)
 - [x] Sumo code prototyping
 - [ ] Clean Sumo code
-- [ ] ns3 integration
+- [ ] Motion prediction module
+- [ ] Better behavior planning at intersection
 - [ ] Cooperative Perception application
 - [ ] Cooperative Localization application
 
