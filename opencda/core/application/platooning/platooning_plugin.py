@@ -163,16 +163,17 @@ class PlatooningPlugin(object):
         """
         self.status = status
 
-    def search_platoon(self, ego_pos, cav_world):
+    def search_platoon(self, ego_loc, cav_nearby):
         """
         Search platoon candidate in the range
 
         Parameters
         ----------
-        ego_pos : carla.Transform
+        ego_loc : carla.Location
             Ego vehicle current position.
-        cav_world : opencda object
-            Object that contains all information about CAVs.
+
+        cav_nearby : dict
+             The dictionary contains all the cavs nearby.
 
         Returns
         -------
@@ -182,23 +183,34 @@ class PlatooningPlugin(object):
         pm : opencda object
             Platoon manager ID.
         """
-        platoon_manager_dict = cav_world.get_platoon_dict()
-        for pmid, pm in platoon_manager_dict.items():
-            for vm in pm.vehicle_manager_list:
-                distance = compute_distance(
-                    ego_pos, vm.localizer.get_ego_pos().location)
-                if distance < self.search_range:
-                    return pmid, pm
-        return None, None
+        pm = None
+        pmid = None
+        min_dist = 1000
 
-    def match_platoon(self, cav_world):
+        for _, vm in cav_nearby.items():
+            if vm.v2x_manager.in_platoon is None:
+                continue
+
+            platoon_manager, _ = vm.v2x_manager.get_platoon_manager()
+            if pmid and pmid == platoon_manager.pmid:
+                continue
+
+            distance = compute_distance(
+                ego_loc, vm.localizer.get_ego_pos().location)
+            if distance < min_dist:
+                pm = platoon_manager
+                pmid = platoon_manager.pmid
+
+        return pmid, pm
+
+    def match_platoon(self, cav_nearby):
         """
         A naive way to find the best position to join a platoon
 
         Parameters
         ----------
-        cav_world : opencda object
-            Object that contains all information about CAVs.
+        cav_nearby : dict
+            The dictionary contains all the cavs nearby.
 
         Returns
         -------
@@ -218,7 +230,7 @@ class PlatooningPlugin(object):
         cur_loc = self.ego_pos.location
         cur_yaw = self.ego_pos.rotation.yaw
 
-        pmid, pm = self.search_platoon(cur_loc, cav_world)
+        pmid, pm = self.search_platoon(cur_loc, cav_nearby)
 
         if not pmid or pmid in self.platooning_blacklist:
             return False, -1, []

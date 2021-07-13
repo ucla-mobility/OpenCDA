@@ -7,7 +7,6 @@ customized 2-lane freeway simplified map sorely with carla
 # License: MIT
 
 import os
-
 import carla
 
 import opencda.scenario_testing.utils.sim_api as sim_api

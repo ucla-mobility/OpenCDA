@@ -93,7 +93,7 @@ class VehicleManager(object):
         v2x_config = config_yaml['v2x']
 
         # v2x module
-        self.v2x_manager = V2XManager(cav_world, v2x_config)
+        self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
         # localization module
         self.localizer = LocalizationManager(
             vehicle, sensing_config['localization'], carla_map)
@@ -166,13 +166,17 @@ class VehicleManager(object):
         """
         # localization
         self.localizer.localize()
+
         ego_pos = self.localizer.get_ego_pos()
         ego_spd = self.localizer.get_ego_spd()
 
         # object detection
         objects = self.perception_manager.detect(ego_pos)
 
+        # update ego position and speed to v2x manager,
+        # and then v2x manager will search the nearby cavs
         self.v2x_manager.update_info(ego_pos, ego_spd)
+
         self.agent.update_information(ego_pos, ego_spd, objects)
         # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
