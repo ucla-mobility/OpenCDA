@@ -160,10 +160,10 @@ class CollisionChecker:
             debug_tmp.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # draw yellow line for overtaking, white line for lane change
-        # draw_trajetory_points(
-        #     world, debug_tmp, color=carla.Color(
-        #         255, 255, 0) if overtake else carla.Color(
-        #         255, 255, 255), size=0.05, lt=0.1)
+        draw_trajetory_points(
+            world, debug_tmp, color=carla.Color(
+                255, 255, 0) if overtake else carla.Color(
+                255, 255, 255), size=0.05, lt=0.2)
 
         return rx, ry, ryaw
 
@@ -193,10 +193,12 @@ class CollisionChecker:
              current range is collision free.
         """
         collision_free = True
-        # detect 2 second ahead
-        distance_check = min(int(self.time_ahead * speed / 0.1),
+        # detect x second ahead. in case the speed is very slow,
+        # there is some minimum threshold for the check distance
+        distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
                              len(path_x))\
             if not adjacent_check else len(path_x)
+
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
 
         # every step is 0.1m, so we check every 10 points
@@ -220,6 +222,8 @@ class CollisionChecker:
                            obstacle_vehicle.bounding_box.extent.x,
                            obstacle_vehicle_loc.y +
                            obstacle_vehicle.bounding_box.extent.y],
+                          [obstacle_vehicle_loc.x,
+                           obstacle_vehicle_loc.y],
                           [obstacle_vehicle_loc.x +
                            obstacle_vehicle.bounding_box.extent.x,
                            obstacle_vehicle_loc.y -
@@ -233,6 +237,7 @@ class CollisionChecker:
             # vehicle to the trajectory point
             collision_dists = spatial.distance.cdist(
                 obstacle_vehicle_bbx_array, circle_locations)
+
             collision_dists = np.subtract(collision_dists, self._circle_radius)
             collision_free = collision_free and not np.any(collision_dists < 0)
 
