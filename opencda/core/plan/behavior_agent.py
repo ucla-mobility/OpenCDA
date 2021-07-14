@@ -91,7 +91,6 @@ class BehaviorAgent(object):
         self.tailgate_speed = config_yaml['tailgate_speed']
         self.speed_lim_dist = config_yaml['speed_lim_dist']
         self.speed_decrease = config_yaml['speed_decrease']
-        self.min_speed = 5
 
         # safety related
         self.safety_time = config_yaml['safety_time']
@@ -399,12 +398,17 @@ class BehaviorAgent(object):
         target_vehicle = None
 
         for vehicle in self.obstacle_vehicles:
+            # print(dist(vehicle))
             collision_free = self._collision_check.collision_circle_check(
                 rx, ry, ryaw, vehicle, self._ego_speed / 3.6,
                 adjacent_check=adjacent_check)
             if not collision_free:
                 vehicle_state = True
-                distance = dist(vehicle)
+
+                # the vehicle length is typical 3 meters,
+                # so we need to consider that when calculating the distance
+                distance = positive(dist(vehicle) - 3)
+
                 if distance < min_distance:
                     min_distance = distance
                     target_vehicle = vehicle
@@ -465,7 +469,7 @@ class BehaviorAgent(object):
 
         if (right_turn == carla.LaneChange.Right or right_turn ==
             carla.LaneChange.Both) and \
-                right_wpt and\
+                right_wpt and \
                 obstacle_vehicle_wpt.lane_id * right_wpt.lane_id > 0 \
                 and right_wpt.lane_type == carla.LaneType.Driving:
             rx, ry, ryaw = self._collision_check.adjacent_lane_collision_check(
@@ -510,7 +514,7 @@ class BehaviorAgent(object):
                 target_wpt = wpt[0]
                 break
         if not target_wpt:
-            return False
+            return True
 
         rx, ry, ryaw = self._collision_check.adjacent_lane_collision_check(
             ego_loc=self._ego_pos.location,
@@ -563,8 +567,9 @@ class BehaviorAgent(object):
         # Actual safety distance area, try to follow the speed of the vehicle
         # in front.
         else:
-            target_speed = min(max(self.min_speed, vehicle_speed + 1),
-                               target_speed)
+            target_speed = 0 if vehicle_speed == 0 else \
+                min(vehicle_speed + 1,
+                    target_speed)
         return target_speed
 
     def run_step(
@@ -600,10 +605,10 @@ class BehaviorAgent(object):
 
         # simulation ends condition
         if abs(
-            self._ego_pos.location.x -
-            self.end_waypoint.transform.location.x) <= 10 and abs(
+                self._ego_pos.location.x -
+                self.end_waypoint.transform.location.x) <= 10 and abs(
             self._ego_pos.location.y -
-                self.end_waypoint.transform.location.y) <= 10:
+            self.end_waypoint.transform.location.y) <= 10:
             print('Simulation is Over')
             sys.exit(0)
 
@@ -635,8 +640,10 @@ class BehaviorAgent(object):
                 self.get_local_planner().lane_id_change and \
                 self.overtake_counter <= 0 and \
                 not self.destination_push_flag:
-            self.lane_change_allowed = lane_change_allowed and\
-                self.lane_change_management()
+            self.lane_change_allowed = lane_change_allowed and \
+                                       self.lane_change_management()
+            if not self.lane_change_allowed:
+                print("lane change not allowed")
 
         # 3: Collision check
         is_hazard = False
@@ -650,12 +657,13 @@ class BehaviorAgent(object):
 
         # the case that the vehicle is doing lane change as planned but found
         # vehicle blocking on the other lane
-        if not self.lane_change_allowed and\
+        if not self.lane_change_allowed and \
                 self.get_local_planner().lane_id_change \
                 and not self.destination_push_flag and \
                 self.overtake_counter <= 0:
             self.overtake_allowed = False
-            reset_target = ego_vehicle_wp.next(self._ego_speed / 3.6 * 3)[0]
+            reset_target = ego_vehicle_wp.next(max(self._ego_speed / 3.6 * 3,
+                                                   15.0))[0]
             print(
                 'Vehicle id: %d :destination pushed forward because of '
                 'potential collision' %
@@ -702,8 +710,8 @@ class BehaviorAgent(object):
 
         # 4. Car following behavior
         if car_following_flag:
-
-            if distance < self.break_distance:
+            print('car following mode. distance : %f' % distance)
+            if distance < max(self.break_distance, 3):
                 return 0, None
 
             target_speed = self.car_following_manager(
@@ -716,5 +724,4 @@ class BehaviorAgent(object):
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
-
         return target_speed, target_loc
