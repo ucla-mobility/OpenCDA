@@ -95,6 +95,7 @@ class LocalPlanner(object):
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
         self.trajectory_update_freq = config_yaml['trajectory_update_freq']
+        self.waypoint_update_freq = config_yaml['waypoint_update_freq']
 
         # trajectory sampling rate
         self.dt = config_yaml['trajectory_dt']
@@ -191,7 +192,7 @@ class LocalPlanner(object):
                 math.radians(
                     angle -
                     1 if angle > 90 else angle +
-                    1)))
+                                         1)))
 
         boundingbox = self._vehicle.bounding_box
         veh_width = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
@@ -201,8 +202,8 @@ class LocalPlanner(object):
         # check if the vehicle is in lane change based on lane id and lateral
         # offset
         self.lane_id_change = (
-            future_wpt.lane_id != current_wpt.lane_id or
-            previous_wpt.lane_id != future_wpt.lane_id)
+                future_wpt.lane_id != current_wpt.lane_id or
+                previous_wpt.lane_id != future_wpt.lane_id)
         self.lane_change = self.lane_id_change or is_lateral_within_range
 
         _, angle = cal_distance_angle(
@@ -233,7 +234,6 @@ class LocalPlanner(object):
                 self._waypoint_buffer[0][0].transform.location,
                 current_location,
                 current_yaw)
-            print('lane change')
             # if the vehicle starts lane change at the very start
             if len(x) == 0 or len(y) == 0:
                 x.append(current_location.x)
@@ -333,7 +333,7 @@ class LocalPlanner(object):
 
         for i in range(1, int(sample_num) + 1):
             sample_resolution += current_speed * dt + \
-                0.5 * acceleration * dt ** 2
+                                 0.5 * acceleration * dt ** 2
             current_speed += acceleration * dt
 
             # print(sample_resolution)
@@ -363,6 +363,9 @@ class LocalPlanner(object):
         """
         max_index = -1
 
+        thresh = self._min_distance if not self.lane_change \
+            else 2 * self._min_distance
+
         for i, (waypoint, _) in enumerate(self._waypoint_buffer):
             if distance_vehicle(
                     waypoint, vehicle_transform) < self._min_distance:
@@ -375,9 +378,9 @@ class LocalPlanner(object):
 
                     if abs(
                         prev_wpt[0].transform.location.x -
-                        incoming_wpt[0].transform.location.x) > 0.5 or abs(
+                        incoming_wpt[0].transform.location.x) > 4.5 or abs(
                             prev_wpt[0].transform.location.y -
-                            incoming_wpt[0].transform.location.y) > 0.5:
+                            incoming_wpt[0].transform.location.y) > 4.5:
                         self._history_buffer.append(incoming_wpt)
                 else:
                     self._history_buffer.append(
@@ -387,8 +390,8 @@ class LocalPlanner(object):
             max_index = -1
             for i, (waypoint, _,) in enumerate(self._trajectory_buffer):
                 if distance_vehicle(
-                    waypoint, vehicle_transform) < max(
-                        self._min_distance - 1, 1):
+                        waypoint, vehicle_transform) < max(
+                    self._min_distance - 1, 1):
                     max_index = i
             if max_index >= 0:
                 for i in range(max_index + 1):
@@ -426,8 +429,7 @@ class LocalPlanner(object):
         self._target_speed = target_speed
 
         # Buffering the waypoints. Always keep the waypoint buffer alive
-        # todo:remove the hard coded
-        if len(self._waypoint_buffer) < 9:
+        if len(self._waypoint_buffer) < self.waypoint_update_freq:
             for i in range(self._buffer_size - len(self._waypoint_buffer)):
                 if self.waypoints_queue:
                     self._waypoint_buffer.append(
@@ -477,6 +479,6 @@ class LocalPlanner(object):
                                   lt=0.2)
 
         return self._target_speed, \
-            self.target_waypoint.transform.location if hasattr(
-                self.target_waypoint,
-                'is_junction') else self.target_waypoint.location
+               self.target_waypoint.transform.location if hasattr(
+                   self.target_waypoint,
+                   'is_junction') else self.target_waypoint.location
