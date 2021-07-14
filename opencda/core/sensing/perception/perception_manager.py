@@ -419,7 +419,8 @@ class PerceptionManager:
         # retrieve current cameras and lidar data
         rgb_images = []
         for rgb_camera in self.rgb_camera:
-            time.sleep(0.0015)
+            while rgb_camera.image is None:
+                continue
             rgb_images.append(
                 cv2.cvtColor(
                     np.array(
