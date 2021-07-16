@@ -246,7 +246,7 @@ class GlobalRoutePlanner(object):
                                     next_segment[0], entry_waypoint=waypoint,
                                     exit_waypoint=next_waypoint,
                                     intersection=False, exit_vector=None,
-                                    path=[], length=0, type=next_road_option,
+                                    path=[], length=10, type=next_road_option,
                                     change_waypoint=next_waypoint)
                                 right_found = True
                     if waypoint.left_lane_marking.lane_change & \
@@ -267,7 +267,7 @@ class GlobalRoutePlanner(object):
                                     exit_waypoint=next_waypoint,
                                     intersection=False,
                                     exit_vector=None,
-                                    path=[], length=0,
+                                    path=[], length=10,
                                     type=next_road_option,
                                     change_waypoint=next_waypoint)
                                 left_found = True
