@@ -15,9 +15,9 @@ world:
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: true # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 3 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 3 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
@@ -31,7 +31,7 @@ vehicle_base: &vehicle_base
         dropoff_zero_intensity: 0.0
         noise_stddev: 0.0
     localization: &base_localize
-      activate: true # when not activated, ego position will be retrieved from server directly
+      activate: false # when not activated, ego position will be retrieved from server directly
       dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.001
@@ -40,11 +40,11 @@ vehicle_base: &vehicle_base
         heading_direction_stddev: 0.1 # degree
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
-        show_animation: true # whether to show real-time trajectory plotting
+        show_animation: false # whether to show real-time trajectory plotting
         x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
-    max_speed: 111 # maximum speed, km/h
+    max_speed: 80 # maximum speed, km/h
     tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
@@ -77,7 +77,7 @@ vehicle_base: &vehicle_base
       dynamic: false # whether use dynamic pid setting
       dt: *delta # this should be equal to your simulation time-step
       max_brake: 1.0
-      max_throttle: 1.0
+      max_throttle: 0.8
       max_steering: 0.3
   v2x: &base_v2x # communication related
     enabled: true
@@ -97,14 +97,14 @@ carla_traffic_manager:
   vehicle_list: 30  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step
-  range: [ 50, 250, 135, 145, 50, 4]
+  range: [ 2, 10, 20, 140, 3.5, 25]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
-      destination: [630, 145.51, 0.3]
+      spawn_position: [6.31, 125.03, 0.3, 0, -92, 0]
+      destination: [-12.51, 110.31, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -112,5 +112,5 @@ scenario:
         <<: *base_behavior
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: false
-          debug: false
+          debug_trajectory: true
+          debug: true
