@@ -686,7 +686,6 @@ class BehaviorAgent(object):
             # when it comes to the intersection, we need to use the future
             # waypoint to make sure the next waypoint is at the same lane
             if self.get_local_planner().is_junction():
-                print('junction!')
                 reset_target = waypoint_buffer[reset_index][0].next(
                     max(self._ego_speed / 3.6, 10.0))[0]
             else:
