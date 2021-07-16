@@ -174,12 +174,12 @@ scenario:
         <<: *platoon_base
       behavior:
         <<: *base_behavior
-        max_speed: 65 # maximum speed, km/h
-        tailgate_speed: 75
+        max_speed: 100 # maximum speed, km/h
+        tailgate_speed: 111
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: false
+          debug_trajectory: true
           debug: false
 
 

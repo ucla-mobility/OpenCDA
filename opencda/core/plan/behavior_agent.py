@@ -36,7 +36,7 @@ class BehaviorAgent(object):
     carla_map : carla.map
         The carla HD map for simulation world.
 
-    config : dict
+    config_yaml : dict
         The configuration dictionary of the localization module.
 
     Attributes
@@ -74,6 +74,12 @@ class BehaviorAgent(object):
     white_list : list
         The white list contains all position of target
         platoon member for joining.
+
+    obstacle_vehicles : list
+        The list contains all obstacle vehicles nearby.
+
+    objects : dict
+        The dictionary that contains all kinds of objects nearby.
 
     debug_helper : PlanDebugHelper
         The helper class that help with the debug functions.
@@ -133,6 +139,7 @@ class BehaviorAgent(object):
         # obstacles
         self.white_list = []
         self.obstacle_vehicles = []
+        self.objects = {}
 
         # debug helper
         self.debug_helper = PlanDebugHelper(self.vehicle.id)
@@ -160,6 +167,7 @@ class BehaviorAgent(object):
         # update the localization info to trajectory planner
         self.get_local_planner().update_information(ego_pos, ego_speed)
 
+        self.objects = objects
         # current version only consider about vehicles
         obstacle_vehicles = objects['vehicles']
         self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
@@ -626,6 +634,10 @@ class BehaviorAgent(object):
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             return 0, None
 
+        # use traffic light to detect intersection
+        is_intersection = \
+            self.get_local_planner().is_intersection(self.objects)
+
         # when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().waypoints_queue) == 0 \
                 and len(self.get_local_planner()._waypoint_buffer) <= 2:
@@ -643,13 +655,17 @@ class BehaviorAgent(object):
 
         # 2. intersection behavior. if the car is near a intersection, no
         # overtake is allowed
-        if self.get_local_planner().is_junction():
+        if is_intersection:
             self.overtake_allowed = False
         else:
             self.overtake_allowed = True and self.overtake_allowed_origin
 
         # 3: Path generation based on the global route
         rx, ry, rk, ryaw = self._local_planner.generate_path()
+
+        # the lane change is forbidden if driving within a large curve
+        if len(rk) > 2 and np.mean(np.abs(np.array(rk))) > 0.04:
+            lane_change_allowed = False
 
         # check whether lane change is allowed
         if collision_detector_enabled and \
@@ -685,7 +701,7 @@ class BehaviorAgent(object):
 
             # when it comes to the intersection, we need to use the future
             # waypoint to make sure the next waypoint is at the same lane
-            if self.get_local_planner().is_junction():
+            if is_intersection:
                 reset_target = waypoint_buffer[reset_index][0].next(
                     max(self._ego_speed / 3.6, 10.0))[0]
             else:
@@ -724,7 +740,6 @@ class BehaviorAgent(object):
                 obstacle_vehicle.get_location()).lane_id
             ego_lane_id = self._map.get_waypoint(
                 self._ego_pos.location).lane_id
-
             # overtake the obstacle vehicle only when speed is bigger and the
             # lane id is the same
             if ego_lane_id == obstacle_lane_id:
@@ -733,7 +748,8 @@ class BehaviorAgent(object):
                 self.hazard_flag = is_hazard
                 # we only consider overtaking when speed is faster than the
                 # front obstacle
-                if self._ego_speed >= obstacle_speed - 2:
+
+                if self._ego_speed >= obstacle_speed - 5:
                     car_following_flag = self.overtake_management(
                         obstacle_vehicle)
                 else:

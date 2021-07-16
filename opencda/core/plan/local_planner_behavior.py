@@ -363,20 +363,27 @@ class LocalPlanner(object):
             if break_flag:
                 break
 
-    def is_junction(self):
+    def is_intersection(self, objects):
         """
-        Check the next waypoints in the buffer to see whether junction
-        included. When the ego is on the junction, no overtake allowed.
+        Check the next waypoints is near the intersection. This is done by
+        check the distance between the waypoints and the traffic light.
+
+        Parameters
+        ----------
+        objects : dict
+            The dictionary contains all objects info.
 
         Returns
         -------
         is_junc : bool
             Whether there is any future waypoint in the junction shortly.
         """
-        for wpt, _ in self._waypoint_buffer:
-            if wpt.is_junction:
-                return True
-
+        for tl in objects['traffic_lights']:
+            for wpt, _ in self._waypoint_buffer:
+                distance = \
+                    tl.get_location().distance(wpt.transform.location)
+                if distance < 20:
+                    return True
         return False
 
     def buffer_filter(self):

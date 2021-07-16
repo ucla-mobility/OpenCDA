@@ -232,7 +232,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         ego_speed : float
             km/h, ego speed.
 
-        objects : dictionary
+        objects : dict
             Objects detection results from perception module.
         """
         # update localization information
@@ -243,6 +243,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         self.get_local_planner().update_information(ego_pos, ego_speed)
 
         # current version only consider about vehicles
+        self.objects = objects
         obstacle_vehicles = objects['vehicles']
         self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
 
