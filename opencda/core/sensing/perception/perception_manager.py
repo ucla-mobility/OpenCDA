@@ -515,7 +515,8 @@ class PerceptionManager:
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
-            time.sleep(0.0015)
+            while self.rgb_camera[0].image is None:
+                continue
             # we only visualiz the frontal camera
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
