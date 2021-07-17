@@ -54,15 +54,12 @@ year={2021}
 ```
 And the arxiv link to the paper:  https://arxiv.org/abs/2107.06260
 
-## Future Plans(v0.2)
-- [x] Sumo code prototyping
-- [ ] Clean Sumo code
-- [ ] Motion prediction module
-- [ ] Cooperative Perception application
-- [ ] Cooperative Localization application
+## 2021 RoadMap
+![teaser](docs/md_files/images/roadmap.PNG)
 
 ## Contributors
 OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/). <br>
+
 
 ### Project Leader: <br>
  Runsheng Xu ([linkedin](https://www.linkedin.com/in/runsheng-xu/), [github](https://github.com/DerrickXuNu))  <br>
@@ -71,7 +68,7 @@ OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.e
  - Runsheng Xu([linkedin](https://www.linkedin.com/in/runsheng-xu/), [github](https://github.com/DerrickXuNu))
  - Xu Han([linkedin](https://linkedin.com/in/xu-han-12851a64), [github](https://github.com/xuhan417))
  - Hao Xiang([linkedin](https://www.linkedin.com/in/hao-xiang-42bb5a1b2/), [github](https://github.com/XHwind))
- 
+
 ### Theoretical supports:
  - Dr. Yi Guo([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
  - Dr. Xin Xia([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
