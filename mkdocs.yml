@@ -11,4 +11,5 @@ nav:
     - Quick Start: OpenCDA_getstarted.md
     - Tutorials: OpenCDA_tutorial.md
     - PythonAPI: modules.rst
+    - About us: OpenCDA_contributor.md
 
