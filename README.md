@@ -64,15 +64,18 @@ And the arxiv link to the paper:  https://arxiv.org/abs/2107.06260
 ## Contributors
 OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/). <br>
 
-Project Leader: <br>
+### Project Leader: <br>
  Runsheng Xu ([linkedin](https://www.linkedin.com/in/runsheng-xu/), [github](https://github.com/DerrickXuNu))  <br>
  
-Major developers: 
+### Major developers: 
  - Runsheng Xu([linkedin](https://www.linkedin.com/in/runsheng-xu/), [github](https://github.com/DerrickXuNu))
  - Xu Han([linkedin](https://linkedin.com/in/xu-han-12851a64), [github](https://github.com/xuhan417))
  - Hao Xiang([linkedin](https://www.linkedin.com/in/hao-xiang-42bb5a1b2/), [github](https://github.com/XHwind))
  
-Theoretical supports:
- - Yi Guo([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
- - Xin Xia([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
+### Theoretical supports:
+ - Dr. Yi Guo([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
+ - Dr. Xin Xia([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
  
+### Lab Supervisor
+- Dr. Jiaqi Ma([linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/),
+               [google scholar](https://scholar.google.com/citations?user=S3cQz1AAAAAJ&hl=en))
