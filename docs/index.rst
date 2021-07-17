@@ -15,7 +15,7 @@ OpenCDA is a work in progress, and many features are still in the future
 roadma. We welcome your contribution and please visit our Github repo
 for latest release.
 
-    `OpenCDA Github <https://github.com/ucla-mobility/OpenCDA>`_
+    `OpenCDA source code on  Github <https://github.com/ucla-mobility/OpenCDA>`_
 
 .. toctree::
    :maxdepth: 2
@@ -25,6 +25,7 @@ for latest release.
    md_files/installation.md
    md_files/getstarted.md
    md_files/tutorial.md
+   md_files/contributor.md
    modules
 
 

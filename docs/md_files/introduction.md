@@ -12,8 +12,8 @@ OpenCDA is created to fill such gap.
   Built  upon these basic modules, OpenCDA supports a range of  <strong> common cooperative  driving  applications</strong>. <br />
  2. <em>Co-Simulation Tools</em>: <br />OpenCDA provides interfaces to integrate multiple open-source simulation tools
  with the cooperative driving system. Through the interfaces, OpenCDA is able to take advantage of the high-quality scene rendering
- and realistic dynamic modelling from <strong> CARLA</strong> , the realistic traffic simulation from <strong>SUMO</strong>, and the network communication from <strong> NS3</strong> .
- (SUMO and NS3 will be shown in OpenCDA in the next version v0.2). <br />
+ and realistic dynamic modelling from <strong> CARLA</strong> , and the realistic traffic simulation from <strong>SUMO</strong>.
+
  3. <em>Scenario Manager</em>:  <br />By defining the parameters in the Yaml file,  OpenCDA is able to <strong> construct the simulation scenario</strong>,
 <strong> creating the traffic flows</strong>, and <strong> assigning various dynamic driving tasks </strong> to different connected automated vehicles. 
  Through such lightweight configuration, researchers can conveniently test and evaluate their algorithms under different scenarios. In the next verision v0.2, 
