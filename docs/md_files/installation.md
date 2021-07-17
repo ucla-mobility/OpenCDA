@@ -2,13 +2,12 @@
 
 * __[System/Hardware Requirements](#requirements)__  
 * __[Local Installation](#local-installation)__
-    * [1,CARLA installation](#carla-installation) 
-	    * [1.1 Debian CARLA installation](#1-debian-carla-installation)  
-	    * [1.2 Package installation](#2-package-installation)  
-	    * [1.3 Build from source](#3-build-from-source)  
+    * [1,CARLA installation](#carla-installation)
+	    * [1.1 Package installation](#11-package-installation)  
+	    * [1.2 Build from source](#12-build-from-source)  
 
     * [2. Install OpenCDA](#opencda-installation)
-    * [3. Install Pytorch and Yolov5(Optional)](#)
+    * [3. Install Pytorch and Yolov5(Optional)](#3-install-pytorch-and-yolov5optional)
 
 
 
@@ -89,7 +88,7 @@ export CARLA_HOME=/path/to/your/CARLA_ROOT
 If everything works correctly, you will see a cache folder is created in your OpenCDA root dir, and inside the cache folder
 you will see an egg file and its unzipped folder. Then install this CARLA egg into your conda environment.
 ```sh
-pip install -e cahce/carla-0.9.11-py3.7-linux-x86_64
+pip install -e cache/carla-0.9.11-py3.7-linux-x86_64
 python -c "import carla" # check whether carla is installed correctly.
 ```
 **Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
