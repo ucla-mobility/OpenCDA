@@ -14,7 +14,7 @@ import carla
 import numpy as np
 
 from opencda.core.common.misc import distance_vehicle, draw_trajetory_points, \
-    cal_distance_angle
+    cal_distance_angle, compute_distance
 from opencda.core.plan.spline import Spline2D
 
 
@@ -95,6 +95,7 @@ class LocalPlanner(object):
         self._trajectory_buffer = deque(maxlen=30)
         self._history_buffer = deque(maxlen=3)
         self.trajectory_update_freq = config_yaml['trajectory_update_freq']
+        self.waypoint_update_freq = config_yaml['waypoint_update_freq']
 
         # trajectory sampling rate
         self.dt = config_yaml['trajectory_dt']
@@ -104,6 +105,7 @@ class LocalPlanner(object):
         # In some corner cases, the id is not changed but we regard it as lane
         # change due to large lateral diff
         self.lane_id_change = False
+        self.lane_lateral_change = False
 
         # debug option
         self.debug = config_yaml['debug']
@@ -162,11 +164,13 @@ class LocalPlanner(object):
         x = []
         y = []
 
+        # pop out the waypoints that may damage driving performance
+        self.buffer_filter()
+
         # [m] distance of each interpolated points
         ds = 0.1
 
-        # retrieve current location, yaw angle todo: this should comes from
-        # self._egopos
+        # retrieve current location, yaw angle
         current_location = self._ego_pos.location
         current_yaw = self._ego_pos.rotation.yaw
 
@@ -189,21 +193,19 @@ class LocalPlanner(object):
             vec_norm *
             math.sin(
                 math.radians(
-                    angle -
-                    1 if angle > 90 else angle +
-                    1)))
+                    angle - 1 if angle > 90 else angle + 1)))
 
         boundingbox = self._vehicle.bounding_box
         veh_width = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
         lane_width = current_wpt.lane_width
 
-        is_lateral_within_range = veh_width < lateral_diff < 2 * lane_width
+        self.lane_lateral_change = veh_width < lateral_diff
         # check if the vehicle is in lane change based on lane id and lateral
         # offset
         self.lane_id_change = (
-            future_wpt.lane_id != current_wpt.lane_id or
-            previous_wpt.lane_id != future_wpt.lane_id)
-        self.lane_change = self.lane_id_change or is_lateral_within_range
+                future_wpt.lane_id != current_wpt.lane_id or
+                previous_wpt.lane_id != future_wpt.lane_id)
+        self.lane_change = self.lane_id_change or self.lane_lateral_change
 
         _, angle = cal_distance_angle(
             self._waypoint_buffer[0][0].transform.location,
@@ -233,7 +235,6 @@ class LocalPlanner(object):
                 self._waypoint_buffer[0][0].transform.location,
                 current_location,
                 current_yaw)
-            print('lane change')
             # if the vehicle starts lane change at the very start
             if len(x) == 0 or len(y) == 0:
                 x.append(current_location.x)
@@ -252,8 +253,9 @@ class LocalPlanner(object):
                 y.append(current_location.y)
 
         # used to filter the waypoints that are too close
-        prev_x = x[max(0, index - 1)] if self.lane_change else x[index]
-        prev_y = y[max(0, index - 1)] if self.lane_change else y[index]
+        index = max(0, index - 1) if self.lane_change else index
+        prev_x = x[index]
+        prev_y = y[index]
         for i in range(len(self._waypoint_buffer)):
             cur_x = self._waypoint_buffer[i][0].transform.location.x
             cur_y = self._waypoint_buffer[i][0].transform.location.y
@@ -265,7 +267,13 @@ class LocalPlanner(object):
             x.append(cur_x)
             y.append(cur_y)
 
+        # calculate interpolation points
+        rx, ry, ryaw, rk = [], [], [], []
+
         # Cubic Spline Interpolation calculation
+        if len(x) < 2 or len(y) < 2:
+            return rx, ry, rk, ryaw
+
         sp = Spline2D(x, y)
 
         diff_x = current_location.x - sp.sx.y[0]
@@ -275,8 +283,6 @@ class LocalPlanner(object):
         # we only need the interpolation points after current position
         s = np.arange(diff_s, sp.s[-1], ds)
 
-        # calculate interpolation points
-        rx, ry, ryaw, rk = [], [], [], []
         self._long_plan_debug = []
         # we only need the interpolation points until next waypoint
         for (i, i_s) in enumerate(s):
@@ -333,7 +339,7 @@ class LocalPlanner(object):
 
         for i in range(1, int(sample_num) + 1):
             sample_resolution += current_speed * dt + \
-                0.5 * acceleration * dt ** 2
+                                 0.5 * acceleration * dt ** 2
             current_speed += acceleration * dt
 
             # print(sample_resolution)
@@ -357,6 +363,63 @@ class LocalPlanner(object):
             if break_flag:
                 break
 
+    def is_intersection(self, objects):
+        """
+        Check the next waypoints is near the intersection. This is done by
+        check the distance between the waypoints and the traffic light.
+
+        Parameters
+        ----------
+        objects : dict
+            The dictionary contains all objects info.
+
+        Returns
+        -------
+        is_junc : bool
+            Whether there is any future waypoint in the junction shortly.
+        """
+        for tl in objects['traffic_lights']:
+            for wpt, _ in self._waypoint_buffer:
+                distance = \
+                    tl.get_location().distance(wpt.transform.location)
+                if distance < 20:
+                    return True
+        return False
+
+    def buffer_filter(self):
+        """
+        Remove the waypoints in the global route plan which has dramatic
+        change of yaw angle. Such waypoint can cause bad vehicle dynnamics.
+        """
+        prev_wpt = None
+
+        tmp = self._waypoint_buffer.copy()
+
+        for i, (waypoint, _) in enumerate(tmp):
+
+            # we only need to examine the waypoint nearby
+            if i >= 3:
+                break
+            # we need to find the right index for origin buffer, since
+            # it may remove several elements already
+            j = i - (len(tmp) - len(self._waypoint_buffer))
+            if prev_wpt is None:
+                prev_wpt = waypoint
+                continue
+
+            # avoid the situation that the next goal state is on the
+            # neighbor lane and it is too close to the current location,
+            # which will cause large steering angel for lane change.
+            if prev_wpt.lane_id != waypoint.lane_id and \
+                    len(self._waypoint_buffer) >= 2:
+                dist = compute_distance(waypoint.transform.location,
+                                        prev_wpt.transform.location)
+
+                if dist <= 4.5:
+                    del self._waypoint_buffer[j]
+
+            prev_wpt = waypoint
+
     def pop_buffer(self, vehicle_transform):
         """
         Remove waypoints the ego vehicle has achieved.
@@ -374,10 +437,10 @@ class LocalPlanner(object):
                     incoming_wpt = self._waypoint_buffer.popleft()
 
                     if abs(
-                        prev_wpt[0].transform.location.x -
-                        incoming_wpt[0].transform.location.x) > 0.5 or abs(
-                            prev_wpt[0].transform.location.y -
-                            incoming_wpt[0].transform.location.y) > 0.5:
+                            prev_wpt[0].transform.location.x -
+                            incoming_wpt[0].transform.location.x) > 4.5 or abs(
+                        prev_wpt[0].transform.location.y -
+                        incoming_wpt[0].transform.location.y) > 4.5:
                         self._history_buffer.append(incoming_wpt)
                 else:
                     self._history_buffer.append(
@@ -387,8 +450,8 @@ class LocalPlanner(object):
             max_index = -1
             for i, (waypoint, _,) in enumerate(self._trajectory_buffer):
                 if distance_vehicle(
-                    waypoint, vehicle_transform) < max(
-                        self._min_distance - 1, 1):
+                        waypoint, vehicle_transform) < \
+                        max(self._min_distance - 1, 1):
                     max_index = i
             if max_index >= 0:
                 for i in range(max_index + 1):
@@ -426,8 +489,7 @@ class LocalPlanner(object):
         self._target_speed = target_speed
 
         # Buffering the waypoints. Always keep the waypoint buffer alive
-        # todo:remove the hard coded
-        if len(self._waypoint_buffer) < 9:
+        if len(self._waypoint_buffer) < self.waypoint_update_freq:
             for i in range(self._buffer_size - len(self._waypoint_buffer)):
                 if self.waypoints_queue:
                     self._waypoint_buffer.append(
@@ -441,6 +503,9 @@ class LocalPlanner(object):
                 self._trajectory_buffer) < self.trajectory_update_freq and \
                 not following:
             self._trajectory_buffer.clear()
+            # if no spline points provided, return 0 and none target wpt
+            if len(rx) == 0:
+                return 0, None
             self.generate_trajectory(rx, ry, rk)
         elif trajectory:
             self._trajectory_buffer = trajectory.copy()
@@ -466,17 +531,17 @@ class LocalPlanner(object):
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._waypoint_buffer,
                                   z=0.1,
-                                  size=0.1,
+                                  size=1.0,
                                   color=carla.Color(0, 0, 255),
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._history_buffer,
                                   z=0.1,
-                                  size=0.1,
+                                  size=0.5,
                                   color=carla.Color(255, 0, 255),
                                   lt=0.2)
 
         return self._target_speed, \
-            self.target_waypoint.transform.location if hasattr(
-                self.target_waypoint,
-                'is_junction') else self.target_waypoint.location
+               self.target_waypoint.transform.location if hasattr(
+                   self.target_waypoint,
+                   'is_junction') else self.target_waypoint.location

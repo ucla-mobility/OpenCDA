@@ -3,7 +3,7 @@
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
-
+import math
 from math import sin, cos
 from scipy import spatial
 
@@ -28,10 +28,11 @@ class CollisionChecker:
         The offset between collision checking circle and the trajectory point.
     """
 
-    def __init__(self, time_ahead=1.2, circle_radius=1.3, circle_offsets=None):
+    def __init__(self, time_ahead=1.2, circle_radius=1.0, circle_offsets=None):
 
         self.time_ahead = time_ahead
         self._circle_offsets = [-1.0,
+                                0,
                                 1.0] \
             if circle_offsets is None else circle_offsets
         self._circle_radius = circle_radius
@@ -104,7 +105,7 @@ class CollisionChecker:
         return True if angle <= 3 else False
 
     def adjacent_lane_collision_check(
-            self, ego_loc, target_wpt, overtake, world):
+            self, ego_loc, target_wpt, overtake, carla_map, world):
         """
         Generate a straight line in the adjacent lane for collision detection
         during overtake/lane change.
@@ -135,14 +136,22 @@ class CollisionChecker:
         # Next we consider the vehicle behind us
         diff_x = target_wpt_next.transform.location.x - ego_loc.x
         diff_y = target_wpt_next.transform.location.y - ego_loc.y
-        diff_s = np.hypot(diff_x, diff_y)
+        diff_s = np.hypot(diff_x, diff_y) + 3
 
-        target_wpt_previous = target_wpt.previous(diff_s)[0]
+        target_wpt_previous = target_wpt.previous(diff_s)
+        while len(target_wpt_previous) == 0:
+            diff_s -= 2
+            target_wpt_previous = target_wpt.previous(diff_s)
+
+        target_wpt_previous = target_wpt_previous[0]
+        target_wpt_middle = target_wpt_previous.next(diff_s/2)[0]
 
         x, y = [target_wpt_next.transform.location.x,
+                target_wpt_middle.transform.location.x,
                 target_wpt_previous.transform.location.x], \
-            [target_wpt_next.transform.location.y,
-             target_wpt_previous.transform.location.y]
+               [target_wpt_next.transform.location.y,
+                target_wpt_middle.transform.location.y,
+                target_wpt_previous.transform.location.y]
         ds = 0.1
 
         sp = Spline2D(x, y)
@@ -160,10 +169,10 @@ class CollisionChecker:
             debug_tmp.append(carla.Transform(carla.Location(ix, iy, 0)))
 
         # draw yellow line for overtaking, white line for lane change
-        # draw_trajetory_points(
-        #     world, debug_tmp, color=carla.Color(
-        #         255, 255, 0) if overtake else carla.Color(
-        #         255, 255, 255), size=0.05, lt=0.1)
+        draw_trajetory_points(
+            world, debug_tmp, color=carla.Color(
+                255, 255, 0) if overtake else carla.Color(
+                255, 255, 255), size=0.05, lt=0.2)
 
         return rx, ry, ryaw
 
@@ -174,6 +183,7 @@ class CollisionChecker:
             path_yaw,
             obstacle_vehicle,
             speed,
+            carla_map,
             adjacent_check=False):
         """
         Use circled collision check to see whether potential hazard on
@@ -193,46 +203,57 @@ class CollisionChecker:
              current range is collision free.
         """
         collision_free = True
-        # detect 2 second ahead
-        distance_check = min(int(self.time_ahead * speed / 0.1),
-                             len(path_x))\
+        # detect x second ahead. in case the speed is very slow,
+        # there is some minimum threshold for the check distance
+        distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
+                             len(path_x)) \
             if not adjacent_check else len(path_x)
+
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
+        obstacle_vehicle_yaw = \
+            carla_map.get_waypoint(obstacle_vehicle_loc).transform.rotation.yaw
 
         # every step is 0.1m, so we check every 10 points
         for i in range(0, distance_check, 10):
             ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
 
-            # circle_x = point_x + circle_offset*cos(yaw), circle_y = point_y +
-            # circle_offset*sin(yaw)
             circle_locations = np.zeros((len(self._circle_offsets), 2))
             circle_offsets = np.array(self._circle_offsets)
             circle_locations[:, 0] = ptx + circle_offsets * cos(yaw)
             circle_locations[:, 1] = pty + circle_offsets * sin(yaw)
 
+            # calculate bbx coords under world coordinate system
+            corrected_extent_x = obstacle_vehicle.bounding_box.extent.x * \
+                                 math.cos(math.radians(obstacle_vehicle_yaw))
+            corrected_extent_y = obstacle_vehicle.bounding_box.extent.y * \
+                                 math.sin(math.radians(obstacle_vehicle_yaw))
+
             # we need compute the four corner of the bbx
             obstacle_vehicle_bbx_array = \
                 np.array([[obstacle_vehicle_loc.x -
-                           obstacle_vehicle.bounding_box.extent.x,
+                           corrected_extent_x,
                            obstacle_vehicle_loc.y -
-                           obstacle_vehicle.bounding_box.extent.y],
+                           corrected_extent_y],
                           [obstacle_vehicle_loc.x -
-                           obstacle_vehicle.bounding_box.extent.x,
+                           corrected_extent_x,
                            obstacle_vehicle_loc.y +
-                           obstacle_vehicle.bounding_box.extent.y],
+                           corrected_extent_y],
+                          [obstacle_vehicle_loc.x,
+                           obstacle_vehicle_loc.y],
                           [obstacle_vehicle_loc.x +
-                           obstacle_vehicle.bounding_box.extent.x,
+                           corrected_extent_x,
                            obstacle_vehicle_loc.y -
-                           obstacle_vehicle.bounding_box.extent.y],
+                           corrected_extent_y],
                           [obstacle_vehicle_loc.x +
-                           obstacle_vehicle.bounding_box.extent.x,
+                           corrected_extent_x,
                            obstacle_vehicle_loc.y +
-                           obstacle_vehicle.bounding_box.extent.y]])
+                           corrected_extent_y]])
 
             # compute whether the distance between the four corners of the
             # vehicle to the trajectory point
             collision_dists = spatial.distance.cdist(
                 obstacle_vehicle_bbx_array, circle_locations)
+
             collision_dists = np.subtract(collision_dists, self._circle_radius)
             collision_free = collision_free and not np.any(collision_dists < 0)
 
