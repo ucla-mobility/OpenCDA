@@ -354,22 +354,22 @@ class PerceptionManager:
         # the dictionary contains all objects
         self.objects = {}
 
-    def dist(self, v):
+    def dist(self, a):
         """
         A fast method to retrieve the obstacle distance the ego
         vehicle from the server directly.
 
         Parameters
         ----------
-        v : carla.vehicle
+        a : carla.actor
             The obstacle vehicle.
 
         Returns
         -------
         distance : float
-            The distance between ego and the obstacle vehicle.
+            The distance between ego and the target actor.
         """
-        return v.get_location().distance(self.ego_pos.location)
+        return a.get_location().distance(self.ego_pos.location)
 
     def detect(self, ego_pos):
         """
@@ -388,7 +388,8 @@ class PerceptionManager:
         """
         self.ego_pos = ego_pos
 
-        objects = {'vehicles': []}
+        objects = {'vehicles': [],
+                   'traffic_lights': []}
 
         if not self.activate:
             objects = self.deactivate_mode(objects)
@@ -419,7 +420,8 @@ class PerceptionManager:
         # retrieve current cameras and lidar data
         rgb_images = []
         for rgb_camera in self.rgb_camera:
-            time.sleep(0.0015)
+            while rgb_camera.image is None:
+                continue
             rgb_images.append(
                 cv2.cvtColor(
                     np.array(
@@ -471,7 +473,8 @@ class PerceptionManager:
                 self.count,
                 self.lidar.o3d_pointcloud,
                 objects)
-
+        # add traffic light
+        objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
 
         return objects
@@ -514,7 +517,8 @@ class PerceptionManager:
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
-            time.sleep(0.0015)
+            while self.rgb_camera[0].image is None:
+                continue
             # we only visualiz the frontal camera
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
@@ -537,6 +541,8 @@ class PerceptionManager:
                 self.lidar.o3d_pointcloud,
                 objects)
 
+        # add traffic light
+        objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
 
         return objects
@@ -639,6 +645,32 @@ class PerceptionManager:
                         obstacle_loc.y) <= 3.0:
                     obstacle_vehicle.set_velocity(v.get_velocity())
                     obstacle_vehicle.set_carla_id(v.id)
+
+    def retrieve_traffic_lights(self, objects):
+        """
+        Retrieve the traffic lights nearby from the server  directly.
+        Next version may consider add traffic light detection module.
+
+        Parameters
+        ----------
+        objects : dict
+            The dictionary that contains all objects.
+
+        Returns
+        -------
+        object : dict
+            The updated dictionary.
+        """
+        world = self.vehicle.get_world()
+        tl_list = world.get_actors().filter('traffic.traffic_light*')
+
+        objects.update({'traffic_lights': []})
+
+        for tl in tl_list:
+            distance = self.dist(tl)
+            if distance < 50:
+                objects['traffic_lights'].append(tl)
+        return objects
 
     def destroy(self):
         """
