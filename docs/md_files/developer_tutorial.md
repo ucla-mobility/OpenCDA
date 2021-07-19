@@ -351,28 +351,26 @@ class BehaviorAgent(object):
 
     This method contains the function of local planner and control command generation. In order to obey the traffic rules and consider the dynamic road elements, we have designed the following cases. Each case will have distinct driving behavior.
 
-    * ##### Destination arrived 
+    * <strong>Destination arrived</strong>
 
         If the current location is near a radius of the destination ($10$ meters by default), the vehicle has arived at the destination and we will exit the agent. 
 
-    * ##### Red traffic Light
+    * <strong>Red traffic light</strong>
 
         If the vehicle is in the junction and the traffic light is red, then return the break control command. Here we also consider the case when the car has moved to the center of the junction and the traffic light turns to green at current timestamp. For this case, it is very dangerious for the car to stop at the center of the junction. Thus we will use `light_id_to_ignore` to ignore this red light so that the car will continue moving. See [code](https://github.com/ucla-mobility/OpenCDA/blob/555aeab2bac7471d9400c51aea9c76741954b54b/opencda/core/plan/behavior_agent.py#L352) for details
 
-    * #####Lane Change behaviors:
-
+    * <strong>Lane change behaviors</strong>
         * If the car is near intersection, for safety concern, the overtake and lane change are not allowed.
         * If the curvature of the road is high, the lane change is disabled. 
         * If lane change is allowed and the global plan indeed output a lane change path, then do collision check to see if the target lane is free. 
 
-    * ##### Car following
+    * <strong>Car following</strong>
 
         If car following mode is on, follow the leading car.
 
-    * ##### Normal mode
+    * <strong>Normal Mode</strong>
 
         For the normal mode, we will sample points along the path and return the target speed and target location. 
-
 
 ### LocalPlanner
 
