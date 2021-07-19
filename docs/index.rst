@@ -25,6 +25,7 @@ for latest release.
    md_files/installation.md
    md_files/getstarted.md
    md_files/tutorial.md
+   md_files/developer_tutorial.md
    md_files/contributor.md
    modules
 
