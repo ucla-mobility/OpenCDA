@@ -99,7 +99,7 @@ class VehicleManager(object):
             vehicle, sensing_config['localization'], carla_map)
         # perception module
         self.perception_manager = PerceptionManager(
-            vehicle, sensing_config['perception'], cav_world.ml_manager,
+            vehicle, sensing_config['perception'], cav_world,
             data_dumping)
 
         # behavior agent

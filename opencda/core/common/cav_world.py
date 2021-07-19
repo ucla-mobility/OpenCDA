@@ -9,7 +9,8 @@ import importlib
 class CavWorld(object):
     """
     A customized world object to save all CDA vehicle
-    information and shared ML models.
+    information and shared ML models. During co-simulation,
+    it is also used to save the sumo-carla id mapping.
 
     Parameters
     ----------
@@ -47,6 +48,9 @@ class CavWorld(object):
             # initialize the ml manager to load the DL/ML models into memory
             self.ml_manager = ml_manager()
 
+        # this is used only when co-simulation activated.
+        self.sumo2carla_ids = {}
+
     def update_vehicle_manager(self, vehicle_manager):
         """
         Update created CAV manager to the world.
@@ -71,6 +75,18 @@ class CavWorld(object):
         """
         self._platooning_dict.update(
             {platooning_manger.pmid: platooning_manger})
+
+    def update_sumo_vehicles(self, sumo2carla_ids):
+        """
+        Update the sumo carla mapping dict. This is only called
+        when cosimulation is conducted.
+
+        Parameters
+        ----------
+        sumo2carla_ids : dict
+            Key is sumo id and value is carla id.
+        """
+        self.sumo2carla_ids = sumo2carla_ids
 
     def get_vehicle_managers(self):
         """

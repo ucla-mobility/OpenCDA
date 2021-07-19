@@ -84,12 +84,12 @@ class CoScenarioManager(ScenarioManager):
         base_name = \
             os.path.basename(sumo_file_parent_path)
         sumo_cfg = \
-            os.path.join(sumo_file_parent_path, base_name + '.net.xml')
+            os.path.join(sumo_file_parent_path, base_name + '.sumocfg')
         # todo: use yaml file to generate the route file
         assert os.path.isfile(sumo_cfg), '%s does not exist, make sure' \
                                          'your config file name has the' \
                                          'same basename as the directory' \
-                                         'and use .net.xml as extension' \
+                                         'and use .sumocfg as extension' \
                                          % sumo_cfg
 
         sumo_port = scenario_params['sumo']['port']
@@ -224,15 +224,32 @@ class CoScenarioManager(ScenarioManager):
 
         # Updates traffic lights in sumo based on carla information.
         # todo make sure the tl is synced
-        common_landmarks = self.sumo.traffic_light_ids & self.carla.traffic_light_ids
+        common_landmarks = self.sumo.traffic_light_ids & \
+                           self.traffic_light_ids
         for landmark_id in common_landmarks:
-            carla_tl_state = self.carla.get_traffic_light_state(landmark_id)
+            carla_tl_state = self.get_traffic_light_state(landmark_id)
             sumo_tl_state = BridgeHelper.get_sumo_traffic_light_state(
                 carla_tl_state)
 
             # Updates all the sumo links related to this landmark.
             self.sumo.synchronize_traffic_light(landmark_id, sumo_tl_state)
 
+        # update the sumo2carla dict to cav world
+        self.cav_world.update_sumo_vehicles(self.sumo2carla_ids)
+
+    @property
+    def traffic_light_ids(self):
+        return set(self._tls.keys())
+
+    def get_traffic_light_state(self, landmark_id):
+        """
+        Accessor for traffic light state.
+
+        If the traffic ligth does not exist, returns None.
+        """
+        if landmark_id not in self._tls:
+            return None
+        return self._tls[landmark_id].state
 
     def spawn_actor(self, blueprint, transform):
         """
@@ -311,9 +328,11 @@ class CoScenarioManager(ScenarioManager):
         Simulation close.
         """
         # Destroying synchronized actors.
+        print('destroying carla actor')
         for carla_actor_id in self.sumo2carla_ids.values():
             self.destroy_actor(carla_actor_id)
 
+        print('destroying sumo actor')
         for sumo_actor_id in self.carla2sumo_ids.values():
             self.sumo.destroy_actor(sumo_actor_id)
 
@@ -321,5 +340,5 @@ class CoScenarioManager(ScenarioManager):
         for actor in self.world.get_actors():
             if actor.type_id == 'traffic.traffic_light':
                 actor.freeze(False)
-        
+
         self.sumo.close()
