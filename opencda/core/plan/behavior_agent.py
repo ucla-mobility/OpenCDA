@@ -467,7 +467,11 @@ class BehaviorAgent(object):
             if not vehicle_state:
                 print("left overtake is operated")
                 self.overtake_counter = 100
-                next_wpt = left_wpt.next(self._ego_speed / 3.6 * 6)[0]
+                next_wpt_list = left_wpt.next(self._ego_speed / 3.6 * 6)
+                if len(next_wpt_list) == 0:
+                    return True
+
+                next_wpt = next_wpt_list[0]
                 left_wpt = left_wpt.next(5)[0]
                 self.set_destination(
                     left_wpt.transform.location,
@@ -494,7 +498,11 @@ class BehaviorAgent(object):
             if not vehicle_state:
                 print("right overtake is operated")
                 self.overtake_counter = 100
-                next_wpt = right_wpt.next(self._ego_speed / 3.6 * 6)[0]
+                next_wpt_list = right_wpt.next(self._ego_speed / 3.6 * 6)
+                if len(next_wpt_list) == 0:
+                    return True
+
+                next_wpt = next_wpt_list[0]
                 right_wpt = right_wpt.next(5)[0]
                 self.set_destination(
                     right_wpt.transform.location,
@@ -611,6 +619,7 @@ class BehaviorAgent(object):
         # retrieve ego location
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
+
         # ttc reset to 1000 at the beginning
         self.ttc = 1000
 

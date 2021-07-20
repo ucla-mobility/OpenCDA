@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<configuration>
+  <input>
+        <net-file value="2lane_freeway_simplified.net.xml"/>
+    <route-files value="2lane_freeway_simplified.rou.xml"/>
+  </input>
+  <num-clients value="1"/>
+</configuration>
