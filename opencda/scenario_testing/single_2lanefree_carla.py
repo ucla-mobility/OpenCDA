@@ -25,7 +25,7 @@ def run_scenario(opt, config_yaml):
         current_path = os.path.dirname(os.path.realpath(__file__))
         xodr_path = os.path.join(
             current_path,
-            '../assets/2lane_freeway_simplified/map_v7.6_12ft_lane.xodr')
+            '../assets/2lane_freeway_simplified/2lane_freeway_simplified.xodr')
 
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
