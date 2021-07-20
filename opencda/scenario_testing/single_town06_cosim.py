@@ -19,17 +19,14 @@ def run_scenario(opt, config_yaml):
 
         # sumo conifg file path
         current_path = os.path.dirname(os.path.realpath(__file__))
-        xodr_path = os.path.join(current_path,
-                                 '../assets/2lane_freeway_simplified/'
-                                 '2lane_freeway_simplified.xodr')
         sumo_cfg = os.path.join(current_path,
-                                '../assets/2lane_freeway_simplified')
+                                '../assets/Town06')
 
         # create co-simulation scenario manager
         scenario_manager = \
             sim_api.CoScenarioManager(scenario_params,
                                       opt.apply_ml,
-                                      xodr_path=xodr_path,
+                                      town='Town06',
                                       cav_world=cav_world,
                                       sumo_file_parent_path=sumo_cfg)
         single_cav_list = \

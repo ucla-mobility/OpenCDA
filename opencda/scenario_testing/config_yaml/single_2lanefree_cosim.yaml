@@ -91,7 +91,7 @@ sumo:
   client_order: 1
   step_length: *delta
 
-# define scenario. In this scenario, a 4-vehicle platoon already exists.
+# define scenario. In this scenario, only a single CAV will be spawned
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base

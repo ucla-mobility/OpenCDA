@@ -2,7 +2,8 @@ description: |-
   Copyright 2021 <UCLA Mobility Lab>
   Author: Runsheng Xu <rxx3386@ucla.edu>
   Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
-           testing in high speed in the customized 2lanefree simple version.
+           testing in high speed in the customized 2lanefree simple version. Co-simulation is activated.
+
 
 # define carla simulation setting
 world:
@@ -14,9 +15,9 @@ world:
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 1 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+      activate: true # when not activated, objects positions will be retrieved from server directly
+      camera_visualize: 3 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_num: 3 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
@@ -30,7 +31,7 @@ vehicle_base: &vehicle_base
         dropoff_zero_intensity: 0.0
         noise_stddev: 0.0
     localization: &base_localize
-      activate: true # when not activated, ego position will be retrieved from server directly
+      activate: false # when not activated, ego position will be retrieved from server directly
       dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
@@ -43,8 +44,8 @@ vehicle_base: &vehicle_base
         x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
-    max_speed: 111 # maximum speed, km/h
-    tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
+    max_speed: 70 # maximum speed, km/h
+    tailgate_speed: 80 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
     safety_time: 4 # ttc safety thresholding for decreasing speed
@@ -82,40 +83,20 @@ vehicle_base: &vehicle_base
     enabled: true
     communication_range: 35
 
-
-# define the background traffic control by carla
-carla_traffic_manager:
-  sync_mode: true # has to be same as the world setting
-  global_distance: 5 # the minimum distance in meters that vehicles have to keep with the rest
-  # Sets the difference the vehicle's intended speed and its current speed limit.
-  #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
-  # and 20 represents 24 km/h
-  global_speed_perc: -100
-  set_osm_mode: true # Enables or disables the OSM mode.
-  auto_lane_change: false
-  random: false # whether to random select vehicles' color and model
-  vehicle_list:  # a number or a list
-    - spawn_position: [-330, 8.3, 0.3, 0, 0, 0]
-      vehicle_speed_perc: 0
-    - spawn_position: [-320, 4.8, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -200
-    - spawn_position: [-300, 8.3, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -100
-    - spawn_position: [-280, 4.8, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -200
-  # Used only when vehicle_list is a number.
-  # x_min, x_max, y_min, y_max, x_step, y_step
-  range: [-400, -300, 4.5, 8.5, 10, 4]
+# define sumo simulation setting for traffic generation
+sumo:
+  port: ~
+  host: ~
+  gui: true
+  client_order: 1
+  step_length: *delta
 
 # define scenario. In this scenario, only a single CAV will be spawned
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-370, 8.3, 0.3, 0, 0, 0]
-      # this parameter will overwrite the spawn position, when it is set, the vehicle is spawn
-      # at the merging lane. 0.5 means it is spawn at the middle of the whole merging lange.
-      # spawn_special: [0.34]
-      destination: [700, 8.3, 0.3]
+      spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
+      destination: [630, 145.51, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45

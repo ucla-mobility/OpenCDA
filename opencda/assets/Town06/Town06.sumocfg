@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<configuration>
+  <input>
+        <net-file value="Town06.net.xml"/>
+    <route-files value="Town06.rou.xml"/>
+  </input>
+  <num-clients value="1"/>
+</configuration>

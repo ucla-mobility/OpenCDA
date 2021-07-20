@@ -1,24 +1,24 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
-    <vehicle id="0" type="vehicle.bh.crossbike" depart="0.00">
+    <vehicle id="0" type="vehicle.bmw.isetta" depart="0.00">
         <route edges="43.0.00 23.0.00 -52.0.00 49.0.00 7.0.00 6.0.00"/>
     </vehicle>
     <vehicle id="1" type="vehicle.bmw.isetta" depart="1.00">
         <route edges="33.0.00 -39.0.00 25.0.00 -6.0.00"/>
     </vehicle>
-    <vehicle id="2" type="vehicle.carlamotors.carlacola" depart="2.00">
+    <vehicle id="2" type="vehicle.volkswagen.t2" depart="2.00">
         <route edges="-8.0.00 -45.0.00 -46.0.00 6.0.00 15.0.00 13.0.00 35.0.00 -27.0.00 20.0.00"/>
     </vehicle>
-    <vehicle id="3" type="vehicle.diamondback.century" depart="3.00">
+    <vehicle id="3" type="random" depart="3.00">
         <route edges="2.0.00 -50.0.00 -23.0.00 -24.0.00 11.0.00 10.0.00 9.0.00"/>
     </vehicle>
-    <vehicle id="4" type="vehicle.gazelle.omafiets" depart="4.00">
+    <vehicle id="4" type="random" depart="4.00">
         <route edges="-14.0.00 33.0.00 -48.0.00"/>
     </vehicle>
     <vehicle id="5" type="vehicle.seat.leon" depart="5.00">
         <route edges="-8.0.00 44.0.00 2.0.00 -50.0.00 -23.0.00"/>
     </vehicle>
-    <vehicle id="6" type="vehicle.harley-davidson.low_rider" depart="6.00">
+    <vehicle id="6" type="random" depart="6.00">
         <route edges="40.0.00 -1.0.00 -2.0.00 43.0.00 -24.0.00 11.0.00"/>
     </vehicle>
     <vehicle id="7" type="vehicle.tesla.cybertruck" depart="7.00">
@@ -27,7 +27,7 @@
     <vehicle id="8" type="vehicle.volkswagen.t2" depart="8.00">
         <route edges="46.0.00 -4.0.00 -8.0.00"/>
     </vehicle>
-    <vehicle id="9" type="vehicle.bh.crossbike" depart="9.00">
+    <vehicle id="9" type="random" depart="9.00">
         <route edges="3.0.00 2.0.00 1.0.00 -18.0.00 -41.0.00"/>
     </vehicle>
     <vehicle id="10" type="vehicle.lincoln.mkz2017" depart="10.00">
@@ -42,10 +42,10 @@
     <vehicle id="13" type="vehicle.toyota.prius" depart="13.00">
         <route edges="20.0.00 48.0.00 -39.0.00 -0.0.00 -1.0.00 49.0.00 4.0.00"/>
     </vehicle>
-    <vehicle id="14" type="vehicle.gazelle.omafiets" depart="14.00">
+    <vehicle id="14" type="random" depart="14.00">
         <route edges="-45.0.00 -46.0.00 6.0.00"/>
     </vehicle>
-    <vehicle id="15" type="vehicle.gazelle.omafiets" depart="15.00">
+    <vehicle id="15" type="random" depart="15.00">
         <route edges="10.0.00 9.0.00 8.0.00 7.0.00 46.0.00"/>
     </vehicle>
     <vehicle id="16" type="vehicle.toyota.prius" depart="16.00">
@@ -75,7 +75,7 @@
     <vehicle id="24" type="vehicle.lincoln.mkz2017" depart="24.00">
         <route edges="11.0.00 10.0.00"/>
     </vehicle>
-    <vehicle id="25" type="vehicle.citroen.c3" depart="25.00">
+    <vehicle id="25" type="random" depart="25.00">
         <route edges="-3.0.00 -11.0.00 24.0.00 23.0.00 22.0.00 21.0.00 28.0.00"/>
     </vehicle>
     <vehicle id="26" type="vehicle.mini.cooperst" depart="26.00">
@@ -147,7 +147,7 @@
     <vehicle id="48" type="vehicle.mercedes-benz.coupe" depart="48.00">
         <route edges="-41.0.00 -51.0.00 22.0.00 21.0.00 28.0.00 27.0.00 37.0.00"/>
     </vehicle>
-    <vehicle id="49" type="vehicle.bh.crossbike" depart="49.00">
+    <vehicle id="49" type="random" depart="49.00">
         <route edges="-2.0.00 -44.0.00 8.0.00 7.0.00 6.0.00 15.0.00 -19.0.00 48.0.00"/>
     </vehicle>
     <vehicle id="50" type="vehicle.audi.a2" depart="50.00">
@@ -174,10 +174,10 @@
     <vehicle id="57" type="vehicle.toyota.prius" depart="57.00">
         <route edges="42.0.00 -51.0.00 -52.0.00 -2.0.00 -3.0.00 10.0.00"/>
     </vehicle>
-    <vehicle id="58" type="vehicle.bh.crossbike" depart="58.00">
+    <vehicle id="58" type="random" depart="58.00">
         <route edges="2.0.00 1.0.00 0.0.00 -26.0.00 28.0.00"/>
     </vehicle>
-    <vehicle id="59" type="vehicle.diamondback.century" depart="59.00">
+    <vehicle id="59" type="random" depart="59.00">
         <route edges="-2.0.00 -44.0.00 8.0.00 4.0.00"/>
     </vehicle>
     <vehicle id="60" type="vehicle.mustang.mustang" depart="60.00">
