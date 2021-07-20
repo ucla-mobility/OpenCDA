@@ -78,7 +78,7 @@ def run_scenario(opt, config_yaml):
         if opt.record:
             scenario_manager.client.stop_recorder()
 
-        scenario_manager.world.apply_settings(scenario_manager.origin_settings)
+        scenario_manager.close()
 
         for v in single_cav_list:
             v.destroy()

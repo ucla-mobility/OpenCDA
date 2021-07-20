@@ -53,7 +53,6 @@ def run_scenario(opt, config_yaml):
                 single_cav.vehicle.apply_control(control)
 
     finally:
-        scenario_manager.world.apply_settings(scenario_manager.origin_settings)
         scenario_manager.close()
         for v in single_cav_list:
             v.destroy()

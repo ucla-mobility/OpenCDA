@@ -493,3 +493,10 @@ class ScenarioManager:
         actor_list = self.world.get_actors()
         for actor in actor_list:
             actor.destroy()
+
+    def close(self):
+        """
+        Simulation close.
+        """
+        # restore to origin setting
+        self.world.apply_settings(self.origin_settings)

@@ -327,6 +327,9 @@ class CoScenarioManager(ScenarioManager):
         """
         Simulation close.
         """
+        # restore to origin setting
+        self.world.apply_settings(self.origin_settings)
+
         # Destroying synchronized actors.
         print('destroying carla actor')
         for carla_actor_id in self.sumo2carla_ids.values():
