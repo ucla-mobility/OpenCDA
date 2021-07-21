@@ -36,6 +36,8 @@ If you want to activate the perception module, please check [Yaml Defining Rules
 > The bounding boxes draw on the camera and lidar are retrieved from the server directly and 
 > projected to the sensor space.
 
+| :exclamation:  This is very important   |
+|-----------------------------------------|
 
 
 #### 2. Town06 test (Pytorch required)
