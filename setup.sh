@@ -32,3 +32,5 @@ cp "$SETUP_PY"  "${CACHE}"/carla-0.9.11-py3.7-linux-x86_64/
 echo "Successful! Run pip -e ${CACHE}/carla-0.9.11-py3.7-linux-x86_64 to install carla into your python package "
 conda activate opencda
 pip install -e ${CACHE}/carla-0.9.11-py3.7-linux-x86_64
+
+echo "Sucessful Setup!"
