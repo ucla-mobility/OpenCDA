@@ -36,9 +36,8 @@ If you want to activate the perception module, please check [Yaml Defining Rules
 > The bounding boxes draw on the camera and lidar are retrieved from the server directly and 
 > projected to the sensor space.
 
-| :exclamation:  This is very important   |
-|-----------------------------------------|
-
+!!! Warning
+    Change the docs version to fit the CARLA version you are using. Use the pannel in the bottom-right side of this window to change to previous versions. 
 
 #### 2. Town06 test (Pytorch required)
 ```sh
