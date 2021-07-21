@@ -92,5 +92,13 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
         * `gnss` : related to the parameters of the gnss sensor.
         * `debug_helper` : parameters related to localization debugging and real-time trajectory plotting.
 * `behavior` : Define behavior planning parameters
-        
- 
+    * `max_speed` : int type, the maximum speed(km/h) that the CAV is allowed to reach.
+    * `tailgate_speed` : int type, the target speed(km/h) for CAV when it tries to catch up with a platoon, it is usually larger
+    than `max_speed`
+    * `speed_lim_dist` : int type, during normal driving mode, `target_speed` = `max_speed` - `speed_lim_dist`
+    * `speed_decrease` : int type, when the CAV is in car following mode and it gets too close to the
+    front vehicle, `target_speed` = `front_vehicle_speed` - `speed_decrease`
+    * `safety_time` : float type, ttc thresholding to identify whether the ego vehicle is too close to 
+    the front vehicle.
+    * `emergency_param` : float type, `emergency_stop_distance` = `current_speed` * `emergency_param`
+    * 
