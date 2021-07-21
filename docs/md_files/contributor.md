@@ -25,7 +25,7 @@ Dr. Yi Guo(Postdoc @ UC):
 - [Linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/)
 
 ### Supervisor
-Dr. Jiaqi Ma(Assistant Professor @ UCLA)
+Dr. Jiaqi Ma(Associate Professor @ UCLA)
 - Project and lab supervisor
 - [Linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/)
 - [Google Scholar](https://scholar.google.com/citations?user=S3cQz1AAAAAJ&hl=en)
