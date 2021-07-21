@@ -2,7 +2,7 @@
 
 * [__System/Hardware Requirements__](#requirements)
 * [__Local Installation__](#local-installation)
-    * [__1,CARLA installation__](#carla-installation)
+    * [__1,CARLA installation__](#1-carla-installation0911-required)
 	    * [1.1 Package installation](#11-package-installation)  
 	    * [1.2 Build from source](#12-build-from-source)  
 
