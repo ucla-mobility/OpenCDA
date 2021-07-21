@@ -72,4 +72,8 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
  If it is set to 0.05 seconds, there will be 20 frames per simulated second.
  
  #### vehicle_base
- `vehicle_base` defines the default parameters
+ `vehicle_base` defines the default parameters for each CAV including perception, localization, planning, control,
+ and v2x modules. The ampersand `&` character before `vehicle_base` is ued to to create a `named anchor`, 
+ which we can then reference later on with an asterisk `*`. To know more details about the `named anchor` feature
+ in yaml file, [read this blog](https://anil.io/blog/symfony/yaml/using-variables-in-yaml-files/) .
+ 

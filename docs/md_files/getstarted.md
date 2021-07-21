@@ -31,16 +31,20 @@ If you want to activate the perception module, please check [Yaml Defining Rules
 
 ![](images/single_2lanefree_carla.gif)
 
-<strong>Note: The bounding boxes draw on the camera and lidar are retrieved from the server directly and 
-projected to the sensor space. </strong>
+
+.. Note:: The bounding boxes draw on the camera and lidar are retrieved from the server directly and 
+projected to the sensor space.
+
+
 
 #### 2. Town06 test (Pytorch required)
 ```sh
 python opencda.py -t single_town06_carla --apply_ml
 ```
-The apply_ml flag will import the pytorch library and load Yolov5 model(<strong>Thus Pytorch is required</strong>) for object detection. Thus, in this
+The apply_ml flag will import the pytorch library and load Yolov5 model (<strong>Thus Pytorch is required</strong>) for object detection. Thus, in this
 scenario, the <strong>perception</strong>, localization, planning and control modules will all be activated.
 ![](images/single_town06_carla_2.gif)
+
 <strong>Note: The bounding box draw here comes from the detection model.</strong>
 
 #### 3. Town06 Co-simulation test (Pytorch and Sumo required)
