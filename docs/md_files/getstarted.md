@@ -1,4 +1,4 @@
-## Quick start 
+## Quick Start 
 
 OpenCDA provides benchmark scenarios that researchers can use directly without any modification. Running these 
 scenario testings only need one line of command:
@@ -17,7 +17,7 @@ set, Pytorch will be imported.
 Below we will demonstrate some examples of running the benchmark testings in OpenCDA
 
 ---
-### Single Vehicle Testing
+### Single Vehicle Test
 ####  1. Two-lane highway test
 ```sh
 python opencda.py -t single_2lanefree_carla

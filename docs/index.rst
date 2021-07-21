@@ -8,8 +8,7 @@ Welcome to OpenCDA's documentation!
 OpenCDA is a generalized framework for fast developing and testing
 cooperative driving automation applications(e.g., cooperative
 perception, platooning) as well as autonomous vehicle components(e.g.,
-perception, localization, planning, control) on multi-resolution
-simulators(e.g., CARLA, SUMO).
+perception, localization, planning, control) under Co-simulation(CARLA-SUMO).
 
 OpenCDA is a work in progress, and many features are still in the future
 roadmap. We welcome your contribution and please visit our Github repo
@@ -24,7 +23,7 @@ for latest release.
    md_files/introduction.md
    md_files/installation.md
    md_files/getstarted.md
-   md_files/tutorial.md
+   md_files/logic_flow.md
    md_files/contributor.md
    modules
 
