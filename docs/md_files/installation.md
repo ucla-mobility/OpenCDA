@@ -51,7 +51,7 @@ scenario testings in Town06.
 
 #### 1.2 Build From Source
 
-For advanced CARLA usage that involves extensive customizations, [Build CARLA from Source](https://carla.readthedocs.io/en/latest/build_linux/) is also supported by OpenCDA. Though source build in 
+For advanced CARLA usage that involves extensive customizations, [Build CARLA from Source](https://carla.readthedocs.io/en/0.9.11/build_linux/) is also supported by OpenCDA. Though source build in 
 Windows OS is supported by CARLA, Ubuntu is the preferred OS as the OpenCDA was developoed in Ubuntu 18.04.  
  
 ** Note: OpenCDA do not require CARLA source build. However, customized map with building/lane/traffic light/road surface materials assets  in CARLA  require source build. 
@@ -78,17 +78,16 @@ If conda install failed,  install through pip
 pip install -r requirement.txt
 ```
 
-After dependencies are installed, we need to install the CARLA PythonAPI package into the conda environment.
+After dependencies are installed, we need to install the CARLA python library into opencda conda environment.
 You can do this by running this script:
 ```sh
 export CARLA_HOME=/path/to/your/CARLA_ROOT
-# remember to set CARLA_HOME first to point to your carla repo
 . setup.sh
 ```
-If everything works correctly, you will see a cache folder is created in your OpenCDA root dir, and inside the cache folder
-you will see an egg file and its unzipped folder. Then install this CARLA egg into your conda environment.
+If everything works correctly, you will see a cache folder is created in your OpenCDA root dir, and the terminal shows
+"Successful Setup!". To double check the carla package is correctly installed, run the following command and 
+there should be no error.
 ```sh
-pip install -e cache/carla-0.9.11-py3.7-linux-x86_64
 python -c "import carla" # check whether carla is installed correctly.
 ```
 **Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
@@ -99,7 +98,7 @@ This section is only needed for the users who want to test perception algorithms
 pytorch installed and it retrieves the object positions from the server directly. Once perception module is activated,
 then OpenCDA will use yolov5 with pytorch to run object detection. <br>
 To install pytorch based on your GPU and cuda version, go to the official pytorch website and install with conda command. Make
-sure you install pytorch >= 1.7.0. <strong>GPU Version highly recommended!</strong>
+sure you install pytorch >= 1.7.0.  <strong>GPU Version highly recommended!</strong>
 <div class="build-buttons">
 <p>
 <a href="https://pytorch.org/" target="_blank" class="btn btn-neutral" title="Pytorch">
@@ -107,8 +106,29 @@ sure you install pytorch >= 1.7.0. <strong>GPU Version highly recommended!</stro
 </p>
 </div>
 
+The command belows shows an example of installing pytorch v1.8.0 with cuda 11.1 in opencda
+environment.
+
+```sh
+
+conda install pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoolkit=11.1 -c pytorch -c conda-forge
+
+``` 
+
 After pytorch installation, install the requirements for Yolov5. <br>
 ```sh
 pip install -qr https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt  # install dependencies
+```
+
+### 4. Install Sumo(Optional)
+Sumo installation is only required for the users who require to conduct co-simulation testing.
+
+You can install sumo directly by apt-get:
+```sh
+sudo apt-get install sumo sumo-tools sumo-doc
+```
+After that, install the traci python package
+```sh
+pip install traci
 ```
 
