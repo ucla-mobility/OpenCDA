@@ -60,3 +60,16 @@ scenario: # define each cav's spawn position, driving task, and parameters
            ...: ... # overwrite the default sensing parameters for this cav
   
 ```
+### Detailed Explanation
+
+---
+#### world
+The parameter `world` in the yaml defines the CARLA server setting.
+* `sync` : bool type, if true, the simulation will be in sync mode, otherwise async mode. Check 
+the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/)  to know more.
+* `client_port` : the python client port connected to the CARLA server.
+* `fixed_delta_seconds` : The elapsed time remains constant between simulation steps.
+ If it is set to 0.05 seconds, there will be 20 frames per simulated second.
+ 
+ #### vehicle_base
+ `vehicle_base` defines the default parameters

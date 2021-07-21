@@ -31,7 +31,7 @@ will retrieve all perception information from the simulation server directly.
 ###  1. CARLA Installation(0.9.11 required)
 
 There are two different recommended ways to install the CARLA simulator and either way is fine for using OpenCDA. <br>
-** Note: If you want to use the customized highway map with full assets(.fbx, .xml and .xodr) in OpenCDA, 
+Note: If you want to use the customized highway map with full assets(.fbx, .xml and .xodr) in OpenCDA, 
 you have to build from source. Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information.
 
 
@@ -54,8 +54,8 @@ scenario testings in Town06.
 For advanced CARLA usage that involves extensive customizations, [Build CARLA from Source](https://carla.readthedocs.io/en/0.9.11/build_linux/) is also supported by OpenCDA. Though source build in 
 Windows OS is supported by CARLA, Ubuntu is the preferred OS as the OpenCDA was developoed in Ubuntu 18.04.  
  
-** Note: OpenCDA do not require CARLA source build. However, customized map with building/lane/traffic light/road surface materials assets  in CARLA  require source build. 
-Visit CARLA's tutorial ["ADD a new map"](`CARLA Tutorials (assets). <https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. 
+<strong>Note: OpenCDA do not require CARLA source build. However, customized map with building/lane/traffic light/road surface materials assets  in CARLA  require source build. 
+Visit CARLA's tutorial ["ADD a new map"](`CARLA Tutorials (assets). <https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. </strong>
  
 ---
 ### 2. OpenCDA Installation
@@ -90,8 +90,8 @@ there should be no error.
 ```sh
 python -c "import carla" # check whether carla is installed correctly.
 ```
-**Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
-carla version's egg file or manually installed carla to your conda environment.
+<strong>Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
+carla version's egg file or manually installed carla to your conda environment.</strong>
 
 ### 3. Install Pytorch and Yolov5(Optional)
 This section is only needed for the users who want to test perception algorithms. By default, OpenCDA does not require
