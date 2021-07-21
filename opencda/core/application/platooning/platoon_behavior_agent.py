@@ -316,13 +316,13 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_front_vehicle_manger, _ = \
             frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
 
-        if len(self._local_planner.get_trajetory()
+        if len(self._local_planner.get_trajectory()
                ) > self.get_local_planner().trajectory_update_freq - 2:
             return self._local_planner.run_step([], [], [], following=True)
         else:
             # this agent is a behavior agent
             frontal_trajectory = frontal_vehicle_manager.\
-                agent.get_local_planner().get_trajetory()
+                agent.get_local_planner().get_trajectory()
 
             # get front speed
             frontal_speed = frontal_vehicle_manager.agent._ego_speed

@@ -264,11 +264,11 @@ class BehaviorAgent(object):
             Flag to clean the waypoint history.
         """
         if clean:
-            self.get_local_planner().waypoints_queue.clear()
-            self.get_local_planner().get_trajetory().clear()
-            self.get_local_planner()._waypoint_buffer.clear()
+            self.get_local_planner().get_waypoints_queue().clear()
+            self.get_local_planner().get_trajectory().clear()
+            self.get_local_planner().get_waypoint_buffer().clear()
         if clean_history:
-            self.get_local_planner()._history_buffer.clear()
+            self.get_local_planner().get_history_buffer().clear()
 
         self.start_waypoint = self._map.get_waypoint(start_location)
 
@@ -527,7 +527,7 @@ class BehaviorAgent(object):
         target_wpt = None
 
         # check the closest waypoint on the adjacent lane
-        for wpt in self.get_local_planner()._waypoint_buffer:
+        for wpt in self.get_local_planner().get_waypoint_buffer():
             if wpt[0].lane_id != ego_lane_id:
                 target_wpt = wpt[0]
                 break
@@ -591,6 +591,29 @@ class BehaviorAgent(object):
                     target_speed)
         return target_speed
 
+    def is_intersection(self, objects, waypoint_buffer):
+        """
+        Check the next waypoints is near the intersection. This is done by
+        check the distance between the waypoints and the traffic light.
+
+        Parameters
+        ----------
+        objects : dict
+            The dictionary contains all objects info.
+
+        Returns
+        -------
+        is_junc : bool
+            Whether there is any future waypoint in the junction shortly.
+        """
+        for tl in objects['traffic_lights']:
+            for wpt, _ in waypoint_buffer:
+                distance = \
+                    tl.get_location().distance(wpt.transform.location)
+                if distance < 20:
+                    return True
+        return False
+
     def run_step(
             self,
             target_speed=None,
@@ -619,6 +642,7 @@ class BehaviorAgent(object):
         # retrieve ego location
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
+        waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
 
         # ttc reset to 1000 at the beginning
         self.ttc = 1000
@@ -644,12 +668,12 @@ class BehaviorAgent(object):
             return 0, None
 
         # use traffic light to detect intersection
-        is_intersection = \
-            self.get_local_planner().is_intersection(self.objects)
+
+        is_intersection = self.is_intersection(self.objects, waipoint_buffer)
 
         # when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().waypoints_queue) == 0 \
-                and len(self.get_local_planner()._waypoint_buffer) <= 2:
+                and len(self.get_local_planner().get_waypoint_buffer()) <= 2:
             print('Destination Reset!')
             # in case the vehicle is disabled overtaking function
             # at the beginning
@@ -705,7 +729,7 @@ class BehaviorAgent(object):
                 self.overtake_counter <= 0:
             self.overtake_allowed = False
 
-            waypoint_buffer = self.get_local_planner()._waypoint_buffer
+            waypoint_buffer = self.get_local_planner().get_waypoint_buffer()
             reset_index = len(waypoint_buffer) // 2
 
             # when it comes to the intersection, we need to use the future
@@ -780,3 +804,5 @@ class BehaviorAgent(object):
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
         return target_speed, target_loc
+
+
