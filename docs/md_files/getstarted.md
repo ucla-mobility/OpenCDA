@@ -32,7 +32,8 @@ If you want to activate the perception module, please check [Yaml Defining Rules
 ![](images/single_2lanefree_carla.gif)
 
 
-!!!Note The bounding boxes draw on the camera and lidar are retrieved from the server directly and 
+!!! Note
+ The bounding boxes draw on the camera and lidar are retrieved from the server directly and 
 projected to the sensor space.
 
 
