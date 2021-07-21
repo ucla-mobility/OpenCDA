@@ -9,6 +9,8 @@
 """ Module with auxiliary functions. """
 
 import math
+import importlib
+
 import numpy as np
 import carla
 
@@ -234,3 +236,33 @@ def positive(num):
     Return the given number if positive, else 0
     """
     return num if num > 0.0 else 0.0
+
+
+def get_speed_sumo(sumo2carla_ids, carla_id):
+    """
+    Get the speed of the vehicles controlled by sumo.
+
+    Parameters
+    ----------
+    sumo2carla_ids : dict
+        Sumo-carla mapping dictionary.
+
+    carla_id : int
+        Carla actor id.
+
+    Returns
+    -------
+    speed : float
+        The speed retrieved from the sumo server, -1 if the carla_id not
+        found.
+    """
+    # python will only import this once and then save it in cache. so the
+    # efficiency won't affected during the loop.
+    traci = importlib.import_module("traci")
+
+    for key, value in sumo2carla_ids.items():
+        if int(value) == carla_id:
+            vehicle_speed = traci.vehicle.getSpeed(key)
+            return vehicle_speed
+
+    return -1
