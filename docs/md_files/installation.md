@@ -47,8 +47,9 @@ you have to build from source. Visit CARLA's tutorial [ADD a new map](https://ca
 
 OpenCDA is only tested at 0.9.11 and thus we highly recommend using this version.
 To install CARLA as a precompiled package, download and extract the release file. It contains a precompiled version of the simulator, the Python API module and some scripts to be used as examples. <br>
-** Note: The  AdditionalMaps_0.9.11.tar.gz also need to be downloaded and extract to the CARLA repo to support
-scenario testings in Town06.
+
+<strong>Note: The  AdditionalMaps_0.9.11.tar.gz also need to be downloaded and extract to the CARLA repo to support
+scenario testings in Town06.</strong>
 
 #### 1.2 Build From Source
 
@@ -56,7 +57,7 @@ For advanced CARLA usage that involves extensive customizations, [Build CARLA fr
 Windows OS is supported by CARLA, Ubuntu is the preferred OS as the OpenCDA was developoed in Ubuntu 18.04.  
  
 <strong>Note: OpenCDA do not require CARLA source build. However, customized map with building/lane/traffic light/road surface materials assets  in CARLA  require source build. 
-Visit CARLA's tutorial ["ADD a new map"](`CARLA Tutorials (assets). <https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. </strong>
+Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. </strong>
  
 ---
 ### 2. OpenCDA Installation
