@@ -6,7 +6,7 @@ cooperative merge) under a realistic simulated environment becomes difficult.
 OpenCDA is created to fill such gap. 
 
 ### Major Components
-![teaser](images/OpenCDA_diagrams.png )
+![](images/OpenCDA_diagrams.png )
  1. <em>Cooperative Driving System</em>: <br /> OpenCDA  provides  a  <strong> full-stack software </strong>  that  contains  the  common  self-driving  modules including
   <strong> sensing,   planning and actuation  layers </strong>,  and  it  is  developed  purely  in  Python for fast prototyping.
   Built  upon these basic modules, OpenCDA supports a range of  <strong> common cooperative  driving  applications</strong>. <br />

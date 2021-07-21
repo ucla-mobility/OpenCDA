@@ -76,4 +76,6 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
  and v2x modules. The ampersand `&` character before `vehicle_base` is ued to to create a `named anchor`, 
  which we can then reference later on with an asterisk `*`. To know more details about the `named anchor` feature
  in yaml file, [read this blog](https://anil.io/blog/symfony/yaml/using-variables-in-yaml-files/) .
+ * `sensing`
+    * d
  
