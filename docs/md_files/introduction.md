@@ -1,4 +1,4 @@
-## Why OpenCDA?
+## OpenCDA Scope
 Current autonomous driving simulation platforms that support scene rendering and traffic simulation mainly concentrate
 on single-vehicle intelligence, therefore, developing and testing Cooperative Driving Automation applications(e.g., cooperative perception,
 cooperative merge) under a realistic simulated environment becomes difficult.
@@ -28,9 +28,4 @@ The key features of OpenCDA can be summarized as <strong>CIFMB</strong>:
 * <strong>M</strong>odularity: OpenCDA is highly modularized, enabling users to conveniently replace any default algorithms or protocols with their own customzied design. 
 * <strong>B</strong>enchmark: OpenCDA offers benchmark testing scenarios, state-of-the-art benchmark algorithms for all modules, benchmark testing road maps, and benchmark evaluation metrics.
 
-### Planned features in the next version
-* Add clean SUMO version to the pipeline(The functions have been finished, we are
-  cleaning the codes).
-* Cooperative localization implementation.
-* Cooperative perception implementation.
 

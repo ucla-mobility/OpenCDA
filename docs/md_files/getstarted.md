@@ -1,24 +1,28 @@
 ## Quick start 
-OpenCDA provides  a default scenario database for users to get a quick start. A  scenario testing contains two components:
-A python script and a yaml file. The yaml file will define CAVs' parameters, the traffic flow and the 
-driving task of each CAV(where to start and where is the destination). The python script will load the yaml file 
-and pass it to corresponding api to construct the scenario.<br>
 
-Running a scenario testing can be done by just one line of command.
-
-### 1. Single vehicle testing(w/o perception)
-```sh
-conda activate opencda
+OpenCDA provides benchmark scenarios that researchers can use directly without any modification. Running these 
+scenario testings only need one line of command:
+```she
 cd ~/OpenCDA
-""" comments, do not input these to your terminal
-single->single vehicle testing, 
-2lanefree->testing map name, 
-carla->only carla is involved(no sumo and ns3)
-"""
+python opencda.py -t scenario_name --aply_ml --record
+```
+Parameters explanation:
+* `-t`: The name of the tesitng scenario. A python script with the same name should exist in
+`opencda/scenario_testing/` to construct the simulation, and a yaml file with the same name should exist in 
+`opencda/scenario_testing/config_yaml/` to define the simulation parameters.
+* `--apply_ml(Optional)` : A flag to indicate whether a deep learning model needs to be loaded. If this flag is 
+set, Pytorch will be imported.
+* `--record(Optional)` : A flag to indicate whether to record this simulation. [Check here for more details](https://carla.readthedocs.io/en/latest/adv_recorder/).
+
+Below we will demonstrate some examples of running the benchmark testings in OpenCDA
+
+### Single Vehicle Testing
+####  1. Two-lane highway test
+```sh
 python opencda.py -t single_2lanefree_carla
 ```
-In this scenario testing, a single connected automated vehicle will be spawn at a 2-lane highway customized map.  This
-CAV will try to reach the assigned destination with a desired speed of 100km/h and manage to safely and efficiently interact
+In this scenario , a single Connected Automated Vehicle will be spawn at a 2-lane highway customized map.  This
+CAV will try to reach the assigned destination with a desired speed of 100km/h and manage to safely interact
 with the surrounding traffic flow. The CAV's localization, planning, and control modules will be activated, and the perception module will be deactivated
 by default, thus <strong> pytorch is NOT required in this testing </strong>. <br>
 
@@ -26,16 +30,22 @@ If you want to activate the perception module, please check [Yaml Defining Rules
 
 ![teaser](images/single_2lanefree_carla.gif)
 
-** Note: The bounding boxes draw on the camera and lidar are projected from the true 3d poses from the server directly. 
+** Note: The bounding boxes draw on the camera and lidar are retrieved from the server directly and 
+projected to the sensor space.
 
-### 2. Single vehicle testing(w/ perception)
+#### 2. Town06 test(Pytorch required)
 ```sh
 python opencda.py -t single_town06_carla --apply_ml
 ```
 The apply_ml flag will import the pytorch library and load Yolov5 model(<strong>Thus Pytorch is required</strong>) for object detection. Thus, in this
 scenario, the <strong>perception</strong>, localization, planning and control modules will all be activated.
-
 ![teaser](images/single_town06_carla_2.gif)
+
+#### 3. Town06 Co-simulation test(Pytorch and Sumo required)
+```sh
+python opencda.py -t single_town06_cosim --apply_ml
+```
+
 
 ### 3. Platooning(w/o perception)
 ```sh
