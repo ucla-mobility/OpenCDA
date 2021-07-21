@@ -1,13 +1,14 @@
 # OpenCDA Installation
 
-* __[System/Hardware Requirements](#requirements)__  
-* __[Local Installation](#local-installation)__
-    * [1,CARLA installation](#carla-installation)
+* [__System/Hardware Requirements__](#requirements)
+* [__Local Installation__](#local-installation)
+    * [__1,CARLA installation__](#carla-installation)
 	    * [1.1 Package installation](#11-package-installation)  
 	    * [1.2 Build from source](#12-build-from-source)  
 
-    * [2. Install OpenCDA](#opencda-installation)
-    * [3. Install Pytorch and Yolov5(Optional)](#3-install-pytorch-and-yolov5optional)
+    * [__2. Install OpenCDA__](#opencda-installation)
+    * [__3. Install Pytorch and Yolov5 (Optional)__](#3-install-pytorch-and-yolov5optional)
+    * [__4. Install Sumo (Optional)__](#4-install-sumooptional)
 
 
 
