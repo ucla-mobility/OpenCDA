@@ -76,6 +76,21 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
  and v2x modules. The ampersand `&` character before `vehicle_base` is ued to to create a `named anchor`, 
  which we can then reference later on with an asterisk `*`. To know more details about the `named anchor` feature
  in yaml file, [read this blog](https://anil.io/blog/symfony/yaml/using-variables-in-yaml-files/) .
- * `sensing`
-    * d
+ * `sensing` :  Define perception and localization related parameters.
+    * `perception`:  Module related to object detection.
+        * `activate` : bool type, if false, the CAV will retrieve object positions from the server directly. 
+        Otherwise, yolov5 will be used for object detection.
+        * `camera_visualize` : int type, indicates how many camera rgb images should be visualized during
+        simulation. 0 means no rgb image visualization.
+        * `camera_num` : int type, indicates how many cameras are mounted in the CAV, e.g. 3 represents a frontal,
+        a left, and a right camera will be mounted on the top of the vehicle to cover a 270 degree of FOV.
+        * `lidar_visualize` : bool type, indicates whether to visualize 3d lidar points during simulaiton.
+        * `lidar` : set the configuration of the lidar sensor.
+     * `localization` : Module related to self-localization.
+        * `activate` : bool type, if true, the CAV will use gnss+imu+kf to get ego vehicle position. Otherwise, 
+        the CAV will load the ego position from server directly.
+        * `gnss` : related to the parameters of the gnss sensor.
+        * `debug_helper` : parameters related to localization debugging and real-time trajectory plotting.
+* `behavior` : Define behavior planning parameters
+        
  
