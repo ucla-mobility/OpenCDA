@@ -602,6 +602,9 @@ class BehaviorAgent(object):
         objects : dict
             The dictionary contains all objects info.
 
+        waypoint_buffer : deque
+            The waypoint buffer.
+
         Returns
         -------
         is_junc : boolean
@@ -614,6 +617,7 @@ class BehaviorAgent(object):
                 if distance < 20:
                     return True
         return False
+
     def is_close_to_destination(self):
         """
         Check if the current ego vehicle's position is close to destination
@@ -761,7 +765,6 @@ class BehaviorAgent(object):
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             return 0, None
-
 
         # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \

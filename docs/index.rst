@@ -24,6 +24,7 @@ for latest release.
    md_files/installation.md
    md_files/getstarted.md
    md_files/logic_flow.md
+   md_files/traffic_generation.md
    md_files/contributor.md
    modules
 

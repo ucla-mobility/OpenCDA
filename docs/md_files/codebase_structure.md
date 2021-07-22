@@ -6,9 +6,9 @@ The `OpenCDA` codebase directory is structured as follows:
 OpenCDA
 ├── docs  # documents of opencda, no need to pay attention.
 ├── opencda
-│   ├── assests  # customized map package.
+│   ├── assests  # customized map and sumo xml package.
 │   ├── co_simulation  # source codes for sumo background traffic generation.
-│   ├── core  # the core logic of the code
+│   ├── core  # the core part of the code
 │   │   └── actutation # implementation of control algorithms
 │   │   ├── application # implementation of cooperative driving applications
 │   │   ├── common # base class and communication class for cavs
