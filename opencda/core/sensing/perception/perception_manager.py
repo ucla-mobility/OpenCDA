@@ -20,6 +20,7 @@ from opencda.core.common.misc import \
     cal_distance_angle, get_speed, get_speed_sumo
 from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
+from opencda.core.sensing.perception.static_obstacle import TrafficLight
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show,\
     o3d_camera_lidar_fusion
@@ -699,6 +700,8 @@ class PerceptionManager:
         for tl in tl_list:
             distance = self.dist(tl)
             if distance < 50:
+                traffic_light = TrafficLight(tl.get_location(),
+                                             tl.get_state())
                 objects['traffic_lights'].append(tl)
         return objects
 

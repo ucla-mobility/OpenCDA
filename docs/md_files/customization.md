@@ -1,6 +1,6 @@
 ## Algorithm Customization
 
-Due the high modularity of OpenCDA, you can conveniently replace any default module with your own
+Due to the high modularity of OpenCDA, you can conveniently replace any default module with your own
 algorithms. The best way for customization is to  <strong> put your customized module under `opencda/customize/...` , </strong> and 
 <strong>use inheritance to overwrite the default algorithms</strong>. Afterwards, import your customized module in
 `VehicleManager` class. The only thing you need to pay attention is to make the input and output format the same

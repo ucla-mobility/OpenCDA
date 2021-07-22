@@ -17,7 +17,8 @@ from scipy.stats import mode
 
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.sensing.perception.obstacle_vehicle import \
-    is_vehicle_cococlass, ObstacleVehicle, StaticObstacle
+    is_vehicle_cococlass, ObstacleVehicle
+from opencda.core.sensing.perception.static_obstacle import StaticObstacle
 
 VIRIDIS = np.array(cm.get_cmap('plasma').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
@@ -256,6 +257,7 @@ def o3d_camera_lidar_fusion(objects,
                 objects['vehicles'].append(obstacle_vehicle)
             else:
                 objects['vehicles'] = [obstacle_vehicle]
+        # todo: refine the category
         # we regard or other obstacle rather than vehicle as static class
         else:
             static_obstacle = StaticObstacle(corner, aabb)
