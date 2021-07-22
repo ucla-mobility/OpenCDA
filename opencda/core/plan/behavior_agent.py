@@ -736,7 +736,6 @@ class BehaviorAgent(object):
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
-
         # ttc reset to 1000 at the beginning
         self.ttc = 1000
         # when overtake_counter > 0, another overtake/lane change is forbidden
@@ -747,17 +746,20 @@ class BehaviorAgent(object):
         if self.destination_push_flag > 0:
             self.destination_push_flag -= 1
 
-        # 0: Simulation ends condition
+        # use traffic light to detect intersection
+        is_intersection = self.is_intersection(self.objects, waipoint_buffer)
+
+        # 0. Simulation ends condition
         if self.is_close_to_destination():
             print('Simulation is Over')
             sys.exit(0)
 
-        # 1: Traffic light management
+        # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             return 0, None
 
 
-        # when the temporary route is finished, we return to the global route
+        # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \
                 and len(self.get_local_planner().get_waypoint_buffer()) <= 2:
             print('Destination Reset!')
@@ -772,23 +774,20 @@ class BehaviorAgent(object):
                 clean=True,
                 clean_history=True)
 
-        # use traffic light to detect intersection
-        is_intersection = self.is_intersection(self.objects, waipoint_buffer)
-        # 2. intersection behavior. if the car is near a intersection, no
-        # overtake is allowed
+        # intersection behavior. if the car is near a intersection, no overtake is allowed
         if is_intersection:
             self.overtake_allowed = False
         else:
             self.overtake_allowed = True and self.overtake_allowed_origin
 
-        # 3: Path generation based on the global route
+        # Path generation based on the global route
         rx, ry, rk, ryaw = self._local_planner.generate_path()
 
 
         # check whether lane change is allowed
         self.lane_change_allowed = self.check_lane_change_permission(collision_detector_enabled, rk)
 
-        # 4: Collision check
+        # 3. Collision check
         is_hazard = False
         if collision_detector_enabled:
             is_hazard, obstacle_vehicle, distance = self.collision_manager(
@@ -798,8 +797,9 @@ class BehaviorAgent(object):
         if not is_hazard:
             self.hazard_flag = False
 
-        # the case that the vehicle is doing lane change as planned but found
-        # vehicle blocking on the other lane
+        # 4. push case. Push the car to a temporary destination when original lane change action can't be executed
+        # The case that the vehicle is doing lane change as planned
+        # but found vehicle blocking on the other lane
         if not self.lane_change_allowed and \
                 self.get_local_planner().potential_curved_road \
                 and not self.destination_push_flag and \
@@ -814,22 +814,20 @@ class BehaviorAgent(object):
                 reset_target.transform.location,
                 clean=True,
                 end_reset=False)
-
             rx, ry, rk, ryaw = self._local_planner.generate_path()
 
-        # the case that vehicle is blocking in front and overtake not
+        # 5. the case that vehicle is blocking in front and overtake not
         # allowed or it is doing overtaking the second condition is to
         # prevent successive overtaking
         elif is_hazard and (not self.overtake_allowed or
                             self.overtake_counter > 0
                             or self.get_local_planner().potential_curved_road):
             car_following_flag = True
-
+        # 6. overtake handeling
         elif is_hazard and self.overtake_allowed and \
                 self.overtake_counter <= 0:
             obstacle_speed = get_speed(obstacle_vehicle)
-            obstacle_lane_id = self._map.get_waypoint(
-                obstacle_vehicle.get_location()).lane_id
+            obstacle_lane_id = self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id
             ego_lane_id = self._map.get_waypoint(
                 self._ego_pos.location).lane_id
             # overtake the obstacle vehicle only when speed is bigger and the
@@ -842,23 +840,21 @@ class BehaviorAgent(object):
                 # front obstacle
 
                 if self._ego_speed >= obstacle_speed - 5:
-                    car_following_flag = self.overtake_management(
-                        obstacle_vehicle)
+                    car_following_flag = self.overtake_management(obstacle_vehicle)
                 else:
                     car_following_flag = True
 
-        # 5. Car following behavior
+        # 7. Car following behavior
         if car_following_flag:
             if distance < max(self.break_distance, 3):
                 return 0, None
 
-            target_speed = self.car_following_manager(
-                obstacle_vehicle, distance, target_speed)
+            target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
             target_speed, target_loc = self._local_planner.run_step(
                 rx, ry, rk, target_speed=target_speed)
             return target_speed, target_loc
 
-        # 6. Normal behavior
+        # 8. Normal behavior
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
