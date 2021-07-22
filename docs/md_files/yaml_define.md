@@ -133,10 +133,88 @@ Users do not need to define this parameter if co-simulation is conducted as Sumo
 
 There are two ways to define the positions of the background vehicles. 
 * Set the parameter `vehicle_list` under `carla_traffic_manager` as a list. An example is demonstrated
-below. In this 
+below. In this example, two vehicles are spawned as background vehicle. The first one is spawned at position `x=100, y=100, z=0.3`,
+and the initial rotation angle is `roll=0, yaw=20(degree), pitch=0`. The second one is spawned at position 
+`x=122, y=666, z=0.3`, and the angle is `roll=0, yaw=0, pitch=0`.
 ```yaml
 carla_traffic_manager:
   vehicle_list: 
     - spawn_position: [100, 100, 0.3, 0 , 20, 0]
-    - spawn_position: [122, 666, 0.3, 0 , 20, 0]
+    - spawn_position: [122, 666, 0.3, 0 , 0, 0]
 ```
+* Set the parameter `vehicle_list` under `carla_traffic_manager` as an integer. The CARLA server will then spawn
+the same number of vehicles. If `vehicle_list` is an  integer, an additional parameter `range` needs to be set to
+give the server the spawn area. In the example shown below, 5 vehicles will be randomly spawn in the restricted
+rectangle area  `0<x<100, 22<y<334`.
+```yaml
+carla_traffic_manager:
+    vehicle_list : 5
+    range: [0, 100, 22, 334]
+```
+Other important parameters:
+* `sync_mode` : bool type, it should be consistent with server's sync setting.
+* `global_speed_perc` : float type, sets the difference the vehicle's intended speed and its current speed limit. 
+Speed limits can be exceeded by setting the number to a negative value. Default is 30 km/h. Exceeding a speed limit can be done using negative percentages.
+For example, -300 will assign a speed of 90, 50 will assign a speed of 15.
+* `auto_lane_change` : bool type, whether the vehicles are allowed to do lane change.
+* `random` : bool type, if set true, the background traffic will randomly select car model and color. Otherwise,
+all vehicles will be in lincoln mkz model and green color.
+
+#### scenario
+`scenario` defines each CAV's spawn position and vehicle parameters if different from the default setting `vehicle_base`.
+```yaml
+scenario:
+  platoon_list:
+    - <<: *platoon_base
+      destination: [1000.372955, 8.3, 0.3]
+      members: # the first one is regarded as leader by default
+        - <<: *vehicle_base
+          spawn_position: [-350, 8.3, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
+          behavior:
+            <<: *base_behavior
+            overtake_allowed: false
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+        - <<: *vehicle_base
+          spawn_position: [-360, 8.3, 0.3, 0, 0, 0]
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+   single_cav_list: 
+    - <<: *vehicle_base
+      spawn_position: [-380, 4.8, 0.3, 0, 0, 0]
+      destination: [300, 12.0, 0]
+      sensing:
+        <<: *base_sensing
+        perception:
+          <<: *base_perception
+          activate: true
+``` 
+In the above example, a platoon containing two members and a single CAV that is out of any platoon will be spawn.
+The `destination` in the platoon sets the destination of the platoon. The first member of platoon is regarded
+as the leader by default, and the second member will be the following car. All members in the same platoon should
+be spawn in the same lane with close distance.  The `<<: *vehicle_base` will load the whole default setting of CAV 
+into the leader. However, since overtake is not allowed for a platoon leader and the default setting allows so, this
+needs to be changed by using the following part:
+```yaml
+behavior:
+  <<: *base_behavior
+  overtake_allowed: false   
+```
+In this way, the default attribute  `overtake_allowed` which is true will be overwritten to false while keeping other
+attributes unchanged. Similarly, the default CAV setting does not have the `platoon` attribute, thus we also 
+add `platoon: <<: *platoon_base` to each member to assign the `platoon` attribute.
+
+For the single CAV, the meaning of the parameters are quite similar with the platoon members we just described.
+
+#### sumo(optional)
+`sumo` needs to be set only when co-simulation is required.
+
+```yaml
+sumo:
+  port: ~
+  host: ~
+  gui: true
+  client_order: 1
+  step_length: *delta
+```
+* `port` 

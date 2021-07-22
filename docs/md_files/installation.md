@@ -19,7 +19,7 @@ To get started, the following requirements should be fulfilled.
 * __System requirements.__ Any 64-bits OS should run OpenCDA. We highly recommends Ubuntu  16.04/18.04/20.04.
 
 * __Adequate GPU.__ CARLA is a realistic simulation platform based on Unity, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
-* __Disk Space.__ Estimate 30GB of space is recommended to install CARLA. 
+* __Disk Space.__ Estimate 100GB of space is recommended to install CARLA. 
 * __Python__ Python3,7 or higher version is required for full functions.
 
 
@@ -129,8 +129,8 @@ You can install sumo directly by apt-get:
 ```sh
 sudo apt-get install sumo sumo-tools sumo-doc
 ```
-After that, install the traci python package
+After that, install the traci python package.
 ```sh
 pip install traci
 ```
-
+Finally, add 
