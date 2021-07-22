@@ -32,8 +32,11 @@ Check the [OpenCDA Introduction](https://opencda-documentation.readthedocs.io/en
 ### Users Guide
 1. [Installation](https://opencda-documentation.readthedocs.io/en/latest/md_files/installation.html)
 1. [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/md_files/getstarted.html)
-1. [Tutorials](https://opencda-documentation.readthedocs.io/en/latest/md_files/tutorial.html)
-1. [Python API](https://opencda-documentation.readthedocs.io/en/latest/modules.html)
+1. [OpenCDA Logic Flow](https://opencda-documentation.readthedocs.io/en/latest/md_files/tutorial.html)
+1. [API Reference](https://opencda-documentation.readthedocs.io/en/latest/modules.html) <br>
+
+Note: We are keeping improving the performance of OpenCDA. Currently, it is mainly tested in our 2-lane highway customized map and
+ Carla town06 map, therefore, we <strong>DO NOT </strong> guarantee the same level of  robustness in other maps.
 
 ### Developer Guide
 We welcome your contributions.

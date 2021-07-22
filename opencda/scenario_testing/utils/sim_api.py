@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Utilize scenario manager to manage simulation construction.
+Utilize scenario manager to manage CARLA simulation construction. This script
+is used for carla simulation only, and if you want to manage the Co-simulation,
+please use cosim_api.py.
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
@@ -483,6 +485,12 @@ class ScenarioManager:
         print('CARLA traffic flow generated.')
         return tm, bg_list
 
+    def tick(self):
+        """
+        Tick the server.
+        """
+        self.world.tick()
+
     def destroyActors(self):
         """
         Destroy all actors in the world.
@@ -491,3 +499,10 @@ class ScenarioManager:
         actor_list = self.world.get_actors()
         for actor in actor_list:
             actor.destroy()
+
+    def close(self):
+        """
+        Simulation close.
+        """
+        # restore to origin setting
+        self.world.apply_settings(self.origin_settings)

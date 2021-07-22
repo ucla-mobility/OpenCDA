@@ -99,7 +99,7 @@ carla_traffic_manager:
   # x_min, x_max, y_min, y_max, x_step, y_step
   range: [ 50, 250, 135, 145, 50, 4]
 
-# define scenario. In this scenario, a 4-vehicle platoon already exists.
+# define scenario. In this scenario, only a single CAV will be spawned
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base

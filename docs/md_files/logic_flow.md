@@ -1,6 +1,6 @@
-##  OpenCDA Tutorial
-In this section,  we will introduce the logic flow to construct a scenario and test the default/customized 
-algoirhtms in OpenCDA.
+##  OpenCDA Logic Flow
+In this section,  we will introduce the logic flow in OpenCDA to construct
+a secenario test.
 
 ### Codebase Structure
 Check the [codebase structure](codebase_structure.md) to see how the codes distributed in OpenCDA.

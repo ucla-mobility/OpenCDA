@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--generated on 2020-03-04 18:25:00 by create_sumo_vtypes.py-->
+
+<routes>
+    <vType id="vType_0" minGap="2.00" speedFactor="normc(1.00,0.00)" vClass="passenger" carFollowModel="IDMM" tau="0.4"/>
+    <vType id="DEFAULT_VEHTYPE" minGap="2.50" tau="1.0"  color="255,255,255" Class="passenger" accel="0.5"/>
+     <flow id="flow_0" begin="0.00" departLane="2" departSpeed="10" departPos="100" from="-35.0.00" to="-38.0.00"  end="4800.00" vehsPerHour="1500.00" type="DEFAULT_VEHTYPE"/>
+     <flow id="flow_1" begin="0.00" departLane="3" departSpeed="11" departPos="100" from="-35.0.00" to="-38.0.00"  end="4800.00" vehsPerHour="1200.00" type="DEFAULT_VEHTYPE"/>
+     <flow id="flow_2" begin="0.00" departLane="4" departSpeed="5" departPos="300" from="-35.0.00" to="-38.0.00"  end="4800.00" vehsPerHour="3500.00" type="DEFAULT_VEHTYPE"/>
+     <flow id="flow_3" begin="0.00" departLane="5" departSpeed="13" departPos="400" from="-35.0.00" to="-38.0.00"  end="4800.00" vehsPerHour="1800.00" type="DEFAULT_VEHTYPE"/>
+     <flow id="flow_4" begin="0.00" departLane="random" departSpeed="13" departPos="400" from="-35.0.00" to="-38.0.00"  end="4800.00" vehsPerHour="1800.00" type="DEFAULT_VEHTYPE"/>
+</routes>

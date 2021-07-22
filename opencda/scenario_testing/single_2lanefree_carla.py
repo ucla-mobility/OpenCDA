@@ -25,7 +25,7 @@ def run_scenario(opt, config_yaml):
         current_path = os.path.dirname(os.path.realpath(__file__))
         xodr_path = os.path.join(
             current_path,
-            '../assets/2lane_freeway_simplified/map_v7.6_12ft_lane.xodr')
+            '../assets/2lane_freeway_simplified/2lane_freeway_simplified.xodr')
 
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
@@ -57,7 +57,7 @@ def run_scenario(opt, config_yaml):
         spectator = scenario_manager.world.get_spectator()
         # run steps
         while True:
-            scenario_manager.world.tick()
+            scenario_manager.tick()
             transform = single_cav_list[0].vehicle.get_transform()
             spectator.set_transform(carla.Transform(
                 transform.location +
@@ -78,7 +78,7 @@ def run_scenario(opt, config_yaml):
         if opt.record:
             scenario_manager.client.stop_recorder()
 
-        scenario_manager.world.apply_settings(scenario_manager.origin_settings)
+        scenario_manager.close()
 
         for v in single_cav_list:
             v.destroy()
