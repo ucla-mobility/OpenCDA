@@ -1,4 +1,4 @@
-## OpenCDA Yaml Rule
+## Yaml Rule
 
 To construct a scenario testing in OpenCDA, users have to first write a yml file to 
 define the simulation parameters. Below we demonstrate an example in `platoon_2lanefree_carla` scenario.

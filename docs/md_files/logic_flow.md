@@ -1,4 +1,4 @@
-##  OpenCDA Logic Flow
+## Logic Flow
 In this section,  we will introduce the logic flow of conducting a 
 scenario test in OpenCDA.
 

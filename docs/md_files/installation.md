@@ -1,4 +1,4 @@
-# OpenCDA Installation
+# Installation
 
 * [__System/Hardware Requirements__](#requirements)
 * [__Local Installation__](#local-installation)
