@@ -77,8 +77,8 @@ class LocalPlanner(object):
     _history_buffer : deque
         A deque buffer that stores the trajectory history of the ego vehicle.
 
-    lane_change : boolean
-        A indicator used to identify whether lane change is operated
+    potential_curved_road : boolean
+        A indicator used to identify whether the road is potentially curved by using lane_id and lane's lateral change
 
     lane_id_change : boolean
         In some corner cases, the id is not changed but we regard it
@@ -114,8 +114,8 @@ class LocalPlanner(object):
         # trajectory sampling rate
         self.dt = config_yaml['trajectory_dt']
 
-        # used to identify whether lane change is operated
-        self.lane_change = False
+        # used to identify whether road is potentially curved
+        self.potential_curved_road = False
         # In some corner cases, the id is not changed but we regard it as lane
         # change due to large lateral diff
         self.lane_id_change = False
@@ -276,7 +276,7 @@ class LocalPlanner(object):
         self.lane_id_change = (
                 future_wpt.lane_id != current_wpt.lane_id or
                 previous_wpt.lane_id != future_wpt.lane_id)
-        self.lane_change = self.lane_id_change or self.lane_lateral_change
+        self.potential_curved_road = self.lane_id_change or self.lane_lateral_change
 
         _, angle = cal_distance_angle(
             self._waypoint_buffer[0][0].transform.location,
@@ -290,18 +290,18 @@ class LocalPlanner(object):
             _, angle = cal_distance_angle(
                 prev_wpt, current_location, current_yaw)
             # make sure the history waypoint is already passed by
-            if angle > 90 and not self.lane_change:
+            if angle > 90 and not self.potential_curved_road:
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
-            if self.lane_change:
+            if self.potential_curved_road:
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
 
         # to make sure the vehicle is stable during lane change, we don't
         # include any current position
-        if self.lane_change:
+        if self.potential_curved_road:
             _, angle = cal_distance_angle(
                 self._waypoint_buffer[0][0].transform.location,
                 current_location,
@@ -324,7 +324,7 @@ class LocalPlanner(object):
                 y.append(current_location.y)
 
         # used to filter the waypoints that are too close
-        index = max(0, index - 1) if self.lane_change else index
+        index = max(0, index - 1) if self.potential_curved_road else index
         prev_x = x[index]
         prev_y = y[index]
         for i in range(len(self._waypoint_buffer)):

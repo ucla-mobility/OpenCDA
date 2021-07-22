@@ -724,7 +724,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # 1. make sure the speed is warmed up first. Also we don't want to
         # reset destination during lane change
         if self._ego_speed < self.warm_up_speed or\
-                self.get_local_planner().lane_change:
+                self.get_local_planner().potential_curved_road:
             print('warm up speed')
             return (*super().run_step(self.tailgate_speed), FSM.BACK_JOINING)
 
@@ -896,7 +896,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if distance < self._ego_speed / 3.6 * self.inter_gap \
                 or self._ego_speed < self.warm_up_speed \
                 or angle <= 90 or get_speed(rear_vehicle) > self._ego_speed \
-                or self.get_local_planner().lane_change:
+                or self.get_local_planner().potential_curved_road:
             print('need to speed up before change lane')
             return (*super().run_step(self.tailgate_speed), FSM.FRONT_JOINING)
 
