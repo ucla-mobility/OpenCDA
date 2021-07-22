@@ -232,7 +232,7 @@ class VehicleManager(object):
 
 The localization module will spawn the location-related sensor actors such as GNSS and IMU. And within the localization module, it will use Kalman filter to keep track of vehicle's locaiton and speed. 
 
-The perception module will spawn perception-related sensors such as camera and LiDAR. If the ML model is applied (`self.active=True`), it will also detect the surrounding vehicles with the default Yolov5 detector. If the ML model is not applied (`self.active=False`), it will use server information directly and use the LiDAR to filter out vehicles out of the range. Please refer to the `PerceptionManager.detect` method for details. 
+The perception module will spawn perception-related sensors such as camera and LiDAR. If the ML model is applied (`self.active=True`), it will also detect the surrounding vehicles with the default Yolov5 detector. If the ML model is not applied (`self.active=False`), it will use server information directly and use the LiDAR to filter out vehicles out of the range. 
 
 The agent module is a key component in our architecture. It will utilize the perception and localization information to reason the actual control command that should be passed into the downstream controller so that the desired destination can be reached.  There are two types of <strong>agents</strong> in our released codebase -- `BehaviorAgent` and `PlatooningBehaviorAgent`. `BehaviorAgent` is designed for the single vehicle while `PlatooningBehaviorAgent` has special methods to deal with the platooning behaviors. We will talk more about those classes in their sections. 
 
@@ -253,6 +253,104 @@ There are several commonly used methods within this class. Here we will brefiely
 * `destroy`
 
     It will destroy the vehicle and associated sensors. 
+
+### PerceptionManager
+
+`PerceptionManager` will spawn perception-related sensors including camera, LiDAR, and Semantic LiDAR. In this class, there are also many attributes for visualization. For the code simplicity, we have removed them from our sample code here. 
+
+```python
+class PerceptionManager:
+    def __init__(self, vehicle, config_yaml, cav_world, data_dump=False):
+        
+				self.activate = config_yaml['activate']
+        self.rgb_camera = []
+        mount_position = ['front', 'right', 'left']
+        for i in range(self.camera_num):
+            self.rgb_camera.append(CameraSensor(vehicle, mount_position[i]))
+        self.lidar = LidarSensor(vehicle, config_yaml['lidar'])
+        if data_dump:
+            self.semantic_lidar = SemanticLidarSensor(vehicle,
+                                                      config_yaml['lidar'])
+        # count how many steps have been passed
+        self.count = 0
+        # ego position
+        self.ego_pos = None
+
+        # the dictionary contains all objects
+        self.objects = {}
+```
+
+For the current version, the main function we provide is detection. And there are two important methods in this class -- `detect` and `retrieve_traffic_lights`.
+
+* `detect`
+
+    It will detect surrounding vehicles by using specified model.  If `self.activate` flag is set, it will use the Yolov5 stored in the `CavWorld` to detect the obstacle vehicles. Otherwise, it will use the server information directly. 
+
+    ```python
+    def detect(self, ego_pos):
+        self.ego_pos = ego_pos
+        objects = {'vehicles': [],
+        'traffic_lights': []}
+        if not self.activate:
+        		objects = self.deactivate_mode(objects)
+        else:
+        		objects = self.activate_mode(objects)
+        self.count += 1
+        return objects
+    ```
+
+* `retrieve_traffic_lights` 
+
+    It will retrieve the traffic light states directly from the server. Thus in current version, we use ground truth to get the traffic light data. We may consider adding customized traffic light detection module in the next version. Researchers can also replace this method with their own traffic light detection algorithm by simply rewriting the following method. 
+
+    ```python
+    def retrieve_traffic_lights(self, objects):
+        world = self.vehicle.get_world()
+        tl_list = world.get_actors().filter('traffic.traffic_light*')
+        objects.update({'traffic_lights': []})
+        for tl in tl_list:
+            distance = self.dist(tl)
+            if distance < 50:
+                objects['traffic_lights'].append(tl)
+        return objects
+    ```
+
+### LocalizationManager
+
+The `LocalizationManager` will spawn location-related sensors including GNSS and IMU. And it will use the Kalman filter to keep track of cars' location and speed. Though we read the speed directly from the server, to simulate the real world's uncertainty, noise is also added to the data retrieved from the server. And user can control the noise level by changing the parameters like `speed_stddev` in `yaml` file. 
+
+```python
+class LocalizationManager(object):
+    def __init__(self, vehicle, config_yaml, carla_map):
+
+        self.vehicle = vehicle
+        self.activate = config_yaml['activate']
+        self.map = carla_map
+        self.geo_ref = self.map.transform_to_geolocation(
+            carla.Location(x=0, y=0, z=0))
+
+        # speed and transform and current timestamp
+        self._ego_pos = None
+        self._speed = 0
+
+        # history track
+        self._ego_pos_history = deque(maxlen=100)
+        self._timestamp_history = deque(maxlen=100)
+
+        self.gnss = GnssSensor(vehicle, config_yaml['gnss'])
+        self.imu = ImuSensor(vehicle)
+
+        # heading direction noise
+        self.heading_noise_std = \
+            config_yaml['gnss']['heading_direction_stddev']
+        self.speed_noise_std = config_yaml['gnss']['speed_stddev']
+
+        self.dt = config_yaml['dt']
+        # Kalman Filter
+        self.kf = KalmanFilter(self.dt)
+
+
+```
 
 ### BehaviorAgent
 
