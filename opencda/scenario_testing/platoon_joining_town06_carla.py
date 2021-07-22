@@ -52,7 +52,7 @@ def run_scenario(opt, config_yaml):
 
         # run steps
         while True:
-            scenario_manager.world.tick()
+            scenario_manager.tick()
             transform = spectator_vehicle.get_transform()
             spectator.set_transform(
                 carla.Transform(

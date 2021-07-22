@@ -48,7 +48,7 @@ def run_scenario(opt, config_yaml):
         spectator = scenario_manager.world.get_spectator()
         # run steps
         while True:
-            scenario_manager.world.tick()
+            scenario_manager.tick()
             transform = single_cav_list[0].vehicle.get_transform()
             spectator.set_transform(carla.Transform(
                 transform.location +
