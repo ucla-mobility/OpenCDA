@@ -627,7 +627,7 @@ class BehaviorAgent(object):
                abs(self._ego_pos.location.y - self.end_waypoint.transform.location.y) <= 10
         return flag
 
-    def check_lane_change_permission(self, collision_detector_enabled, rk):
+    def check_lane_change_permission(self, lane_change_allowed, collision_detector_enabled, rk):
         """
         Check if lane change is allowed.
         Several conditions will influence the result such as the road curvature, collision detector, overtake and push status.
@@ -635,6 +635,9 @@ class BehaviorAgent(object):
 
         Parameters
         ----------
+        lane_change_allowed : boolean
+            Previous lane change permission.
+
         collision_detector_enabled : boolean
             True if collision detector is enabled.
 
@@ -785,7 +788,7 @@ class BehaviorAgent(object):
 
 
         # check whether lane change is allowed
-        self.lane_change_allowed = self.check_lane_change_permission(collision_detector_enabled, rk)
+        self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled, rk)
 
         # 3. Collision check
         is_hazard = False
