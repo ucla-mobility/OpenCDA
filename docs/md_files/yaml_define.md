@@ -115,4 +115,28 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
         * `trajectory_dt` : float type, trajectory points sampling resolution.
         * `debug` : bool type, if true, waypoint will be visualized.
         * `debug_trajectory` : bool type, if true, trajectory will be visualized.
-         
+* `controller` : Define controller parameters.
+    * `type` : string type, the type of controller the ego vehicle uses.
+    * `args` : the arguments related to the selected controller.
+
+#### platoon_base
+`platoon_base` define the default platooning parameters.
+* `max_capacity` : int type, the maximum number of members that the platoon can include.
+* `inter_gap` : float type, desired time gap.
+* `open_gap` : float type, time gap during cut-in-join.
+* `warm_up_speed` : float type, the speed that the merging vehicle needs to reach before do any
+kind of joining.
+
+#### carla_traffic_manager
+`carla_traffic_manager` defines the traffic flow controlled by <strong>CARLA</strong> traffic manager. <strong>
+Users do not need to define this parameter if co-simulation is conducted as Sumo will control the traffic.</strong>
+
+There are two ways to define the positions of the background vehicles. 
+* Set the parameter `vehicle_list` under `carla_traffic_manager` as a list. An example is demonstrated
+below. In this 
+```yaml
+carla_traffic_manager:
+  vehicle_list: 
+    - spawn_position: [100, 100, 0.3, 0 , 20, 0]
+    - spawn_position: [122, 666, 0.3, 0 , 20, 0]
+```
