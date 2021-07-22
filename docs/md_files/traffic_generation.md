@@ -64,5 +64,25 @@ to see more details.
   </routes>
   
   ```
+* Use `CoScenarioManager` to load sumo files and create sumo traffic flow. During initialization, 
+  `CoscenarioManager` will setup the Sumo server. During the `tick()` function, `CoScenarioManager` 
+  will keep spawning Sumo vechiles as traffic flow.
+    ```python
+  import opencda.scenario_testing.utils.cosim_api as sim_api
   
+    # there should be a Town06.sumocfg, a Town06.net.xml, and a Town06.rou.xml in
+    # Town06 folder
+    sumo_cfg = 'Town06'
+    
+  # create co-simulation scenario manager
+    scenario_manager = \
+        sim_api.CoScenarioManager(scenario_params,
+                                  opt.apply_ml,
+                                  town='Town06',
+                                  cav_world=cav_world,
+                                  sumo_file_parent_path=sumo_cfg)
+    
+    while True:
+        scenario_manager.tick()
+    ```
 

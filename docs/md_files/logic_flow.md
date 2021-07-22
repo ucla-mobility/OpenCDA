@@ -28,26 +28,32 @@ Check the [Yaml Define Rule](yaml_define.md) to see how to write a yaml file to 
 your scenario.
 
 ### Step2: Construct scenario (CARLA only)
-After the yaml file is given, the <strong>Scenario Manager </strong> will load the file
-and construct the scenario through `opencda sim_api and map_api`.
+If the simulation only requires CARLA simulator, then after the yaml file is given, the <strong>Scenario Manager </strong> will load the file
+and construct the scenario through `opencda.sim_api`. 
+
+The users nned to first load the yaml file
+into a dictionary, and initialize the `ScenarioManager`.
 
 ```python
 import opencda.scenario_testing.utils.sim_api as sim_api
-import opencda.scenario_testing.utils.customized_map_api as map_api
-from opencda.scenario_testing.utils.yaml_utils import load_yaml
-from opencda.scenario_testing.evaluations.evaluate_manager import \
-    EvaluationManager
 
 # Aad yaml file into a dictionary
 scenario_params = load_yaml(config_yaml)
+
 # Create CAV world object to store all CAV VehicleManager info.
 # this is the key element to achieve cooperation
 cav_world = CavWorld(opt.apply_ml)
+
 # create scenario manager
 scenario_manager = sim_api.ScenarioManager(scenario_params,
                                            opt.apply_ml,
                                            town='Town06',
                                            cav_world=cav_world)
+```
+
+Afterwards, the platoons and single CAVs will be generated.
+
+```python
 # create a list of platoon
 platoon_list = \
     scenario_manager.create_platoon_manager(
@@ -57,21 +63,49 @@ platoon_list = \
 # create a list of single CAV
 single_cav_list = \
     scenario_manager.create_vehicle_manager(application=['single'])
+```
 
+Next, the traffic flow is prodced. Check [CARLA Traffic Generation](traffic_generation.md#carla-traffic-manager)
+to see more details about CARLA traffic generation.
+
+```python
 # create background traffic under Carla
 traffic_manager, bg_veh_list = \
     scenario_manager.create_traffic_carla()
+```
 
-# create the evaluation manager
+Finally, create the `EvaluationManager`
+```python
+from opencda.scenario_testing.evaluations.evaluate_manager import \
+    EvaluationManager
 eval_manager = \
     EvaluationManager(scenario_manager.cav_world,
                       script_name='platoon_joining_town06_carla',
                       current_time=scenario_params['current_time'])
-
-
 ```
-As you can observe from the above scripts, <strong>only less than 10 lines of codes</strong> 
-are needed to construct a complex scenario!
+
+### Step2: Construct scenario (Co-Simulation)
+Constructing a scenario under co-simulation setting is very similar with building scenario 
+in CARLA only. There are only two differences: 1) Co-simulation requires addtional Sumo files. 2)
+Instead of using `ScenarioManager`, `CoScenarioManager` is used to control the traffic. Check
+[Traffic Generation under Sumo](traffic_generation.md#sumo-traffic-management-co-simulation) section
+to see more details.
+```python
+import opencda.scenario_testing.utils.cosim_api as sim_api
+
+# there should be a Town06.sumocfg, a Town06.net.xml, and a Town06.rou.xml in
+# Town06 folder
+sumo_cfg = 'Town06'
+
+# create co-simulation scenario manager
+scenario_manager = \
+    sim_api.CoScenarioManager(scenario_params,
+                              opt.apply_ml,
+                               town='Town06',
+                              cav_world=cav_world,
+                              sumo_file_parent_path=sumo_cfg)
+```
+
 
 ### Step3: Execute a single step
 A simplified class diagram design is shown below.
