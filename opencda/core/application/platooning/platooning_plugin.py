@@ -200,6 +200,7 @@ class PlatooningPlugin(object):
             if distance < min_dist:
                 pm = platoon_manager
                 pmid = platoon_manager.pmid
+                min_dist = distance
 
         return pmid, pm
 
