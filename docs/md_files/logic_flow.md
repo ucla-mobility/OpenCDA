@@ -1,6 +1,6 @@
 ##  OpenCDA Logic Flow
-In this section,  we will introduce the logic flow in OpenCDA to construct
-a secenario test.
+In this section,  we will introduce the logic flow of conducting a 
+scenario test in OpenCDA.
 
 ### Codebase Structure
 Check the [codebase structure](codebase_structure.md) to see how the codes distributed in OpenCDA.
