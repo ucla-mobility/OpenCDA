@@ -481,6 +481,7 @@ class LocalPlanner(object):
     def pop_buffer(self, vehicle_transform):
         """
         Remove waypoints the ego vehicle has achieved.
+        
         Parameters
         ----------
         vehicle_transform : carla.position

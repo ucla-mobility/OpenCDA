@@ -617,6 +617,7 @@ class BehaviorAgent(object):
     def is_close_to_destination(self):
         """
         Check if the current ego vehicle's position is close to destination
+
         Returns
         -------
         flag : boolean
