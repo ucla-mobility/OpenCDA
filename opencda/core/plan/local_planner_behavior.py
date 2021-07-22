@@ -41,35 +41,49 @@ class LocalPlanner(object):
     a random choice.
 
     Parameters
-    -agent : carla.agent
+    ----------
+    agent : carla.agent
         The carla.agent that applying vehicle contorl.
-    -carla_map : carla.map
+
+    carla_map : carla.map
         The HD map of the current simulation world.
-    -config : dict
+
+    config : dict
         The configuration dictionary of the trajectory planning module.
 
     Attributes
-    -_vehicle : carla.vehicle
+    ----------
+    _vehicle : carla.vehicle
         The caral vehicle objcet.
-    -_ego_pos : carla.position
+
+    _ego_pos : carla.position
         The current position of the ego vehicle.
-    -_ego_speed : float
+
+    _ego_speed : float
         The current speed of the ego vehicle.
-    -waypoints_queue : deque
+
+    waypoints_queue : deque
         The waypoint deque of the current plan.
-    -_waypoint_buffer : deque
+
+    _waypoint_buffer : deque
         A buffer deque to store waypoints of the next steps.
-    -_long_plan_debug : list
+
+    _long_plan_debug : list
         A list that stores the waypoints of global plan for debug purposes.
-    -_trajectory_buffer : deque
+
+    _trajectory_buffer : deque
         A deque buffer that stores the current trajectory.
-    -_history_buffer : deque
+
+    _history_buffer : deque
         A deque buffer that stores the trajectory history of the ego vehicle.
-    -lane_change : boolean
-        A indicator used to identify whether lane change is operated
-    -lane_id_change : boolean
+
+    potential_curved_road : boolean
+        A indicator used to identify whether the road is potentially curved by using lane_id and lane's lateral change
+
+    lane_id_change : boolean
         In some corner cases, the id is not changed but we regard it
          as lane change due to large lateral diff.
+
     """
 
     # Minimum distance to target waypoint as a percentage
@@ -100,8 +114,8 @@ class LocalPlanner(object):
         # trajectory sampling rate
         self.dt = config_yaml['trajectory_dt']
 
-        # used to identify whether lane change is operated
-        self.lane_change = False
+        # used to identify whether road is potentially curved
+        self.potential_curved_road = False
         # In some corner cases, the id is not changed but we regard it as lane
         # change due to large lateral diff
         self.lane_id_change = False
@@ -115,9 +129,14 @@ class LocalPlanner(object):
         """
         Sets new global plan.
 
-        Args:
-            -clean (boolean): Indicator of whether to clear the global plan.
-            -current_plan (list): list of waypoints in the actual plan.
+        Parameters
+        ----------
+        current_plan : list
+            List of waypoints in the actual plan.
+
+        clean : boolean
+            Indicator of whether to clear the global plan.
+
         """
         for elem in current_plan:
             self.waypoints_queue.append(elem)
@@ -135,29 +154,81 @@ class LocalPlanner(object):
         """
         Update the ego position and speed for trajectory planner.
 
-        Args:
-            -ego_pos (carla.Transform): Ego position from localization module.
-            -ego_speed (float): Ego speed(km/h) from localization module.
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego position from localization module.
+
+        ego_speed : float
+            Ego speed(km/h) from localization module.
 
         """
         self._ego_pos = ego_pos
         self._ego_speed = ego_speed
 
-    def get_trajetory(self):
+    def get_trajectory(self):
         """
-        Get the trajetory.
+        Get the trajetory
+
+        Returns :
+        ----------
+        self._trajectory_buffer : deque
+            Trajectory buffer.
+
         """
         return self._trajectory_buffer
+
+    def get_waypoint_buffer(self):
+        """
+        Get the _waypoint_buffer.
+
+        Returns
+        -------
+        self._waypoint_buffer : deque
+            A buffer deque to store waypoints of the next steps.
+
+        """
+        return self._waypoint_buffer
+    def get_waypoints_queue(self):
+        """
+        Get the waypoints_queue.
+        Returns
+        -------
+        self.waypoints_queue : deque
+            The waypoint deque of the current plan.
+
+        """
+        return self.waypoints_queue
+    def get_history_buffer(self):
+        """
+        Get the _history_buffer
+
+        Returns
+        -------
+        self._history_buffer : deque
+            A deque buffer that stores the trajectory history of the ego vehicle.
+
+        """
+        return self._history_buffer
 
     def generate_path(self):
         """
         Generate the smooth path using cubic spline.
 
-        Returns:
-            -rx (list): List of planned path points' x coordinates.
-            -ry (list): List of planned path points' y coordinates.
-            -ryaw (list): List of planned path points' yaw angles.
-            -rk (list): List of planned path points' curvatures.
+        Returns :
+        ----------
+        rx : list
+            List of planned path points' x coordinates.
+
+        ry : list
+            List of planned path points' y coordinates.
+
+        ryaw : list
+            List of planned path points' yaw angles.
+
+        rk : list
+            List of planned path points' curvatures.
+
         """
 
         # used to save all key spline node
@@ -205,7 +276,7 @@ class LocalPlanner(object):
         self.lane_id_change = (
                 future_wpt.lane_id != current_wpt.lane_id or
                 previous_wpt.lane_id != future_wpt.lane_id)
-        self.lane_change = self.lane_id_change or self.lane_lateral_change
+        self.potential_curved_road = self.lane_id_change or self.lane_lateral_change
 
         _, angle = cal_distance_angle(
             self._waypoint_buffer[0][0].transform.location,
@@ -219,18 +290,18 @@ class LocalPlanner(object):
             _, angle = cal_distance_angle(
                 prev_wpt, current_location, current_yaw)
             # make sure the history waypoint is already passed by
-            if angle > 90 and not self.lane_change:
+            if angle > 90 and not self.potential_curved_road:
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
-            if self.lane_change:
+            if self.potential_curved_road:
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
 
         # to make sure the vehicle is stable during lane change, we don't
         # include any current position
-        if self.lane_change:
+        if self.potential_curved_road:
             _, angle = cal_distance_angle(
                 self._waypoint_buffer[0][0].transform.location,
                 current_location,
@@ -253,7 +324,7 @@ class LocalPlanner(object):
                 y.append(current_location.y)
 
         # used to filter the waypoints that are too close
-        index = max(0, index - 1) if self.lane_change else index
+        index = max(0, index - 1) if self.potential_curved_road else index
         prev_x = x[index]
         prev_y = y[index]
         for i in range(len(self._waypoint_buffer)):
@@ -303,11 +374,19 @@ class LocalPlanner(object):
         """
         Sampling the generated path and assign speed to each point.
 
-        Args:
-            -rx (list): List of planned path points' x coordinates.
-            -ry (list): List of planned path points' y coordinates.
-            -rk (list): List of planned path points' curvatures.
-            -debug (boolean): whether to draw the whole plan path
+        Parameters
+        ----------
+        rx : list
+            List of planned path points' x coordinates.
+
+        ry : list
+            List of planned path points' y coordinates.
+
+        rk : list
+            List of planned path points' curvatures.
+
+        debug : boolean
+            whether to draw the whole plan path
 
         """
         # unit distance for interpolation points
@@ -363,28 +442,7 @@ class LocalPlanner(object):
             if break_flag:
                 break
 
-    def is_intersection(self, objects):
-        """
-        Check the next waypoints is near the intersection. This is done by
-        check the distance between the waypoints and the traffic light.
 
-        Parameters
-        ----------
-        objects : dict
-            The dictionary contains all objects info.
-
-        Returns
-        -------
-        is_junc : bool
-            Whether there is any future waypoint in the junction shortly.
-        """
-        for tl in objects['traffic_lights']:
-            for wpt, _ in self._waypoint_buffer:
-                distance = \
-                    tl.get_location().distance(wpt.transform.location)
-                if distance < 20:
-                    return True
-        return False
 
     def buffer_filter(self):
         """
@@ -423,6 +481,11 @@ class LocalPlanner(object):
     def pop_buffer(self, vehicle_transform):
         """
         Remove waypoints the ego vehicle has achieved.
+        
+        Parameters
+        ----------
+        vehicle_transform : carla.position
+            The position of vehicle.
         """
         max_index = -1
 
@@ -470,19 +533,36 @@ class LocalPlanner(object):
         running the longitudinal and lateral PID controllers to
         follow the smooth waypoints trajectory.
 
-        Args:
-            -rx (list): List of planned path points' x coordinates.
-            -ry (list): List of planned path points' y coordinates.
-            -ryaw (list): List of planned path points' yaw angles.
-            -rk (list): List of planned path points' curvatures.
-            -following (boolean): Indicator of whether the vehicle is under
-            following status.
-            -trajectory (list): Pre-generated car-following trajectory only
-             for platoon members.
-            -target_speed (float): The ego vehicle's desired speed.
-        Returns:
-            -speed (float): Next trajectory point's target speed
-            -waypoint (carla.waypoint): Next trajectory point's waypoint.
+        Parameters
+        ----------
+        rx : list
+            List of planned path points' x coordinates.
+
+        ry : list
+            List of planned path points' y coordinates.
+
+        ryaw : list
+            List of planned path points' yaw angles.
+
+        rk : list
+            List of planned path points' curvatures.
+
+        following : boolean
+            Indicator of whether the vehicle is under following status.
+
+        trajectory : list
+            Pre-generated car-following trajectory only for platoon members.
+
+        target_speed : float
+            The ego vehicle's desired speed.
+
+        Returns
+        -------
+        speed : float
+            Next trajectory point's target speed。
+
+        waypoint : carla.waypoint
+            Next trajectory point's waypoint.
 
         """
 
@@ -545,3 +625,6 @@ class LocalPlanner(object):
                self.target_waypoint.transform.location if hasattr(
                    self.target_waypoint,
                    'is_junction') else self.target_waypoint.location
+
+
+
