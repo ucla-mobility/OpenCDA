@@ -1,13 +1,14 @@
 # OpenCDA Installation
 
-* __[System/Hardware Requirements](#requirements)__  
-* __[Local Installation](#local-installation)__
-    * [1,CARLA installation](#carla-installation)
+* [__System/Hardware Requirements__](#requirements)
+* [__Local Installation__](#local-installation)
+    * [__1,CARLA installation__](#1-carla-installation0911-required)
 	    * [1.1 Package installation](#11-package-installation)  
 	    * [1.2 Build from source](#12-build-from-source)  
 
-    * [2. Install OpenCDA](#opencda-installation)
-    * [3. Install Pytorch and Yolov5(Optional)](#3-install-pytorch-and-yolov5optional)
+    * [__2. Install OpenCDA__](#opencda-installation)
+    * [__3. Install Pytorch and Yolov5 (Optional)__](#3-install-pytorch-and-yolov5optional)
+    * [__4. Install Sumo (Optional)__](#4-install-sumooptional)
 
 
 
@@ -18,7 +19,7 @@ To get started, the following requirements should be fulfilled.
 * __System requirements.__ Any 64-bits OS should run OpenCDA. We highly recommends Ubuntu  16.04/18.04/20.04.
 
 * __Adequate GPU.__ CARLA is a realistic simulation platform based on Unity, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
-* __Disk Space.__ Estimate 30GB of space is recommended to install CARLA. 
+* __Disk Space.__ Estimate 100GB of space is recommended to install CARLA. 
 * __Python__ Python3,7 or higher version is required for full functions.
 
 
@@ -31,7 +32,7 @@ will retrieve all perception information from the simulation server directly.
 ###  1. CARLA Installation(0.9.11 required)
 
 There are two different recommended ways to install the CARLA simulator and either way is fine for using OpenCDA. <br>
-** Note: If you want to use the customized highway map with full assets(.fbx, .xml and .xodr) in OpenCDA, 
+Note: If you want to use the customized highway map with full assets(.fbx, .xml and .xodr) in OpenCDA, 
 you have to build from source. Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information.
 
 
@@ -46,16 +47,17 @@ you have to build from source. Visit CARLA's tutorial [ADD a new map](https://ca
 
 OpenCDA is only tested at 0.9.11 and thus we highly recommend using this version.
 To install CARLA as a precompiled package, download and extract the release file. It contains a precompiled version of the simulator, the Python API module and some scripts to be used as examples. <br>
-** Note: The  AdditionalMaps_0.9.11.tar.gz also need to be downloaded and extract to the CARLA repo to support
-scenario testings in Town06.
+
+<strong>Note: The  AdditionalMaps_0.9.11.tar.gz also need to be downloaded and extract to the CARLA repo to support
+scenario testings in Town06.</strong>
 
 #### 1.2 Build From Source
 
 For advanced CARLA usage that involves extensive customizations, [Build CARLA from Source](https://carla.readthedocs.io/en/0.9.11/build_linux/) is also supported by OpenCDA. Though source build in 
 Windows OS is supported by CARLA, Ubuntu is the preferred OS as the OpenCDA was developoed in Ubuntu 18.04.  
  
-** Note: OpenCDA do not require CARLA source build. However, customized map with building/lane/traffic light/road surface materials assets  in CARLA  require source build. 
-Visit CARLA's tutorial ["ADD a new map"](`CARLA Tutorials (assets). <https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. 
+<strong>Note: OpenCDA do not require CARLA source build. However, customized map with building/lane/traffic light/road surface materials assets  in CARLA  require source build. 
+Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. </strong>
  
 ---
 ### 2. OpenCDA Installation
@@ -90,8 +92,8 @@ there should be no error.
 ```sh
 python -c "import carla" # check whether carla is installed correctly.
 ```
-**Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
-carla version's egg file or manually installed carla to your conda environment.
+<strong>Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
+carla version's egg file or manually installed carla to your conda environment.</strong>
 
 ### 3. Install Pytorch and Yolov5(Optional)
 This section is only needed for the users who want to test perception algorithms. By default, OpenCDA does not require
@@ -127,8 +129,8 @@ You can install sumo directly by apt-get:
 ```sh
 sudo apt-get install sumo sumo-tools sumo-doc
 ```
-After that, install the traci python package
+After that, install the traci python package.
 ```sh
 pip install traci
 ```
-
+Finally, add 
