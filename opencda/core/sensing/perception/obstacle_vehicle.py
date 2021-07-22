@@ -228,26 +228,3 @@ class ObstacleVehicle(object):
         self.o3d_bbx = aabb
 
 
-class StaticObstacle(object):
-    """
-    The general class for obstacles. Currently, we regard all static obstacles
-     such as stop signs and traffic light as the same class.
-
-    Parameters
-    ----------
-    corner : nd.nparray
-        Eight corners of the bounding box (shape:(8, 3)).
-    o3d_bbx : open3d.AlignedBoundingBox
-        The bounding box object in Open3d.This is
-        mainly used for visualization.
-
-    Attributes
-    ----------
-    bounding_box : BoundingBox
-        Bounding box of the osbject vehicle.
-    """
-
-    def __init__(self, corner, o3d_bbx):
-
-        self.bounding_box = BoundingBox(corner)
-        self.o3d_bbx = o3d_bbx
