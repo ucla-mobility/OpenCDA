@@ -5,12 +5,14 @@ Obstacle vehicle class to save object detection.
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
+import sys
 
 import carla
 import numpy as np
 import open3d as o3d
 
 import opencda.core.sensing.perception.sensor_transformation as st
+from opencda.core.common.misc import get_speed_sumo
 
 
 def is_vehicle_cococlass(label):
@@ -23,7 +25,7 @@ def is_vehicle_cococlass(label):
     Returns:
         -is_vehicle(bool): Whether this label belongs to the vehicle class
     """
-    vehicle_class_array = np.array([2, 3, 4, 6, 8], dtype=np.int)
+    vehicle_class_array = np.array([1, 2, 3, 5, 7], dtype=np.int)
     return True if 0 in (label - vehicle_class_array) else False
 
 
@@ -75,6 +77,12 @@ class ObstacleVehicle(object):
     lidar : carla.sensor.lidar
         The lidar sensor.
 
+    sumo2carla_ids : dict
+        Sumo to carla mapping dictionary, this is used only when co-simulation
+        is activated. We need this since the speed info of  vehicles that
+        are controlled by sumo can not be read from carla server. We will
+        need this dict to read vehicle speed from sumo api--traci.
+
     Attributes
     ----------
     bounding_box : BoundingBox
@@ -92,16 +100,21 @@ class ObstacleVehicle(object):
         matched with the obstacle vehicle, it should be -1.
     """
 
-    def __init__(self, corners, o3d_bbx, vehicle=None, lidar=None):
+    def __init__(self, corners, o3d_bbx,
+                 vehicle=None, lidar=None, sumo2carla_ids=None):
 
         if not vehicle:
             self.bounding_box = BoundingBox(corners)
             self.location = self.bounding_box.location
+            # todo: next version will add rotation estimation
+            self.transform = None
             self.o3d_bbx = o3d_bbx
             self.carla_id = -1
             self.velocity = carla.Vector3D(0.0, 0.0, 0.0)
         else:
-            self.set_vehicle(vehicle, lidar)
+            if sumo2carla_ids is None:
+                sumo2carla_ids = dict()
+            self.set_vehicle(vehicle, lidar, sumo2carla_ids)
 
     def get_transform(self):
         """
@@ -144,7 +157,7 @@ class ObstacleVehicle(object):
         """
         self.velocity = velocity
 
-    def set_vehicle(self, vehicle, lidar):
+    def set_vehicle(self, vehicle, lidar, sumo2carla_ids):
         """
         Assign the attributes from carla.Vehicle to ObstacleVehicle.
 
@@ -156,6 +169,13 @@ class ObstacleVehicle(object):
         lidar : carla.sensor.lidar
             The lidar sensor, it is used to project world coordinates to
              sensor coordinates.
+
+        sumo2carla_ids : dict
+            Sumo to carla mapping dictionary, this is used only when
+            co-simulation is activated. We need this since the speed info of
+            vehicles that are controlled by sumo can not be read from carla
+            server. We will need this dict to read vehicle speed
+            from sumo api--traci.
         """
         self.location = vehicle.get_location()
         self.transform = vehicle.get_transform()
@@ -163,6 +183,14 @@ class ObstacleVehicle(object):
         self.carla_id = vehicle.id
 
         self.set_velocity(vehicle.get_velocity())
+        # the vehicle controlled by sumo has speed 0 in carla,
+        # thus we need to retrieve the correct number from sumo
+        if len(sumo2carla_ids) > 0:
+            sumo_speed = get_speed_sumo(sumo2carla_ids, self.carla_id)
+            if sumo_speed > 0:
+                # todo: consider the yaw angle in the future
+                speed_vector = carla.Vector3D(sumo_speed, 0, 0)
+                self.set_velocity(speed_vector)
 
         # find the min and max boundary
         min_boundary = np.array([self.location.x - self.bounding_box.extent.x,
@@ -179,6 +207,8 @@ class ObstacleVehicle(object):
         max_boundary = max_boundary.reshape((4, 1))
         stack_boundary = np.hstack((min_boundary, max_boundary))
 
+        if lidar is None:
+            return
         # the boundary coord at the lidar sensor space
         stack_boundary_sensor_cords = st.world_to_sensor(stack_boundary,
                                                          lidar.get_transform())
@@ -198,26 +228,3 @@ class ObstacleVehicle(object):
         self.o3d_bbx = aabb
 
 
-class StaticObstacle(object):
-    """
-    The general class for obstacles. Currently, we regard all static obstacles
-     such as stop signs and traffic light as the same class.
-
-    Parameters
-    ----------
-    corner : nd.nparray
-        Eight corners of the bounding box (shape:(8, 3)).
-    o3d_bbx : open3d.AlignedBoundingBox
-        The bounding box object in Open3d.This is
-        mainly used for visualization.
-
-    Attributes
-    ----------
-    bounding_box : BoundingBox
-        Bounding box of the osbject vehicle.
-    """
-
-    def __init__(self, corner, o3d_bbx):
-
-        self.bounding_box = BoundingBox(corner)
-        self.o3d_bbx = o3d_bbx

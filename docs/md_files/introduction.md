@@ -1,12 +1,19 @@
-## Why OpenCDA?
+## OpenCDA Overview
 Current autonomous driving simulation platforms that support scene rendering and traffic simulation mainly concentrate
 on single-vehicle intelligence, therefore, developing and testing Cooperative Driving Automation applications(e.g., cooperative perception,
 cooperative merge) under a realistic simulated environment becomes difficult.
  
 OpenCDA is created to fill such gap. 
 
+<div class="build-buttons">
+<p>
+<a href="https://github.com/ucla-mobility/OpenCDA" target="_blank" class="btn btn-neutral" title="Go to the latest OpenCDA page">
+<span class="icon icon-github"></span> OpenCDA 0.1.0</a>
+</p>
+</div>
+
 ### Major Components
-![teaser](images/OpenCDA_diagrams.png )
+![](images/OpenCDA_diagrams.png )
  1. <em>Cooperative Driving System</em>: <br /> OpenCDA  provides  a  <strong> full-stack software </strong>  that  contains  the  common  self-driving  modules including
   <strong> sensing,   planning and actuation  layers </strong>,  and  it  is  developed  purely  in  Python for fast prototyping.
   Built  upon these basic modules, OpenCDA supports a range of  <strong> common cooperative  driving  applications</strong>. <br />
@@ -28,9 +35,4 @@ The key features of OpenCDA can be summarized as <strong>CIFMB</strong>:
 * <strong>M</strong>odularity: OpenCDA is highly modularized, enabling users to conveniently replace any default algorithms or protocols with their own customzied design. 
 * <strong>B</strong>enchmark: OpenCDA offers benchmark testing scenarios, state-of-the-art benchmark algorithms for all modules, benchmark testing road maps, and benchmark evaluation metrics.
 
-### Planned features in the next version
-* Add clean SUMO version to the pipeline(The functions have been finished, we are
-  cleaning the codes).
-* Cooperative localization implementation.
-* Cooperative perception implementation.
 

@@ -1,6 +1,6 @@
-##  OpenCDA Tutorial
-In this section,  we will introduce the logic flow to construct a scenario and test the default/customized 
-algoirhtms in OpenCDA.
+## Logic Flow
+In this section,  we will introduce the logic flow of conducting a 
+scenario test in OpenCDA.
 
 ### Codebase Structure
 Check the [codebase structure](codebase_structure.md) to see how the codes distributed in OpenCDA.
@@ -27,27 +27,33 @@ information to the `VehicleManager` for next round running.
 Check the [Yaml Define Rule](yaml_define.md) to see how to write a yaml file to define
 your scenario.
 
-### Step2: Construct scenario
-After the yaml file is given, the <strong>Scenario Manager </strong> will load the file
-and construct the scenario through `opencda sim_api and map_api`.
+### Step2: Construct scenario (CARLA only)
+If the simulation only requires CARLA simulator, then after the yaml file is given, the <strong>Scenario Manager </strong> will load the file
+and construct the scenario through `opencda.sim_api`. 
+
+The users nned to first load the yaml file
+into a dictionary, and initialize the `ScenarioManager`.
 
 ```python
 import opencda.scenario_testing.utils.sim_api as sim_api
-import opencda.scenario_testing.utils.customized_map_api as map_api
-from opencda.scenario_testing.utils.yaml_utils import load_yaml
-from opencda.scenario_testing.evaluations.evaluate_manager import \
-    EvaluationManager
 
 # Aad yaml file into a dictionary
 scenario_params = load_yaml(config_yaml)
+
 # Create CAV world object to store all CAV VehicleManager info.
 # this is the key element to achieve cooperation
 cav_world = CavWorld(opt.apply_ml)
+
 # create scenario manager
 scenario_manager = sim_api.ScenarioManager(scenario_params,
                                            opt.apply_ml,
                                            town='Town06',
                                            cav_world=cav_world)
+```
+
+Afterwards, the platoons and single CAVs will be generated.
+
+```python
 # create a list of platoon
 platoon_list = \
     scenario_manager.create_platoon_manager(
@@ -57,21 +63,49 @@ platoon_list = \
 # create a list of single CAV
 single_cav_list = \
     scenario_manager.create_vehicle_manager(application=['single'])
+```
 
+Next, the traffic flow is prodced. Check [CARLA Traffic Generation](traffic_generation.md#carla-traffic-manager)
+to see more details about CARLA traffic generation.
+
+```python
 # create background traffic under Carla
 traffic_manager, bg_veh_list = \
     scenario_manager.create_traffic_carla()
+```
 
-# create the evaluation manager
+Finally, create the `EvaluationManager`
+```python
+from opencda.scenario_testing.evaluations.evaluate_manager import \
+    EvaluationManager
 eval_manager = \
     EvaluationManager(scenario_manager.cav_world,
                       script_name='platoon_joining_town06_carla',
                       current_time=scenario_params['current_time'])
-
-
 ```
-As you can observe from the above scripts, <strong>only less than 10 lines of codes</strong> 
-are needed to construct a complex scenario!
+
+### Step2: Construct scenario (Co-Simulation)
+Constructing a scenario under co-simulation setting is very similar with building scenario 
+in CARLA only. There are only two differences: 1) Co-simulation requires addtional Sumo files. 2)
+Instead of using `ScenarioManager`, `CoScenarioManager` is used to control the traffic. Check
+[Traffic Generation under Sumo](traffic_generation.md#sumo-traffic-management-co-simulation) section
+to see more details.
+```python
+import opencda.scenario_testing.utils.cosim_api as sim_api
+
+# there should be a Town06.sumocfg, a Town06.net.xml, and a Town06.rou.xml in
+# Town06 folder
+sumo_cfg = 'Town06'
+
+# create co-simulation scenario manager
+scenario_manager = \
+    sim_api.CoScenarioManager(scenario_params,
+                              opt.apply_ml,
+                               town='Town06',
+                              cav_world=cav_world,
+                              sumo_file_parent_path=sumo_cfg)
+```
+
 
 ### Step3: Execute a single step
 A simplified class diagram design is shown below.
@@ -139,34 +173,4 @@ eval_manager = EvaluationManager(cav_world)
 eval_manager.evaluate()
 ```
 
-### Customize your own algorithms
-Due the high modularity of OpenCDA, you can conveniently replace any default module with your own
-algorithms. It is highly recommended to put your customized module under `opencda/customize/..` and apply
-inheritance to overwrite the default algorithm. <br>
-Here we show an example of customizing localzation module. The default localization selects Kalman Filter
-as the fusing algorim, and we aim to use Extended Kalman Filter to replace it.<br>
-Under `opencda/customize/core/sensing/localization`, create `localization_manager.py` that inherit 
-the origin localization module and overrite the Kalman Filter with Extended Kalman Filter:
-```python
-from opencda.core.sensing.localization.localization_manager import LocalizationManager
-from opencda.customize.core.sensing.localization.extented_kalman_filter import ExtentedKalmanFilter
-
-class CustomizedLocalizationManager(LocalizationManager):
-    def __init__(self, vehicle, config_yaml, carla_map):
-        super(CustomizedLocalizationManager, self).__init__(vehicle, config_yaml, carla_map)
-        self.kf = ExtentedKalmanFilter(self.dt)
-``` 
-
-Then go to `VehicleManager` class, import this customized module and set it as the localizer.
-```python
-from opencda.core.sensing.localization.localization_manager import LocalizationManager
-from opencda.customize.core.sensing.localization.localization_manager import CustomizedLocalizationManager
-
-class VehicleManager(object):
-    def __init__(self, vehicle, config_yaml, application, carla_map, cav_world):
-        # self.localizer = LocalizationManager(vehicle, sensing_config['localization'], carla_map)
-        self.localizer = CustomizedLocalizationManager(vehicle, sensing_config['localization'], carla_map)
-```
-As long as you <strong>keep the input and output format as the origin imlementation</strong>, customization will 
-be a very simple job.
   

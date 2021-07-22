@@ -16,8 +16,11 @@ import numpy as np
 import open3d as o3d
 
 import opencda.core.sensing.perception.sensor_transformation as st
-from opencda.core.common.misc import cal_distance_angle, get_speed
-from opencda.core.sensing.perception.obstacle_vehicle import ObstacleVehicle
+from opencda.core.common.misc import \
+    cal_distance_angle, get_speed, get_speed_sumo
+from opencda.core.sensing.perception.obstacle_vehicle import \
+    ObstacleVehicle
+from opencda.core.sensing.perception.static_obstacle import TrafficLight
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show,\
     o3d_camera_lidar_fusion
@@ -281,8 +284,9 @@ class PerceptionManager:
     config_yaml : dict
         Configuration dictionary for perception.
 
-    ml_manager : opencda object
-        Shared ML library and models across all CAVs.
+    cav_world : opencda object
+        CAV World object that saves all cav information, shared ML model,
+         and sumo2carla id mapping dictionary.
 
     data_dump : bool
         Whether dumping data, if true, semantic lidar will be spawned.
@@ -299,13 +303,16 @@ class PerceptionManager:
         Open3d point cloud visualizer.
     """
 
-    def __init__(self, vehicle, config_yaml, ml_manager, data_dump=False):
+    def __init__(self, vehicle, config_yaml, cav_world, data_dump=False):
         self.vehicle = vehicle
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
         self.camera_num = min(config_yaml['camera_num'], 3)
         self.lidar_visualize = config_yaml['lidar_visualize']
+
+        self.cav_world = weakref.ref(cav_world)()
+        ml_manager = cav_world.ml_manager
 
         if self.activate and data_dump:
             sys.exit("When you dump data, please deactivate the "
@@ -467,6 +474,8 @@ class PerceptionManager:
             cv2.waitKey(1)
 
         if self.lidar_visualize:
+            while self.lidar.data is None:
+                continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
             o3d_visualizer_show(
                 self.o3d_vis,
@@ -513,7 +522,17 @@ class PerceptionManager:
                     None,
                     None,
                     v,
-                    self.lidar.sensor) for v in vehicle_list]
+                    self.lidar.sensor,
+                    self.cav_world.sumo2carla_ids) for v in vehicle_list]
+        else:
+            vehicle_list = [
+                ObstacleVehicle(
+                    None,
+                    None,
+                    v,
+                    None,
+                    self.cav_world.sumo2carla_ids) for v in vehicle_list]
+
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
@@ -533,6 +552,8 @@ class PerceptionManager:
             cv2.waitKey(1)
 
         if self.lidar_visualize:
+            while self.lidar.data is None:
+                continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
             # render the raw lidar
             o3d_visualizer_show(
@@ -629,6 +650,7 @@ class PerceptionManager:
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
 
+        # todo: consider the minimum distance to be safer in next version
         for v in vehicle_list:
             loc = v.get_location()
             for obstacle_vehicle in objects['vehicles']:
@@ -638,12 +660,21 @@ class PerceptionManager:
                 if obstacle_speed > 0:
                     continue
                 obstacle_loc = obstacle_vehicle.get_location()
-                if abs(
-                        loc.x -
-                        obstacle_loc.x) <= 3.0 and abs(
-                        loc.y -
-                        obstacle_loc.y) <= 3.0:
+                if abs(loc.x - obstacle_loc.x) <= 3.0 and \
+                        abs(loc.y - obstacle_loc.y) <= 3.0:
                     obstacle_vehicle.set_velocity(v.get_velocity())
+
+                    # the case where the obstacle vehicle is controled by
+                    # sumo
+                    if self.cav_world.sumo2carla_ids:
+                        sumo_speed = \
+                            get_speed_sumo(self.cav_world.sumo2carla_ids,
+                                           v.id)
+                        if sumo_speed > 0:
+                            # todo: consider the yaw angle in the future
+                            speed_vector = carla.Vector3D(sumo_speed, 0, 0)
+                            obstacle_vehicle.set_velocity(speed_vector)
+
                     obstacle_vehicle.set_carla_id(v.id)
 
     def retrieve_traffic_lights(self, objects):
@@ -669,6 +700,8 @@ class PerceptionManager:
         for tl in tl_list:
             distance = self.dist(tl)
             if distance < 50:
+                traffic_light = TrafficLight(tl.get_location(),
+                                             tl.get_state())
                 objects['traffic_lights'].append(tl)
         return objects
 
