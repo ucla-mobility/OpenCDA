@@ -101,4 +101,18 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
     * `safety_time` : float type, ttc thresholding to identify whether the ego vehicle is too close to 
     the front vehicle.
     * `emergency_param` : float type, `emergency_stop_distance` = `current_speed` * `emergency_param`
-    * 
+    * `ignore_traffic_light` : bool type, if set to true, the CAV will ignore the traffic light.
+    * `overtake_allowed` :  bool type, if set to false, overtaking is not allowed during driving.
+    * `collision_time_ahead` : float type, collision detection range
+    * `sample_resolution` : float type, the unit distance (m) between two adjacent waypoints
+    * `local_planner` : Define trajectory planning parameters.
+        * `buffer_size` : dequeue type, waypoint buffer size.
+        * `trajectory_update_freq` : int type, the update frequency for trajectory, when the length of trajectory buffer 
+        is below the frequency number, the ego vehicle will re-generate the trajectory.
+        * `waypoint_update_freq` : int type, the update frequency for waypoint buffer, when the length of the 
+        waypoint buffer is below the frequency, the waypoint buffer will load waypoints from `waypoint_queue`.
+        * `min_dist` : float type, used to pop out the waypoints that are too close to the current location
+        * `trajectory_dt` : float type, trajectory points sampling resolution.
+        * `debug` : bool type, if true, waypoint will be visualized.
+        * `debug_trajectory` : bool type, if true, trajectory will be visualized.
+         
