@@ -485,6 +485,12 @@ class ScenarioManager:
         print('CARLA traffic flow generated.')
         return tm, bg_list
 
+    def tick(self):
+        """
+        Tick the server.
+        """
+        self.world.tick()
+
     def destroyActors(self):
         """
         Destroy all actors in the world.

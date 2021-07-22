@@ -461,6 +461,18 @@ class LocalPlanner(object):
             # we need to find the right index for origin buffer, since
             # it may remove several elements already
             j = i - (len(tmp) - len(self._waypoint_buffer))
+
+            # check if the current waypoint is behind the vehicle.
+            # if so, remove such waypoint.
+            _, angle = cal_distance_angle(
+                waypoint.transform.location,
+                self._ego_pos.location, self._ego_pos.rotation.yaw)
+
+            if angle > 90:
+                print('delete waypoint!')
+                del self._waypoint_buffer[j]
+                continue
+
             if prev_wpt is None:
                 prev_wpt = waypoint
                 continue
