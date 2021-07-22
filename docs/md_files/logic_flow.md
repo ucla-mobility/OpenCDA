@@ -27,7 +27,7 @@ information to the `VehicleManager` for next round running.
 Check the [Yaml Define Rule](yaml_define.md) to see how to write a yaml file to define
 your scenario.
 
-### Step2: Construct scenario
+### Step2: Construct scenario (CARLA only)
 After the yaml file is given, the <strong>Scenario Manager </strong> will load the file
 and construct the scenario through `opencda sim_api and map_api`.
 

@@ -127,10 +127,15 @@ Sumo installation is only required for the users who require to conduct co-simul
 
 You can install sumo directly by apt-get:
 ```sh
+sudo add-apt-repository ppa:sumo/stable
+sudo apt-get update
 sudo apt-get install sumo sumo-tools sumo-doc
 ```
 After that, install the traci python package.
 ```sh
 pip install traci
 ```
-Finally, add 
+Finally, add the following path to your ~/.bashrc:
+```yaml
+export SUMO_HOME=/usr/share/sumo
+```

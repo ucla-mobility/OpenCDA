@@ -217,4 +217,9 @@ sumo:
   client_order: 1
   step_length: *delta
 ```
-* `port` 
+* `port` : int type, TCP port to listen to (default: 8813).
+* `host` : str type, IP of the sumo host server (default: 127.0.0.1).
+* `gui` : bool type, when set to true, Sumo gui will be show.
+* `client_order` : int type, client order number for the co-simulation TraCI connection (default: 1).
+* `step_length` : The elapsed time remains constant between simulation steps. It should be the same
+as the CARLA server.
