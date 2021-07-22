@@ -94,7 +94,7 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   random: true # whether to random select vehicles' color and model
-  vehicle_list: 11  # a number or a list
+  vehicle_list: 30  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step
   range: [ 2, 10, 0, 200, 3.5, 25]
