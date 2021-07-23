@@ -56,7 +56,7 @@ class PredictionManager:
         self.observed_length = observed_length
         self.predict_length = predict_length
         self.dt = dt
-        self.model = eval(model)
+        self.model = eval(model)(self.observed_length, self.predict_length, self.dt)
         self.d = {}
         self.objects = None
         self.ids = None
