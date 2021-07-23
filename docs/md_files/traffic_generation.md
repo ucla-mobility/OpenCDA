@@ -10,7 +10,7 @@ have names ending with 'carla', e.g. single_2lanefree_carla.py, single_town06_ca
 
 To generate the CARLA traffic flow, users need to <strong>define the corresponding parameters
 in yaml file </strong> and call the APIs in `opencda.scenario_testing.utils.sim_api.ScenarioManager`:
-* Check the carla_traffic_manager section in [yaml rule](yaml_define.md#carla_traffic_manager) to
+* Check the carla_traffic_manager section in [yaml rule](yaml_define.md) to
 see how to define parameters related to carla traffic in the yaml file.
 * Utilizing `ScenarioManager` to generate CARLA traffic flow is easy. It just takes 3 lines of codes. `scenario_manager.tick()`
 will keep the traffic manager keep running during the simulation loop.
@@ -35,10 +35,11 @@ and <strong>manage the traffic flow in Sumo</strong>. All the test scripts that 
 have names ending with 'cosim', e.g. single_2lanefree_cosim.py, single_town06_cosim.py.
 
 To generate the Sumo traffic flow, three things are needed:
-* Define the Sumo server settings in yaml file. Check our [yaml rule](yaml_define.md#sumooptional) to see more details.
+* Define the Sumo server settings in yaml file. Check our [yaml rule](yaml_define.md) to see more details.
 * Three files that defines Sumo road network and traffic route: a `xxx.sumocfg` file, 
   a `xxx.net.xml` file, and a `xxx.rou.xml` file. xxx is the name of the testing map, e,g. Town06. This
   name should keep consistent acroos the three files.
+  
     *   `.sumocfg` : used to give the Sumo server the path of the network and route xml file. Check
         [.sumocfg file extension](https://fileinfo.com/extension/sumocfg) to see more explanations.
     * `.net.xml` : defines the road graph. Check [Sumo Road Networks](https://sumo.dlr.de/docs/Networks/SUMO_Road_Networks.html)
