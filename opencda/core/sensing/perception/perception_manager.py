@@ -338,7 +338,7 @@ class PerceptionManager:
         else:
             self.rgb_camera = None
 
-        # we only spawn the camera when perception module is activated or lidar
+        # we only spawn the LiDAR when perception module is activated or lidar
         # visualization is needed
         if self.activate or self.lidar_visualize:
             self.lidar = LidarSensor(vehicle, config_yaml['lidar'])
@@ -702,7 +702,7 @@ class PerceptionManager:
             if distance < 50:
                 traffic_light = TrafficLight(tl.get_location(),
                                              tl.get_state())
-                objects['traffic_lights'].append(tl)
+                objects['traffic_lights'].append(traffic_light)
         return objects
 
     def destroy(self):
