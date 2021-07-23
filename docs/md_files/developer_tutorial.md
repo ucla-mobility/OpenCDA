@@ -1,6 +1,12 @@
 ## Developer Tutorial
 
-In this section, we will take a deeper look at the implementation details of several important classes in our OpenCDA framework. For beginners, we encourage you to go through our [OpenCDA tutorial](tutorial.md) first. This tutorial will emphasis on the design logics behind each class and try to give a clean description of the core algorithms of each module. For easy understanding, we have removed many assert and branch statements and evaluation/debug code to simplify the code flow. For complete working code, please refer to our [repo](https://github.com/ucla-mobility/OpenCDA). For details about our cooperative architecture, please refer to our [paper](https://arxiv.org/abs/2107.06260). 
+In this section, we will take a deeper look at the implementation details of several important classes in 
+our OpenCDA framework. For beginners, we encourage you to go through our [OpenCDA tutorial](tutorial.md)
+ first. This tutorial will emphasis on the design logics behind each class and try to give a clean
+  description of the core algorithms of each module. For easy understanding, we have removed many assert 
+  and branch statements and evaluation/debug code to simplify the code flow. For complete working code, 
+  please refer to our [repo](https://github.com/ucla-mobility/OpenCDA). 
+  For details about our cooperative architecture, please refer to our [paper](https://arxiv.org/abs/2107.06260). 
 
 ### Workflow
 
