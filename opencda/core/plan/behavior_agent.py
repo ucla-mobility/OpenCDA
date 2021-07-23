@@ -746,12 +746,12 @@ class BehaviorAgent(object):
             Vehicle control of the next step.
         """
         # retrieve ego location
-        import pdb
+        
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
         preds = self.prediction_manager.predict()
-        pdb.set_trace()
+
         # ttc reset to 1000 at the beginning
         self.ttc = 1000
         # when overtake_counter > 0, another overtake/lane change is forbidden
