@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Utility functions for 3d lidar visualization and processing by utilizing open3d.
+Utility functions for 3d lidar visualization
+and processing by utilizing open3d.
 """
 
 # Author: CARLA Team, Runsheng Xu <rxx3386@ucla.edu>
@@ -15,7 +16,9 @@ from matplotlib import cm
 from scipy.stats import mode
 
 import opencda.core.sensing.perception.sensor_transformation as st
-from opencda.core.sensing.perception.obstacle_vehicle import is_vehicle_cococlass, ObstacleVehicle, StaticObstacle
+from opencda.core.sensing.perception.obstacle_vehicle import \
+    is_vehicle_cococlass, ObstacleVehicle
+from opencda.core.sensing.perception.static_obstacle import StaticObstacle
 
 VIRIDIS = np.array(cm.get_cmap('plasma').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
@@ -48,13 +51,16 @@ LABEL_COLORS = np.array([
 
 def o3d_pointcloud_encode(raw_data, point_cloud):
     """
-    Encode the raw point cloud to Open3d PointCloud object.
-    Args:
-        raw_data (np.ndarray): Raw lidar points (N, (x, y, z, i)) obtained from lidar sensor.
-        point_cloud (o3d.PointCloud):  Open3d PointCloud.
+    Encode the raw point cloud(np.array) to Open3d PointCloud object.
 
-    Returns:
-        (o3d.PointCloud): PointCloud with added points.
+    Parameters
+    ----------
+    raw_data : np.ndarray
+        Raw lidar points, (N, 4).
+
+    point_cloud : o3d.PointCloud
+        Open3d PointCloud.
+
     """
 
     # Isolate the intensity and compute a color for it
@@ -78,16 +84,22 @@ def o3d_pointcloud_encode(raw_data, point_cloud):
 def o3d_visualizer_init(actor_id):
     """
     Initialize the visualizer.
-    Args:
-        actor_id (int): Vehicle's id.
-    Returns:
-        (o3d.visualizer): Initialize Open3d visualizer.
+
+    Parameters
+    ----------
+    actor_id : int
+        Ego vehicle's id.
+
+    Returns
+    -------
+    vis : o3d.visualizer
+        Initialize open3d visualizer.
 
     """
     vis = o3d.visualization.Visualizer()
     vis.create_window(window_name=str(actor_id),
-                      width=720,
-                      height=405,
+                      width=480,
+                      height=320,
                       left=480,
                       top=270)
     vis.get_render_option().background_color = [0.05, 0.05, 0.05]
@@ -100,12 +112,23 @@ def o3d_visualizer_init(actor_id):
 def o3d_visualizer_show(vis, count, point_cloud, objects):
     """
     Visualize the point cloud at runtime.
-    Args:
-        vis (o3d.Visualizer): Visualization interface.
-        count (int): current step since simulation started.
-        point_cloud (o3d.PointCLoud): Open3d point clouds.
-        objects (dict): The dictionary containing objects.
-    Returns:
+
+    Parameters
+    ----------
+    vis : o3d.Visualizer
+        Visualization interface.
+
+    count : int
+        Current step since simulation started.
+
+    point_cloud : o3d.PointCloud
+        Open3d point cloud.
+
+    objects : dict
+        The dictionary containing objects.
+
+    Returns
+    -------
 
     """
 
@@ -135,22 +158,39 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
             vis.remove_geometry(aabb)
 
 
-def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_sensor):
+def o3d_camera_lidar_fusion(objects,
+                            yolo_bbx,
+                            lidar_3d,
+                            projected_lidar,
+                            lidar_sensor):
     """
-    Utilize the 3D lidar points to extend the 2D bounding box from camera to 3D bounding box under world coordinates.
-    Args:
-        objects (dict): The dictionary contains all object detection result.
-        yolo_bbx (torch.Tensor): Object detection bounding box at current photo from yolov5,
-                                 shape:(n, [x1, y1, x2, y2, label]).
-        lidar_3d (np.ndarray): Raw 3D lidar points in lidar coordinate system.
-        projected_lidar (np.ndarray): 3D lidar points projected to the camera space.
-        lidar_sensor (carla.Sensor): The lidar sensor.
+    Utilize the 3D lidar points to extend the 2D bounding box
+    from camera to 3D bounding box under world coordinates.
 
-    Returns:
-        objects: dict
-            The update object dictionary that contains 3d bounding boxes.
+    Parameters
+    ----------
+    objects : dict
+        The dictionary contains all object detection results.
+
+    yolo_bbx : torch.Tensor
+        Object detection bounding box at current photo from yolov5,
+        shape (n, 5)->(n, [x1, y1, x2, y2, label])
+
+    lidar_3d : np.ndarray
+        Raw 3D lidar points in lidar coordinate system.
+
+    projected_lidar : np.ndarray
+        3D lidar points projected to the camera space.
+
+    lidar_sensor : carla.sensor
+        The lidar sensor.
+
+    Returns
+    -------
+    objects : dict
+        The update object dictionary that contains 3d bounding boxes.
     """
-    
+
     # convert torch tensor to numpy array first
     if yolo_bbx.is_cuda:
         yolo_bbx = yolo_bbx.cpu().detach().numpy()
@@ -160,7 +200,8 @@ def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_
     for i in range(yolo_bbx.shape[0]):
         detection = yolo_bbx[i]
         # 2d bbx coordinates
-        x1, y1, x2, y2 = int(detection[0]), int(detection[1]), int(detection[2]), int(detection[3])
+        x1, y1, x2, y2 = int(detection[0]), int(detection[1]),\
+            int(detection[2]), int(detection[3])
         label = int(detection[5])
 
         # choose the lidar points in the 2d yolo bounding box
@@ -175,16 +216,21 @@ def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_
             continue
 
         # filter out the outlier
-        x_common = mode(np.array(np.abs(select_points[:, 0]), dtype=np.int), axis=0)[0][0]
-        y_common = mode(np.array(np.abs(select_points[:, 1]), dtype=np.int), axis=0)[0][0]
-        points_inlier = (np.abs(select_points[:, 0]) > x_common - 3) & (np.abs(select_points[:, 0]) < x_common + 3) & \
-                        (np.abs(select_points[:, 1]) > y_common - 3) & (np.abs(select_points[:, 1]) < y_common + 3)
+        x_common = mode(np.array(np.abs(select_points[:, 0]),
+                                 dtype=np.int), axis=0)[0][0]
+        y_common = mode(np.array(np.abs(select_points[:, 1]),
+                                 dtype=np.int), axis=0)[0][0]
+        points_inlier = (np.abs(select_points[:, 0]) > x_common - 3) & \
+                        (np.abs(select_points[:, 0]) < x_common + 3) & \
+                        (np.abs(select_points[:, 1]) > y_common - 3) & \
+                        (np.abs(select_points[:, 1]) < y_common + 3)
         select_points = select_points[points_inlier]
 
         if select_points.shape[0] < 2:
             continue
 
-        # to visualize 3d lidar points in o3d visualizer, we need to revert the x coordinates
+        # to visualize 3d lidar points in o3d visualizer, we need to
+        # revert the x coordinates
         select_points[:, :1] = -select_points[:, :1]
 
         # create o3d.PointCloud object
@@ -211,6 +257,7 @@ def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_
                 objects['vehicles'].append(obstacle_vehicle)
             else:
                 objects['vehicles'] = [obstacle_vehicle]
+        # todo: refine the category
         # we regard or other obstacle rather than vehicle as static class
         else:
             static_obstacle = StaticObstacle(corner, aabb)
@@ -220,4 +267,3 @@ def o3d_camera_lidar_fusion(objects, yolo_bbx, lidar_3d, projected_lidar, lidar_
                 objects['static'] = [static_obstacle]
 
     return objects
-

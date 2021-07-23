@@ -16,44 +16,73 @@ import numpy as np
 import open3d as o3d
 
 import opencda.core.sensing.perception.sensor_transformation as st
-from opencda.core.common.misc import cal_distance_angle, get_speed
-from opencda.core.sensing.perception.obstacle_vehicle import ObstacleVehicle
-from opencda.core.sensing.perception.o3d_lidar_libs import o3d_visualizer_init, \
-    o3d_pointcloud_encode, o3d_visualizer_show, o3d_camera_lidar_fusion
+from opencda.core.common.misc import \
+    cal_distance_angle, get_speed, get_speed_sumo
+from opencda.core.sensing.perception.obstacle_vehicle import \
+    ObstacleVehicle
+from opencda.core.sensing.perception.static_obstacle import TrafficLight
+from opencda.core.sensing.perception.o3d_lidar_libs import \
+    o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show,\
+    o3d_camera_lidar_fusion
 
 
-class CameraSensor(object):
+class CameraSensor:
     """
-    Class for rgb camera.
-    """
+    Camera manager.
 
+    Parameters
+    ----------
+    vehicle : carla.Vehicle
+        The carla.Vehicle. We need this class to spawn sensors.
+
+    position : str
+        Indicates the sensor is a front or rear camera. option:
+        front, left, right.
+
+    Attributes
+    ----------
+    image : np.ndarray
+        Current received rgb image.
+    sensor : carla.sensor
+        The carla sensor that mounts at the vehicle.
+
+    """
     def __init__(self, vehicle, position='front'):
-        """
-        Construct class.
-        Args:
-            vehicle (carla.Vehicle): Carla actor.
-            position (string): the camera mounted position, only front, left and right supported.
-        """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
         blueprint.set_attribute('fov', '100')
 
         if position == 'front':
-            spawn_point = carla.Transform(carla.Location(x=2.5, y=0.0, z=1.0),
-                                          carla.Rotation(pitch=0, roll=0, yaw=0))
+            spawn_point = carla.Transform(
+                carla.Location(
+                    x=2.5, y=0.0, z=1.0), carla.Rotation(
+                    pitch=0, roll=0, yaw=0))
         elif position == 'right':
-            spawn_point = carla.Transform(carla.Location(x=0.0, y=0.3, z=1.8),
-                                          carla.Rotation(pitch=0, roll=0, yaw=100))
+            spawn_point = carla.Transform(
+                carla.Location(
+                    x=0.0, y=0.3, z=1.8), carla.Rotation(
+                    pitch=0, roll=0, yaw=100))
         else:
-            spawn_point = carla.Transform(carla.Location(x=0.0, y=-0.3, z=1.8),
-                                          carla.Rotation(pitch=0, roll=0, yaw=-100))
+            spawn_point = carla.Transform(
+                carla.Location(
+                    x=0.0,
+                    y=-0.3,
+                    z=1.8),
+                carla.Rotation(
+                    pitch=0,
+                    roll=0,
+                    yaw=-100))
 
-        self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+        self.sensor = world.spawn_actor(
+            blueprint, spawn_point, attach_to=vehicle)
 
         self.image = None
         self.timstamp = None
+        self.frame = 0
         weak_self = weakref.ref(self)
-        self.sensor.listen(lambda event: CameraSensor._on_rgb_image_event(weak_self, event))
+        self.sensor.listen(
+            lambda event: CameraSensor._on_rgb_image_event(
+                weak_self, event))
 
         # camera attributes
         self.image_width = int(self.sensor.attributes['image_size_x'])
@@ -71,21 +100,33 @@ class CameraSensor(object):
         image = image[:, :, :3]
 
         self.image = image
+        self.frame = event.frame
         self.timestamp = event.timestamp
 
 
-class LidarSensor(object):
+class LidarSensor:
     """
     Lidar sensor manager.
+
+    Parameters
+    ----------
+    vehicle : carla.Vehicle
+        carla Vehicle, we need this to spawn sensors.
+
+    config_yaml : dict
+        Configuration dictionary for lidar.
+
+    Attributes
+    ----------
+    o3d_pointcloud : 03d object
+        Received point cloud, saved in o3d.Pointcloud format.
+
+    sensor : carla.sensor
+        Lidar sensor that will be attached to the vehicle.
+
     """
 
     def __init__(self, vehicle, config_yaml):
-        """
-        Construct class.
-        Args:
-            vehicle (carla.Vehicle): The attached vehicle.
-            config_yaml (dict): Configuration for lidar.
-        """
         world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.lidar.ray_cast')
 
@@ -94,29 +135,45 @@ class LidarSensor(object):
         blueprint.set_attribute('lower_fov', str(config_yaml['lower_fov']))
         blueprint.set_attribute('channels', str(config_yaml['channels']))
         blueprint.set_attribute('range', str(config_yaml['range']))
-        blueprint.set_attribute('points_per_second', str(config_yaml['points_per_second']))
-        blueprint.set_attribute('rotation_frequency', str(config_yaml['rotation_frequency']))
-        blueprint.set_attribute('dropoff_general_rate', str(config_yaml['dropoff_general_rate']))
-        blueprint.set_attribute('dropoff_intensity_limit', str(config_yaml['dropoff_intensity_limit']))
-        blueprint.set_attribute('dropoff_zero_intensity', str(config_yaml['dropoff_zero_intensity']))
-        blueprint.set_attribute('noise_stddev', str(config_yaml['noise_stddev']))
+        blueprint.set_attribute(
+            'points_per_second', str(
+                config_yaml['points_per_second']))
+        blueprint.set_attribute(
+            'rotation_frequency', str(
+                config_yaml['rotation_frequency']))
+        blueprint.set_attribute(
+            'dropoff_general_rate', str(
+                config_yaml['dropoff_general_rate']))
+        blueprint.set_attribute(
+            'dropoff_intensity_limit', str(
+                config_yaml['dropoff_intensity_limit']))
+        blueprint.set_attribute(
+            'dropoff_zero_intensity', str(
+                config_yaml['dropoff_zero_intensity']))
+        blueprint.set_attribute(
+            'noise_stddev', str(
+                config_yaml['noise_stddev']))
 
         # spawn sensor on vehicle
         spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.8))
-        self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+        self.sensor = world.spawn_actor(
+            blueprint, spawn_point, attach_to=vehicle)
 
         # lidar data
         self.data = None
         self.timestamp = None
+        self.frame = 0
         # open3d point cloud object
         self.o3d_pointcloud = o3d.geometry.PointCloud()
 
         weak_self = weakref.ref(self)
-        self.sensor.listen(lambda event: LidarSensor._on_data_event(weak_self, event))
+        self.sensor.listen(
+            lambda event: LidarSensor._on_data_event(
+                weak_self, event))
 
     @staticmethod
     def _on_data_event(weak_self, event):
-        """CAMERA  method"""
+        """Lidar  method"""
         self = weak_self()
         if not self:
             return
@@ -127,22 +184,126 @@ class LidarSensor(object):
         data = np.reshape(data, (int(data.shape[0] / 4), 4))
 
         self.data = data
+        self.frame = event.frame
         self.timestamp = event.timestamp
 
 
-class PerceptionManager(object):
+class SemanticLidarSensor:
     """
-    Perception manager mainly for object detection
+    Semantic lidar sensor manager. This class is used when data dumping
+    is needed.
+
+    Parameters
+    ----------
+    vehicle : carla.Vehicle
+        carla Vehicle, we need this to spawn sensors.
+
+    config_yaml : dict
+        Configuration dictionary, the same as the normal lidar.
+
+    Attributes
+    ----------
+    o3d_pointcloud : 03d object
+        Received point cloud, saved in o3d.Pointcloud format.
+
+    sensor : carla.sensor
+        Lidar sensor that will be attached to the vehicle.
+
+
+    """
+    def __init__(self, vehicle, config_yaml):
+        world = vehicle.get_world()
+        blueprint =\
+            world.get_blueprint_library().\
+                find('sensor.lidar.ray_cast_semantic')
+
+        # set attribute based on the configuration
+        blueprint.set_attribute('upper_fov', str(config_yaml['upper_fov']))
+        blueprint.set_attribute('lower_fov', str(config_yaml['lower_fov']))
+        blueprint.set_attribute('channels', str(config_yaml['channels']))
+        blueprint.set_attribute('range', str(config_yaml['range'] - 10))
+        blueprint.set_attribute(
+            'points_per_second', str(
+                config_yaml['points_per_second']))
+        blueprint.set_attribute(
+            'rotation_frequency', str(
+                config_yaml['rotation_frequency']))
+
+        # spawn sensor on vehicle
+        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.8))
+        self.sensor = world.spawn_actor(
+            blueprint, spawn_point, attach_to=vehicle)
+
+        # lidar data
+        self.points = None
+        self.obj_idx = None
+        self.obj_tag = None
+
+        self.timestamp = None
+        self.frame = 0
+        # open3d point cloud object
+        self.o3d_pointcloud = o3d.geometry.PointCloud()
+
+        weak_self = weakref.ref(self)
+        self.sensor.listen(
+            lambda event: SemanticLidarSensor._on_data_event(
+                weak_self, event))
+
+    @staticmethod
+    def _on_data_event(weak_self, event):
+        """Semantic Lidar  method"""
+        self = weak_self()
+        if not self:
+            return
+
+        # shape:(n, 6)
+        data = np.frombuffer(event.raw_data, dtype=np.dtype([
+            ('x', np.float32), ('y', np.float32), ('z', np.float32),
+            ('CosAngle', np.float32), ('ObjIdx', np.uint32),
+            ('ObjTag', np.uint32)]))
+
+        # (x, y, z, intensity)
+        self.points = np.array([data['x'], data['y'], data['z']]).T
+        self.obj_tag = np.array(data['ObjTag'])
+        self.obj_idx = np.array(data['ObjIdx'])
+
+        self.data = data
+        self.frame = event.frame
+        self.timestamp = event.timestamp
+
+
+class PerceptionManager:
+    """
+    Default perception module. Currenly only used to detect vehicles.
+
+    Parameters
+    ----------
+    vehicle : carla.Vehicle
+        carla Vehicle, we need this to spawn sensors.
+
+    config_yaml : dict
+        Configuration dictionary for perception.
+
+    cav_world : opencda object
+        CAV World object that saves all cav information, shared ML model,
+         and sumo2carla id mapping dictionary.
+
+    data_dump : bool
+        Whether dumping data, if true, semantic lidar will be spawned.
+
+    Attributes
+    ----------
+    lidar : opencda object
+        Lidar sensor manager.
+
+    rgb_camera : opencda object
+        RGB camera manager.
+
+    o3d_vis : o3d object
+        Open3d point cloud visualizer.
     """
 
-    def __init__(self, vehicle, config_yaml, ml_manager):
-        """
-        Construct class.
-        Args:
-            vehicle (carla.Actor): The carla vehicle.
-            config_yaml (dict):  The configuration yaml dictionary.
-            ml_manager(MlManager): Machine learning manager from CAV World.
-        """
+    def __init__(self, vehicle, config_yaml, cav_world, data_dump=False):
         self.vehicle = vehicle
 
         self.activate = config_yaml['activate']
@@ -150,22 +311,35 @@ class PerceptionManager(object):
         self.camera_num = min(config_yaml['camera_num'], 3)
         self.lidar_visualize = config_yaml['lidar_visualize']
 
+        self.cav_world = weakref.ref(cav_world)()
+        ml_manager = cav_world.ml_manager
+
+        if self.activate and data_dump:
+            sys.exit("When you dump data, please deactivate the "
+                     "detection function for precise label.")
+
         if self.activate and not ml_manager:
-            sys.exit('If you activate the perception module, then apply_ml must be set to true in'
-                     'the argument parser to load the detection DL model.')
+            sys.exit(
+                'If you activate the perception module, '
+                'then apply_ml must be set to true in'
+                'the argument parser to load the detection DL model.')
         self.ml_manager = ml_manager
 
-        # we only spawn the camera when perception module is activated or camera visualization is needed
+        # we only spawn the camera when perception module is activated or
+        # camera visualization is needed
         if self.activate or self.camera_visualize:
             self.rgb_camera = []
             mount_position = ['front', 'right', 'left']
             for i in range(self.camera_num):
-                self.rgb_camera.append(CameraSensor(vehicle, mount_position[i]))
+                self.rgb_camera.append(
+                    CameraSensor(
+                        vehicle, mount_position[i]))
 
         else:
             self.rgb_camera = None
 
-        # we only spawn the camera when perception module is activated or lidar visualization is needed
+        # we only spawn the LiDAR when perception module is activated or lidar
+        # visualization is needed
         if self.activate or self.lidar_visualize:
             self.lidar = LidarSensor(vehicle, config_yaml['lidar'])
             self.o3d_vis = o3d_visualizer_init(vehicle.id)
@@ -173,35 +347,56 @@ class PerceptionManager(object):
             self.lidar = None
             self.o3d_vis = None
 
+        # if data dump is true, semantic lidar is also spawned
+        self.data_dump = data_dump
+        if data_dump:
+            self.semantic_lidar = SemanticLidarSensor(vehicle,
+                                                      config_yaml['lidar'])
+
         # count how many steps have been passed
         self.count = 0
-
+        # ego position
         self.ego_pos = None
 
-    def dist(self, v):
-        """
-        A fast method to retrieve the obstable distance the ego vehicle from the server directly.
-        Args:
-            v (carla.vehicle):
+        # the dictionary contains all objects
+        self.objects = {}
 
-        Returns:
-            float: distance
-
+    def dist(self, a):
         """
-        return v.get_location().distance(self.ego_pos.location)
+        A fast method to retrieve the obstacle distance the ego
+        vehicle from the server directly.
+
+        Parameters
+        ----------
+        a : carla.actor
+            The obstacle vehicle.
+
+        Returns
+        -------
+        distance : float
+            The distance between ego and the target actor.
+        """
+        return a.get_location().distance(self.ego_pos.location)
 
     def detect(self, ego_pos):
         """
         Detect surrounding objects. Currently only vehicle detection supported.
-        Args:
-            ego_pos (carla.Transform): Vehicle ego position
 
-        Returns:
-            List of carla.Vehicle or ObstacleVehicle
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego vehicle pose.
+
+        Returns
+        -------
+        objects : list
+            A list that contains all detected obstacle vehicles.
+
         """
         self.ego_pos = ego_pos
 
-        objects = {'vehicles': []}
+        objects = {'vehicles': [],
+                   'traffic_lights': []}
 
         if not self.activate:
             objects = self.deactivate_mode(objects)
@@ -216,18 +411,29 @@ class PerceptionManager(object):
     def activate_mode(self, objects):
         """
         Use Yolov5 + Lidar fusion to detect objects.
-        Args:
-            objects(dict): object dictionary
 
-        Returns:
-            objects: dict
-                The updated object dictionary.
+        Parameters
+        ----------
+        objects : dict
+            The dictionary that contains all category of detected objects.
+            The key is the object category name and value is its 3d coordinates
+            and confidence.
+
+        Returns
+        -------
+         objects: dict
+            Updated object dictionary.
         """
         # retrieve current cameras and lidar data
         rgb_images = []
         for rgb_camera in self.rgb_camera:
-            time.sleep(0.001)
-            rgb_images.append(cv2.cvtColor(np.array(rgb_camera.image), cv2.COLOR_BGR2RGB))
+            while rgb_camera.image is None:
+                continue
+            rgb_images.append(
+                cv2.cvtColor(
+                    np.array(
+                        rgb_camera.image),
+                    cv2.COLOR_BGR2RGB))
 
         # yolo detection
         yolo_detection = self.ml_manager.object_detector(rgb_images)
@@ -236,15 +442,22 @@ class PerceptionManager(object):
 
         for (i, rgb_camera) in enumerate(self.rgb_camera):
             # lidar projection
-            rgb_image, projected_lidar = st.project_lidar_to_camera(self.lidar.sensor, rgb_camera.sensor,
-                                                                    self.lidar.data, np.array(rgb_camera.image))
+            rgb_image, projected_lidar = st.project_lidar_to_camera(
+                self.lidar.sensor,
+                rgb_camera.sensor, self.lidar.data, np.array(
+                    rgb_camera.image))
             rgb_draw_images.append(rgb_image)
 
             # camera lidar fusion
-            objects = o3d_camera_lidar_fusion(objects, yolo_detection.xyxy[i],
-                                              self.lidar.data, projected_lidar, self.lidar.sensor)
+            objects = o3d_camera_lidar_fusion(
+                objects,
+                yolo_detection.xyxy[i],
+                self.lidar.data,
+                projected_lidar,
+                self.lidar.sensor)
 
-            # calculate the speed. current we retrieve from the server directly.
+            # calculate the speed. current we retrieve from the server
+            # directly.
             self.speed_retrieve(objects)
 
         if self.camera_visualize:
@@ -252,24 +465,44 @@ class PerceptionManager(object):
             for (i, rgb_image) in enumerate(rgb_draw_images):
                 if i > self.camera_num or i > self.camera_visualize - 1:
                     break
-                rgb_image = self.ml_manager.draw_2d_box(yolo_detection, rgb_image, i)
-                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
-                cv2.imshow('%s camera of actor %d, perception activated' % (names[i], self.vehicle.id), rgb_image)
+                rgb_image = self.ml_manager.draw_2d_box(
+                    yolo_detection, rgb_image, i)
+                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
+                cv2.imshow(
+                    '%s camera of actor %d, perception activated' %
+                    (names[i], self.vehicle.id), rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
+            while self.lidar.data is None:
+                continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+            o3d_visualizer_show(
+                self.o3d_vis,
+                self.count,
+                self.lidar.o3d_pointcloud,
+                objects)
+        # add traffic light
+        objects = self.retrieve_traffic_lights(objects)
+        self.objects = objects
 
         return objects
 
     def deactivate_mode(self, objects):
         """
-        Obstacle detection under perception deactivation mode.
-        Args:
-            objects(dict): object dictionary
-        Returns:
+        Object detection using server information directly.
 
+        Parameters
+        ----------
+        objects : dict
+            The dictionary that contains all category of detected objects.
+            The key is the object category name and value is its 3d coordinates
+            and confidence.
+
+        Returns
+        -------
+         objects: dict
+            Updated object dictionary.
         """
         world = self.vehicle.get_world()
 
@@ -277,60 +510,137 @@ class PerceptionManager(object):
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
 
-        # convert carla.Vehicle to opencda.ObstacleVehicle if lidar visualization is required.
+        # use semantic lidar to filter out vehicles out of the range
+        if self.data_dump:
+            vehicle_list = self.filter_vehicle_out_sensor(vehicle_list)
+
+        # convert carla.Vehicle to opencda.ObstacleVehicle if lidar
+        # visualization is required.
         if self.lidar:
-            vehicle_list = [ObstacleVehicle(None, None, v, self.lidar.sensor) for v in vehicle_list]
+            vehicle_list = [
+                ObstacleVehicle(
+                    None,
+                    None,
+                    v,
+                    self.lidar.sensor,
+                    self.cav_world.sumo2carla_ids) for v in vehicle_list]
+        else:
+            vehicle_list = [
+                ObstacleVehicle(
+                    None,
+                    None,
+                    v,
+                    None,
+                    self.cav_world.sumo2carla_ids) for v in vehicle_list]
+
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
-            time.sleep(0.001)
+            while self.rgb_camera[0].image is None:
+                continue
             # we only visualiz the frontal camera
             rgb_image = np.array(self.rgb_camera[0].image)
             # draw the ground truth bbx on the camera image
             rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
             # resize to make it fittable to the screen
-            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.5, fy=0.5)
+            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
 
             # show image using cv2
-            cv2.imshow('front camera of actor %d, perception deactivated' % self.vehicle.id, rgb_image)
+            cv2.imshow(
+                'front camera of actor %d, perception deactivated' %
+                self.vehicle.id, rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
+            while self.lidar.data is None:
+                continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
             # render the raw lidar
-            o3d_visualizer_show(self.o3d_vis, self.count, self.lidar.o3d_pointcloud, objects)
+            o3d_visualizer_show(
+                self.o3d_vis,
+                self.count,
+                self.lidar.o3d_pointcloud,
+                objects)
+
+        # add traffic light
+        objects = self.retrieve_traffic_lights(objects)
+        self.objects = objects
 
         return objects
+
+    def filter_vehicle_out_sensor(self, vehicle_list):
+        """
+        By utilizing semantic lidar, we can retrieve the objects that
+        are in the lidar detection range from the server.
+        This function is important for collect training data for object
+        detection as it can filter out the objects out of the senor range.
+
+        Parameters
+        ----------
+        vehicle_list : list
+            The list contains all vehicles information retrieves from the
+            server.
+
+        Returns
+        -------
+        new_vehicle_list : list
+            The list that filters out the out of scope vehicles.
+
+        """
+        semantic_idx = self.semantic_lidar.obj_idx
+        semantic_tag = self.semantic_lidar.obj_tag
+
+        # label 10 is the vehicle
+        vehicle_idx = semantic_idx[semantic_tag == 10]
+        # each individual instance id
+        vehicle_unique_id = list(np.unique(vehicle_idx))
+
+        new_vehicle_list = []
+        for veh in vehicle_list:
+            if veh.id in vehicle_unique_id:
+                new_vehicle_list.append(veh)
+
+        return new_vehicle_list
 
     def visualize_3d_bbx_front_camera(self, objects, rgb_image):
         """
         Visualize the 3d bounding box on frontal camera image.
-        Args:
-            objects (dict): a dictionary containing all detected objects.
-            rgb_image (np.ndarray):camera image.
 
-        Returns:
+        Parameters
+        ----------
+        objects : dict
+            The object dictionary.
+
+        rgb_image : np.ndarray
+            Received rgb image at current timestamp.
 
         """
         for v in objects['vehicles']:
             # we only draw the bounding box in the fov of camera
-            _, angle = cal_distance_angle(v.get_location(), self.ego_pos.location, self.ego_pos.rotation.yaw)
+            _, angle = cal_distance_angle(
+                v.get_location(), self.ego_pos.location,
+                self.ego_pos.rotation.yaw)
             if angle < 30:
-                bbx_camera = st.get_2d_bb(v, self.rgb_camera[0].sensor, self.rgb_camera[0].sensor.get_transform())
-                cv2.rectangle(rgb_image, (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
-                              (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])), (255, 0, 0), 2)
+                bbx_camera = st.get_2d_bb(
+                    v,
+                    self.rgb_camera[0].sensor,
+                    self.rgb_camera[0].sensor.get_transform())
+                cv2.rectangle(rgb_image,
+                              (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
+                              (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])),
+                              (255, 0, 0), 2)
 
         return rgb_image
 
     def speed_retrieve(self, objects):
         """
-        We don't implement any obstacle speed calculation algorithm. The speed will be retrieved from
-        the server directly.
-        Args:
-            objects(dict): The dictionary contains the objects.
+        We don't implement any obstacle speed calculation algorithm.
+        The speed will be retrieved from the server directly.
 
-        Returns:
-
+        Parameters
+        ----------
+        objects : dict
+            The dictionary contains the objects.
         """
         if 'vehicles' not in objects:
             return
@@ -340,28 +650,77 @@ class PerceptionManager(object):
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
                         v.id != self.vehicle.id]
 
+        # todo: consider the minimum distance to be safer in next version
         for v in vehicle_list:
             loc = v.get_location()
             for obstacle_vehicle in objects['vehicles']:
                 obstacle_speed = get_speed(obstacle_vehicle)
+                # if speed > 0, it represents that the vehicle
+                # has been already matched.
                 if obstacle_speed > 0:
                     continue
                 obstacle_loc = obstacle_vehicle.get_location()
-                if abs(loc.x - obstacle_loc.x) <= 3.0 and abs(loc.y - obstacle_loc.y) <= 3.0:
+                if abs(loc.x - obstacle_loc.x) <= 3.0 and \
+                        abs(loc.y - obstacle_loc.y) <= 3.0:
                     obstacle_vehicle.set_velocity(v.get_velocity())
+
+                    # the case where the obstacle vehicle is controled by
+                    # sumo
+                    if self.cav_world.sumo2carla_ids:
+                        sumo_speed = \
+                            get_speed_sumo(self.cav_world.sumo2carla_ids,
+                                           v.id)
+                        if sumo_speed > 0:
+                            # todo: consider the yaw angle in the future
+                            speed_vector = carla.Vector3D(sumo_speed, 0, 0)
+                            obstacle_vehicle.set_velocity(speed_vector)
+
+                    obstacle_vehicle.set_carla_id(v.id)
+
+    def retrieve_traffic_lights(self, objects):
+        """
+        Retrieve the traffic lights nearby from the server  directly.
+        Next version may consider add traffic light detection module.
+
+        Parameters
+        ----------
+        objects : dict
+            The dictionary that contains all objects.
+
+        Returns
+        -------
+        object : dict
+            The updated dictionary.
+        """
+        world = self.vehicle.get_world()
+        tl_list = world.get_actors().filter('traffic.traffic_light*')
+
+        objects.update({'traffic_lights': []})
+
+        for tl in tl_list:
+            distance = self.dist(tl)
+            if distance < 50:
+                traffic_light = TrafficLight(tl.get_location(),
+                                             tl.get_state())
+                objects['traffic_lights'].append(traffic_light)
+        return objects
 
     def destroy(self):
         """
         Destroy sensors.
-        Returns:
-
         """
         if self.rgb_camera:
             for rgb_camera in self.rgb_camera:
                 rgb_camera.sensor.destroy()
+
         if self.lidar:
             self.lidar.sensor.destroy()
+
         if self.camera_visualize:
             cv2.destroyAllWindows()
+
         if self.lidar_visualize:
             self.o3d_vis.destroy_window()
+
+        if self.data_dump:
+            self.semantic_lidar.sensor.destroy()

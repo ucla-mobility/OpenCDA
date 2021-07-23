@@ -26,9 +26,11 @@ class bcolors:
 def load_customized_world(xodr_path, client):
     """
     Load .xodr file and return the carla world object
-    :param xodr_path: path to the xodr file
-    :param client: created client
-    :return:
+
+    Args:
+        -xodr_path (string): path to the xodr file
+        -client (carla.client): The created CARLA simulation client.
+
     """
     if os.path.exists(xodr_path):
         with open(xodr_path) as od_file:
@@ -59,18 +61,22 @@ def load_customized_world(xodr_path, client):
 def spawn_helper_2lanefree(carla_map, coefficient):
     """
     A helper function to locate the valid spawn point on the merge lane.
-    :param carla_map: the 2lanefreeway map
-    :param coefficient: a single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position
-    is in the middle of the merge lane
-    :return: carla transform
+
+    Args:
+        -carla_map (carla.map): the 2lanefreeway map
+        -coefficient (float): A single scalar indicating where is the
+         spawn point, eg. 0.5 represents the spawn position is in the
+         middle of the merge lane.
+    Returns:
+        -transform_point (carla.transform): The desired spawn points.
     """
 
     all_deafault_spawn = carla_map.get_spawn_points()
     transform_point = all_deafault_spawn[11]
-    transform_point.location.x = transform_point.location.x + \
-                             coefficient * (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
-    transform_point.location.y = transform_point.location.y + \
-                             coefficient * (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+    transform_point.location.x = transform_point.location.x + coefficient * \
+        (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+    transform_point.location.y = transform_point.location.y + coefficient * \
+        (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
 
     return transform_point
 
@@ -78,17 +84,27 @@ def spawn_helper_2lanefree(carla_map, coefficient):
 def spawn_helper_2lanefree_complete(carla_map, coefficient):
     """
     A helper function to locate the valid spawn point on the merge lane.
-    :param carla_map: the 2lanefreeway map
-    :param coefficient: a single scalar indicating where is the spawn point, eg. 0.5 represents the spawn position
-    is in the middle of the merge lane
-    :return: carla transform
+
+    Args:
+        -carla_map (carla.map): The 2lanefreeway map.
+        -coefficient (float): A single scalar indicating where is the
+         spawn point, eg. 0.5 represents the spawn position is in the
+         middle of the merge lane.
+    Returns:
+        -transform_point (carla.transform): The desired spawn points.
     """
 
-    all_deafault_spawn = carla_map.get_spawn_points()
-    transform_point = all_deafault_spawn[13]
-    transform_point.location.x = transform_point.location.x + \
-                             coefficient * (all_deafault_spawn[1].location.x - all_deafault_spawn[13].location.x)
-    transform_point.location.y = transform_point.location.y + \
-                             coefficient * (all_deafault_spawn[1].location.y - all_deafault_spawn[13].location.y)
+    start_point_x = -1202.19
+    start_point_y = 456.34
+
+    merge_point_x = -31.65
+    merge_point_y = 19.52
+    merge_point_yaw = -20.48
+
+    spawn_x = start_point_x + coefficient * (merge_point_x - start_point_x)
+    spawn_y = start_point_y + coefficient * (merge_point_y - start_point_y)
+
+    transform_point = carla.Transform(carla.Location(spawn_x, spawn_y, 0.3),
+                                      carla.Rotation(yaw=merge_point_yaw))
 
     return transform_point

@@ -14,15 +14,51 @@ from opencda.core.application.platooning.fsm import FSM
 
 class PlatooningPlugin(object):
     """
-    Platooning Plugin
+    Platooning plugin inside the V2X manager.
+
+    Parameters
+    ----------
+    search_range : float
+        The search range of the communication equipment.
+
+    cda_enabled : boolean
+        Whether connectivity is supported.
+
+    Attributes
+    ----------
+    leader : boolean
+        Boolean indicator of the platoon leader status.
+
+    platooning_object : opencda object
+        The current platoon object.
+
+    platooning_id : int
+        The current platoon ID.
+
+    in_id : int
+        The position in the platoon.
+
+    status : enum
+        The current platooning status.
+
+    ego_pos : carla.transformation
+        The current position (i.e., location and rotation) of the ego vehicle.
+
+    ego_spd : float
+        The current speed(km/h) of the ego vehicle.
+
+    platooning_blacklist : list
+        The platoon in the black list won't be considered again.
+
+    front_vehicle : opencda object
+        The front vehicle manager of the ego vehicle.
+
+    rear_vechile : opencda object
+        The rear vehicle manager of the ego vehicle.
     """
 
     def __init__(self, search_range, cda_enabled):
-        """
-        Construct class
-        :param search_range:
-        :param cda_enabled:
-        """
+
         self.search_range = search_range
         self.cda_enabled = cda_enabled
 
@@ -47,17 +83,21 @@ class PlatooningPlugin(object):
     def update_info(self, ego_pos, ego_spd):
         """
         Update the ego position and speed
-        :param ego_pos: ego position, carla.Transform
-        :param ego_spd: ego speed, km/h
-        :return:
+
+        Parameters
+        ----------
+        ego_pos: carla.Transform
+            Ego pose.
+
+        ego_spd : float
+            Ego speed(km/h).
         """
         self.ego_pos = ego_pos
         self.ego_spd = ego_spd
 
     def reset(self):
         """
-        Reset to the origin status
-        :return:
+        Reset to the origin status.
         """
         self.front_vehicle = None
         self.rear_vechile = None
@@ -67,19 +107,35 @@ class PlatooningPlugin(object):
         self.platooning_id = None
         self.in_id = None
 
-    def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
+    def set_platoon(
+            self,
+            in_id,
+            platooning_object=None,
+            platooning_id=None,
+            leader=False):
         """
-        Set platooning status
-        :param platooning_object: platooning manager todo: remove this later
-        :param platooning_id: platoon id the cav belongs to
-        :param in_id: the position in the platoon, etc. 0 represents leader and 1 represents the second position
-        :param leader: indicate whether this cav is a leader in platoon
-        :return:
+        Set platooning status.
+
+        Parameters
+        ----------
+        in_id : int
+            Inner platoon ID of the vehicle.
+
+        platooning_object : opencda object
+            The current platoon object.
+
+        platooning_id : int
+            The current platoon ID.
+
+        leader : bool
+            Boolean indicator of the platoon leader status.
         """
         if in_id is None:
             if not self.cda_enabled:
                 self.set_status(FSM.DISABLE)
-                warnings.warn("CDA feature is disabled, can not activate platooning application ")
+                warnings.warn(
+                    "CDA feature is disabled, can not activate platooning"
+                    " application ")
             else:
                 self.set_status(FSM.SEARCHING)
             return
@@ -99,39 +155,83 @@ class PlatooningPlugin(object):
     def set_status(self, status):
         """
         Set FSM status
-        :param status:
-        :return:
+
+        Parameters
+        ----------
+        status : str
+            The current platooning status.
         """
         self.status = status
 
-    def search_platoon(self, ego_pos, cav_world):
+    def search_platoon(self, ego_loc, cav_nearby):
         """
         Search platoon candidate in the range
-        :param ego_pos:
-        :param cav_world:
-        :return: the uuid of platoon member, platoon object
-        """
-        platoon_manager_dict = cav_world.get_platoon_dict()
-        for pmid, pm in platoon_manager_dict.items():
-            for vm in pm.vehicle_manager_list:
-                distance = compute_distance(ego_pos, vm.localizer.get_ego_pos().location)
-                if distance < self.search_range:
-                    return pmid, pm
-        return None, None
 
-    def match_platoon(self, cav_world):
+        Parameters
+        ----------
+        ego_loc : carla.Location
+            Ego vehicle current position.
+
+        cav_nearby : dict
+             The dictionary contains all the cavs nearby.
+
+        Returns
+        -------
+        pmid : int
+            Platoon manager ID.
+
+        pm : opencda object
+            Platoon manager ID.
+        """
+        pm = None
+        pmid = None
+        min_dist = 1000
+
+        for _, vm in cav_nearby.items():
+            if vm.v2x_manager.in_platoon is None:
+                continue
+
+            platoon_manager, _ = vm.v2x_manager.get_platoon_manager()
+            if pmid and pmid == platoon_manager.pmid:
+                continue
+
+            distance = compute_distance(
+                ego_loc, vm.localizer.get_ego_pos().location)
+            if distance < min_dist:
+                pm = platoon_manager
+                pmid = platoon_manager.pmid
+                min_dist = distance
+
+        return pmid, pm
+
+    def match_platoon(self, cav_nearby):
         """
         A naive way to find the best position to join a platoon
-        :param cav_world: an object containing all existing platoons
-        :return: platoon found or not, closest platoon member team id, and a list containing the vehicle managers
+
+        Parameters
+        ----------
+        cav_nearby : dict
+            The dictionary contains all the cavs nearby.
+
+        Returns
+        -------
+        matched : bool
+            The boolean indicator of matching result.
+
+        min_index : int
+            The minimum index inside the selected platoon.
+
+        platoon_vehicle_list : list
+            The list of platoon members.
         """
+
         # make sure the previous status won't influence current one
         self.reset()
 
         cur_loc = self.ego_pos.location
         cur_yaw = self.ego_pos.rotation.yaw
 
-        pmid, pm = self.search_platoon(cur_loc, cav_world)
+        pmid, pm = self.search_platoon(cur_loc, cav_nearby)
 
         if not pmid or pmid in self.platooning_blacklist:
             return False, -1, []
@@ -148,8 +248,8 @@ class PlatooningPlugin(object):
         platoon_vehicle_list = []
 
         for (i, vehicle_manager) in enumerate(pm.vehicle_manager_list):
-            distance, angle = cal_distance_angle(vehicle_manager.vehicle.get_location(),
-                                                 cur_loc, cur_yaw)
+            distance, angle = cal_distance_angle(
+                vehicle_manager.vehicle.get_location(), cur_loc, cur_yaw)
             platoon_vehicle_list.append(vehicle_manager)
 
             if distance < min_distance:

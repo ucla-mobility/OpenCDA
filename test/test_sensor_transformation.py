@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Unit test for sensor transformation
+Unit test for sensor transformation.
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
@@ -9,9 +9,11 @@ import os
 import sys
 import unittest
 
+import numpy as np
+
 # temporary solution for relative imports in case opencda is not installed
 # if opencda is installed, no need to use the following line
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../opencda')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 
 import mocked_carla as mcarla

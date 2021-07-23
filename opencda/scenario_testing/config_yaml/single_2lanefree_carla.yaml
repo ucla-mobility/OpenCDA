@@ -34,8 +34,8 @@ vehicle_base: &vehicle_base
       dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
-        noise_lat_stddev: 2e-6
-        noise_lon_stddev: 2e-6
+        noise_lat_stddev: 1.5e-6
+        noise_lon_stddev: 1.5e-6
         heading_direction_stddev: 0.1 # degree
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
@@ -57,7 +57,7 @@ vehicle_base: &vehicle_base
     local_planner: &base_local_planner # trajectory planning related
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
-      waypoint_update_freq: 12 # used to control waypoint updating frequency
+      waypoint_update_freq: 9 # used to control waypoint updating frequency
       min_dist: 3 # used to pop out the waypoints too close to current location
       trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
       debug: false # whether to draw future/history waypoints
@@ -93,7 +93,8 @@ carla_traffic_manager:
   global_speed_perc: -100
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
-  vehicle_list:
+  random: false # whether to random select vehicles' color and model
+  vehicle_list:  # a number or a list
     - spawn_position: [-330, 8.3, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-320, 4.8, 0.3, 0, 0, 0]
@@ -102,8 +103,11 @@ carla_traffic_manager:
       vehicle_speed_perc: -100
     - spawn_position: [-280, 4.8, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
+  # Used only when vehicle_list is a number.
+  # x_min, x_max, y_min, y_max, x_step, y_step
+  range: [-400, -300, 4.5, 8.5, 10, 4]
 
-# define scenario. In this scenario, a 4-vehicle platoon already exists.
+# define scenario. In this scenario, only a single CAV will be spawned
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base

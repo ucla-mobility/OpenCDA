@@ -57,7 +57,7 @@ vehicle_base: &vehicle_base
     local_planner: &base_local_planner # trajectory planning related
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
-      waypoint_update_freq: 12 # used to control waypoint updating frequency
+      waypoint_update_freq: 9 # used to control waypoint updating frequency
       min_dist: 3 # used to pop out the waypoints too close to current location
       trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
       debug: false # whether to draw future/history waypoints
@@ -100,6 +100,7 @@ carla_traffic_manager:
   global_speed_perc: -50
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
+  random: false # whether to random select vehicles' color and model
   vehicle_list:
     - spawn_position: [101.7194, 136.51, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200
@@ -133,7 +134,7 @@ scenario:
             <<: *base_behavior
             local_planner:
               <<: *base_local_planner
-              debug_trajectory: true
+              debug_trajectory: false
               debug: false
         - <<: *vehicle_base
           spawn_position: [111.7194, 139.51, 0.3, 0, 0, 0]
@@ -173,8 +174,8 @@ scenario:
         <<: *platoon_base
       behavior:
         <<: *base_behavior
-        max_speed: 65 # maximum speed, km/h
-        tailgate_speed: 75
+        max_speed: 100 # maximum speed, km/h
+        tailgate_speed: 111
         overtake_allowed: true
         local_planner:
           <<: *base_local_planner

@@ -7,115 +7,227 @@
 
 import weakref
 
-from opencda.core.application.platooning.platooning_plugin import PlatooningPlugin
+from opencda.core.application.platooning.platooning_plugin \
+    import PlatooningPlugin
+from opencda.core.common.misc import compute_distance
 
 
 class V2XManager(object):
     """
-    V2X Manager for platooning, cooperative perception and so on
+    V2X Manager for platooning, cooperative perception and so on.
+
+    Parameters
+    ----------
+    cav_world : opencda object
+        CAV world.
+
+    config_yaml : dict
+        The configuration dictionary of the v2x module.
+
+    vid : str
+        The corresponding vehicle manager's uuid.
+
+    Attributes
+    ----------
+    _recieved_buffer : dict
+        A buffer for receive data.
+
+    cav_nearby : dict
+        The dictionary that contains the cavs in the communication range.
+
+    platooning_plugin : opencda object
+        The platooning plugin for communication during platooning.
+
+    ego_pos : carla.transform
+        Ego position.
+
+    ego_spd : float
+        Ego speed(km/h).
+
     """
 
-    def __init__(self, cav_world, config_yaml):
-        """
-        Construct class
-        :param config_yaml: configuration yaml file
-        """
+    def __init__(self, cav_world, config_yaml, vid):
         # if disabled, no cooperation will be operated
         self.cda_enabled = config_yaml['enabled']
         self.communication_range = config_yaml['communication_range']
+
+        # found CAVs nearby
+        self.cav_nearby = {}
 
         # used for cooperative perception.
         self._recieved_buffer = {}
 
         # used for platooning communication
-        self.platooning_plugin = PlatooningPlugin(self.communication_range, self.cda_enabled)
+        self.platooning_plugin = PlatooningPlugin(
+            self.communication_range, self.cda_enabled)
 
         self.cav_world = weakref.ref(cav_world)()
 
+        self.ego_pos = None
+        self.ego_spd = 0
+        self.vid = vid
+
     def update_info(self, ego_pos, ego_spd):
         """
-        Update all communication plugins with current localization info
+        Update all communication plugins with current localization info.
         """
+        self.ego_pos = ego_pos
+        self.ego_spd = ego_spd
+        self.search()
+
         self.platooning_plugin.update_info(ego_pos, ego_spd)
 
+    def search(self):
+        """
+        Search the CAVs nearby.
+        """
+        vehicle_manager_dict = self.cav_world.get_vehicle_managers()
+
+        for vid, vm in vehicle_manager_dict.items():
+            # avoid the Nonetype error at the first simulation step
+            if not vm.localizer.get_ego_pos():
+                continue
+            # avoid add itself as the cav nearby
+            if vid == self.vid:
+                continue
+            distance = compute_distance(
+                self.ego_pos.location, vm.localizer.get_ego_pos().location)
+            if distance < self.communication_range:
+                self.cav_nearby.update({vid: vm})
     """
-    Followings are platooning-specific functions
+    -----------------------------------------------------------
+                 Below is platooning related 
+    -----------------------------------------------------------
     """
 
-    def set_platoon(self, in_id, platooning_object=None, platooning_id=None, leader=False):
+    def set_platoon(
+            self,
+            in_id,
+            platooning_object=None,
+            platooning_id=None,
+            leader=False):
         """
         Set platooning status
-        :param platooning_object: platooning world that contains all platoon information todo: remove this later
-        :param platooning_id: platoon id the cav belongs to
-        :param in_id: the position in the platoon, etc. 0 represents leader and 1 represents the second position
-        :param leader: indicate whether this cav is a leader in platoon
-        :return:
+
+        Parameters
+        ----------
+        platooning_object : platoon object)
+            Platooning world that contains all platoon information.
+
+        platooning_id : int
+            Platoon id the cav belongs to.
+
+        in_id : int
+            The position in the platoon, etc. 0 represents leader
+            and 1 represents the second position.
+
+        leader : boolean
+            Indicate whether this cav is a leader in platoon.
+
         """
-        self.platooning_plugin.set_platoon(in_id, platooning_object, platooning_id, leader)
+        self.platooning_plugin.set_platoon(
+            in_id, platooning_object, platooning_id, leader)
 
     def set_platoon_status(self, status):
         """
-        Set the cav to a different fsm status
-        :param status: fsm status
-        :return:
+        Set the cav to a different fsm status.
+
+        Parameters
+        ----------
+        status : str
+            fsm status.
+
         """
         self.platooning_plugin.set_status(status)
 
     def set_platoon_front(self, vm):
         """
         Set the frontal vehicle to another vehicle
-        :param vm: vehicle manager
-        :return:
+
+        Parameters
+        ----------
+        vm : opencda object
+            The target vehicle manager.
         """
         self.platooning_plugin.front_vehicle = vm
 
     def set_platoon_rear(self, vm):
         """
         Set the rear vehicle to another vehicle
-        :param vm:
-        :return:
+
+        Parameters
+        __________
+        vm : opencda object
+            The target vehicle manager.
         """
         self.platooning_plugin.rear_vechile = vm
 
     def add_platoon_blacklist(self, pmid):
         """
-        Add an existing platoon to current blacklist
-        :param pmid: platoon id
-        :return:
+        Add an existing platoon to current blacklist.
+
+        Parameters
+        ----------
+        pmid : int
+            The target platoon manager ID.
         """
         self.platooning_plugin.platooning_blacklist.append(pmid)
 
     def match_platoon(self):
         """
-        A naive way to find the best position to join a platoon
-        :return:
+        A naive way to find the best position to join a platoon.
         """
-        return self.platooning_plugin.match_platoon(self.cav_world)
+        return self.platooning_plugin.match_platoon(self.cav_nearby)
 
     def in_platoon(self):
         """
-        Check whether the vehicle is inside the platoon
-        :return: bool, flag indication whether in a platoon
+        Check whether the vehicle is inside the platoon.
+
+        Returns
+        -------
+        flag : bool
+            Whether this vehicle is inside a platoon.
         """
         return False if self.platooning_plugin.in_id is None else True
 
     def get_platoon_manager(self):
         """
-        Retrieve the platoon manager the cav belongs to and the corresponding id
-        :return:
+        Retrieve the platoon manager the cav
+        belongs to and the corresponding id.
+
+        Returns
+        -------
+        platoon_object : opencda object
+            The PlatoonManager object.
+
+        in_id : int
+            The ego vehicle's in team id.
         """
-        return self.platooning_plugin.platooning_object, self.platooning_plugin.in_id
+        return self.platooning_plugin.platooning_object, \
+               self.platooning_plugin.in_id
 
     def get_platoon_status(self):
         """
-        Retrive the FSM status for platooning application
-        :return:
+        Retrieve the FSM status for platooning application
+
+        Returns
+        -------
+        status : enum
+            The vehicle's current platoon status.
         """
         return self.platooning_plugin.status
 
     def get_platoon_front_rear(self):
         """
         Get the ego vehicle's front and rear cav in the platoon
-        :return:
+
+        Returns
+        -------
+        front_vehicle : opencda object
+            Front vehicle of the ego vehicle in the platoon.
+
+        rear_vehicle : opencda object
+            Rear vehicle of the ego vehicle in the platoon.
         """
-        return self.platooning_plugin.front_vehicle, self.platooning_plugin.rear_vechile
+        return self.platooning_plugin.front_vehicle, \
+               self.platooning_plugin.rear_vechile
