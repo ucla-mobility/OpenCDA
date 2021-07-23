@@ -88,11 +88,12 @@
     </road>
     <road name="gneE5" length="1200" id="62" junction="-1">
         <link>
-            <predecessor elementType="junction" elementId="2"/>
+            <predecessor elementType="junction" elementId="4"/>
+            <successor elementType="junction" elementId="3"/>
         </link>
         <type s="0" type="town"/>
         <planView>
-            <geometry s="0.00000000" x="426.99172801" y="-3.0" hdg="0.00000000" length="1200">
+            <geometry s="0.00000000" x="426.97" y="-3.0" hdg="0.00000000" length="1200">
                 <line/>
             </geometry>
         </planView>
@@ -105,7 +106,7 @@
                 <center>
                     <lane id="0" type="none" level="true">
                         <link/>
-                        <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13" laneChange="none"/>
+                        <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13" laneChange="both"/>
                     </lane>
                 </center>
                 <right>
@@ -118,7 +119,7 @@
                     <lane id="-2" type="driving" level="true">
                         <link/>
                         <width sOffset="0" a="3.6576" b="0" c="0" d="0"/>
-                        <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13" laneChange="none"/>
+                        <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13" laneChange="both"/>
                         <speed sOffset="0" max="33.53"/>
                     </lane>
                  </right>
@@ -203,6 +204,47 @@
         <objects/>
         <signals/>
     </road>
+    <road name="gneE6" length="5.0" id="69" junction="-1">
+        <link>
+            <predecessor elementType="junction" elementId="2"/>
+        </link>
+        <type s="0" type="town"/>
+        <planView>
+            <geometry s="0.00000000" x="1626.95" y="-3.0" hdg="0.00000000" length="5.0">
+                <line/>
+            </geometry>
+        </planView>
+        <elevationProfile>
+            <elevation s="0" a="0.00" b="0" c="0" d="0"/>
+        </elevationProfile>
+        <lateralProfile/>
+        <lanes>
+            <laneSection s="0">
+                <center>
+                    <lane id="0" type="none" level="true">
+                        <link/>
+                        <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13" laneChange="both"/>
+                    </lane>
+                </center>
+                <right>
+                    <lane id="-1" type="driving" level="true">
+                        <link/>
+                        <width sOffset="0" a="3.6576" b="0" c="0" d="0"/>
+                        <roadMark sOffset="0" type="broken" weight="standard" color="standard" width="0.13" laneChange="both"/>
+                        <speed sOffset="0" max="33.53"/>
+                    </lane>
+                    <lane id="-2" type="driving" level="true">
+                        <link/>
+                        <width sOffset="0" a="3.6576" b="0" c="0" d="0"/>
+                        <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13" laneChange="both"/>
+                        <speed sOffset="0" max="33.53"/>
+                    </lane>
+                 </right>
+            </laneSection>
+        </lanes>
+        <objects/>
+        <signals/>
+    </road>
 
     <road name="gneJ6_0" length="6.28738509" id="65" junction="2">
         <link>
@@ -250,7 +292,7 @@
         </link>
         <type s="0" type="town"/>
         <planView>
-            <geometry s="0.00000000" x="418.3729844599999" y="-3.0" hdg="0.00000000" length="8.61874355">
+            <geometry s="0.00000000" x="418.372" y="-3.0" hdg="0.00000000" length="8.61874355">
                 <line/>
             </geometry>
         </planView>
@@ -263,7 +305,7 @@
                 <center>
                     <lane id="0" type="none" level="true">
                         <link/>
-                        <roadMark sOffset="0" type="none" weight="standard" color="standard" width="0.00" laneChange="none"/>
+                        <roadMark sOffset="0" type="none" weight="standard" color="standard" width="0.00" laneChange="both"/>
                     </lane>
                 </center>
                 <right>
@@ -388,6 +430,14 @@
             <laneLink from="-2" to="-2"/>
         </connection>
     </junction>
+
+    <junction name="8433034436" id="4">
+        <connection id="2" incomingRoad="66" connectingRoad="62" contactPoint="start">
+            <laneLink from="-1" to="-1"/>
+            <laneLink from="-2" to="-2"/>
+        </connection>
+    </junction>
+
     <junction name="8433034435" id="1">
         <connection id="0" incomingRoad="61" connectingRoad="67" contactPoint="start">
             <laneLink from="-1" to="-1"/>
@@ -397,4 +447,12 @@
             <laneLink from="-2" to="-2"/>
         </connection>
     </junction>
+
+    <junction name="8433034434" id="3">
+        <connection id="0" incomingRoad="62" connectingRoad="69" contactPoint="start">
+            <laneLink from="-1" to="-1"/>
+            <laneLink from="-2" to="-2"/>
+        </connection>
+    </junction>
+
 </OpenDRIVE>
