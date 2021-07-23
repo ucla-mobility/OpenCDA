@@ -10,7 +10,7 @@ have names ending with 'carla', e.g. single_2lanefree_carla.py, single_town06_ca
 
 To generate the CARLA traffic flow, users need to <strong>define the corresponding parameters
 in yaml file </strong> and call the APIs in `opencda.scenario_testing.utils.sim_api.ScenarioManager`:
-* Check [the carla_traffic_manager in yaml rule section](yaml_define.md#carla_traffic_manager) to
+* Check the carla_traffic_manager section in [yaml rule](yaml_define.md#carla_traffic_manager) to
 see how to define parameters related to carla traffic in the yaml file.
 * Utilizing `ScenarioManager` to generate CARLA traffic flow is easy. It just takes 3 lines of codes. `scenario_manager.tick()`
 will keep the traffic manager keep running during the simulation loop.
