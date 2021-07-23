@@ -9,9 +9,6 @@ OpenCDA is a generalized framework for fast prototyping <strong>cooperative driv
 applications</strong>(e.g., cooperative perception, platooning) as well as <strong>autonomous vehicle components</strong>(e.g., 
 perception, localization, planning, control) under <strong>Co-simulation</strong>(CARLA and SUMO).
 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
- ![teaser](docs/md_files/images/platoon_joining_2lanefree_complete.gif)
 
 
 The key features of OpenCDA can be summarized as <strong>CIFMB</strong>:
@@ -35,12 +32,14 @@ and  <strong>Scenario Manager</strong>.
 Check the [OpenCDA Introduction](https://opencda-documentation.readthedocs.io/en/latest/md_files/introduction.html) for more details.
 
 ## Get Started
-* [Overview](https://opencda-documentation.readthedocs.io/en/latest/md_files/introduction.html)
-* [Installation](https://opencda-documentation.readthedocs.io/en/latest/md_files/installation.html)
-* [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/md_files/getstarted.html)
+
+ ![teaser](docs/md_files/images/platoon_joining_2lanefree_complete.gif)
 
 
 ### Users Guide
+* [Overview](https://opencda-documentation.readthedocs.io/en/latest/md_files/introduction.html)
+* [Installation](https://opencda-documentation.readthedocs.io/en/latest/md_files/installation.html)
+* [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/md_files/getstarted.html)
 * [Logic Flow](https://opencda-documentation.readthedocs.io/en/latest/md_files/logic_flow.html)
 * [Traffic Generation](https://opencda-documentation.readthedocs.io/en/latest/md_files/traffic_generation.html)
 
