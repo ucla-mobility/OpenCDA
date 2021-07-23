@@ -76,11 +76,9 @@ class PredictionManager:
     def predict(self):
         preds = []
         ids = []
-        import pdb
         for id in self.ids:
-            pdb.set_trace()
-            observed_traj = self.d[id].observed_traj[-self.observed_length:]
-            v = self.d[id].observed_velocity[-1]
+            observed_traj = list(self.d[id].observed_traj)[-self.observed_length:]
+            v = list(self.d[id].observed_velocity)[-1]
             preds.append(self.model(observed_traj, v))
         return preds
 
