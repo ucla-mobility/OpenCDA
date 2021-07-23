@@ -5,7 +5,11 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
+from collections import deque
 import weakref
+
+import carla
+import numpy as np
 
 from opencda.core.application.platooning.platooning_plugin \
     import PlatooningPlugin
@@ -63,19 +67,85 @@ class V2XManager(object):
 
         self.cav_world = weakref.ref(cav_world)()
 
-        self.ego_pos = None
-        self.ego_spd = 0
+        # ego position buffer. use deque so we can simulate lagging
+        self.ego_pos = deque(maxlen=100)
+        self.ego_spd = deque(maxlen=100)
+        # used to exclude the cav self during searching
         self.vid = vid
+
+        # check if lag or noise needed to be added during communication
+        self.loc_noise = 0.0
+        self.yaw_noise = 0.0
+        self.speed_noise = 0.0
+        self.lag = 0
+
+        if 'loc_noise' in config_yaml:
+            self.loc_noise = config_yaml['loc_noise']
+        if 'yaw_noise' in config_yaml:
+            self.yaw_noise = config_yaml['yaw_noise']
+        if 'speed_noise' in config_yaml:
+            self.speed_noise = config_yaml['speed_noise']
+        if 'lag' in config_yaml:
+            self.lag = config_yaml['lag']
 
     def update_info(self, ego_pos, ego_spd):
         """
         Update all communication plugins with current localization info.
         """
-        self.ego_pos = ego_pos
-        self.ego_spd = ego_spd
+        self.ego_pos.append(ego_pos)
+        self.ego_spd.append(ego_spd)
         self.search()
 
+        # the ego pos in platooning_plugin is used for self-localization,
+        # so we shouldn't add noise or lag.
         self.platooning_plugin.update_info(ego_pos, ego_spd)
+
+    def get_ego_pos(self):
+        """
+        Add noise and lag to the current ego position and send to other CAVs.
+        This is for simulate noise and lagging during communication.
+
+        Returns
+        -------
+        processed_ego_pos : carla.Transform
+            The ego position after adding noise and lagging.
+        """
+        if not self.ego_pos:
+            return None
+
+        # add lag
+        ego_pos = self.ego_pos[0] if len(self.ego_pos) < self.lag else \
+            self.ego_pos[-1 - int(abs(self.lag))]
+
+        x_noise = np.random.normal(0, self.loc_noise) + ego_pos.location.x
+        y_noise = np.random.normal(0, self.loc_noise) + ego_pos.location.y
+        z = ego_pos.location.z
+        yaw_noise = np.random.normal(0, self.yaw_noise) + ego_pos.rotation.yaw
+
+        noise_location = carla.Location(x=x_noise, y=y_noise, z=z)
+        noise_rotation = carla.Rotation(pitch=0, yaw=yaw_noise, roll=0)
+
+        processed_ego_pos = carla.Transform(noise_location, noise_rotation)
+
+        return processed_ego_pos
+
+    def get_ego_speed(self):
+        """
+        Add noise and lag to the current ego speed.
+
+        Returns
+        -------
+        processed_ego_speed : float
+            The ego speed after adding noise and lagging.
+        """
+        if not self.ego_spd:
+            return None
+        # add lag
+        ego_speed = self.ego_spd[0] if len(self.ego_spd) < self.lag else \
+            self.ego_spd[-1 - int(abs(self.lag))]
+        processed_ego_speed = np.random.normal(0, self.speed_noise) + ego_speed
+
+        return processed_ego_speed
 
     def search(self):
         """
@@ -85,13 +155,15 @@ class V2XManager(object):
 
         for vid, vm in vehicle_manager_dict.items():
             # avoid the Nonetype error at the first simulation step
-            if not vm.localizer.get_ego_pos():
+            if not vm.v2x_manager.get_ego_pos():
                 continue
             # avoid add itself as the cav nearby
             if vid == self.vid:
                 continue
             distance = compute_distance(
-                self.ego_pos.location, vm.localizer.get_ego_pos().location)
+                self.ego_pos[-1].location,
+                vm.v2x_manager.get_ego_pos().location)
+
             if distance < self.communication_range:
                 self.cav_nearby.update({vid: vm})
     """

@@ -287,6 +287,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     def calculate_gap(self, distance):
         """
         Calculate the current vehicle and frontal vehicle's time/distance gap.
+        Note: please use groundtruth position of the frontal vehicle to
+        calculate the correct distance.
 
         Parameters
         ----------
@@ -654,8 +656,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         ego_vehicle_yaw = self._ego_pos.rotation.yaw
 
         distance, _ =\
-            cal_distance_angle(frontal_vehicle_manager.localizer.get_ego_pos().
-                               location, ego_vehicle_loc, ego_vehicle_yaw)
+            cal_distance_angle(frontal_vehicle_manager.vehicle.get_location(),
+                               ego_vehicle_loc, ego_vehicle_yaw)
         self.calculate_gap(distance)
 
         # gradually open the gap TODO: Make this dynamic to map a linear
