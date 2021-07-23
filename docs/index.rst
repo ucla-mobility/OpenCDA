@@ -17,7 +17,7 @@ for latest release.
     `OpenCDA source code on  Github <https://github.com/ucla-mobility/OpenCDA>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Getting Started:
 
    md_files/introduction.md
@@ -32,13 +32,14 @@ for latest release.
    md_files/traffic_generation.md
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Developer Tutorial:
+
    md_files/developer_tutorial.md
    md_files/customization.md
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Additional Information:
 
    md_files/contributor.md
