@@ -18,7 +18,7 @@ for latest release.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting Started:
+   :caption: Getting Started
 
    md_files/introduction.md
    md_files/installation.md
@@ -26,21 +26,21 @@ for latest release.
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Tutorial:
+   :caption: User Tutorial
 
    md_files/logic_flow.md
    md_files/traffic_generation.md
 
 .. toctree::
    :maxdepth: 1
-   :caption: Developer Tutorial:
+   :caption: Developer Tutorial
 
    md_files/developer_tutorial.md
    md_files/customization.md
 
 .. toctree::
    :maxdepth: 1
-   :caption: Additional Information:
+   :caption: Additional Information
 
    md_files/contributor.md
    modules

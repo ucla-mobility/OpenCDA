@@ -18,7 +18,7 @@ server to set simulation setting, create traffic flow and generate the CAVs. Eac
 4. The simulation server will apply the received control commands to the vehicles, execute a single step, and return the updated information to the `VehicleManager` for next round running.
 5. After simulation is over, `EvaluaitonManager` will evaluate different modules' performance and save the statistics.
 
-![teaser](images/flow.png )
+![](images/flow.png )
 
 ### Step1: Define the yaml file
 Check the [Yaml Define Rule](yaml_define.md) to see how to write a yaml file to define your scenario.
@@ -58,7 +58,7 @@ platoon_list = scenario_manager.create_platoon_manager(
 single_cav_list = scenario_manager.create_vehicle_manager(application=['single'])
 ```
 
-Next, the traffic flow is prodced. Check [CARLA Traffic Generation](traffic_generation.md#carla-traffic-manager) to see more details about CARLA traffic generation.
+Next, the traffic flow is prodced. Check [CARLA Traffic Generation](traffic_generation.html#carla-traffic-manager) to see more details about CARLA traffic generation.
 
 ```python
 # create background traffic under Carla
