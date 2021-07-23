@@ -17,7 +17,7 @@ Hao Xiang(Ph.D. Student @ UCLA):
 
 ### Theoretical Support
 Dr. Xin Xia(Postdoc @ UCLA):
-- Theoretical guidance on cooperative localziation
+- Theoretical guidance on cooperative localization
 - [Linkedin](https://www.linkedin.com/in/xin-xia-3b6589189/)
 
 Dr. Yi Guo(Postdoc @ UC):
