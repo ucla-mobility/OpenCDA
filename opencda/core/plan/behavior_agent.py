@@ -750,7 +750,7 @@ class BehaviorAgent(object):
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
-        preds = self.prediction_manager.predict()
+        preds = self.prediction_manager.predict(self._ego_pos.location.z, self.vehicle.get_world)
 
         # ttc reset to 1000 at the beginning
         self.ttc = 1000

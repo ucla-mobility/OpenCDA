@@ -7,8 +7,9 @@ Physcis-based trajectory prediction model
 # License: MIT
 
 import numpy as np
+import carla
 from collections import deque
-
+from opencda.core.common.misc import draw_points
 
 def angle_diff(x, y):
     """
@@ -48,7 +49,7 @@ class TrajectoryData:
 
 
 class PredictionManager:
-    def __init__(self, observed_length, predict_length, dt, model="ConstantVelocityHeading"):
+    def __init__(self, observed_length, predict_length, dt, model="ConstantVelocityHeading", debug=True):
         assert isinstance(observed_length,
                           int) and observed_length > 0, "observed_length must be int and greater than 0"
         assert isinstance(predict_length, int) and predict_length > 0, "predict_length must be int and greater than 0"
@@ -56,6 +57,7 @@ class PredictionManager:
         self.observed_length = observed_length
         self.predict_length = predict_length
         self.dt = dt
+        self.debug = debug
         self.model = eval(model)(self.observed_length, self.predict_length, self.dt)
         self.d = {}
         self.objects = None
@@ -73,13 +75,16 @@ class PredictionManager:
             v = vehicle.get_velocity()
             self.d[vehicle.get_carla_id()].add([x, y], [v.x, v.y])
 
-    def predict(self):
+    def predict(self,z=0, world=None):
         preds = []
         ids = []
         for id in self.ids:
             observed_traj = list(self.d[id].observed_traj)[-self.observed_length:]
             v = list(self.d[id].observed_velocity)[-1]
             preds.append(self.model(observed_traj, v))
+        if self.debug:
+            draw_points(world, preds, z)
+
         return preds
 
 

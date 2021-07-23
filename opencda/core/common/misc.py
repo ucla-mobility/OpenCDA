@@ -58,6 +58,11 @@ def draw_trajetory_points(world, waypoints, z=0.25,
             arrow_size=arrow_size,
             color=color,
             life_time=lt)
+def draw_points(world, points, z, color=carla.Color(125, 125, 125), lt=5, size=0.2):
+    for point in points:
+        x, y = point
+        world.debug.draw_point(carla.Location(x,y,z), size=size, color=color, life_time=lt)
+
 
 
 def draw_waypoints(world, waypoints, z=0.5):
