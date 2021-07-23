@@ -9,6 +9,11 @@ OpenCDA is a generalized framework for fast prototyping <strong>cooperative driv
 applications</strong>(e.g., cooperative perception, platooning) as well as <strong>autonomous vehicle components</strong>(e.g., 
 perception, localization, planning, control) under <strong>Co-simulation</strong>(CARLA and SUMO).
 
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+ ![teaser](docs/md_files/images/platoon_joining_2lanefree_complete.gif)
+
+
 The key features of OpenCDA can be summarized as <strong>CIFMB</strong>:
 * <strong>C</strong>onnectivity and <strong>C</strong>ooperation: OpenCDA supports various levels and categories of cooperation between CAVs in simulation.
   This differentiates OpenCDA with other single vehicle automation tools.
@@ -17,7 +22,7 @@ The key features of OpenCDA can be summarized as <strong>CIFMB</strong>:
 * <strong>M</strong>odularity: OpenCDA is highly modularized, enabling users to conveniently replace any default algorithms or protocols with their own customzied design. 
 * <strong>B</strong>enchmark: OpenCDA offers benchmark testing scenarios, state-of-the-art benchmark algorithms, and benchmark evaluation metrics.
 
-![teaser](docs/md_files/images/platoon_joining_2lanefree_complete.gif)
+
  
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) to see more details.
 
@@ -34,6 +39,7 @@ Check the [OpenCDA Introduction](https://opencda-documentation.readthedocs.io/en
 * [Installation](https://opencda-documentation.readthedocs.io/en/latest/md_files/installation.html)
 * [Quick Start](https://opencda-documentation.readthedocs.io/en/latest/md_files/getstarted.html)
 
+
 ### Users Guide
 * [Logic Flow](https://opencda-documentation.readthedocs.io/en/latest/md_files/logic_flow.html)
 * [Traffic Generation](https://opencda-documentation.readthedocs.io/en/latest/md_files/traffic_generation.html)
@@ -44,8 +50,8 @@ Note: We are keeping improving the performance of OpenCDA. Currently, it is main
 
 ### Developer Guide
 
-*  [Class Design](https://opencda-documentation.readthedocs.io/en/latest/developer_tutorial.html)
-*  [Customize Your Algorithms](https://opencda-documentation.readthedocs.io/en/latest/customization.html)
+*  [Class Design](https://opencda-documentation.readthedocs.io/en/latest/md_files/developer_tutorial.html)
+*  [Customize Your Algorithms](https://opencda-documentation.readthedocs.io/en/latest/md_files/customization.html)
 *  [API Reference](https://opencda-documentation.readthedocs.io/en/latest/modules.html) <br>
 
 
