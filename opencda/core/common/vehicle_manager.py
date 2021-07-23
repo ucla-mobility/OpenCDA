@@ -177,7 +177,7 @@ class VehicleManager(object):
         # and then v2x manager will search the nearby cavs
         self.v2x_manager.update_info(ego_pos, ego_spd)
 
-        self.agent.update_information(ego_pos, ego_spd, objects)
+        self.agent.zupdate_information(ego_pos, ego_spd, objects)
         # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
 
