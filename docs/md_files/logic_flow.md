@@ -78,7 +78,7 @@ eval_manager = \
 Constructing a scenario under co-simulation setting is very similar with building scenario 
 in CARLA only. There are only two differences: 1) Co-simulation requires addtional Sumo files. 2)
 Instead of using `ScenarioManager`, `CoScenarioManager` is used to control the traffic. Check
-[Traffic Generation under Sumo](traffic_generation.md#sumo-traffic-management-co-simulation) section to see more details.
+[Traffic Generation under Sumo](traffic_generation.html#sumo-traffic-management-co-simulation) section to see more details.
 
 ```python
 import opencda.scenario_testing.utils.cosim_api as sim_api
@@ -102,7 +102,7 @@ A simplified class diagram design is shown below.
 The core class in OpenCDA is `VehicleManager`, which is the base class for any cooperative driving applications (e.g. `PlatoonManager` is built upon `VehicleManager` ). It contains the necessary modules such as `PerceptionManager` and
 `LocalizationManager`.
 
-![teaser](images/class_diagram.png )
+![](images/class_diagram.png )
 
 Based on whether certain cooperative driving application is activated,
 `VehicleManager` will choose different perception/localization/planning manager.
