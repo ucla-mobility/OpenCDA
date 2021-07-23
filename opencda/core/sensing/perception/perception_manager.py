@@ -702,7 +702,7 @@ class PerceptionManager:
             if distance < 50:
                 traffic_light = TrafficLight(tl.get_location(),
                                              tl.get_state())
-                objects['traffic_lights'].append(tl)
+                objects['traffic_lights'].append(traffic_light)
         return objects
 
     def destroy(self):
