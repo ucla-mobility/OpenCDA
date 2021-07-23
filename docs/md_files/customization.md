@@ -1,7 +1,7 @@
 ## Algorithm Customization
 
 Due to the high modularity of OpenCDA, you can conveniently replace any default module with your own
-algorithms. The best way for customization is to  <strong> put your customized module under `opencda/customize/...` , </strong> and 
+algorithms. The best way for customization is to <strong>put your customized module under `opencda/customize/...` , </strong> and 
 <strong>use inheritance to overwrite the default algorithms</strong>. Afterwards, import your customized module in
 `VehicleManager` class. The only thing you need to pay attention is to make the input and output format the same
 as origin module if you only want to change a single module. Below we will show a detailed instruction 
@@ -16,7 +16,7 @@ The core function in it is `localize()`, which doesn't take any input, and aims 
 `self._ego_pos` and `_speed`.
 The default algorithm to fuse the gps and imu data is the Kalman Filter. It takes the current gps and imu data as input,
 and return the corrected `x, y, z` coordinates.
- 
+
 ```python
 from opencda.core.sensing.localization.kalman_filter import KalmanFilter
 
@@ -40,7 +40,7 @@ class CustomizedLocalizationManager(LocalizationManager):
     def __init__(self, vehicle, config_yaml, carla_map):
         super(CustomizedLocalizationManager, self).__init__(vehicle, config_yaml, carla_map)
         self.kf = ExtentedKalmanFilter(self.dt)
-``` 
+```
 
 Then go to `VehicleManager` class, import this customized module and set it as the localizer.
 ```python
@@ -58,12 +58,11 @@ for the downstream modules.
 
 ---
 ### Perception Customization
-The class `PerceptionManager` is responsible for object detection. The core function `detect(ego_pos)` takes the
-ego position from localization module as the input, and return a dictionary `objects` whose keys are the object
-categories and the values are each object's attributes(e.g. 3d poses, static or dynamic) under world coordinate system in this category.
+The class `PerceptionManager` is responsible for perception related task. Right now it supports vehicle detection and traffic light detection. The core function `detect(ego_pos)` takes the ego position from localization module as the input, and return a dictionary `objects` whose keys are the object categories and the values are each object's attributes (e.g. 3d poses, static or dynamic) under world coordinate system in this category.
 
 To customize your own object detection algorithms, create a `perception_manager.py` under
 `opencda/customize/core/sensing/perception/` folder. 
+
 ```python
 import cv2
 from opencda.core.sensing.perception.perception_manager import PerceptionManager
@@ -108,7 +107,7 @@ and surrounding objects information from `PerceptionManager` and `LocalizationMa
 function `update_information`. Afterwards,  the `BehaviorAgent` will call function
 `run_step()` to execute a single step and return the `target_speed` and `target_location`.
 
-To customize your own object detection algorithms, create a `behavior_agent.py` under
+To customize your own behavior planning algorithms, create a `behavior_agent.py` under
 `opencda/customize/core/plan/` folder.
 
 ```python
@@ -140,7 +139,7 @@ class CustomizedBehaviorAgent(BehaviorAgent):
 ### Control Customization
 Similar with `BehaviorAgent`, `ControlManager` first saves the ego vehicle and position
 through `update_info()`, and then takes the `target_speed` and `target_loc` generated from
-behavior agent as inputs to produce the final control command through `run_step()`.
+behavior agent to produce the final control command through `run_step()`.
 
 Different from other modules, `ControlManager` is more like a abstract class, which provides an
 interface to call the corresponding controller(default pid controller).
@@ -171,9 +170,7 @@ class ControlManager(object):
         return control_command
 ```
 
-Therefore, if you want to use a controller other than pid controller, you can
-just create your `customize_controller.py` under `opencda/core/acutation/` folder, and 
-follow the same input and output data format:
+Therefore, if you want to use a controller other than pid controller, you can just create your `customize_controller.py` under `opencda/core/acutation/` folder, and follow the same input and output data format:
 ```python
 class CustomizeController:
     def update_info(self, ego_pos, ego_spd):
@@ -197,3 +194,4 @@ vehicle_base:
         type: customize_controller # this has to be exactly the same name as the controller py file
         args: ......
 ```
+
