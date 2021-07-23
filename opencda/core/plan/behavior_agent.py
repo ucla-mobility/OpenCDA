@@ -110,7 +110,7 @@ class BehaviorAgent(object):
             time_ahead=config_yaml['collision_time_ahead'])
         # Warning!!
         # hard coded!!!
-        self.prediction_manager = PredictionManager(4, 6, 0.05)
+        self.prediction_manager = PredictionManager(int(4/0.05), int(6/0.05), 0.05)
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
         self.overtake_allowed = config_yaml['overtake_allowed']
         self.overtake_allowed_origin = config_yaml['overtake_allowed']
