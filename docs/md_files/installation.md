@@ -19,20 +19,20 @@ To get started, the following requirements should be fulfilled.
 * __System requirements.__ Any 64-bits OS should run OpenCDA. We highly recommends Ubuntu  16.04/18.04/20.04.
 
 * __Adequate GPU.__ CARLA is a realistic simulation platform based on Unity, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
-* __Disk Space.__ Estimate 100GB of space is recommended to install CARLA. 
+* __Disk Space.__ Estimate 100GB of space is recommended to install CARLA and Unreal Engine. 
 * __Python__ Python3,7 or higher version is required for full functions.
 
 
 ---
 ## Local Installation
 To get OpenCDA v0.1 running with complete functionality, you will need four things: CARLA, OpenCDA, and
-Pytorch(optional). Pytorch is required only when you want to activate the perception module, otherwise OpenCDA
+Pytorch (optional). Pytorch is required only when you want to activate the perception module, otherwise OpenCDA
 will retrieve all perception information from the simulation server directly.
 
-###  1. CARLA Installation(0.9.11 required)
+###  1. CARLA Installation (0.9.11 required)
 
 There are two different recommended ways to install the CARLA simulator and either way is fine for using OpenCDA. <br>
-Note: If you want to use the customized highway map with full assets(.fbx, .xml and .xodr) in OpenCDA, 
+Note: If you want to use the customized highway map with full assets (.fbx, .xml and .xodr) in OpenCDA, 
 you have to build from source. Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information.
 
 
@@ -55,10 +55,10 @@ scenario testings in Town06.</strong>
 
 For advanced CARLA usage that involves extensive customizations, [Build CARLA from Source](https://carla.readthedocs.io/en/0.9.11/build_linux/) is also supported by OpenCDA. Though source build in 
 Windows OS is supported by CARLA, Ubuntu is the preferred OS as the OpenCDA was developoed in Ubuntu 18.04.  
- 
+
 <strong>Note: OpenCDA do not require CARLA source build. However, customized map with building/lane/traffic light/road surface materials assets  in CARLA  require source build. 
 Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. </strong>
- 
+
 ---
 ### 2. OpenCDA Installation
 First, download OpenCDA github to your local folder if you haven't done it yet.
@@ -95,7 +95,7 @@ python -c "import carla" # check whether carla is installed correctly.
 <strong>Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
 carla version's egg file or manually installed carla to your conda environment.</strong>
 
-### 3. Install Pytorch and Yolov5(Optional)
+### 3. Install Pytorch and Yolov5 (Optional)
 This section is only needed for the users who want to test perception algorithms. By default, OpenCDA does not require
 pytorch installed and it retrieves the object positions from the server directly. Once perception module is activated,
 then OpenCDA will use yolov5 with pytorch to run object detection. <br>
@@ -115,14 +115,14 @@ environment.
 
 conda install pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoolkit=11.1 -c pytorch -c conda-forge
 
-``` 
+```
 
 After pytorch installation, install the requirements for Yolov5. <br>
 ```sh
 pip install -qr https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt  # install dependencies
 ```
 
-### 4. Install Sumo(Optional)
+### 4. Install Sumo (Optional)
 Sumo installation is only required for the users who require to conduct co-simulation testing.
 
 You can install sumo directly by apt-get:

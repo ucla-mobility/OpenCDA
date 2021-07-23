@@ -1,7 +1,9 @@
 ## Yaml Rule
 
-To construct a scenario testing in OpenCDA, users have to first write a yml file to 
-define the simulation parameters. Below we demonstrate an example in `platoon_2lanefree_carla` scenario.
+To construct a scenario testing in OpenCDA, users have to first write a yml file to define the simulation parameters. To help reuse the parameters across different modules within the system, we adopt the `name anchor`. To know more details about the `named anchor` feature in yaml file, [read this blog](https://anil.io/blog/symfony/yaml/using-variables-in-yaml-files/). 
+
+Below we demonstrate an example in `platoon_2lanefree_carla` scenario. Our example yaml files for various scenes are stored in the path`opencda/scenario_testing/config_yaml`. 
+
 ```yaml
 # platoon_2lanefree_carla.yaml
 world:  # define the CARLA server setting
@@ -65,17 +67,17 @@ scenario: # define each cav's spawn position, driving task, and parameters
 ---
 #### world
 The parameter `world` in the yaml defines the CARLA server setting.
-* `sync` : bool type, if true, the simulation will be in sync mode, otherwise async mode. Check 
+* `sync` : boolean type, if true, the simulation will be in sync mode, otherwise async mode. Check 
 the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/)  to know more.
 * `client_port` : the python client port connected to the CARLA server.
 * `fixed_delta_seconds` : The elapsed time remains constant between simulation steps.
  If it is set to 0.05 seconds, there will be 20 frames per simulated second.
- 
+
  #### vehicle_base
  `vehicle_base` defines the default parameters for each CAV including perception, localization, planning, control,
  and v2x modules. The ampersand `&` character before `vehicle_base` is ued to to create a `named anchor`, 
- which we can then reference later on with an asterisk `*`. To know more details about the `named anchor` feature
- in yaml file, [read this blog](https://anil.io/blog/symfony/yaml/using-variables-in-yaml-files/) .
+ which be referenced later on with an asterisk `*`. 
+
  * `sensing` :  Define perception and localization related parameters.
     * `perception`:  Module related to object detection.
         * `activate` : bool type, if false, the CAV will retrieve object positions from the server directly. 
@@ -92,8 +94,8 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
         * `gnss` : related to the parameters of the gnss sensor.
         * `debug_helper` : parameters related to localization debugging and real-time trajectory plotting.
 * `behavior` : Define behavior planning parameters
-    * `max_speed` : int type, the maximum speed(km/h) that the CAV is allowed to reach.
-    * `tailgate_speed` : int type, the target speed(km/h) for CAV when it tries to catch up with a platoon, it is usually larger
+    * `max_speed` : int type, the maximum speed (km/h) that the CAV is allowed to reach.
+    * `tailgate_speed` : int type, the target speed (km/h) for CAV when it tries to catch up with a platoon, it is usually larger
     than `max_speed`
     * `speed_lim_dist` : int type, during normal driving mode, `target_speed` = `max_speed` - `speed_lim_dist`
     * `speed_decrease` : int type, when the CAV is in car following mode and it gets too close to the
@@ -188,7 +190,7 @@ scenario:
         perception:
           <<: *base_perception
           activate: true
-``` 
+```
 In the above example, a platoon containing two members and a single CAV that is out of any platoon will be spawn.
 The `destination` in the platoon sets the destination of the platoon. The first member of platoon is regarded
 as the leader by default, and the second member will be the following car. All members in the same platoon should
@@ -200,13 +202,13 @@ behavior:
   <<: *base_behavior
   overtake_allowed: false   
 ```
-In this way, the default attribute  `overtake_allowed` which is true will be overwritten to false while keeping other
+In this way, the default attribute  `overtake_allowed` will be overwritten to false while keeping other
 attributes unchanged. Similarly, the default CAV setting does not have the `platoon` attribute, thus we also 
 add `platoon: <<: *platoon_base` to each member to assign the `platoon` attribute.
 
 For the single CAV, the meaning of the parameters are quite similar with the platoon members we just described.
 
-#### sumo(optional)
+#### sumo (optional)
 `sumo` needs to be set only when co-simulation is required.
 
 ```yaml

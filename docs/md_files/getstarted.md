@@ -10,9 +10,9 @@ Parameters explanation:
 * `-t`: The name of the tesitng scenario. A python script with the same name should exist in
 `opencda/scenario_testing/` to construct the simulation, and a yaml file with the same name should exist in 
 `opencda/scenario_testing/config_yaml/` to define the simulation parameters.
-* `--apply_ml(Optional)` : A flag to indicate whether a deep learning model needs to be loaded. If this flag is 
+* `--apply_ml`  (Optional): A flag to indicate whether a deep learning model needs to be loaded. If this flag is 
 set, Pytorch will be imported.
-* `--record(Optional)` : A flag to indicate whether to record this simulation. [Check here for more details](https://carla.readthedocs.io/en/latest/adv_recorder/).
+* `--record` (Optional): A flag to indicate whether to record this simulation. [Check here for more details](https://carla.readthedocs.io/en/latest/adv_recorder/).
 
 Below we will demonstrate some examples of running the benchmark testings in OpenCDA
 
@@ -72,7 +72,7 @@ merging lane, communicate with the platoon to cooperatively merge into the mainl
 
 ![](images/platoon_joining_2lanefree.gif)
 
-#### 3. Cooperative merge and join a platoon under co-simulation(Sumo required)
+#### 3. Cooperative merge and join a platoon under co-simulation (Sumo required)
 ```sh
 python opencda.py -t platoon_joining_2lanefree_cosim
 ```
