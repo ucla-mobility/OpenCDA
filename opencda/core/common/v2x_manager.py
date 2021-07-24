@@ -115,7 +115,7 @@ class V2XManager(object):
 
         # add lag
         ego_pos = self.ego_pos[0] if len(self.ego_pos) < self.lag else \
-            self.ego_pos[-1 - int(abs(self.lag))]
+            self.ego_pos[np.random.randint(-1 - int(abs(self.lag)), 0)]
 
         x_noise = np.random.normal(0, self.loc_noise) + ego_pos.location.x
         y_noise = np.random.normal(0, self.loc_noise) + ego_pos.location.y
