@@ -504,7 +504,10 @@ This method contains the function of behavior regulation and trajectory generati
 
 ### V2XManager
 
-`V2XManager` is used to receive information from other CAVs and deliver ego information to them.
+`V2XManager` is used to receive information from other CAVs and deliver ego information to them. 
+The class attributes `ego_pos` and `ego_spped` are both deque type. Such data type is used to 
+simulate the signal lagging during communication, e.g. `ego_pos[-3]` represents there is a lag
+of 2 time steps(`ego_pos[-1]` represents the most recent one).
 
 ```python
 class V2XManager(object):
@@ -525,12 +528,66 @@ class V2XManager(object):
 
         self.cav_world = weakref.ref(cav_world)()
 
-        self.ego_pos = None
-        self.ego_spd = 0
+        # ego position buffer. use deque so we can simulate lagging
+        self.ego_pos = deque(maxlen=100)
+        self.ego_spd = deque(maxlen=100)
+        # used to exclude the cav self during searching
         self.vid = vid
+
+        # check if lag or noise needed to be added during communication
+        self.loc_noise = 0.0
+        self.yaw_noise = 0.0
+        self.speed_noise = 0.0
+        self.lag = 0
+
+        if 'loc_noise' in config_yaml:
+            self.loc_noise = config_yaml['loc_noise']
+        if 'yaw_noise' in config_yaml:
+            self.yaw_noise = config_yaml['yaw_noise']
+        if 'speed_noise' in config_yaml:
+            self.speed_noise = config_yaml['speed_noise']
+        if 'lag' in config_yaml:
+            self.lag = config_yaml['lag']
 ```
 
-* `update_info`
+* `update_info`<br>
+   This method updates the ego vehicle's speed and position and passes the updated information to 
+   different application plugins. Also, this method searches all of the neighboring vehicles within range. To search the vehicles, we need to retrieve a list of registered vehicles' information from `CavWorld`. For each vehicle in the list, we compute its distance to the ego vehicle. 
+   If the distance is less than the threshold (`communication_range`), we consider it as a neighboring vehicle.  
 
-    This method updates the ego vehicle's speed and position and passes the updated information to `PlatooningPlugin`. Also, this method searches all of the neighboring vehicles within range. To search the vehicles, we need to retrieve a list of registered vehicles' information from `CavWorld`. For each vehicle in the list, we compute its distance to the ego vehicle. If the distance is less than the threshold (`communication_range`), we consider it as a neighboring vehicle.  
+    ```python
+    def update_info(self, ego_pos, ego_spd):
+        self.ego_pos.append(ego_pos)
+        self.ego_spd.append(ego_spd)
+        self.search()
+    
+        # the ego pos in platooning_plugin is used for self-localization,
+        # so we shouldn't add noise or lag.
+        self.platooning_plugin.update_info(ego_pos, ego_spd)
+    ```
 
+
+* `get_ego_pos` <br>
+   This method adds noise and lags to the ego pose and then delivers to
+   other CAVs.
+  
+    ```python
+    def get_ego_pos(self):
+         # add lag
+        ego_pos = self.ego_pos[0] if len(self.ego_pos) < self.lag else \
+            self.ego_pos[np.random.randint(-1 - int(abs(self.lag)), 0)]
+    
+        x_noise = np.random.normal(0, self.loc_noise) + ego_pos.location.x
+        y_noise = np.random.normal(0, self.loc_noise) + ego_pos.location.y
+        z = ego_pos.location.z
+        yaw_noise = np.random.normal(0, self.yaw_noise) + ego_pos.rotation.yaw
+    
+        noise_location = carla.Location(x=x_noise, y=y_noise, z=z)
+        noise_rotation = carla.Rotation(pitch=0, yaw=yaw_noise, roll=0)
+    
+        processed_ego_pos = carla.Transform(noise_location, noise_rotation)
+    
+        return processed_ego_pos
+
+    ```
+  
