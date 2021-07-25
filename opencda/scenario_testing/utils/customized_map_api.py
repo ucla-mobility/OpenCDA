@@ -72,11 +72,11 @@ def spawn_helper_2lanefree(carla_map, coefficient):
     """
 
     all_deafault_spawn = carla_map.get_spawn_points()
-    transform_point = all_deafault_spawn[11]
+    transform_point = all_deafault_spawn[13]
     transform_point.location.x = transform_point.location.x + coefficient * \
-        (all_deafault_spawn[2].location.x - all_deafault_spawn[11].location.x)
+        (all_deafault_spawn[2].location.x - all_deafault_spawn[13].location.x)
     transform_point.location.y = transform_point.location.y + coefficient * \
-        (all_deafault_spawn[2].location.y - all_deafault_spawn[11].location.y)
+        (all_deafault_spawn[2].location.y - all_deafault_spawn[13].location.y)
 
     return transform_point
 
