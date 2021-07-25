@@ -215,7 +215,7 @@ class BehaviorAgent(object):
             o_lane_id = o_waypoint.lane_id
 
             for vm in self.white_list:
-                pos = vm.localizer.get_ego_pos()
+                pos = vm.v2x_manager.get_ego_pos()
                 vm_x = pos.location.x
                 vm_y = pos.location.y
 

@@ -83,6 +83,10 @@ vehicle_base: &vehicle_base
   v2x: &base_v2x # comminuation related
     enabled: true
     communication_range: 35
+    loc_noise: 0.0
+    yaw_noise: 0.0
+    speed_noise: 0.0
+    lag: 0
 
 # define the platoon basic characteristics
 platoon_base: &platoon_base

@@ -125,9 +125,9 @@ class PlatooningManager(object):
         Calculate and update center location of the platoon.
         """
         v1_ego_transform = \
-            self.vehicle_manager_list[0].localizer.get_ego_pos()
+            self.vehicle_manager_list[0].v2x_manager.get_ego_pos()
         v2_ego_transform = \
-            self.vehicle_manager_list[-1].localizer.get_ego_pos()
+            self.vehicle_manager_list[-1].v2x_manager.get_ego_pos()
 
         self.center_loc = carla.Location(x=(v1_ego_transform.location.x +
                                             v2_ego_transform.location.x) /
