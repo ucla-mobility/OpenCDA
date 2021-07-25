@@ -82,6 +82,10 @@ vehicle_base: &vehicle_base
   v2x: &base_v2x # communication related
     enabled: true
     communication_range: 35
+    loc_noise: 0.0
+    yaw_noise: 0.0
+    speed_noise: 0.0
+    lag: 0
 
 # define the background traffic control by carla
 carla_traffic_manager:

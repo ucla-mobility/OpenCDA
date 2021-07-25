@@ -121,6 +121,18 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
     * `type` : string type, the type of controller the ego vehicle uses.
     * `args` : the arguments related to the selected controller.
 
+* `v2x` : Defome vehicle communication parameters.
+    * `enabled` : bool type, indicate whether v2x is enabled.
+    * `communication_range` : float type, the searching range of the CAV
+    * `loc_noise` : float type, the deviation of the noise added to the received ego position 
+    during communication.
+    * `yaw_noise` : float type, the deviation of the noise added to the received yaw angle
+    during communication.
+    * `speed_noise` : float type, the deviation of the noise added to the received ego speed 
+    during communication.
+    * `lag` : int type, the lagging during the communication. E.g., 2 means the CAV
+     receives the packages of other CAVs at most 2 time steps ago. 
+
 #### platoon_base
 `platoon_base` define the default platooning parameters.
 * `max_capacity` : int type, the maximum number of members that the platoon can include.
