@@ -7,6 +7,12 @@ Dr. Jiaqi Ma (Associate Professor @ UCLA)
 - [Linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/)
 - [Google Scholar](https://scholar.google.com/citations?user=S3cQz1AAAAAJ&hl=en)
 
+### Supervisor
+Dr. Jiaqi Ma (Associate Professor @ UCLA)
+- Project and lab supervisor
+- [Linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/)
+- [Google Scholar](https://scholar.google.com/citations?user=S3cQz1AAAAAJ&hl=en)
+
 ### Core Developer
 Runsheng Xu (Ph.D. Student @ UCLA):
 - Project Lead and OpenCDA System Architect
@@ -27,5 +33,11 @@ Dr. Xin Xia (Postdoc @ UCLA):
 - [Linkedin](https://www.linkedin.com/in/xin-xia-3b6589189/)
 
 Dr. Yi Guo (Postdoc @ UC):
+<<<<<<< HEAD
 - SUMO Integration, platooning algorithm, SUMO Only Mode (under dev)
 - [Linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/)
+=======
+- Help on Sumo part
+- [Linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/)
+
+>>>>>>> 232a18fe1724891b03327ab54f14f5849ae11214
