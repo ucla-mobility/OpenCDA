@@ -114,8 +114,10 @@ class DataDumper(object):
                 camera_position = 'front'
             elif i == 1:
                 camera_position = 'right'
-            else:
+            elif i == 2:
                 camera_position = 'left'
+            else:
+                camera_position = 'back'
 
             image_name = '%06d' % frame + '_' + camera_position + '.png'
 

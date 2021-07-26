@@ -43,14 +43,14 @@ def run_scenario(opt, config_yaml):
         # create evaluation manager
         eval_manager = \
             EvaluationManager(scenario_manager.cav_world,
-                              script_name='single_2lanefree_carla',
+                              script_name='coop_town06',
                               current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
         # run steps
         while True:
             scenario_manager.tick()
-            transform = single_cav_list[0].vehicle.get_transform()
+            transform = single_cav_list[1].vehicle.get_transform()
             spectator.set_transform(carla.Transform(
                 transform.location +
                 carla.Location(

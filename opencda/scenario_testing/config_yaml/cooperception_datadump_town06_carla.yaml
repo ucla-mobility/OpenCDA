@@ -17,7 +17,7 @@ vehicle_base: &vehicle_base
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
       camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 3 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+      camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
@@ -44,8 +44,8 @@ vehicle_base: &vehicle_base
         x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
-    max_speed: 111 # maximum speed, km/h
-    tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
+    max_speed: 41 # maximum speed, km/h
+    tailgate_speed: 51 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
     safety_time: 4 # ttc safety thresholding for decreasing speed
@@ -94,11 +94,11 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -100
+  global_speed_perc: -30
   set_osm_mode: true # Enables or disables the OSM mode.
-  auto_lane_change: false
+  auto_lane_change: true
   random: true # whether to random select vehicles' color and model
-  vehicle_list: 17  # a number or a list
+  vehicle_list: 30  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step
   range: [ 50, 250, 135, 145, 20, 4]
@@ -119,8 +119,20 @@ scenario:
           debug_trajectory: false
           debug: false
     - <<: *vehicle_base
-      spawn_position: [ 67.7194, 143.51, 0.3, 0, 0, 0 ]
+      spawn_position: [ 77.7194, 143.51, 0.3, 0, 0, 0 ]
       destination: [ 630, 143.51, 0.3 ]
+      v2x:
+        <<: *base_v2x
+        communication_range: 45
+      behavior:
+        <<: *base_behavior
+        local_planner:
+          <<: *base_local_planner
+          debug_trajectory: false
+          debug: false
+    - <<: *vehicle_base
+      spawn_position: [ 97.7194, 136.51, 0.3, 0, 0, 0 ]
+      destination: [ 630, 136.51, 0.3 ]
       v2x:
         <<: *base_v2x
         communication_range: 45

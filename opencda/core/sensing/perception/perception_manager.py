@@ -62,7 +62,7 @@ class CameraSensor:
                 carla.Location(
                     x=0.0, y=0.3, z=1.8), carla.Rotation(
                     pitch=0, roll=0, yaw=100))
-        else:
+        elif position == 'left':
             spawn_point = carla.Transform(
                 carla.Location(
                     x=0.0,
@@ -72,6 +72,16 @@ class CameraSensor:
                     pitch=0,
                     roll=0,
                     yaw=-100))
+        else:
+            spawn_point = carla.Transform(
+                carla.Location(
+                    x=-2.0,
+                    y=0.0,
+                    z=1.5),
+                carla.Rotation(
+                    pitch=0,
+                    roll=0,
+                    yaw=180))
 
         self.sensor = world.spawn_actor(
             blueprint, spawn_point, attach_to=vehicle)
@@ -308,7 +318,7 @@ class PerceptionManager:
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
-        self.camera_num = min(config_yaml['camera_num'], 3)
+        self.camera_num = min(config_yaml['camera_num'], 4)
         self.lidar_visualize = config_yaml['lidar_visualize']
 
         self.cav_world = weakref.ref(cav_world)()
@@ -329,7 +339,7 @@ class PerceptionManager:
         # camera visualization is needed
         if self.activate or self.camera_visualize:
             self.rgb_camera = []
-            mount_position = ['front', 'right', 'left']
+            mount_position = ['front', 'right', 'left', 'back']
             for i in range(self.camera_num):
                 self.rgb_camera.append(
                     CameraSensor(
@@ -461,7 +471,7 @@ class PerceptionManager:
             self.speed_retrieve(objects)
 
         if self.camera_visualize:
-            names = ['front', 'right', 'left']
+            names = ['front', 'right', 'left', 'back']
             for (i, rgb_image) in enumerate(rgb_draw_images):
                 if i > self.camera_num or i > self.camera_visualize - 1:
                     break
