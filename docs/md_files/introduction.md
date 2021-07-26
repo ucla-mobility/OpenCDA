@@ -1,7 +1,6 @@
 ## OpenCDA Overview
 Current autonomous driving simulation platforms that support scene rendering and traffic simulation mainly concentrate
-on single-vehicle intelligence; therefore, developing and testing Cooperative Driving Automation applications (e.g., cooperative perception, platooning, 
-signalized intersection appriach and departure) under a realistic simulated environment becomes difficult.
+on single-vehicle intelligence; therefore, developing and testing Cooperative Driving Automation applications (e.g., cooperative perception, platooning, signalized intersection approach and departure) under a realistic simulated environment becomes difficult.
 
 OpenCDA is created to fill such gaps. 
 
