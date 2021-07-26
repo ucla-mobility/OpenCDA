@@ -158,30 +158,30 @@ Now we will introduce each of them:
         self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
         # create platoons
         for i, platoon in enumerate(self.scenario_params['scenario']['platoon_list']):
-          platoon_manager = PlatooningManager(platoon, self.cav_world)
-          for j, cav in enumerate(platoon['members']):
-              # Similar as spawning single CAV, we need to create its start location (spawn_transform)
-              # and set its color etc. 
-              ...
-              vehicle = self.world.spawn_actor(cav_vehicle_bp,spawn_transform)
-              # create vehicle manager for each cav
-              vehicle_manager = VehicleManager(vehicle, cav, ['platooning'],
-                        self.carla_map, self.cav_world,
-                        current_time=self.scenario_params['current_time'],
-                        data_dumping=data_dump)
-              # add the vehicle manager to platoon
-              if j == 0:
-                  platoon_manager.set_lead(vehicle_manager)
-              else:
-                  platoon_manager.add_member(vehicle_manager, leader=False)
-              self.world.tick()
-              destination = carla.Location(x=platoon['destination'][0],
-                                           y=platoon['destination'][1],
-                                           z=platoon['destination'][2])
-              platoon_manager.set_destination(destination)
-              platoon_manager.update_member_order()
-              platoon_list.append(platoon_manager)
-              return platoon_list
+            platoon_manager = PlatooningManager(platoon, self.cav_world)
+            for j, cav in enumerate(platoon['members']):
+                # Similar as spawning single CAV, we need to create its start location (spawn_transform)
+                # and set its color etc. 
+                ...
+                vehicle = self.world.spawn_actor(cav_vehicle_bp,spawn_transform)
+                # create vehicle manager for each cav
+                vehicle_manager = VehicleManager(vehicle, cav, ['platooning'],
+                          self.carla_map, self.cav_world,
+                          current_time=self.scenario_params['current_time'],
+                          data_dumping=data_dump)
+                # add the vehicle manager to platoon
+                if j == 0:
+                    platoon_manager.set_lead(vehicle_manager)
+                else:
+                    platoon_manager.add_member(vehicle_manager, leader=False)
+                self.world.tick()
+            destination = carla.Location(x=platoon['destination'][0],
+                                         y=platoon['destination'][1],
+                                         z=platoon['destination'][2])
+            platoon_manager.set_destination(destination)
+            platoon_manager.update_member_order()
+            platoon_list.append(platoon_manager)
+        return platoon_list
     ```
 
     
