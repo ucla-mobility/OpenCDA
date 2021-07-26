@@ -187,25 +187,25 @@ Now we will introduce each of them:
     
 
 * `create_traffic_carla()`
-  This method will create the `carla.TrafficManager` and set associated parameters. Afterward, it will spawn the background vehicles. For spawning the vehicles, there are two options -- `spawn_vehicle_by_range` and `spawn_vehicles_by_list`. Depending on the way you configure them, the code will choose the associated one to do the task. Here for illustration, we use the `spawn_vehicles_by_list`. 
+    This method will create the `carla.TrafficManager` and set associated parameters. Afterward, it will spawn the background vehicles. For spawning the vehicles, there are two options -- `spawn_vehicle_by_range` and `spawn_vehicles_by_list`. Depending on the way you configure them, the code will choose the associated one to do the task. Here for illustration, we use the `spawn_vehicles_by_list`. 
 
     ```python
-  def create_traffic_carla(self):
-      traffic_config = self.scenario_params['carla_traffic_manager']
-      # get carla.TrafficManager
-      tm = self.client.get_trafficmanager()
-      tm.set_global_distance_to_leading_vehicle(
-        traffic_config['global_distance'])
-      tm.set_synchronous_mode(traffic_config['sync_mode'])
-      tm.set_osm_mode(traffic_config['set_osm_mode'])
-      tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
-  
-      bg_list = spawn_vehicles_by_list(tm, traffic_config, bg_list)
-  
-      return tm, bg_list
+    def create_traffic_carla(self):
+        traffic_config = self.scenario_params['carla_traffic_manager']
+        # get carla.TrafficManager
+        tm = self.client.get_trafficmanager()
+        tm.set_global_distance_to_leading_vehicle(
+          traffic_config['global_distance'])
+        tm.set_synchronous_mode(traffic_config['sync_mode'])
+        tm.set_osm_mode(traffic_config['set_osm_mode'])
+        tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
+    
+        bg_list = spawn_vehicles_by_list(tm, traffic_config, bg_list)
+    
+        return tm, bg_list
     ```
 
-  The `spawn_vehicles_by_list` has similar structure as `create_vehicle_manager` with the support of randomness of the vehicles' apperance and colors. Notice that, different from CAVs, we will set autopilot to `True` for those background traffic and we will return a list of `carla.Vehicle` instead of the `VehicleManager`  used in the `Create_vehicle_manager`. 
+    The `spawn_vehicles_by_list` has similar structure as `create_vehicle_manager` with the support of randomness of the vehicles' apperance and colors. Notice that, different from CAVs, we will set autopilot to `True` for those background traffic and we will return a list of `carla.Vehicle` instead of the `VehicleManager`  used in the `Create_vehicle_manager`. 
 
 ### VehicleManager
 
@@ -535,7 +535,7 @@ class V2XManager(object):
 ```
 
 * `update_info`
-   
+  
    This method updates the ego vehicle's speed and position and passes the updated information to different application plugins. Also, this method searches all of the neighboring vehicles within range. To search the vehicles, we need to retrieve a list of registered vehicles' information from `CavWorld`. For each vehicle in the list, we compute its distance to the ego vehicle. If the distance is less than the threshold (`communication_range`), we consider it as a neighboring vehicle.  
    
    ```python
@@ -551,7 +551,7 @@ class V2XManager(object):
 
 
 * `get_ego_pos` 
-   
+  
    This method adds noise and lags to the ego pose and then delivers to other CAVs.
   
    ```python
