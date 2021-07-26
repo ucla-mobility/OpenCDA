@@ -3,7 +3,7 @@
 Basic class of CAV
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import uuid
 

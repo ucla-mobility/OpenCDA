@@ -5,7 +5,7 @@ freeway sorely with carla Warning: You have to load the 2lanefreecomplete
 map into your ue4 editor before running this
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 
 import carla

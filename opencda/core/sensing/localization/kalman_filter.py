@@ -4,7 +4,7 @@ Use Kalman Filter on GPS + IMU for better localization.
 Reference: https://www.bzarg.com/p/how-a-kalman-filter-works-in-pictures/
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>, Xin Xia<x35xia@g.ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import math
 import numpy as np

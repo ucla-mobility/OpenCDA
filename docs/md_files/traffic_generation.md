@@ -1,6 +1,6 @@
 ## Traffic Generation
 
-OpenCDA supports two different ways to generate the background traffic flow: CARLA traffic manager and Sumo traffic simulation.
+OpenCDA supports two different ways to generate the background traffic flow: CARLA traffic manager and SUMO traffic simulation. The traffic and other scenario generation function are currently being enhanced and will be released in the future.
 
 ---
 ### CARLA Traffic Manager

@@ -2,7 +2,7 @@
 
 * [__System/Hardware Requirements__](#requirements)
 * [__Local Installation__](#local-installation)
-    * [__1,CARLA installation__](#1-carla-installation0911-required)
+    * [__1. CARLA installation__](#1-carla-installation0911-required)
 	    * [1.1 Package installation](#11-package-installation)  
 	    * [1.2 Build from source](#12-build-from-source)  
 
@@ -20,13 +20,13 @@ To get started, the following requirements should be fulfilled.
 
 * __Adequate GPU.__ CARLA is a realistic simulation platform based on Unity, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
 * __Disk Space.__ Estimate 100GB of space is recommended to install CARLA and Unreal Engine. 
-* __Python__ Python3,7 or higher version is required for full functions.
+* __Python__ Python3.7 or higher version is required for full functions.
 
 
 ---
 ## Local Installation
 To get OpenCDA v0.1 running with complete functionality, you will need four things: CARLA, OpenCDA, and
-Pytorch (optional). Pytorch is required only when you want to activate the perception module, otherwise OpenCDA
+Pytorch (optional). Pytorch is required only when you want to activate the perception module; otherwise OpenCDA
 will retrieve all perception information from the simulation server directly.
 
 ###  1. CARLA Installation (0.9.11 required)
@@ -36,7 +36,7 @@ Note: If you want to use the customized highway map with full assets (.fbx, .xml
 you have to build from source. Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information.
 
 
-#### 1.1 Package installation
+#### 1.1 Package Installation
 
 <div class="build-buttons">
 <p>
@@ -122,10 +122,10 @@ After pytorch installation, install the requirements for Yolov5. <br>
 pip install -qr https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt  # install dependencies
 ```
 
-### 4. Install Sumo (Optional)
-Sumo installation is only required for the users who require to conduct co-simulation testing.
+### 4. Install SUMO (Optional)
+SUMO installation is only required for the users who require to conduct co-simulation testing and use future release of SUMO-only mode.
 
-You can install sumo directly by apt-get:
+You can install SUMO directly by apt-get:
 ```sh
 sudo add-apt-repository ppa:sumo/stable
 sudo apt-get update
