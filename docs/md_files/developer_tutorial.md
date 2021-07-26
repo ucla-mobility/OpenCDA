@@ -1,14 +1,9 @@
 ## Class Design
 
-In this section, we will take a deeper look at the implementation details of several important classes in our OpenCDA framework. For beginners, we encourage you to go through our [OpenCDA Logic Flow](tutorial.md)
- first to understand the general simulation process. 
- 
- This tutorial will emphasize the detailed design logic behind each class and try to give clear descriptions of the core algorithms in each module.
-  We will go through a test example `platoon_joining_2lanefree_carla.py` and for easy understanding, we have removed some non-core codes to simplify the code flow. To read the complete source code, 
-  please refer to our [repo](https://github.com/ucla-mobility/OpenCDA). 
-  For details about our cooperative architecture, please refer to our [paper](https://arxiv.org/abs/2107.06260). 
- 
+In this section, we will take a deeper look at the implementation details of several important classes in our OpenCDA framework. For beginners, we encourage you to go through our [OpenCDA Logic Flow](tutorial.md) first to understand the general simulation process. This tutorial will emphasize the detailed design logic behind each class and try to give clear descriptions of the core algorithms in each module. We will go through a test example `platoon_joining_2lanefree_carla.py` and for easy understanding, we have removed some non-core codes to simplify the code flow. To read the complete source code, please refer to our [repo](https://github.com/ucla-mobility/OpenCDA). For details about our cooperative architecture, please refer to our [paper](https://arxiv.org/abs/2107.06260). 
+
 <strong>Note: this tutorial assume you are using CARLA only instead of Co-simulation.</strong>
+
 ### Workflow
 
 The workflow of opencda can be summarized as follows. 
@@ -18,13 +13,10 @@ The workflow of opencda can be summarized as follows.
 * Create `CavWorld` object to store information of registered CAVs and more importantly, to store the shared large models like neural networks. 
 *  `ScenarioManager` will use those configurations to set `carla.TrafficManager` and load customized map if needed.
 * After the creation of `ScenarioManager`, users can use its `create_vehicle_manager` method to spawn Connected Automated Vehicles (CAVs). Internally, each vehicle is managed by a `VehicleManager`, which will wrap the original `carla.Vehicle` with other modules such as perception, localization, control, and behavior agent. 
-* Besides single CAVs, there may also be platoons in the traffic. To spawn the platoons, users should use `create_platoon_manager` method. 
-Similar to the previous single CAV, each member in the platoon will be managed by `VehicleManager`. In addition,  `PlatooningManager` is used to maintain the information of all the vehicles in the same platoon. And after the creation of vehicles and platoons, it will return a list of `PlatooningManager`. 
+* Besides single CAVs, there may also be platoons in the traffic. To spawn the platoons, users should use `create_platoon_manager` method. Similar to the previous single CAV, each member in the platoon will be managed by `VehicleManager`. In addition,  `PlatooningManager` is used to maintain the information of all the vehicles in the same platoon. And after the creation of vehicles and platoons, it will return a list of `PlatooningManager`. 
 * Similar to the process of spawning a single CAV, `create_traffic_carla` method will spawn background traffic with `autopilot=True`. 
 * Now all the CAVs and traffic flow are generated, thus we will enter the simulation loop. At the beginning of each simulation
-step, ` scenario_manager.tick()` will be called to tick the server. Then all the CAVs will update the surrounding
-information and execute a single step. The single CAVs may join the platoon in the middle of the travel, so we need
-to check whether any single CAV has joined a platoon and remove it from the `single_cav_list` if so.
+step, ` scenario_manager.tick()` will be called to tick the server. Then all the CAVs will update the surrounding information and execute a single step. The single CAVs may join the platoon in the middle of the travel, so we need to check whether any single CAV has joined a platoon and remove it from the `single_cav_list` if so.
 
 
 ```python
@@ -66,8 +58,7 @@ def run_scenario(opt, config_yaml):
 
 ### CavWorld
 
-`CavWorld`  stores CAVs and platoon information. Besides,  it will also store
- the shared machine learning models,   so we don't need to store a separate model for each CAV. <strong>if you plan to use a neural network, this is a good place to load your model and call it in the customized algorithm class to utilize the model.</strong>
+`CavWorld`  stores CAVs and platoon information. Besides,  it will also store the shared machine learning models, so we don't need to store a separate model for each CAV. <strong>if you plan to use a neural network, this is a good place to load your model and call it in the customized algorithm class to utilize the model.</strong>
 
 ```python
 class CavWorld(object):
@@ -86,9 +77,7 @@ class CavWorld(object):
 
 ### ScenarioManager
 
-`ScenarioManager`  controls simulation construction,
-generates background traffic generation, and spawns CAVs. During the initialization stage, it will create the `client` and load the world with the HD map
- into the variable `self.world`. 
+`ScenarioManager`  controls simulation construction, generates background traffic generation, and spawns CAVs. During the initialization stage, it will create the `client` and load the world with the HD map into the variable `self.world`. 
 
 ```python
 class ScenarioManager:
@@ -120,46 +109,44 @@ Now we will introduce each of them:
 
 * `create_vehicle_manager()`
 
-The CAVs information is stored as a list in the yaml file. Each entry in the list corresponds to a CAV's 
-configuration.This method will pass spawn positions specified in the yaml file to the server and spawn 
-the `carla.Vehicle` object. For each spawned vehicle, we will wrap it with the class `VehicleManager`,
- which essentially supports the localization, perception, platooning behavior, etc.
-  Details about this class can be found in the  `VehicleManager` section. 
+    The CAVs information is stored as a list in the yaml file. Each entry in the list corresponds to a CAV's configuration.This method will pass spawn positions specified in the yaml file to the server and spawn the `carla.Vehicle` object. For each spawned vehicle, we will wrap it with the class `VehicleManager`, which essentially supports the localization, perception, platooning behavior, etc. Details about this class can be found in the  `VehicleManager` section. 
 
-```python
-def create_vehicle_manager(self, application,
-                               map_helper=None,
-                               data_dump=False):
-    # By default, we use lincoln as our cav model.
-    cav_vehicle_bp = self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
-    single_cav_list = []
-    # Each entry in the list corresponds to a CAV
-    for i, cav_config in enumerate(self.scenario_params['scenario']['single_cav_list']):
-        spawn_transform = function_to_load_spawn_position(cav_config)
-        cav_vehicle_bp.set_attribute('color', '0, 0, 255')
-        vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
-        # create vehicle manager for each cav
-        vehicle_manager = VehicleManager(vehicle, cav_config, application,...)
-        self.world.tick()
-        vehicle_manager.v2x_manager.set_platoon(None)
-				# Set the destination of the vehicle according to the configuration
-        destination = carla.Location(x=cav_config['destination'][0],
-                                     y=cav_config['destination'][1],
-                                     z=cav_config['destination'][2])
-        # The `update_info` method will call the internal localization module and perception module
-        # to update position and detected objects. 
-        # Those information is then again passed to the v2x_manager/controller/BehaviorAgent module.
-        vehicle_manager.update_info()
-        vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),destination,clean=True)
+    ```python
+    def create_vehicle_manager(self, application,
+                                   map_helper=None,
+                                   data_dump=False):
+        # By default, we use lincoln as our cav model.
+        cav_vehicle_bp = self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
+        single_cav_list = []
+        # Each entry in the list corresponds to a CAV
+        for i, cav_config in enumerate(self.scenario_params['scenario']['single_cav_list']):
+            spawn_transform = function_to_load_spawn_position(cav_config)
+            cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+            vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
+            # create vehicle manager for each cav
+            vehicle_manager = VehicleManager(vehicle, cav_config, application,...)
+            self.world.tick()
+            vehicle_manager.v2x_manager.set_platoon(None)
+    				# Set the destination of the vehicle according to the configuration
+            destination = carla.Location(x=cav_config['destination'][0],
+                                         y=cav_config['destination'][1],
+                                         z=cav_config['destination'][2])
+            # The `update_info` method will call the internal localization module and perception module
+            # to update position and detected objects. 
+            # Those information is then again passed to the v2x_manager/controller/BehaviorAgent module.
+            vehicle_manager.update_info()
+            vehicle_manager.set_destination(vehicle_manager.vehicle.get_location(),destination,clean=True)
+    
+            single_cav_list.append(vehicle_manager)
+    
+        return single_cav_list
+    ```
 
-        single_cav_list.append(vehicle_manager)
-
-    return single_cav_list
-```
+    
 
 * `create_platoon_manager()`
 
-This method will first loop over the predefined platoon list. For each platoon, we will create a `PlatooningManager` object to group all the vehicles within the platoon. In the current version, we assume the first vehicle in the platoon is the lead vehicle. After creating all of the vehicles of each platoon, it will return a list of `PlatooningManager`. As a result, we can control the behavior of each platoon via a single line of code without worrying about details of how each vehicle will react. 
+    This method will first loop over the predefined platoon list. For each platoon, we will create a `PlatooningManager` object to group all the vehicles within the platoon. In the current version, we assume the first vehicle in the platoon is the lead vehicle. After creating all of the vehicles of each platoon, it will return a list of `PlatooningManager`. As a result, we can control the behavior of each platoon via a single line of code without worrying about details of how each vehicle will react. 
 
     ```python
     def create_platoon_manager(self, map_helper=None, data_dump=False):    
@@ -197,26 +184,28 @@ This method will first loop over the predefined platoon list. For each platoon, 
               return platoon_list
     ```
 
+    
+
 * `create_traffic_carla()`
-This method will create the `carla.TrafficManager` and set associated parameters. Afterward, it will spawn the background vehicles. For spawning the vehicles, there are two options -- `spawn_vehicle_by_range` and `spawn_vehicles_by_list`. Depending on the way you configure them, the code will choose the associated one to do the task. Here for illustration, we use the `spawn_vehicles_by_list`. 
+  This method will create the `carla.TrafficManager` and set associated parameters. Afterward, it will spawn the background vehicles. For spawning the vehicles, there are two options -- `spawn_vehicle_by_range` and `spawn_vehicles_by_list`. Depending on the way you configure them, the code will choose the associated one to do the task. Here for illustration, we use the `spawn_vehicles_by_list`. 
 
     ```python
-    def create_traffic_carla(self):
-        traffic_config = self.scenario_params['carla_traffic_manager']
-        # get carla.TrafficManager
-        tm = self.client.get_trafficmanager()
-        tm.set_global_distance_to_leading_vehicle(
+  def create_traffic_carla(self):
+      traffic_config = self.scenario_params['carla_traffic_manager']
+      # get carla.TrafficManager
+      tm = self.client.get_trafficmanager()
+      tm.set_global_distance_to_leading_vehicle(
         traffic_config['global_distance'])
-        tm.set_synchronous_mode(traffic_config['sync_mode'])
-        tm.set_osm_mode(traffic_config['set_osm_mode'])
-        tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
+      tm.set_synchronous_mode(traffic_config['sync_mode'])
+      tm.set_osm_mode(traffic_config['set_osm_mode'])
+      tm.global_percentage_speed_difference(traffic_config['global_speed_perc'])
   
-        bg_list = spawn_vehicles_by_list(tm, traffic_config, bg_list)
-    
-        return tm, bg_list
+      bg_list = spawn_vehicles_by_list(tm, traffic_config, bg_list)
+  
+      return tm, bg_list
     ```
 
-    The `spawn_vehicles_by_list` has similar structure as `create_vehicle_manager` with the support of randomness of the vehicles' apperance and colors. Notice that, different from CAVs, we will set autopilot to `True` for those background traffic and we will return a list of `carla.Vehicle` instead of the `VehicleManager`  used in the `Create_vehicle_manager`. 
+  The `spawn_vehicles_by_list` has similar structure as `create_vehicle_manager` with the support of randomness of the vehicles' apperance and colors. Notice that, different from CAVs, we will set autopilot to `True` for those background traffic and we will return a list of `carla.Vehicle` instead of the `VehicleManager`  used in the `Create_vehicle_manager`. 
 
 ### VehicleManager
 
@@ -342,11 +331,7 @@ For the current version, the main function we provide is detection. And there ar
 
 ### LocalizationManager
 
-The `LocalizationManager` will spawn location-related sensors including GNSS and IMU. 
-And it will use the Kalman Filter to keep track of cars' location and speed.
- Though we read the speed and yaw angle directly from the server,
-  to simulate the real world's uncertainty, noise is also added to the data retrieved from the server.
-   And user can control the noise level by changing the parameters like `speed_stddev` in `yaml` file. 
+The `LocalizationManager` will spawn location-related sensors including GNSS and IMU. And it will use the Kalman Filter to keep track of cars' location and speed. Though we read the speed and yaw angle directly from the server, to simulate the real world's uncertainty, noise is also added to the data retrieved from the server. And user can control the noise level by changing the parameters like `speed_stddev` in `yaml` file. 
 
 ```python
 class LocalizationManager(object):
@@ -422,15 +407,15 @@ class BehaviorAgent(object):
 ```
 
 * `update_information`
-
-The `VehicleManager` will call `agent.update_information` to update the position and speed as well as the detected objects. Afterward, the agent will update the local planner with the new speed/location information. For the detected objects, it may contain the vehicles that are about to join the platooning and those vehicles should be managed by the platooning manager. Thus we should remove those vehicles from the `objects` like shown below. Besides, we will also update the traffic light state here. 
+    The `VehicleManager` will call `agent.update_information` to update the position and speed as well as the detected objects. Afterward, the agent will update the local planner with the new speed/location information. For the detected objects, it may contain the vehicles that are about to join the platooning and those vehicles should be managed by the platooning manager. Thus we should remove those vehicles from the `objects` like shown below. Besides, we will also update the traffic light state here. 
+    
     ```python
     def update_information(self, ego_pos, ego_speed, objects):
             # update localization information
             self._ego_speed = ego_speed
             self._ego_pos = ego_pos
             self.break_distance = self._ego_speed / 3.6 * self.emergency_param
-  
+    
             # update the localization info to trajectory planner
             self.get_local_planner().update_information(ego_pos, ego_speed)
             # The white list contains all position of target platoon member for joining. 
@@ -439,7 +424,7 @@ The `VehicleManager` will call `agent.update_information` to update the position
             # based on their lane_id and location.
             obstacle_vehicles = objects['vehicles']
             self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
-  
+      
             # update the debug helper
             self.debug_helper.update(ego_speed, self.ttc)
             if self.ignore_traffic_light:
@@ -448,10 +433,10 @@ The `VehicleManager` will call `agent.update_information` to update the position
                 # This method also includes stop signs and intersections.
                 self.light_state = str(self.vehicle.get_traffic_light_state())
     ```
-
+    
 * `set_destination`
 
-Given the start location and end location, it will find the closest waypoints in the map to each of them. And we will use those 2 waypoints as the starting and end node. We will use the following code to make sure the starting node is always in front of the vehicle.
+    Given the start location and end location, it will find the closest waypoints in the map to each of them. And we will use those 2 waypoints as the starting and end node. We will use the following code to make sure the starting node is always in front of the vehicle.
 
     ```python
     _, angle = cal_distance_angle(self.start_waypoint.transform.location, cur_loc, cur_yaw)
@@ -460,6 +445,7 @@ Given the start location and end location, it will find the closest waypoints in
         _, angle = cal_distance_angle(
         self.start_waypoint.transform.location, cur_loc, cur_yaw)
     ```
+    
 
     And we will call `self._trace_route` to find the list of waypoints from the starting node to the end node. Then, we will store the route into the buffer `self.waypoints_queue`. 
 
@@ -478,36 +464,34 @@ Given the start location and end location, it will find the closest waypoints in
 
 * `run_step` 
 
-This method contains the function of behavior regulation and trajectory generation. To obey the traffic rules and consider the dynamic road elements, we have designed the following cases. Each case will have distinct driving behavior.
+    This method contains the function of behavior regulation and trajectory generation. To obey the traffic rules and consider the dynamic road elements, we have designed the following cases. Each case will have distinct driving behavior.
 
-* <strong>Destination arrived</strong>
+    * <strong>Destination arrived</strong>
 
-    If the current location is near a radius of the destination ($10$ meters by default), the vehicle has arrived at the destination and we will exit the agent. 
+        If the current location is near a radius of the destination ($10$ meters by default), the vehicle has arrived at the destination and we will exit the agent. 
 
-* <strong>Red traffic light</strong>
+    * <strong>Red traffic light</strong>
 
-    If the vehicle is in the junction and the traffic light is red, then return a target speed of 0.  Here we also consider the case when the car has moved to the center of the junction and the traffic light turns green at the current timestamp. In this case, it is very dangerous for the car to stop at the center of the junction. Thus we will use `light_id_to_ignore` to ignore this red light so that the car will continue moving. See [code](https://github.com/ucla-mobility/OpenCDA/blob/555aeab2bac7471d9400c51aea9c76741954b54b/opencda/core/plan/behavior_agent.py#L352) for details
+        If the vehicle is in the junction and the traffic light is red, then return a target speed of 0.  Here we also consider the case when the car has moved to the center of the junction and the traffic light turns green at the current timestamp. In this case, it is very dangerous for the car to stop at the center of the junction. Thus we will use `light_id_to_ignore` to ignore this red light so that the car will continue moving. See [code](https://github.com/ucla-mobility/OpenCDA/blob/555aeab2bac7471d9400c51aea9c76741954b54b/opencda/core/plan/behavior_agent.py#L352) for details
 
-* <strong>Lane change behaviors</strong>
-    * If the car is near the intersection, for safety concerns, the overtake and lane change are not allowed.
-    * If the curvature of the road is high, the lane change is disabled. 
-    * If a lane change is allowed and the global plan indeed outputs a lane change path, then do a collision check to see if the target lane is free. 
+    * <strong>Lane change behaviors</strong>
 
-* <strong>Car following</strong>
+        * If the car is near the intersection, for safety concerns, the overtake and lane change are not allowed.
+        * If the curvature of the road is high, the lane change is disabled. 
+        * If a lane change is allowed and the global plan indeed outputs a lane change path, then do a collision check to see if the target lane is free. 
 
-    If the car following mode is on, follow the leading car.
+    * <strong>Car following</strong>
 
-* <strong>Normal Mode</strong>
+        If the car following mode is on, follow the leading car.
 
-    For the normal mode, we will sample points along the path and return the target speed and target location. 
+    * <strong>Normal Mode</strong>
+
+        For the normal mode, we will sample points along the path and return the target speed and target location. 
 
 
 ### V2XManager
 
-`V2XManager` is used to receive information from other CAVs and deliver ego information to them. 
-The class attributes `ego_pos` and `ego_spped` are both deque type. Such data type is used to 
-simulate the signal lagging during communication, e.g. `ego_pos[-3]` represents there is a lag
-of 2 time steps (`ego_pos[-1]` represents the most recent one).
+`V2XManager` is used to receive information from other CAVs and deliver ego information to them. The class attributes `ego_pos` and `ego_spped` are both deque type. Such data type is used to simulate the signal lagging during communication, e.g., `ego_pos[-3]` represents there is a lag of 2 time steps (`ego_pos[-1]` represents the most recent one).
 
 ```python
 class V2XManager(object):
@@ -550,12 +534,11 @@ class V2XManager(object):
             self.lag = config_yaml['lag']
 ```
 
-* `update_info`<br>
-   This method updates the ego vehicle's speed and position and passes the updated information to 
-   different application plugins. Also, this method searches all of the neighboring vehicles within range. To search the vehicles, we need to retrieve a list of registered vehicles' information from `CavWorld`. For each vehicle in the list, we compute its distance to the ego vehicle. 
-   If the distance is less than the threshold (`communication_range`), we consider it as a neighboring vehicle.  
-
-    ```python
+* `update_info`
+   
+   This method updates the ego vehicle's speed and position and passes the updated information to different application plugins. Also, this method searches all of the neighboring vehicles within range. To search the vehicles, we need to retrieve a list of registered vehicles' information from `CavWorld`. For each vehicle in the list, we compute its distance to the ego vehicle. If the distance is less than the threshold (`communication_range`), we consider it as a neighboring vehicle.  
+   
+   ```python
     def update_info(self, ego_pos, ego_spd):
         self.ego_pos.append(ego_pos)
         self.ego_spd.append(ego_spd)
@@ -564,14 +547,14 @@ class V2XManager(object):
         # the ego pos in platooning_plugin is used for self-localization,
         # so we shouldn't add noise or lag.
         self.platooning_plugin.update_info(ego_pos, ego_spd)
-    ```
+   ```
 
 
-* `get_ego_pos` <br>
-   This method adds noise and lags to the ego pose and then delivers to
-   other CAVs.
+* `get_ego_pos` 
+   
+   This method adds noise and lags to the ego pose and then delivers to other CAVs.
   
-    ```python
+   ```python
     def get_ego_pos(self):
          # add lag
         ego_pos = self.ego_pos[0] if len(self.ego_pos) < self.lag else \
@@ -588,6 +571,6 @@ class V2XManager(object):
         processed_ego_pos = carla.Transform(noise_location, noise_rotation)
     
         return processed_ego_pos
+   
+   ```
 
-    ```
-  
