@@ -148,7 +148,7 @@ Users do not need to define this parameter if co-simulation is conducted as Sumo
 There are two ways to define the positions of the background vehicles. 
 * Set the parameter `vehicle_list` under `carla_traffic_manager` as a list. An example is demonstrated
 below. In this example, two vehicles are spawned as background vehicle. The first one is spawned at position `x=100, y=100, z=0.3`,
-and the initial rotation angle is `roll=0, yaw=20(degree), pitch=0`. The second one is spawned at position 
+and the initial rotation angle is `roll=0, yaw=20 (degree), pitch=0`. The second one is spawned at position 
 `x=122, y=666, z=0.3`, and the angle is `roll=0, yaw=0, pitch=0`.
 ```yaml
 carla_traffic_manager:

@@ -46,8 +46,7 @@ year={2021}
 ```
 The arxiv link to the paper:  https://arxiv.org/abs/2107.06260
 
-Also, under this LICENSE, OpenCDA is for non-commercial research only. Researchers to be able to modify the source code for their own research only. Contracted work that generates corporate revenues and other general commecial use are prohibited under this lICENSE. See the LICENSE file for details and possible opportunities for commercial use.
-
+Also, under this LICENSE, OpenCDA is for non-commercial research only. Researchers can modify the source code for their own research only. Contracted work that generates corporate revenues and other general commercial use are prohibited under this LICENSE. See the LICENSE file for details and possible opportunities for commercial use.
 ## Get Started
 
  ![teaser](docs/md_files/images/platoon_joining_2lanefree_complete.gif)

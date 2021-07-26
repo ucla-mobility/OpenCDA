@@ -5,7 +5,7 @@ is used for carla simulation only, and if you want to manage the Co-simulation,
 please use cosim_api.py.
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import math
 import random
@@ -291,7 +291,7 @@ class ScenarioManager:
             platoon_manager.update_member_order()
             platoon_list.append(platoon_manager)
 
-            return platoon_list
+        return platoon_list
 
     def spawn_vehicles_by_list(self, tm, traffic_config, bg_list):
         """

@@ -28,7 +28,7 @@ class LocalizationManager(object):
         ...
         corrected_cords = self.kf(x, y, z, speed, yaw, imu_yaw_rate)
 ```
-If a user wants to remain the whole structure of localization and just replace the filter(e.g. Extended Kalman Filter),
+If a user wants to remain the whole structure of localization and just replace the filter (e.g. Extended Kalman Filter),
 then he/she just needs to create a `localization_manager.py` under `opencda/customize/core/sensing/localization`
 folder and initializes the `CustomizedLocalizationManager` with Extended Kalman Filter:
 
@@ -142,7 +142,7 @@ through `update_info()`, and then takes the `target_speed` and `target_loc` gene
 behavior agent to produce the final control command through `run_step()`.
 
 Different from other modules, `ControlManager` is more like a abstract class, which provides an
-interface to call the corresponding controller(default pid controller).
+interface to call the corresponding controller (default pid controller).
 
 ```python
 import importlib

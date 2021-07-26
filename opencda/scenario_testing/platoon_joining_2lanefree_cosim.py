@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Scenario testing: merging vehicle joining a platoon in the
+customized 2-lane freeway simplified map sorely with co-sim
+"""
+# Author: Runsheng Xu <rxx3386@ucla.edu>
+# License: TDG-Attribution-NonCommercial-NoDistrib
+
 import os
 
 import carla

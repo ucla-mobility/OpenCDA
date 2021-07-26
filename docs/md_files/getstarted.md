@@ -1,6 +1,6 @@
 ## Quick Start 
 
-OpenCDA provides benchmark scenarios that researchers can use directly without any modification. Running these 
+OpenCDA provides benchmark scenarios that researchers can use directly without any modification. We will also be adding new testing scenarios in future releases. Running these 
 scenario testings only need one line of command:
 ```she
 cd ~/OpenCDA
@@ -14,7 +14,7 @@ Parameters explanation:
 set, Pytorch will be imported.
 * `--record` (Optional): A flag to indicate whether to record this simulation. [Check here for more details](https://carla.readthedocs.io/en/latest/adv_recorder/).
 
-Below we will demonstrate some examples of running the benchmark testings in OpenCDA
+Below we will demonstrate some examples of running the benchmark testings in OpenCDA.
 
 ---
 ### Single Vehicle Test
@@ -22,7 +22,7 @@ Below we will demonstrate some examples of running the benchmark testings in Ope
 ```sh
 python opencda.py -t single_2lanefree_carla
 ```
-In this scenario , a single Connected Automated Vehicle will be spawn at a 2-lane highway customized map.  This
+In this scenario , a single Connected Automated Vehicle will be spawned at a 2-lane highway customized map.  This
 CAV will try to reach the assigned destination with a desired speed of 100km/h and manage to safely interact
 with the surrounding traffic flow. The CAV's localization, planning, and control modules will be activated, and the perception module will be deactivated
 by default, thus <strong> pytorch is NOT required in this testing </strong>. <br>
@@ -63,7 +63,7 @@ In this scenario, a platoon with 4 members will be placed at the 2-lane highway 
 and decreases its speed to test whether the members can still keep the desired time gap. In this way, the platoon
 stability is verified.
 
-#### 2. Cooperative merge and join a platoon
+#### 2. Cooperative merge and joining a platoon
 ```sh
 python opencda.py -t platoon_joining_2lanefree_carla
 ```
@@ -72,7 +72,7 @@ merging lane, communicate with the platoon to cooperatively merge into the mainl
 
 ![](images/platoon_joining_2lanefree.gif)
 
-#### 3. Cooperative merge and join a platoon under co-simulation (Sumo required)
+#### 3. Cooperative merge and joining a platoon under co-simulation (SUMO required)
 ```sh
 python opencda.py -t platoon_joining_2lanefree_cosim
 ```
@@ -82,6 +82,6 @@ python opencda.py -t platoon_joining_2lanefree_cosim
 ```sh
 python opencda.py -t platoon_joining_town06_carla --apply_ml
 ```
-A single CAV will try to overtake several human-drive vehicles to join the platoon from the back side.
+A single CAV will try to overtake several human-driven vehicles to join the platoon from the back.
 Pytorch is required for this test since we use yolov5 detetion.
 ![](images/platoon_joining_town06.gif)

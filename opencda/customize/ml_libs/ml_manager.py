@@ -7,7 +7,7 @@ here we have this class to enable different CAVs share the same model to
 """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import cv2
 import torch
