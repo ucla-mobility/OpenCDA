@@ -411,27 +411,27 @@ class BehaviorAgent(object):
     
     ```python
     def update_information(self, ego_pos, ego_speed, objects):
-            # update localization information
-            self._ego_speed = ego_speed
-            self._ego_pos = ego_pos
-            self.break_distance = self._ego_speed / 3.6 * self.emergency_param
+        # update localization information
+        self._ego_speed = ego_speed
+        self._ego_pos = ego_pos
+        self.break_distance = self._ego_speed / 3.6 * self.emergency_param
     
-            # update the localization info to trajectory planner
-            self.get_local_planner().update_information(ego_pos, ego_speed)
-            # The white list contains all position of target platoon member for joining. 
-            # Those vehicles should be managed by platooning manager. Thus we should remove them.
-            # Right now the white_list_match function will associate the vehicles 
-            # based on their lane_id and location.
-            obstacle_vehicles = objects['vehicles']
-            self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
+        # update the localization info to trajectory planner
+        self.get_local_planner().update_information(ego_pos, ego_speed)
+        # The white list contains all position of target platoon member for joining. 
+        # Those vehicles should be managed by platooning manager. Thus we should remove them.
+        # Right now the white_list_match function will associate the vehicles 
+        # based on their lane_id and location.
+        obstacle_vehicles = objects['vehicles']
+        self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
       
-            # update the debug helper
-            self.debug_helper.update(ego_speed, self.ttc)
-            if self.ignore_traffic_light:
-                self.light_state = "Green"
-            else:
-                # This method also includes stop signs and intersections.
-                self.light_state = str(self.vehicle.get_traffic_light_state())
+        # update the debug helper
+        self.debug_helper.update(ego_speed, self.ttc)
+        if self.ignore_traffic_light:
+            self.light_state = "Green"
+        else:
+            # This method also includes stop signs and intersections.
+            self.light_state = str(self.vehicle.get_traffic_light_state())
     ```
     
 * `set_destination`
@@ -454,7 +454,7 @@ class BehaviorAgent(object):
     This method will find the path from the `start_waypoint` to the `end_waypoint`. If the global plan has not been set before, it will load the `GlobalRoutePlanner` first. The algorithm for searching can be summarized as follows.
 
     * Given the `start_waypoint`, find the edge in the original graph containing this waypoint's location (achieved through `GlobalRoutePlanner._localize`).  And use the start node of the edge as the actual search origin. Through the same process, we can find the actual destination based on the provided `end_point`. 
-    * Use A$^*$ algorithm to find the path from origin to destination.  The path will contain a list of waypoints. The waypoint is either the start or end of a lane segment. Add the destination at the end of the path.
+    * Use A* algorithm to find the path from origin to destination.  The path will contain a list of waypoints. The waypoint is either the start or end of a lane segment. Add the destination at the end of the path.
     * For each of the traversed edges in the path, we can find the corresponding turn decision (it is called RoadOption, e.g. lanefollow, left, right turn, etc.). See `RoadOption` class for complete definition. Then, loop over the edges,
         * If the turn decision of the edge is lanefollow or void, then also add the `edge['path']` with associated RoadOption to the path.
         * Else, only add current_waypoint and a point in the target lane with a certain distance away. (see `GlobalRoutePlanner.trace_route` for details.)
