@@ -2,8 +2,8 @@
 
 """Loading world from customized map
 """
-# Author: Xu Han <hanxu417@ucla.edu>
-# License: MIT
+# Author: Xu Han <hanxu417@ucla.edu>, Runsheng Xu <rxx3386@ucla.edu>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import os
 import sys

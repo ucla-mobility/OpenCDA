@@ -3,7 +3,7 @@
 """Behavior manager for platooning specifically
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import weakref
 from collections import deque

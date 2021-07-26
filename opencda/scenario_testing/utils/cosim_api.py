@@ -3,7 +3,7 @@
 Co-simulation scenario manager. The code is modified from CARLA official
 cosimulation code.
 """
-# Author: Runsheng Xu <rxx3386@ucla.edu>
+# Author: CARLA Team, Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT
 
 import logging
