@@ -3,7 +3,7 @@
 Localization module
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import weakref
 from collections import deque
@@ -24,19 +24,23 @@ class GnssSensor(object):
     The default GNSS sensor module.
 
     Parameters
-    -vehicle : carla.Vehicle
+    vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
-    -config : dict
+
+    config : dict
         The configuration dictionary of the localization module.
 
     Attributes
-    -world : carla.world
+    world : carla.world
         The caral world of the current vehicle.
-    -blueprint : carla.blueprint
+
+    blueprint : carla.blueprint
         The current blueprint of the sensor actor.
-    -weak_self : opencda Object
+
+    weak_self : opencda Object
         A weak reference point to avoid circular reference.
-    -sensor : CARLA actor
+
+    sensor : CARLA actor
         The current sensor actors that will be attach to the vehicles.
     """
 
@@ -90,17 +94,20 @@ class ImuSensor(object):
     Default ImuSensor module.
 
     Parameters
-    -vehicle : carla.Vehicle
+    vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
 
     Attributes
-    -world : carla.world
+    world : carla.world
         The caral world of the current vehicle.
-    -blueprint : carla.blueprint
+
+    blueprint : carla.blueprint
         The current blueprint of the sensor actor.
-    -weak_self : opencda Object
+
+    weak_self : opencda Object
         A weak reference point to avoid circular reference.
-    -sensor : CARLA actor
+
+    sensor : CARLA actor
         The current sensor actors that will be attach to the vehicles.
     """
 
@@ -144,24 +151,24 @@ class LocalizationManager(object):
     Default localization module.
 
     Parameters
-    -vehicle : carla.Vehicle
+    vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
-    -config_yaml : dict
+    config_yaml : dict
         The configuration dictionary of the localization module.
-    -carla_map : carla.Map
+    carla_map : carla.Map
         The carla HDMap. We need this to find the map origin to
         convert wg84 to enu coordinate system.
 
     Attributes
-    -gnss : opencda object
+    gnss : opencda object
         GNSS sensor manager for spawning gnss sensor and listen to the data
         transmission.
-    -ImuSensor : opencda object
+    ImuSensor : opencda object
         Imu sensor manager for spawning gnss sensor and listen to the data
         transmission.
-    -kf : opencda object
+    kf : opencda object
         The filter used to fuse different sensors.
-    -debug_helper : opencda object
+    debug_helper : opencda object
         The debug helper is used to visualize the accuracy of
         the localization and provide evaluation functions.
     """
@@ -266,11 +273,15 @@ class LocalizationManager(object):
         """
         Add synthetic noise to heading direction.
 
-        Args:
-            -heading_direction (float): groundtruth heading_direction
-             obtained from the server.
-        Returns:
-            -heading_direction (float): heading direction with noise.
+        Parameters
+        __________
+        heading_direction : float
+            groundtruth heading_direction obtained from the server.
+
+        Returns
+        -------
+        heading_direction : float
+            heading direction with noise.
         """
         return heading_direction + np.random.normal(0, self.heading_noise_std)
 
@@ -278,11 +289,15 @@ class LocalizationManager(object):
         """
         Add gaussian white noise to the current speed.
 
-        Args:
-            -speed (float): m/s, current speed.
+        Parameters
+        __________
+        speed : float
+            m/s, current speed.
 
-        Returns:
-            -speed (float): the speed with noise.
+        Returns
+        -------
+        speed : float
+            the speed with noise.
         """
         return speed + np.random.normal(0, self.speed_noise_std)
 

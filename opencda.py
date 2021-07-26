@@ -4,7 +4,7 @@ Script to run different scenarios.
 """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import argparse
 import importlib

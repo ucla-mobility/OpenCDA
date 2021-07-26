@@ -3,7 +3,7 @@
 low-level waypoint following based on PID controllers. """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License:  TDG-Attribution-NonCommercial-NoDistrib
 
 from collections import deque
 from enum import Enum

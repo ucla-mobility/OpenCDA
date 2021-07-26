@@ -4,7 +4,7 @@
 """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 from enum import Enum
 

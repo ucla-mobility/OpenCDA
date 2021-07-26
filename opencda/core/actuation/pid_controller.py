@@ -2,8 +2,13 @@
 """
 PID Control Class
 """
-# Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+
+# Copyright (c) # Copyright (c) 2018-2020 CVC.
+#
+# This work is licensed under the terms of the MIT license.
+# For a copy, see <https://opensource.org/licenses/MIT>.
+
+
 from collections import deque
 
 import math

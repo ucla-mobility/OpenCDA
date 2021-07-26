@@ -4,11 +4,12 @@ Static Obstacle base class
 """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 import sys
 
 import numpy as np
 import carla
+
 
 class BoundingBox(object):
     """
