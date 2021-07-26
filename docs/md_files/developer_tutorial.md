@@ -507,7 +507,7 @@ This method contains the function of behavior regulation and trajectory generati
 `V2XManager` is used to receive information from other CAVs and deliver ego information to them. 
 The class attributes `ego_pos` and `ego_spped` are both deque type. Such data type is used to 
 simulate the signal lagging during communication, e.g. `ego_pos[-3]` represents there is a lag
-of 2 time steps(`ego_pos[-1]` represents the most recent one).
+of 2 time steps (`ego_pos[-1]` represents the most recent one).
 
 ```python
 class V2XManager(object):

@@ -1,6 +1,12 @@
 ## About us
 OpenCDA is funded and mainly support by [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/).
 
+### Supervisor
+Dr. Jiaqi Ma (Associate Professor @ UCLA)
+- Project and lab supervisor
+- [Linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/)
+- [Google Scholar](https://scholar.google.com/citations?user=S3cQz1AAAAAJ&hl=en)
+
 ### Core Developer
 Runsheng Xu (Ph.D. Student @ UCLA):
 - OpenCDA System Architect
@@ -25,8 +31,3 @@ Dr. Yi Guo (Postdoc @ UC):
 - Help on Sumo part
 - [Linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/)
 
-### Supervisor
-Dr. Jiaqi Ma (Associate Professor @ UCLA)
-- Project and lab supervisor
-- [Linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/)
-- [Google Scholar](https://scholar.google.com/citations?user=S3cQz1AAAAAJ&hl=en)
