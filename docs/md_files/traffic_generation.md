@@ -82,6 +82,6 @@ To generate the Sumo traffic flow, three things are needed:
                             sumo_file_parent_path=sumo_cfg)
   
   while True:
-      scenario_manager.tick()
+        scenario_manager.tick()
     ```
 
