@@ -54,7 +54,7 @@ def run_scenario(opt, config_yaml):
             spectator.set_transform(carla.Transform(
                 transform.location +
                 carla.Location(
-                    z=50),
+                    z=70),
                 carla.Rotation(
                     pitch=-
                     90)))

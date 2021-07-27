@@ -189,6 +189,7 @@ class LocalPlanner(object):
 
         """
         return self._waypoint_buffer
+
     def get_waypoints_queue(self):
         """
         Get the waypoints_queue.
@@ -199,6 +200,7 @@ class LocalPlanner(object):
 
         """
         return self.waypoints_queue
+
     def get_history_buffer(self):
         """
         Get the _history_buffer
@@ -442,8 +444,6 @@ class LocalPlanner(object):
             if break_flag:
                 break
 
-
-
     def buffer_filter(self):
         """
         Remove the waypoints in the global route plan which has dramatic
@@ -637,6 +637,3 @@ class LocalPlanner(object):
                self.target_waypoint.transform.location if hasattr(
                    self.target_waypoint,
                    'is_junction') else self.target_waypoint.location
-
-
-

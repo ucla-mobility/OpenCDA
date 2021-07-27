@@ -675,6 +675,7 @@ class BehaviorAgent(object):
                 print("lane change not allowed")
 
         return lane_change_allowed
+
     def get_push_destination(self, ego_vehicle_wp, is_intersection):
         """
         Get the destination for push operation.
@@ -713,7 +714,6 @@ class BehaviorAgent(object):
              reset_target.transform.location.y,
              reset_target.transform.location.z))
         return reset_target
-
 
     def run_step(
             self,

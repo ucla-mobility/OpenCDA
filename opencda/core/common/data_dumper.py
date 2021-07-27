@@ -13,6 +13,7 @@ import open3d as o3d
 import numpy as np
 
 from opencda.core.common.misc import get_speed
+from opencda.core.sensing.perception import sensor_transformation as st
 from opencda.scenario_testing.utils.yaml_utils import save_yaml
 
 
@@ -24,9 +25,6 @@ class DataDumper(object):
     ----------
     perception_manager : opencda object
         The perception manager contains rgb camera data and lidar data.
-
-    localization_manager : opencda object
-        The localization manager contains gnss and imu data.
 
     vehicle_id : int
         The carla.Vehicle id.
@@ -54,7 +52,6 @@ class DataDumper(object):
 
     def __init__(self,
                  perception_manager,
-                 localization_manager,
                  vehicle_id,
                  save_time):
 
@@ -76,7 +73,10 @@ class DataDumper(object):
 
         self.count = 0
 
-    def run_step(self, perception_manager, localization_manager):
+    def run_step(self,
+                 perception_manager,
+                 localization_manager,
+                 behavior_agent):
         """
         Dump data at running time.
 
@@ -87,19 +87,24 @@ class DataDumper(object):
 
         localization_manager : opencda object
             OpenCDA localization manager.
+
+        behavior_agent : opencda object
+            Open
         """
         self.count += 1
         # we ignore the first 60 steps
         if self.count < 60:
             return
 
-        # save data for every 5 steps
-        if self.count % 5 != 0:
+        # 10hz
+        if self.count % 2 != 0:
             return
 
         self.save_rgb_image()
         self.save_lidar_points()
-        self.save_yaml_file(perception_manager, localization_manager)
+        self.save_yaml_file(perception_manager,
+                            localization_manager,
+                            behavior_agent)
 
     def save_rgb_image(self):
         """
@@ -110,16 +115,7 @@ class DataDumper(object):
             frame = camera.frame
             image = camera.image
 
-            if i == 0:
-                camera_position = 'front'
-            elif i == 1:
-                camera_position = 'right'
-            elif i == 2:
-                camera_position = 'left'
-            else:
-                camera_position = 'back'
-
-            image_name = '%06d' % frame + '_' + camera_position + '.png'
+            image_name = '%06d' % frame + '_' + 'camera%d' % i + '.png'
 
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
@@ -150,7 +146,10 @@ class DataDumper(object):
                                  pointcloud=o3d_pcd,
                                  write_ascii=True)
 
-    def save_yaml_file(self, perception_manager, localization_manager):
+    def save_yaml_file(self,
+                       perception_manager,
+                       localization_manager,
+                       behavior_agent):
         """
         Save objects positions/spped, true ego position,
         predicted ego position, sensor transformations.
@@ -162,6 +161,9 @@ class DataDumper(object):
 
         localization_manager : opencda object
             OpenCDA localization manager.
+
+        behavior_agent : opencda object
+            OpenCDA behavior agent.
         """
         frame = self.lidar.frame
 
@@ -213,9 +215,10 @@ class DataDumper(object):
             true_ego_pos.rotation.roll,
             true_ego_pos.rotation.yaw,
             true_ego_pos.rotation.pitch]})
-        dump_yml.update({'ego_speed': localization_manager.get_ego_spd()})
+        dump_yml.update({'ego_speed':
+                        float(localization_manager.get_ego_spd())})
 
-        # dump lidar sensor transformation
+        # dump lidar sensor coordinates under world coordinate system
         lidar_transformation = self.lidar.sensor.get_transform()
         dump_yml.update({'lidar_pose': [
             lidar_transformation.location.x,
@@ -225,10 +228,10 @@ class DataDumper(object):
             lidar_transformation.rotation.yaw,
             lidar_transformation.rotation.pitch]})
 
-        # dump camera sensor transformation
+        # dump camera sensor coordinates under world coordinate system
         for (i, camera) in enumerate(self.rgb_camera):
             camera_transformation = camera.sensor.get_transform()
-            dump_yml.update({'camera_%d' % i: [
+            dump_yml.update({'camera%d_cords' % i: [
                 camera_transformation.location.x,
                 camera_transformation.location.y,
                 camera_transformation.location.z,
@@ -237,8 +240,58 @@ class DataDumper(object):
                 camera_transformation.rotation.pitch
             ]})
 
+            # dump intrinsic matrix
+            camera_intrinsic = st.get_camera_intrinsic(camera.sensor)
+            camera_intrinsic = self.matrix2list(camera_intrinsic)
+            dump_yml.update({'camera%d_intrinsic' % i: camera_intrinsic})
+
+            # dump extrinsic matrix lidar2camera
+            lidar2world = \
+                st.x_to_world_transformation(self.lidar.sensor.get_transform())
+            camera2world = \
+                st.x_to_world_transformation(camera.sensor.get_transform())
+
+            world2camera = np.linalg.inv(camera2world)
+            lidar2camera = np.dot(world2camera, lidar2world)
+            lidar2camera = self.matrix2list(lidar2camera)
+            dump_yml.update({'camera%d_extrinsic' % i: lidar2camera})
+
+        # dump the planned trajectory
+        trajectory_deque = behavior_agent.get_local_planner().get_trajectory()
+        trajectory_list = []
+
+        for i in range(len(trajectory_deque)):
+            tmp_buffer = trajectory_deque.popleft()
+            x = tmp_buffer[0].location.x
+            y = tmp_buffer[0].location.y
+            spd = tmp_buffer[1]
+
+            trajectory_list.append([x, y, spd])
+
+        dump_yml.update({'plan_trajectory': trajectory_list})
+
         yml_name = '%06d' % frame + '.yaml'
         save_path = os.path.join(self.save_parent_folder,
                                  yml_name)
 
         save_yaml(dump_yml, save_path)
+
+    @staticmethod
+    def matrix2list(matrix):
+        """
+        To generate readable yaml file, we need to convert the matrix
+        to list format.
+
+        Parameters
+        ----------
+        matrix : np.ndarray
+            The extrinsic/intrinsic matrix.
+
+        Returns
+        -------
+        matrix_list : list
+            The matrix represents in list format.
+        """
+
+        assert len(matrix.shape) == 2
+        return matrix.tolist()

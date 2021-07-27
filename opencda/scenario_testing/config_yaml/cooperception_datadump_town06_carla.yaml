@@ -51,7 +51,7 @@ vehicle_base: &vehicle_base
     safety_time: 4 # ttc safety thresholding for decreasing speed
     emergency_param: 0.4 # used to identify whether a emergency stop needed
     ignore_traffic_light: true # whether to ignore traffic light
-    overtake_allowed: true # whether overtake allowed, typically false for platoon leader
+    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
     collision_time_ahead: 1.5 # used for collision checking
     overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
