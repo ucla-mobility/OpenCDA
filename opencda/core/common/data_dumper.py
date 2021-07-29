@@ -184,6 +184,9 @@ class DataDumper(object):
                                        "mode if you are dumping data"
 
             vehicle_dict.update({veh_carla_id: {
+                "location": [veh_pos.location.x,
+                             veh_pos.location.y,
+                             veh_pos.location.z],
                 "center": [veh_bbx.location.x,
                            veh_bbx.location.y,
                            veh_bbx.location.z],
