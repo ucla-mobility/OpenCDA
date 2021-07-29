@@ -184,12 +184,12 @@ class DataDumper(object):
                                        "mode if you are dumping data"
 
             vehicle_dict.update({veh_carla_id: {
-                "center": [veh_pos.location.x,
-                           veh_pos.location.y,
-                           veh_pos.location.z],
-                "angle": [veh_pos.rotation.roll,
-                          veh_pos.rotation.yaw,
-                          veh_pos.rotation.pitch],
+                "center": [veh_bbx.location.x,
+                           veh_bbx.location.y,
+                           veh_bbx.location.z],
+                "angle": [veh_bbx.rotation.roll,
+                          veh_bbx.rotation.yaw,
+                          veh_bbx.rotation.pitch],
                 "extent": [veh_bbx.extent.x,
                            veh_bbx.extent.y,
                            veh_bbx.extent.z],
