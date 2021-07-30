@@ -71,11 +71,13 @@ def get_kinematics(trajectory_data, observed_length):
 
 
 class PredictionManager:
-    def __init__(self, observed_length, predict_length, dt, model="ConstantVelocityHeading", debug=True):
+    def __init__(self, observed_length, predict_length, dt, model="ConstantManitudeAccelAndYawRate", debug=True):
         assert isinstance(observed_length,
                           int) and observed_length > 0, "observed_length must be int and greater than 0"
         assert isinstance(predict_length, int) and predict_length > 0, "predict_length must be int and greater than 0"
         assert (isinstance(dt, int) or isinstance(dt, float)) and dt > 0, "dt must be real number and greater than 0"
+        assert model in ["ConstantVelocityHeading", "ConstantAccelerationHeading", "ConstantSpeedYawRate",
+                         "ConstantManitudeAccelAndYawRate", "PhysicsOracle"]
         self.observed_length = observed_length
         self.predict_length = predict_length
         self.dt = dt
@@ -169,6 +171,7 @@ class ConstantSpeedYawRate(Baseline):
         pred_traj = constant_speed_and_yaw_rate(x, y, vx, vy, yaw, yaw_rate, self.predict_length, self.dt)
         return pred_traj
 
+
 class ConstantManitudeAccelAndYawRate(Baseline):
     def __call__(self, kinematics_data):
         observed_traj, v, a, yaw, yaw_rate = kinematics_data
@@ -177,12 +180,15 @@ class ConstantManitudeAccelAndYawRate(Baseline):
         # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
         vx, vy = v
         ax, ay = a
-        pred_traj = constant_magnitude_accel_and_yaw_rate(x, y, vx, vy, ax, ay, yaw, yaw_rate, self.predict_length, self.dt)
+        pred_traj = constant_magnitude_accel_and_yaw_rate(x, y, vx, vy, ax, ay, yaw, yaw_rate, self.predict_length,
+                                                          self.dt)
         return pred_traj
+
 
 class PhysicsOracle(Baseline):
     def __call__(self, kinematics_data, ground_truth):
-        assert len(ground_truth.shape) == 2 and ground_truth.shape[0] == self.predict_length and ground_truth.shape[1] == 2
+        assert len(ground_truth.shape) == 2 and ground_truth.shape[0] == self.predict_length and ground_truth.shape[
+            1] == 2
         models = [
             ConstantVelocityHeading,
             ConstantAccelerationHeading,
@@ -192,9 +198,10 @@ class PhysicsOracle(Baseline):
         models = [model(self.observed_length, self.predict_length, self.dt) for model in models]
         all_preds = [model(kinematics_data) for model in models]
         oracles = sorted(all_preds,
-            key = lambda x: np.linalg.norm(np.array(x) - ground_truth, ord="fro"))
+                         key=lambda x: np.linalg.norm(np.array(x) - ground_truth, ord="fro"))
         oracle = oracles[0]
         return oracle
+
 
 def constant_velocity_heading(x, y, vx, vy, predict_length, dt):
     """
