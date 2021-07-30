@@ -180,6 +180,21 @@ class ConstantManitudeAccelAndYawRate(Baseline):
         pred_traj = constant_magnitude_accel_and_yaw_rate(x, y, vx, vy, ax, ay, yaw, yaw_rate, self.predict_length, self.dt)
         return pred_traj
 
+class PhysicsOracle(Baseline):
+    def __call__(self, kinematics_data, ground_truth):
+        assert len(ground_truth.shape) == 2 and ground_truth.shape[0] == self.predict_length and ground_truth.shape[1] == 2
+        models = [
+            ConstantVelocityHeading,
+            ConstantAccelerationHeading,
+            ConstantSpeedYawRate,
+            ConstantManitudeAccelAndYawRate
+        ]
+        models = [model(self.observed_length, self.predict_length, self.dt) for model in models]
+        all_preds = [model(kinematics_data) for model in models]
+        oracles = sorted(all_preds,
+            key = lambda x: np.linalg.norm(np.array(x) - ground_truth, ord="fro"))
+        oracle = oracles[0]
+        return oracle
 
 def constant_velocity_heading(x, y, vx, vy, predict_length, dt):
     """

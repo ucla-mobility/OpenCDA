@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 from opencda.core.sensing.prediction.physics import TrajectoryData, ConstantVelocityHeading, \
-    ConstantAccelerationHeading, ConstantSpeedYawRate, ConstantManitudeAccelAndYawRate
+    ConstantAccelerationHeading, ConstantSpeedYawRate, ConstantManitudeAccelAndYawRate, PhysicsOracle
 
 
 class TestPredictionBaseline(unittest.TestCase):
@@ -88,8 +88,31 @@ class TestPredictionBaseline(unittest.TestCase):
                        [50., 50.],
                        [60., 60.],
                        [71., 71.]])
+
         def dist(x, y):
             return np.linalg.norm(x - y)
+
+        assert dist(preds, gt) < 1e-10
+        return
+
+    def test_oracle(self):
+        model = PhysicsOracle(self.observed_length, self.predict_length, self.dt)
+        kinematics_data = (self.observed_traj, self.v, self.a, self.yaw, self.yaw_rate)
+        gt = np.array([[8., 8.],
+                       [11., 11.],
+                       [15., 15.],
+                       [20., 20.],
+                       [26., 26.],
+                       [33., 33.],
+                       [41., 41.],
+                       [50., 50.],
+                       [60., 60.],
+                       [71., 71.]])
+        preds = model(kinematics_data, gt)
+
+        def dist(x, y):
+            return np.linalg.norm(x - y)
+
         assert dist(preds, gt) < 1e-10
         return
 
