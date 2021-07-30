@@ -25,7 +25,7 @@ def load_yaml(file):
     """
 
     stream = open(file, 'r')
-    loader = yaml.SafeLoader
+    loader = yaml.Loader
     loader.add_implicit_resolver(
         u'tag:yaml.org,2002:float',
         re.compile(u'''^(?:
