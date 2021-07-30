@@ -9,7 +9,7 @@ well as regular automated driving components (e.g., perception, localization, pl
 
 OpenCDA is <strong>all in Python</strong>. The purpose is to enable researchers to fast-prototype, simulate, and test CDA algorithms and functions.  By applying our simulation tool, users can conveniently conduct both task-specific evaluation (e.g. object detection accuracy) and pipeline-level assessment (e.g. traffic safety) on their customized algorithms.
 
-Inspired by the USDOT CDA program, OpenCDA, as an open-source project, makes a unique contribution from the perspective of initial-stage development and testing using simulation. 
+Inspired by the [USDOT CDA CARMA program](https://its.dot.gov/cda/), OpenCDA, as an open-source project, makes a unique contribution from the perspective of initial-stage development and testing using simulation. 
 Users can consider using OpenCDA for <strong>initial algorithmic testing</strong>, and should use the [CARMA everything-in-the-loop](https://github.com/usdot-fhwa-stol/carma-simulation) evaluation tool and [CARMA platform](https://github.com/usdot-fhwa-stol/carma-platform) for software platform development and field testing.
 
 The key features of OpenCDA are:
