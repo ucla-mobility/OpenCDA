@@ -47,19 +47,18 @@ for the latest release.
 
 **Citing OpenCDA**\ :
 
-If you are using our OpenCDA framework or codes for your development, please cite the following paper:
+If you are using our OpenCDA framework or codes for your development, please cite the following paper::
 
     @inproceedings{xu2021opencda,
-      author  = {Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Hao Xiang, Jiaqi Ma},
-      title   = {OpenCDA:  An  Open  Cooperative  Driving  Automation
+      author = {Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Hao Xiang, Jiaqi Ma},
+      title = {OpenCDA:  An  Open  Cooperative  Driving  Automation
       Framework Integrated  with  Co-Simulation},
       booktitle = {2021 IEEE Intelligent Transportation Systems Conference (ITSC)},
-      year    = {2021}
-    }
+      year = {2021}}
 
 Our paper can be accessed by arxiv: https://arxiv.org/abs/2107.06260
 
-Also, under this LICENSE, OpenCDA is for non-commercial research only. Researchers are able to modify the source code for their own research only. Contracted work that generates corporate revenues and other general commecial use are prohibited under this LICENSE. See the LICENSE file for details and possible opportunities for commercial use.
+Also, under this LICENSE, OpenCDA is for non-commercial research only. Researchers can modify the source code for their own research only. Contracted work that generates corporate revenues and other general commercial use are prohibited under this LICENSE. See the LICENSE file for details and possible opportunities for commercial use.
 
 Indices and tables
 ==================

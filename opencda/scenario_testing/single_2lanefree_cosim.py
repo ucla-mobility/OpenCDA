@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+Scenario testing: Single vehicle dring in the customized 2 lane highway map
+with cosimulation.
+"""
+# Author: Runsheng Xu <rxx3386@ucla.edu>
+# License: TDG-Attribution-NonCommercial-NoDistrib
+
+
 import os
 
 import carla

@@ -4,7 +4,7 @@ Scenario testing: merging vehicle joining a platoon in the
 customized 2-lane freeway simplified map sorely with carla
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import carla
 

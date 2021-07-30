@@ -3,7 +3,7 @@
 Customized Localization Module.
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
