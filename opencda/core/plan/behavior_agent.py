@@ -1,13 +1,11 @@
-# Copyright (c) # Copyright (c) 2018-2020 CVC.
-#
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
+# -*- coding: utf-8 -*-
 
-
-""" This module implements an agent that roams around a track following random
-waypoints and avoiding other vehicles. The agent also responds to
- traffic lights, traffic signs, and has different possible configurations.
+"""Behavior planning module
 """
+
+# Author: Runsheng Xu <rxx3386@ucla.edu>
+# License: TDG-Attribution-NonCommercial-NoDistrib
+
 
 import math
 import random
@@ -220,7 +218,7 @@ class BehaviorAgent(object):
             o_lane_id = o_waypoint.lane_id
 
             for vm in self.white_list:
-                pos = vm.localizer.get_ego_pos()
+                pos = vm.v2x_manager.get_ego_pos()
                 vm_x = pos.location.x
                 vm_y = pos.location.y
 

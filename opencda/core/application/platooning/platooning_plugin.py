@@ -4,7 +4,7 @@
 """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: MIT
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import warnings
 
@@ -196,7 +196,7 @@ class PlatooningPlugin(object):
                 continue
 
             distance = compute_distance(
-                ego_loc, vm.localizer.get_ego_pos().location)
+                ego_loc, vm.v2x_manager.get_ego_pos().location)
             if distance < min_dist:
                 pm = platoon_manager
                 pmid = platoon_manager.pmid
