@@ -8,7 +8,9 @@ for each vehicle
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import os
+import concurrent
 
+from concurrent.futures import ThreadPoolExecutor
 from opencda.scenario_testing.utils.yaml_utils import load_yaml, save_yaml
 
 
@@ -33,8 +35,8 @@ def retrieve_future_params(yaml_params, index, seconds=8):
     future_params : list
         The list contains next n seconds' yaml parameters
     """
-    start_index = min(index+1, len(yaml_params)-1)
-    end_index = min(index+seconds*10+1, len(yaml_params)-1)
+    start_index = min(index + 1, len(yaml_params) - 1)
+    end_index = min(index + seconds * 10 + 1, len(yaml_params) - 1)
     future_params = yaml_params[start_index:end_index]
 
     return future_params
@@ -61,8 +63,8 @@ def retrieve_past_params(yaml_params, index, seconds=1):
     past_params : list
         The list contains previous n seconds' yaml parameters
     """
-    end_index = max(index-1, 0)
-    start_index = max(index-seconds*10, 0)
+    end_index = max(index - 1, 0)
+    start_index = max(index - seconds * 10, 0)
     past_params = yaml_params[start_index:end_index]
 
     return past_params
@@ -150,10 +152,43 @@ def extract_trajectories_by_file(yaml_params,
                                                 past_seconds)
         observations = extract_trajectories_by_id(vehicle_id,
                                                   past_yaml_params)
-        cur_param['vehicles'][vehicle_id].\
+        cur_param['vehicles'][vehicle_id]. \
             update({'observations': observations})
 
     return cur_param
+
+
+def generate_prediction_by_scenario(scenario,
+                                    future_seconds=8,
+                                    past_seconds=1):
+    """
+    Generate prediction and observation trajectories by scenario.
+
+    Parameters
+    ----------
+    future_seconds : int
+        The number of seconds look ahead for prediction trajectory.
+
+    past_seconds : int
+        The number of seconds look back for observation trajectory.
+
+    scenario : dict
+        The scenario dictionary.
+    """
+    cavs = [os.path.join(scenario, x) for x in os.listdir(scenario)
+            if not x.endswith('.yaml')]
+    for (j, cav) in enumerate(cavs):
+        yaml_files = \
+            sorted([os.path.join(cav, x) for x in os.listdir(cav)
+                    if x.endswith('.yaml')])
+
+        # load all dictionarys at one time
+        yaml_params = [load_yaml(x) for x in yaml_files]
+        for k in range(len(yaml_files)):
+            new_param = \
+                extract_trajectories_by_file(yaml_params, k,
+                                             past_seconds, future_seconds)
+            save_yaml(new_param, yaml_files[k])
 
 
 def generate_prediction_yaml(root_dir, future_seconds=8, past_seconds=1):
@@ -172,22 +207,14 @@ def generate_prediction_yaml(root_dir, future_seconds=8, past_seconds=1):
     """
 
     scenarios = [os.path.join(root_dir, x) for x in os.listdir(root_dir)]
-    for (i, scenario) in enumerate(scenarios):
-        print('processing the %dth scenario' % i)
-        cavs = [os.path.join(scenario, x) for x in os.listdir(scenario)
-                if not x.endswith('.yaml')]
-        for (j, cav) in enumerate(cavs):
-            yaml_files = \
-                sorted([os.path.join(cav, x) for x in os.listdir(cav)
-                        if x.endswith('.yaml')])
 
-            # load all dictionarys at one time
-            yaml_params = [load_yaml(x) for x in yaml_files]
-            for k in range(len(yaml_files)):
-                extract_trajectories_by_file(yaml_params, k,
-                                             past_seconds, future_seconds)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(generate_prediction_by_scenario,
+                                   scenario, future_seconds, past_seconds)
+                   for scenario in scenarios]
+        concurrent.futures.wait(futures)
 
 
 if __name__ == '__main__':
-    root_dir = '../data_dumping/2021_07_29_13_11_34/401'
+    root_dir = '../data_dumping/'
     generate_prediction_yaml(root_dir)
