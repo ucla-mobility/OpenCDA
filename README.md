@@ -15,7 +15,7 @@ Users can consider using OpenCDA for <strong>initial algorithmic testing</strong
 The key features of OpenCDA are:
 * <strong>Integration</strong>: OpenCDA utilizes CARLA and SUMO separately, as well as integrates them together for realistic scene rendering, vehicle modeling, and traffic simulation.
 * <strong> Full-stack</strong> prototype CDA Platform in Simulation: OpenCDA provides a simple prototype automated driving and cooperative driving platform, all in Python, that contains perception, localization, planning, control, and V2X communication modules.
-* <strong>Modularity</strong>: OpenCDA is highly modularized, enabling users to conveniently replace any default algorithms or protocols with their own customzied design. 
+* <strong>Modularity</strong>: OpenCDA is highly modularized, enabling users to conveniently replace any default algorithms or protocols with their own customized design. 
 * <strong>Benchmark</strong>: OpenCDA offers benchmark testing scenarios, benchmark baseline maps, state-of-the-art benchmark algorithms for ADS and Cooperative ADS functions, and benchmark evaluation metrics.
 * <strong>Connectivity and Cooperation</strong>: OpenCDA supports various levels and categories of cooperation between CAVs in simulation. This differentiates OpenCDA from other single vehicle simulation tools.
 
@@ -85,7 +85,7 @@ The current version features the following:
 ## In Future Releases
 Future versions are expected to include the following:
 * OpenCDA v0.2.0 and above software stack, including signalized intersection and corridor applications, cooperative perception and localization, enhanced scenario generation/manager and scenario database for newly added CDA applications)
-* SUMO only simulation which includes SUMO impplementation of all cooperative driving applications using behavior based approach (consistent with CARLA implementation)
+* SUMO only simulation which includes SUMO implementation of all cooperative driving applications using behavior based approach (consistent with CARLA implementation)
 * Software-in-the-loop interfaces with two open-source ADS platforms, i.e., Autoware and CARMA
 * hardware-in-the-loop interfaces and example projects with a real automated driving vehicle platform and a driving simulator
 

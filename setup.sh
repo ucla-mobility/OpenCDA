@@ -33,4 +33,4 @@ echo "Successful! Run 'pip install -e ${CACHE}/carla-0.9.11-py3.7-linux-x86_64' 
 conda activate opencda
 pip install -e ${CACHE}/carla-0.9.11-py3.7-linux-x86_64
 
-echo "Sucessful Setup!"
+echo "Successful Setup!"

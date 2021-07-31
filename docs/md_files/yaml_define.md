@@ -18,10 +18,10 @@ vehicle_base: &vehicle_base # define cav default parameters
   behavior: &base_behavior # define planning related parameters
   controller: &base_controller # define controller
     type: pid_controller # define the type of controller
-    args: ...  # define the detailed parmaters of the controller
+    args: ...  # define the detailed parameters of the controller
   v2x: &base_v2x # define v2x configuration
 
-carla_traffic_manager: # define the background traffic controled by carla.TrafficManager
+carla_traffic_manager: # define the background traffic controlled by carla.TrafficManager
   global_speed_perc: -100 # define the default speed of traffic flow
   auto_lane_change: false # whether lane change is allowed in the traffic flow
   ...: # some other parameters

@@ -81,7 +81,7 @@ class CarlaSimulation(object):
         """
         Accessor for traffic light state.
 
-        If the traffic ligth does not exist, returns None.
+        If the traffic light does not exist, returns None.
         """
         if landmark_id not in self._tls:
             return None

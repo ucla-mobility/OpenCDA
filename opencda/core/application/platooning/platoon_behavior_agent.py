@@ -181,7 +181,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         if status == FSM.BACK_JOINING:
             target_speed, target_waypoint, new_status = \
                 self.run_step_back_joining()
-            # if joining is finshed
+            # if joining is finished
             if new_status == FSM.JOINING_FINISHED:
                 self.joining_finish_manager()
             return target_speed, target_waypoint
@@ -193,7 +193,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.v2x_manager.set_platoon_status(new_status)
 
             # if joining abandoned
-            if new_status == FSM.ABONDON:
+            if new_status == FSM.ABANDON:
                 self.v2x_manager.set_platoon_status(FSM.SEARCHING)
                 _, rear_vehicle_manager = \
                     self.v2x_manager.get_platoon_front_rear()
@@ -881,7 +881,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 super().run_step(
                     self.max_speed -
                     self.speed_lim_dist),
-                FSM.ABONDON)
+                FSM.ABANDON)
 
         # if the ego vehilce is already behind the platooning
         if angle <= 90:

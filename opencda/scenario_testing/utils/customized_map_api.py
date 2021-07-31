@@ -37,7 +37,7 @@ def load_customized_world(xodr_path, client):
             try:
                 data = od_file.read()
             except OSError:
-                print('file could not be readed.')
+                print('file could not be read.')
                 sys.exit()
         print('load opendrive map %r.' % os.path.basename(xodr_path))
         vertex_distance = 2.0  # in meters

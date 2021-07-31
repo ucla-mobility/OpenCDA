@@ -20,7 +20,7 @@ def is_vehicle_cococlass(label):
     Check whether the label belongs to the vehicle class
     according to coco dataset.
     Args:
-        -label(int): The lable of the detecting object.
+        -label(int): The label of the detecting object.
 
     Returns:
         -is_vehicle(bool): Whether this label belongs to the vehicle class

@@ -150,7 +150,7 @@ class DataDumper(object):
 
     def save_yaml_file(self, perception_manager, localization_manager):
         """
-        Save objects positions/spped, true ego position,
+        Save objects positions/speed, true ego position,
         predicted ego position, sensor transformations.
 
         Parameters

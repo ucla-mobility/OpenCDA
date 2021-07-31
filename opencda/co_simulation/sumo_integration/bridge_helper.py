@@ -29,7 +29,7 @@ from opencda.co_simulation.sumo_integration.sumo_simulation import SumoSignalSta
 
 class BridgeHelper(object):
     """
-    BridgeHelper provides methos to ease the co-simulation between sumo and carla.
+    BridgeHelper provides methods to ease the co-simulation between sumo and carla.
     """
 
     blueprint_library = []
@@ -319,7 +319,7 @@ class BridgeHelper(object):
                 bool(current_lights & SumoVehSignal.FOGLIGHT)):
             current_lights ^= SumoVehSignal.FOGLIGHT
 
-        # High beam ligth.
+        # High beam light.
         if (bool(carla_lights & carla.VehicleLightState.HighBeam) !=
                 bool(current_lights & SumoVehSignal.HIGHBEAM)):
             current_lights ^= SumoVehSignal.HIGHBEAM

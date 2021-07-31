@@ -67,7 +67,7 @@ class Spline:
         Args:
             - t (float): if t is outside of the input x, return None
         Returns:
-            - result (float): The calcualtion result of position.
+            - result (float): The calculation result of position.
               If t is outside the range of x, return None.
 
         """
@@ -221,7 +221,7 @@ class Spline2D:
 
 def calc_spline_course(x, y, ds=0.1):
     """
-    Caculate 2D splice course.
+    Calculate 2D splice course.
 
     Args:
         -x (float): The x coordinate of the input point.
@@ -257,7 +257,7 @@ def main():
     import matplotlib.pyplot as plt
     x = [-135, -131, -131, -131]
     y = [6.43, 10.83, 100.38, 131]
-    ds = 0.1  # [m] distance of each intepolated points
+    ds = 0.1  # [m] distance of each interpolated points
 
     sp = Spline2D(x, y)
     s = np.arange(0, sp.s[-1], ds)

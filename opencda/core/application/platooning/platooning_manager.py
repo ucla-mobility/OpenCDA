@@ -35,7 +35,7 @@ class PlatooningManager(object):
     vehicle_manager_list : list
         A list of all vehciel managers within the platoon.
     destination : carla.location
-        The destiantion of the current plan.
+        The destination of the current plan.
     center_loc : carla.location
         The center location of the platoon.
     leader_target_speed : float
@@ -81,7 +81,7 @@ class PlatooningManager(object):
 
     def add_member(self, vehicle_manager, leader=False):
         """
-        Add memeber to the current platooning
+        Add member to the current platooning
 
         Parameters
         __________
@@ -196,7 +196,7 @@ class PlatooningManager(object):
 
     def set_destination(self, destination):
         """
-        Set desination of the vehicle managers in the platoon.
+        Set destination of the vehicle managers in the platoon.
         """
         self.destination = destination
         for i in range(len(self.vehicle_manager_list)):

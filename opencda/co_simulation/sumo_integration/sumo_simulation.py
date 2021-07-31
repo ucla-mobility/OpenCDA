@@ -183,7 +183,7 @@ class SumoTLManager(object):
     @staticmethod
     def subscribe(tlid):
         """
-        Subscribe the given traffic ligth to the following variables:
+        Subscribe the given traffic light to the following variables:
 
             * Current program.
             * Current phase.
@@ -196,7 +196,7 @@ class SumoTLManager(object):
     @staticmethod
     def unsubscribe(tlid):
         """
-        Unsubscribe the given traffic ligth from receiving updated information each step.
+        Unsubscribe the given traffic light from receiving updated information each step.
         """
         traci.trafficlight.unsubscribe(tlid)
 
@@ -337,7 +337,7 @@ class SumoSimulation(object):
         # Creating a random route to be able to spawn carla actors.
         traci.route.add("carla_route", [traci.edge.getIDList()[0]])
 
-        # Variable to asign an id to new added actors.
+        # Variable to assign an id to new added actors.
         self._sequential_id = 0
 
         # Structures to keep track of the spawned and destroyed vehicles at each time step.
@@ -447,7 +447,7 @@ class SumoSimulation(object):
         """
         Accessor for traffic light state.
 
-        If the traffic ligth does not exist, returns None.
+        If the traffic light does not exist, returns None.
         """
         return self.traffic_light_manager.get_state(landmark_id)
 

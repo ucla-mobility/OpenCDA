@@ -10,7 +10,7 @@ import numpy as np
 def geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0):
     """
     Convert WG84 to ENU. The origin of the ENU should pass the geo reference.
-    Note this function is a writen by reversing the
+    Note this function is a written by reversing the
     official API transform_to_geo.
 
     Parameters

@@ -76,7 +76,7 @@ eval_manager = \
 
 ### Step2: Construct scenario (Co-Simulation)
 Constructing a scenario under co-simulation setting is very similar with building scenario 
-in CARLA only. There are only two differences: 1) Co-simulation requires addtional Sumo files. 2)
+in CARLA only. There are only two differences: 1) Co-simulation requires additional Sumo files. 2)
 Instead of using `ScenarioManager`, `CoScenarioManager` is used to control the traffic. Check
 [Traffic Generation under Sumo](traffic_generation.html#sumo-traffic-management-co-simulation) section to see more details.
 

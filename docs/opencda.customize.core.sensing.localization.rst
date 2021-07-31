@@ -4,7 +4,7 @@ opencda.customize.core.sensing.localization package
 Submodules
 ----------
 
-opencda.customize.core.sensing.localization.extented\_kalman\_filter module
+opencda.customize.core.sensing.localization.extended\_kalman\_filter module
 ---------------------------------------------------------------------------
 
 .. automodule:: opencda.customize.core.sensing.localization.extented_kalman_filter

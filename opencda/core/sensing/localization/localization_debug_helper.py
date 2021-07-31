@@ -174,7 +174,7 @@ class LocDebugHelper(object):
             -figures(matplotlib.pyplot.plot): The plot of
             localization related figures.
             -perform_txt(txt file): The localization related
-            datas saved as text file.
+            data saved as text file.
 
         """
         figure, axis = plt.subplots(3, 2)

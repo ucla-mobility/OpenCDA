@@ -191,7 +191,7 @@ class Controller:
         target_speed : float
             Target speed of the ego vehicle.
 
-        waypoint : carla.loaction
+        waypoint : carla.location
             Target location.
 
         Returns

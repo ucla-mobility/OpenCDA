@@ -13,7 +13,7 @@ OpenCDA
 │   │   ├── application # implementation of cooperative driving applications
 │   │   ├── common # base class and communication class for cavs
 │   │   ├── plan # planning algorithms
-│   │   └── sensing # perception adn localization algorithms.
+│   │   └── sensing # perception and localization algorithms.
 │   ├── customize # where the users put their customized algorithm to replace the default modules
 │   ├── scenario_testing # where all scenario testing scripts and yaml files exist
 │   │   └── config_yaml # the yaml file defining the testing scenarios

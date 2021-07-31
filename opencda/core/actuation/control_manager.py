@@ -21,7 +21,7 @@ class ControlManager(object):
     Attributes
     ----------
     controller : opencda object.
-        The controller object of the OpenCDA framwork.
+        The controller object of the OpenCDA framework.
     """
 
     def __init__(self, control_config):

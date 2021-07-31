@@ -73,7 +73,7 @@ def o3d_pointcloud_encode(raw_data, point_cloud):
 
     # Isolate the 3D data
     points = raw_data[:, :-1]
-    # We're negating the y to correclty visualize a world that matches
+    # We're negating the y to correctly visualize a world that matches
     # what we see in Unreal since Open3D uses a right-handed coordinate system
     points[:, :1] = -points[:, :1]
 
@@ -242,10 +242,10 @@ def o3d_camera_lidar_fusion(objects,
 
         # get the eight corner of the bounding boxes.
         corner = np.asarray(aabb.get_box_points())
-        # covert back to unreal coordinate
+        # convert back to unreal coordinate
         corner[:, :1] = -corner[:, :1]
         corner = corner.transpose()
-        # extend (3, 8) to (4, 8) for homogenous transformation
+        # extend (3, 8) to (4, 8) for homogeneous transformation
         corner = np.r_[corner, [np.ones(corner.shape[1])]]
         # project to world reference
         corner = st.sensor_to_world(corner, lidar_sensor.get_transform())

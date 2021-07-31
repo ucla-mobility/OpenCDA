@@ -353,7 +353,7 @@ class BehaviorAgent(object):
         WARNING: What follows is a proxy to avoid having a car brake after
         running a yellow light. This happens because the car is still under
         the influence of the semaphore, even after passing it.
-        So, the semaphore id is temporarely saved to ignore it and go around
+        So, the semaphore id is temporarily saved to ignore it and go around
         this issue, until the car is near a new one.
 
         Parameters
@@ -828,7 +828,7 @@ class BehaviorAgent(object):
                             self.overtake_counter > 0
                             or self.get_local_planner().potential_curved_road):
             car_following_flag = True
-        # 6. overtake handeling
+        # 6. overtake handling
         elif is_hazard and self.overtake_allowed and \
                 self.overtake_counter <= 0:
             obstacle_speed = get_speed(obstacle_vehicle)

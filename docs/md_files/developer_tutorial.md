@@ -43,7 +43,7 @@ def run_scenario(opt, config_yaml):
         for platoon in platoon_list:
             platoon.update_information()
             platoon.run_step()
-        # update signle CAV
+        # update single CAV
         for i, single_cav in enumerate(single_cav_list):
             # If the CAV is merged into one of the platoon, then we should let platoon manage it.
             # Thus we should remove them from single_cav_list
@@ -205,7 +205,7 @@ Now we will introduce each of them:
         return tm, bg_list
     ```
 
-    The `spawn_vehicles_by_list` has similar structure as `create_vehicle_manager` with the support of randomness of the vehicles' apperance and colors. Notice that, different from CAVs, we will set autopilot to `True` for those background traffic and we will return a list of `carla.Vehicle` instead of the `VehicleManager`  used in the `Create_vehicle_manager`. 
+    The `spawn_vehicles_by_list` has similar structure as `create_vehicle_manager` with the support of randomness of the vehicles' appearance and colors. Notice that, different from CAVs, we will set autopilot to `True` for those background traffic and we will return a list of `carla.Vehicle` instead of the `VehicleManager`  used in the `Create_vehicle_manager`. 
 
 ### VehicleManager
 

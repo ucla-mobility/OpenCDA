@@ -62,7 +62,7 @@ def car_blueprint_filter(blueprint_library):
 
 class ScenarioManager:
     """
-    The manager that controls simulation construction, backgound traffic
+    The manager that controls simulation construction, background traffic
     generation and CAVs spawning.
 
     Parameters

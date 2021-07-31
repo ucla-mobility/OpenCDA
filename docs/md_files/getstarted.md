@@ -83,5 +83,5 @@ python opencda.py -t platoon_joining_2lanefree_cosim
 python opencda.py -t platoon_joining_town06_carla --apply_ml
 ```
 A single CAV will try to overtake several human-driven vehicles to join the platoon from the back.
-Pytorch is required for this test since we use yolov5 detetion.
+Pytorch is required for this test since we use yolov5 detection.
 ![](images/platoon_joining_town06.gif)

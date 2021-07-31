@@ -36,7 +36,7 @@ class FSM(Enum):
         vehicle will switch to maintaining state.
     LEADING_MODE : int
         The vehicle is the platoon leader.
-    ABONDON:
+    ABANDON:
         Current joining is abandoned.
     DISABLE:
         V2X is not available and thus won't join any platoon.
@@ -51,5 +51,5 @@ class FSM(Enum):
     FRONT_JOINING = 7
     JOINING_FINISHED = 8
     LEADING_MODE = 9
-    ABONDON = 10
+    ABANDON = 10
     DISABLE = 11

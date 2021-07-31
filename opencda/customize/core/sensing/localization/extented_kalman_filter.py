@@ -117,7 +117,7 @@ class ExtentedKalmanFilter(object):
 
     def run_step_init(self, x, y, heading, velocity):
         """
-        Initalization for states.
+        Initialization for states.
 
         Args:
             -x (float): The X coordinate.

@@ -274,7 +274,7 @@ class SemanticLidarSensor:
 
 class PerceptionManager:
     """
-    Default perception module. Currenly only used to detect vehicles.
+    Default perception module. Currently only used to detect vehicles.
 
     Parameters
     ----------
@@ -664,7 +664,7 @@ class PerceptionManager:
                         abs(loc.y - obstacle_loc.y) <= 3.0:
                     obstacle_vehicle.set_velocity(v.get_velocity())
 
-                    # the case where the obstacle vehicle is controled by
+                    # the case where the obstacle vehicle is controlled by
                     # sumo
                     if self.cav_world.sumo2carla_ids:
                         sumo_speed = \

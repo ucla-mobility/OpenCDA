@@ -43,7 +43,7 @@ class LocalPlanner(object):
     Parameters
     ----------
     agent : carla.agent
-        The carla.agent that applying vehicle contorl.
+        The carla.agent that applying vehicle control.
 
     carla_map : carla.map
         The HD map of the current simulation world.

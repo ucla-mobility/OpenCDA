@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Unit test for Extented Kalman Filter.
+Unit test for Extended Kalman Filter.
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: MIT

@@ -75,7 +75,7 @@ class GlobalRoutePlannerDAO(object):
         The method returns waypoint at given location.
 
         Args:
-            -location (carla.lcoation): Vehicle location.
+            -location (carla.location): Vehicle location.
         Returns:
             -waypoint (carla.waypoint): Newly generated waypoint close
             to location.
