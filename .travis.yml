@@ -7,11 +7,12 @@ python:
 
 install:
   - pip install --upgrade pip
-  - pip install coveralls pytest pytest-cov -r requirements_ci.txt
+  - pip install codespell coveralls pytest pytest-cov -r requirements_ci.txt
 
 # command to run tests
 script:
-   pytest --cov=test/
+  - codespell --ignore-words-list="nd,te"
+  - pytest --cov=test/
 
 after_success:
   - coveralls
