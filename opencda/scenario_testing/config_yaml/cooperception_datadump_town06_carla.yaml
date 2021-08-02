@@ -21,15 +21,15 @@ vehicle_base: &vehicle_base
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
-        range: 50
-        points_per_second: 100000
+        range: 200
+        points_per_second: 1200000
         rotation_frequency: 20 # the simulation is 20 fps
-        upper_fov: 10.0
-        lower_fov: -30.0
-        dropoff_general_rate: 0.0
-        dropoff_intensity_limit: 1.0
-        dropoff_zero_intensity: 0.0
-        noise_stddev: 0.0
+        upper_fov: 15
+        lower_fov: -25
+        dropoff_general_rate: 0.1
+        dropoff_intensity_limit: 0.7
+        dropoff_zero_intensity: 0.15
+        noise_stddev: 0.01
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
       dt: *delta # used for kalman filter
@@ -94,14 +94,14 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -30
+  global_speed_perc: -20
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: true
   random: true # whether to random select vehicles' color and model
-  vehicle_list: 30  # a number or a list
+  vehicle_list: 90  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step
-  range: [ 50, 250, 135, 145, 20, 4]
+  range: [ -100, 500, 120, 150, 20, 4]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:

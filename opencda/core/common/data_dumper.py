@@ -233,8 +233,9 @@ class DataDumper(object):
 
         # dump camera sensor coordinates under world coordinate system
         for (i, camera) in enumerate(self.rgb_camera):
+            camera_param = {}
             camera_transformation = camera.sensor.get_transform()
-            dump_yml.update({'camera%d_cords' % i: [
+            camera_param.update({'cords': [
                 camera_transformation.location.x,
                 camera_transformation.location.y,
                 camera_transformation.location.z,
@@ -246,7 +247,7 @@ class DataDumper(object):
             # dump intrinsic matrix
             camera_intrinsic = st.get_camera_intrinsic(camera.sensor)
             camera_intrinsic = self.matrix2list(camera_intrinsic)
-            dump_yml.update({'camera%d_intrinsic' % i: camera_intrinsic})
+            camera_param.update({'intrinsic': camera_intrinsic})
 
             # dump extrinsic matrix lidar2camera
             lidar2world = \
@@ -257,7 +258,8 @@ class DataDumper(object):
             world2camera = np.linalg.inv(camera2world)
             lidar2camera = np.dot(world2camera, lidar2world)
             lidar2camera = self.matrix2list(lidar2camera)
-            dump_yml.update({'camera%d_extrinsic' % i: lidar2camera})
+            camera_param.update({'extrinsic': lidar2camera})
+            dump_yml.update({'camera%d' % i: camera_param})
 
         # dump the planned trajectory
         trajectory_deque = behavior_agent.get_local_planner().get_trajectory()
