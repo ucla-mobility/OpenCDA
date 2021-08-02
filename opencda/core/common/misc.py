@@ -58,11 +58,12 @@ def draw_trajetory_points(world, waypoints, z=0.25,
             arrow_size=arrow_size,
             color=color,
             life_time=lt)
-def draw_points(world, points, z, color=carla.Color(125, 125, 125), lt=5, size=0.2):
+def draw_points(world, points, z, color=carla.Color(255, 102, 0), lt=0.06, size=0.05):
     for obstacle in points:
         for point in obstacle:
             x, y = point
-            world.debug.draw_point(carla.Location(x,y,z), size=size, color=color, life_time=lt)
+            # world.debug.draw_string(carla.Location(x,y,z), "", draw_shadow=False, color=color, life_time=lt)
+            world.debug.draw_point(carla.Location(x,y,z), size=size,color=color, life_time=lt)
 
 
 

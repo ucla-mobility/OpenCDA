@@ -7,11 +7,10 @@ Physcis-based trajectory prediction model
 # License: MIT
 
 import numpy as np
-# import carla
+import carla
 from collections import deque
 
-
-# from opencda.core.common.misc import draw_points
+from opencda.core.common.misc import draw_points
 
 def angle_diff(x, y):
     """
@@ -71,7 +70,7 @@ def get_kinematics(trajectory_data, observed_length):
 
 
 class PredictionManager:
-    def __init__(self, observed_length, predict_length, dt, model="ConstantManitudeAccelAndYawRate", debug=True):
+    def __init__(self, observed_length, predict_length, dt, model="ConstantSpeedYawRate", debug=True):
         assert isinstance(observed_length,
                           int) and observed_length > 0, "observed_length must be int and greater than 0"
         assert isinstance(predict_length, int) and predict_length > 0, "predict_length must be int and greater than 0"
@@ -106,8 +105,7 @@ class PredictionManager:
             kinematics_data = get_kinematics(self.d[id], self.observed_length)
             preds.append(self.model(kinematics_data))
         if self.debug:
-            pass
-            # draw_points(world, preds, z)
+            draw_points(world, preds, z)
 
         return preds
 
