@@ -18,7 +18,7 @@
 To get started, the following requirements should be fulfilled.
 * __System requirements.__ Any 64-bits OS should run OpenCDA. We highly recommends Ubuntu  16.04/18.04/20.04.
 
-* __Adequate GPU.__ CARLA is a realistic simulation platform based on Unity, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
+* __Adequate GPU.__ CARLA is a realistic simulation platform based on Unreal Engine 4, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
 * __Disk Space.__ Estimate 100GB of space is recommended to install CARLA and Unreal Engine. 
 * __Python__ Python3.7 or higher version is required for full functions.
 
