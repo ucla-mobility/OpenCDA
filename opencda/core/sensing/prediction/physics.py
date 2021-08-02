@@ -7,10 +7,9 @@ Physcis-based trajectory prediction model
 # License: MIT
 
 import numpy as np
-import carla
 from collections import deque
 
-from opencda.core.common.misc import draw_points
+
 
 def angle_diff(x, y):
     """
@@ -105,6 +104,7 @@ class PredictionManager:
             kinematics_data = get_kinematics(self.d[id], self.observed_length)
             preds.append(self.model(kinematics_data))
         if self.debug:
+            from opencda.core.common.misc import draw_points
             draw_points(world, preds, z)
 
         return preds

@@ -8,7 +8,6 @@ Unit test for physics-based prediction baseline.
 import os
 import sys
 import unittest
-import pdb
 import numpy as np
 import matplotlib.pyplot as plt
 
