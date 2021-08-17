@@ -386,26 +386,26 @@ class ScenarioManager:
         # if not random select, we always choose lincoln.mkz with green color
         ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
 
-        spawn_num = traffic_config['vehicle_list']
-        spawn_range = traffic_config['range']
-
-        x_min, x_max, y_min, y_max = \
-            math.floor(spawn_range[0]), math.ceil(spawn_range[1]), \
-            math.floor(spawn_range[2]), math.ceil(spawn_range[3])
-
+        spawn_ranges = traffic_config['range']
         spawn_set = set()
 
-        for x in range(x_min, x_max, int(spawn_range[4])):
-            for y in range(y_min, y_max, int(spawn_range[5])):
-                location = carla.Location(x=x, y=y, z=0.3)
-                way_point = self.carla_map.get_waypoint(location).transform
+        for spawn_range in spawn_ranges:
+            spawn_num = spawn_range[4]
+            x_min, x_max, y_min, y_max = \
+                math.floor(spawn_range[0]), math.ceil(spawn_range[1]), \
+                math.floor(spawn_range[2]), math.ceil(spawn_range[3])
 
-                spawn_set.add((way_point.location.x,
-                               way_point.location.y,
-                               way_point.location.z,
-                               way_point.rotation.roll,
-                               way_point.rotation.yaw,
-                               way_point.rotation.pitch))
+            for x in range(x_min, x_max, int(spawn_range[4])):
+                for y in range(y_min, y_max, int(spawn_range[5])):
+                    location = carla.Location(x=x, y=y, z=0.3)
+                    way_point = self.carla_map.get_waypoint(location).transform
+
+                    spawn_set.add((way_point.location.x,
+                                   way_point.location.y,
+                                   way_point.location.z,
+                                   way_point.rotation.roll,
+                                   way_point.rotation.yaw,
+                                   way_point.rotation.pitch))
         count = 0
         spawn_list = list(spawn_set)
         shuffle(spawn_list)
@@ -484,11 +484,9 @@ class ScenarioManager:
                                                   traffic_config,
                                                   bg_list)
 
-        elif isinstance(traffic_config['vehicle_list'], int):
+        else:
             bg_list = self.spawn_vehicle_by_range(tm, traffic_config, bg_list)
 
-        else:
-            sys.exit('Traffic vehicle list param has to be a list or int!')
         print('CARLA traffic flow generated.')
         return tm, bg_list
 
