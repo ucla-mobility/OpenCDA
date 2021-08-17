@@ -13,6 +13,7 @@ import sys
 from random import shuffle
 
 import carla
+import numpy as np
 
 from opencda.core.common.vehicle_manager import VehicleManager
 from opencda.core.application.platooning.platooning_manager import \
@@ -106,6 +107,12 @@ class ScenarioManager:
         self.scenario_params = scenario_params
 
         simulation_config = scenario_params['world']
+
+        # set random seed if stated
+        if 'seed' in simulation_config:
+            np.random.seed(simulation_config['seed'])
+            random.seed(simulation_config['seed'])
+
         self.client = \
             carla.Client('localhost', simulation_config['client_port'])
         self.client.set_timeout(10.0)

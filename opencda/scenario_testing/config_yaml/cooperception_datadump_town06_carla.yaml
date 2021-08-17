@@ -20,16 +20,16 @@ vehicle_base: &vehicle_base
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        channels: 32
-        range: 200
-        points_per_second: 1200000
+        channels: 64
+        range: 120
+        points_per_second: 1300000
         rotation_frequency: 20 # the simulation is 20 fps
-        upper_fov: 15
+        upper_fov: 2
         lower_fov: -25
         dropoff_general_rate: 0.1
         dropoff_intensity_limit: 0.7
         dropoff_zero_intensity: 0.15
-        noise_stddev: 0.01
+        noise_stddev: 0.02
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
       dt: *delta # used for kalman filter
@@ -50,7 +50,7 @@ vehicle_base: &vehicle_base
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
     safety_time: 4 # ttc safety thresholding for decreasing speed
     emergency_param: 0.4 # used to identify whether a emergency stop needed
-    ignore_traffic_light: true # whether to ignore traffic light
+    ignore_traffic_light: false # whether to ignore traffic light
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
     collision_time_ahead: 1.5 # used for collision checking
     overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
@@ -98,17 +98,17 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: true
   random: true # whether to random select vehicles' color and model
-  vehicle_list: 90  # a number or a list
+  vehicle_list: 30  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step
-  range: [ -100, 500, 120, 150, 20, 4]
+  range: [ 560, 700, 130, 200, 20, 1.5]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
-      destination: [630, 145.51, 0.3]
+      spawn_position: [606.87, 141.91, 0.3, 0, 0.234, 0]
+      destination: [551.40, -17.32, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -119,20 +119,8 @@ scenario:
           debug_trajectory: false
           debug: false
     - <<: *vehicle_base
-      spawn_position: [ 77.7194, 143.51, 0.3, 0, 0, 0 ]
+      spawn_position: [ 668.18, 178.64, 0.3, 0, -89.37, 0 ]
       destination: [ 630, 143.51, 0.3 ]
-      v2x:
-        <<: *base_v2x
-        communication_range: 45
-      behavior:
-        <<: *base_behavior
-        local_planner:
-          <<: *base_local_planner
-          debug_trajectory: false
-          debug: false
-    - <<: *vehicle_base
-      spawn_position: [ 97.7194, 136.51, 0.3, 0, 0, 0 ]
-      destination: [ 630, 136.51, 0.3 ]
       v2x:
         <<: *base_v2x
         communication_range: 45
