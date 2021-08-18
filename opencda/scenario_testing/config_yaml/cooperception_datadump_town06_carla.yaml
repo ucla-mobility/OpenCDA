@@ -99,18 +99,19 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: true
   random: true # whether to random select vehicles' color and model
+  ignore_lights_percentage: true # whether set the traffic ignore traffic lights
   vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
   #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
   range:
-    - [650, 670, 160, 190, 3, 20, 15]
-    - [585, 625, 135, 150, 15, 3, 15]
+    - [650, 670, 160, 200, 3, 20, 25]
+    - [585, 625, 135, 150, 15, 3, 25]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [606.87, 141.91, 0.3, 0, 0.234, 0]
+      spawn_position: [600.87, 141.91, 0.3, 0, 0.234, 0]
       destination: [551.40, -17.32, 0.3]
       v2x:
         <<: *base_v2x
