@@ -444,6 +444,11 @@ class ScenarioManager:
             vehicle.set_autopilot(True, 8000)
             tm.auto_lane_change(vehicle, traffic_config['auto_lane_change'])
 
+            if 'ignore_lights_percentage' in traffic_config:
+                tm.ignore_lights_percentage(vehicle,
+                                            traffic_config[
+                                                'ignore_lights_percentage'])
+
             # each vehicle have slight different speed
             tm.vehicle_percentage_speed_difference(
                 vehicle,
