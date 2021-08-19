@@ -10,7 +10,7 @@ world:
   sync_mode: true
   client_port: 2000
   fixed_delta_seconds: &delta 0.05
-  seed: 44
+  seed: 22
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
@@ -95,7 +95,7 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: 0
+  global_speed_perc: -10
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: true
   random: true # whether to random select vehicles' color and model
@@ -104,15 +104,15 @@ carla_traffic_manager:
   # Used only when vehicle_list is a number.
   #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
   range:
-    - [610, 630, 31, 50, 10, 3.5, 15]
-    - [651, 672, 20, 50, 3.5, 10, 20]
+    - [-11, 12, 100, 200, 3.5, 15, 25]
+
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [625, 38.20, 1.0, 0, 0, 0]
-      destination: [570, -10.17, 0.3]
+      spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
+      destination: [67.12, 150.2, 1.0]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -123,8 +123,8 @@ scenario:
           debug_trajectory: false
           debug: false
     - <<: *vehicle_base
-      spawn_position: [671, 50, 0.3, 0, -90, 0]
-      destination: [570, -10.17, 0.3]
+      spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
+      destination: [-2.43, 263, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
