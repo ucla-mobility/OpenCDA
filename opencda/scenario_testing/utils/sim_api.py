@@ -390,7 +390,7 @@ class ScenarioManager:
         spawn_set = set()
 
         for spawn_range in spawn_ranges:
-            spawn_num = spawn_range[4]
+            spawn_num = spawn_range[6]
             x_min, x_max, y_min, y_max = \
                 math.floor(spawn_range[0]), math.ceil(spawn_range[1]), \
                 math.floor(spawn_range[2]), math.ceil(spawn_range[3])
