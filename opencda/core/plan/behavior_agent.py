@@ -382,10 +382,12 @@ class BehaviorAgent(object):
                 # stop sign
                 if self.stop_sign_wait_count < 60:
                     self.stop_sign_wait_count += 1
+                    # indicate emergent stop needed
                     return 1
                 # After pass a stop sign, the vehicle shouldn't stop at
                 # the stop sign in the opposite direction
                 else:
+                    # indicate no need to stop
                     return 0
 
 
