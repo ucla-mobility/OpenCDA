@@ -121,6 +121,7 @@ class BehaviorAgent(object):
         # intersection agent related
         self.light_state = "Red"
         self.light_id_to_ignore = -1
+        self.stop_sign_wait_count = 0
 
         # trajectory planner
         self._local_planner = LocalPlanner(
@@ -366,7 +367,28 @@ class BehaviorAgent(object):
         light_id = self.vehicle.get_traffic_light(
         ).id if self.vehicle.get_traffic_light() is not None else -1
 
+        # this is the case where the vehicle just pass a stop sign, and won't
+        # stop at any stop sign in the next 4 seconds.
+        if 60 <= self.stop_sign_wait_count < 240:
+            self.stop_sign_wait_count += 1
+        elif self.stop_sign_wait_count >= 240:
+            self.stop_sign_wait_count = 0
+
         if self.light_state == "Red":
+            # when light state is red and light id is -1, it means the vehicle
+            # is near a stop sign.
+            if light_id == -1:
+                # we force the vehicle wait for 2 sceconds in front of the
+                # stop sign
+                if self.stop_sign_wait_count < 60:
+                    self.stop_sign_wait_count += 1
+                    return 1
+                # After pass a stop sign, the vehicle shouldn't stop at
+                # the stop sign in the opposite direction
+                else:
+                    return 0
+
+
             if not waypoint.is_junction and (
                     self.light_id_to_ignore != light_id or light_id == -1):
                 return 1
