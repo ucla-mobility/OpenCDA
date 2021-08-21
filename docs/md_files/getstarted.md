@@ -4,7 +4,7 @@ OpenCDA provides benchmark scenarios that researchers can use directly without a
 scenario testings only need one line of command:
 ```she
 cd ~/OpenCDA
-python opencda.py -t scenario_name --aply_ml --record
+python opencda.py -t scenario_name --apply_ml --record
 ```
 Parameters explanation:
 * `-t`: The name of the tesitng scenario. A python script with the same name should exist in

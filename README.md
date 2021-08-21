@@ -4,24 +4,21 @@
 [![Documentation Status](https://readthedocs.org/projects/opencda-documentation/badge/?version=latest)](https://opencda-documentation.readthedocs.io/en/latest/?badge=latest)
 
 
+OpenCDA is a <strong>SIMULATION</strong> tool integrated with a prototype cooperative driving automation (CDA; see [SAE J3216](https://www.sae.org/standards/content/j3216_202005/)) pipeline as
+well as regular automated driving components (e.g., perception, localization, planning, control). The tool integrates automated driving simulation (CARLA), traffic simulation (SUMO), and Co-simulation (CARLA + SUMO). 
 
-OpenCDA is a generalized framework for prototyping <strong>cooperative driving automation (CDA; see [SAE J3216](](https://www.sae.org/standards/content/j3216_202005/)))
-applications</strong> (e.g., cooperative perception, platooning) as well as <strong>automated driving components</strong> (e.g., 
-perception, localization, planning, control) integrated with automated driving simulation (CARLA), traffic simulation (SUMO), and <strong>Co-simulation</strong> (CARLA + SUMO). OpenCDA builds upon standard automated driving system (ADS) platforms and focuses on various classes of data exchanges and cooperation between vehicles, infrastructure, and other road users (e.g., pedestrians).
+OpenCDA is <strong>all in Python</strong>. The purpose is to enable researchers to fast-prototype, simulate, and test CDA algorithms and functions.  By applying our simulation tool, users can conveniently conduct both task-specific evaluation (e.g. object detection accuracy) and pipeline-level assessment (e.g. traffic safety) on their customized algorithms.
 
-The goal of the OpenCDA project is to enable researchers and engineers to prototype any cooperative driving applications using our full-stack CDA platform and test them from both automated driving and traffic operations perspectives. OpenCDA bridges the gaps between the communities of automated driving and transporation engineering. Eventually, OpenCDA can be used to develop and test cooperative driving functions and applications for improving safety, sustainability, and efficiency of future transportation systems.
-
+In collaboration with [U.S.DOT CDA Research](https://its.dot.gov/cda/) and the [FHWA CARMA Program](https://highways.dot.gov/research/operations/CARMA), OpenCDA, as an open-source project, makes a unique contribution from the perspective of initial-stage development and testing using simulation. OpenCDA is designed and built to support <strong>initial algorithmic testing</strong> for CDA Features. Through collaboration with CARMA Collaborative, this tool provides a unique capability to the CDA research community and will interface with the [CARMA XiL tools](https://github.com/usdot-fhwa-stol/carma-simulation) being developed by U.S.DOT to support more advanced simulation testing of CDA Features.
 
 The key features of OpenCDA are:
-* <strong>Full-stack CDA System</strong>: OpenCDA provides a full-stack automated driving and cooperative driving software system that contains perception, localization, planning, control, and V2X communication modules. 
-* <strong>Connectivity and Cooperation</strong>: OpenCDA supports various levels and categories of cooperation between CAVs in simulation.
-  This differentiates OpenCDA with other single vehicle automation tools.
-* <strong>Integration</strong>: OpenCDA utilizes CARLA and SUMO separately, as well as integrates them together for realistic scene rendering, vehicle modeling, and traffic simulation. It is also efficient and flexible enough to be applied for software-in-the-loop and hardware-in-the-loop testing.
+* <strong>Integration</strong>: OpenCDA utilizes CARLA and SUMO separately, as well as integrates them together for realistic scene rendering, vehicle modeling, and traffic simulation.
+* <strong> Full-stack</strong> prototype CDA Platform in Simulation: OpenCDA provides a simple prototype automated driving and cooperative driving platform, all in Python, that contains perception, localization, planning, control, and V2X communication modules.
 * <strong>Modularity</strong>: OpenCDA is highly modularized, enabling users to conveniently replace any default algorithms or protocols with their own customzied design. 
 * <strong>Benchmark</strong>: OpenCDA offers benchmark testing scenarios, benchmark baseline maps, state-of-the-art benchmark algorithms for ADS and Cooperative ADS functions, and benchmark evaluation metrics.
+* <strong>Connectivity and Cooperation</strong>: OpenCDA supports various levels and categories of cooperation between CAVs in simulation. This differentiates OpenCDA from other single vehicle simulation tools.
 
 
- 
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) for more details.
 
 ## Major Components
@@ -75,7 +72,7 @@ We welcome your contributions.
 - Please report bugs and improvements by submitting issues.
 - Submit your contributions using [pull requests](https://github.com/ucla-mobility/OpenCDA/pulls).
  Please use [this template](.github/PR_TEMPLATE.md) for your pull requests.
- 
+
 ## In OpenCDA v0.1.0 Release
 The current version features the following:
 * OpenCDA v0.1.0 software stack (basic ADS and cooperative ADS platform, benchmark algorithms for platooning, cooperative lane change, merge, and other freeway maneuvers)
@@ -104,11 +101,10 @@ OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.e
 
 ### Project Lead: <br>
  - Runsheng Xu ([linkedin](https://www.linkedin.com/in/runsheng-xu/), [github](https://github.com/DerrickXuNu))  <br>
- 
+
 ### Team Members: 
  - Xu Han ([linkedin](https://linkedin.com/in/xu-han-12851a64), [github](https://github.com/xuhan417))
  - Hao Xiang ([linkedin](https://www.linkedin.com/in/hao-xiang-42bb5a1b2/), [github](https://github.com/XHwind))
  - Dr. Yi Guo ([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
  - Dr. Xin Xia ([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
- 
 
