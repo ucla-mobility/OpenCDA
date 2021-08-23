@@ -17,9 +17,9 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
-      lidar_visualize: false # whether to visualize lidar points using open3d
+      camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+      lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 64
         range: 120
@@ -120,7 +120,7 @@ scenario:
         <<: *base_behavior
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: true
+          debug_trajectory: false
           debug: false
     - <<: *vehicle_base
       spawn_position: [-37.87, 187.75, 3.3, 0, -179, 0]
@@ -132,7 +132,7 @@ scenario:
         <<: *base_behavior
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: true
+          debug_trajectory: false
           debug: false
     - <<: *vehicle_base
       spawn_position: [-98, 200.93, 9.0, 0, 0, 0]
@@ -145,6 +145,6 @@ scenario:
         max_speed: 30
         local_planner:
           <<: *base_local_planner
-          debug_trajectory: true
+          debug_trajectory: false
           debug: false
 
