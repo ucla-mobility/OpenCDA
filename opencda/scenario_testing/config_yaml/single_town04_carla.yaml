@@ -10,15 +10,15 @@ world:
   sync_mode: true
   client_port: 2000
   fixed_delta_seconds: &delta 0.05
-  seed: 165
+  seed: 151
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+      camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_num: 1 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: false # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 64
@@ -45,7 +45,7 @@ vehicle_base: &vehicle_base
         x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
   behavior: &base_behavior
-    max_speed: 70 # maximum speed, km/h
+    max_speed: 100 # maximum speed, km/h
     tailgate_speed: 34 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
@@ -96,23 +96,23 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -200
+  global_speed_perc: -300
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: true
   random: true # whether to random select vehicles' color and model
-  ignore_lights_percentage: 100 # whether set the traffic ignore traffic lights
+  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
   vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
   #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
   range:
-    - [-50, -10, 187, 194, 15, 3.5, 8]
+    - [5.84, 17.34, 100.2, 210.6, 3.5, 15, 19]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [-17.87, 194.67, 1.3, 0, -179, 0]
-      destination: [-130, 194.67, 0.3]
+      spawn_position: [ 65.54, 145.66, 1.5, 0, -180, 0 ]
+      destination: [12.25, 18.03, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -123,8 +123,8 @@ scenario:
           debug_trajectory: true
           debug: false
     - <<: *vehicle_base
-      spawn_position: [-37.87, 187.75, 3.3, 0, -179, 0]
-      destination: [-130, 187.75, 0.3]
+      spawn_position: [ 16.34, 184.61, 0.5, 0, -90, 0 ]
+      destination: [12.25, 18.03, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -135,16 +135,14 @@ scenario:
           debug_trajectory: true
           debug: false
     - <<: *vehicle_base
-      spawn_position: [-98, 200.93, 9.0, 0, 0, 0]
-      destination: [22.15, 180.93, 3.0]
+      spawn_position: [ 9.18, 152.65, 0.3, 0, -90, 0 ]
+      destination: [9.18, 18.03, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
       behavior:
         <<: *base_behavior
-        max_speed: 30
         local_planner:
           <<: *base_local_planner
           debug_trajectory: true
           debug: false
-

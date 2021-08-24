@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+Scenario testing: merging vehicle joining a platoon in the
+customized 2-lane freeway simplified map sorely with carla
+"""
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
+import os
 
 import carla
 
@@ -8,7 +13,7 @@ import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
-from opencda.scenario_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.utils.yaml_utils import load_yaml, save_yaml
 
 
 def run_scenario(opt, config_yaml):
@@ -21,15 +26,16 @@ def run_scenario(opt, config_yaml):
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
-                                                   town='Town05',
+                                                   town='Town04',
                                                    cav_world=cav_world)
 
         if opt.record:
             scenario_manager.client. \
-                start_recorder("single_town06_carla.log", True)
+                start_recorder("single_town04_carla.log", True)
 
         single_cav_list = \
-            scenario_manager.create_vehicle_manager(application=['single'])
+            scenario_manager.create_vehicle_manager(application=['single'],
+                                                    data_dump=True)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = \
@@ -38,10 +44,19 @@ def run_scenario(opt, config_yaml):
         # create evaluation manager
         eval_manager = \
             EvaluationManager(scenario_manager.cav_world,
-                              script_name='single_2lanefree_carla',
+                              script_name='coop_town04',
                               current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
+
+        # save the data collection protocol to the folder
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        save_yaml_name = os.path.join(current_path,
+                                          '../../data_dumping',
+                                          scenario_params['current_time'],
+                                          'data_protocol.yaml')
+        save_yaml(scenario_params, save_yaml_name)
+
         # run steps
         while True:
             scenario_manager.tick()
