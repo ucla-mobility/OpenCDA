@@ -517,7 +517,9 @@ class PerceptionManager:
         world = self.vehicle.get_world()
 
         vehicle_list = world.get_actors().filter("*vehicle*")
-        vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
+        thresh = 50 if not self.data_dump else 120
+
+        vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
                         v.id != self.vehicle.id]
 
         # use semantic lidar to filter out vehicles out of the range
