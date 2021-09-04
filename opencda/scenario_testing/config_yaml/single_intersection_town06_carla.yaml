@@ -10,6 +10,7 @@ world:
   sync_mode: true
   client_port: 2000
   fixed_delta_seconds: &delta 0.05
+  seed: 25
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
@@ -94,10 +95,12 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   random: true # whether to random select vehicles' color and model
-  vehicle_list: 30  # a number or a list
+  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
+  vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step
-  range: [ 2, 10, 0, 200, 3.5, 25]
+  range:
+    - [ 2, 10, 0, 200, 3.5, 25, 30]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:

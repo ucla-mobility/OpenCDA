@@ -5,6 +5,7 @@ customized 2-lane freeway simplified map sorely with carla
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
+import os
 
 import carla
 
@@ -12,7 +13,7 @@ import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
-from opencda.scenario_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.utils.yaml_utils import load_yaml, save_yaml
 
 
 def run_scenario(opt, config_yaml):
@@ -43,10 +44,19 @@ def run_scenario(opt, config_yaml):
         # create evaluation manager
         eval_manager = \
             EvaluationManager(scenario_manager.cav_world,
-                              script_name='single_2lanefree_carla',
+                              script_name='coop_town06',
                               current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
+
+        # save the data collection protocol to the folder
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        save_yaml_name = os.path.join(current_path,
+                                          '../../data_dumping',
+                                          scenario_params['current_time'],
+                                          'data_protocol.yaml')
+        save_yaml(scenario_params, save_yaml_name)
+
         # run steps
         while True:
             scenario_manager.tick()
@@ -54,7 +64,7 @@ def run_scenario(opt, config_yaml):
             spectator.set_transform(carla.Transform(
                 transform.location +
                 carla.Location(
-                    z=50),
+                    z=70),
                 carla.Rotation(
                     pitch=-
                     90)))

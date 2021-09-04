@@ -72,7 +72,7 @@ def o3d_pointcloud_encode(raw_data, point_cloud):
         np.interp(intensity_col, VID_RANGE, VIRIDIS[:, 2])]
 
     # Isolate the 3D data
-    points = raw_data[:, :-1]
+    points = np.array(raw_data[:, :-1], copy=True)
     # We're negating the y to correclty visualize a world that matches
     # what we see in Unreal since Open3D uses a right-handed coordinate system
     points[:, :1] = -points[:, :1]

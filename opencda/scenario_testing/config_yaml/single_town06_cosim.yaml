@@ -10,14 +10,15 @@ world:
   sync_mode: true
   client_port: 2000
   fixed_delta_seconds: &delta 0.05
+  seed: 25
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: true # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 3 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 3 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+      camera_visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
