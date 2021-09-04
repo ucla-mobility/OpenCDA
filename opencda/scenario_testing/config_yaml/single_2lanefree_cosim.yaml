@@ -10,6 +10,7 @@ world:
   sync_mode: true
   client_port: 2000
   fixed_delta_seconds: &delta 0.05
+  seed: 25
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
