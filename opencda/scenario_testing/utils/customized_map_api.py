@@ -27,10 +27,13 @@ def load_customized_world(xodr_path, client):
     """
     Load .xodr file and return the carla world object
 
-    Args:
-        -xodr_path (string): path to the xodr file
-        -client (carla.client): The created CARLA simulation client.
+    Parameters
+    ----------
+    xodr_path : str
+        path to the xodr file
 
+    client : carla.client
+        The created CARLA simulation client.
     """
     if os.path.exists(xodr_path):
         with open(xodr_path) as od_file:
@@ -58,41 +61,70 @@ def load_customized_world(xodr_path, client):
         return None
 
 
-def spawn_helper_2lanefree(carla_map, coefficient):
+def spawn_helper_2lanefree(carla_version, coefficient):
     """
     A helper function to locate the valid spawn point on the merge lane.
 
-    Args:
-        -carla_map (carla.map): the 2lanefreeway map
-        -coefficient (float): A single scalar indicating where is the
-         spawn point, eg. 0.5 represents the spawn position is in the
-         middle of the merge lane.
-    Returns:
-        -transform_point (carla.transform): The desired spawn points.
-    """
+    Parameters
+    ----------
+    carla_version : str
+        The CARLA simulator version. We need this as the map for 0.9.11
+        and 0.9.12 are a little different
 
-    all_deafault_spawn = carla_map.get_spawn_points()
-    transform_point = all_deafault_spawn[13]
+    coefficient : float
+        A single scalar indicating where is the  spawn point, eg. 0.5
+        represents the spawn position is in the middle of the merge lane.
+
+    Returns
+    -------
+    transform_point : carla.transform
+        The desired spawn points.
+    """
+    if carla_version == '0.9.12':
+        coefficient += 0.06
+
+    transform_point = carla.Transform(carla.Location(x=-1202.0827,
+                                                     y=458.2501,
+                                                     z=0.3),
+                                      carla.Rotation(yaw=-20.4866))
+
+    begin_point = carla.Transform(carla.Location(x=-16.7102,
+                                                 y=15.3622,
+                                                 z=0.3),
+                                  carla.Rotation(yaw=-20.4866))
+
     transform_point.location.x = transform_point.location.x + coefficient * \
-        (all_deafault_spawn[2].location.x - all_deafault_spawn[13].location.x)
+                                 (begin_point.location.x -
+                                  transform_point.location.x)
     transform_point.location.y = transform_point.location.y + coefficient * \
-        (all_deafault_spawn[2].location.y - all_deafault_spawn[13].location.y)
+                                 (begin_point.location.y -
+                                  transform_point.location.y)
 
     return transform_point
 
 
-def spawn_helper_2lanefree_complete(carla_map, coefficient):
+def spawn_helper_2lanefree_complete(carla_version, coefficient):
     """
     A helper function to locate the valid spawn point on the merge lane.
 
-    Args:
-        -carla_map (carla.map): The 2lanefreeway map.
-        -coefficient (float): A single scalar indicating where is the
-         spawn point, eg. 0.5 represents the spawn position is in the
-         middle of the merge lane.
-    Returns:
-        -transform_point (carla.transform): The desired spawn points.
+    Parameters
+    ----------
+    carla_version : str
+        The CARLA simulator version. We need this as the map for 0.9.11
+        and 0.9.12 are a little different
+
+    coefficient : float
+        A single scalar indicating where is the  spawn point, eg. 0.5
+        represents the spawn position is in the middle of the merge lane.
+
+    Returns
+    -------
+    transform_point : carla.transform
+        The desired spawn points.
     """
+
+    if carla_version == '0.9.12':
+        coefficient += 0.06
 
     start_point_x = -1202.19
     start_point_y = 456.34

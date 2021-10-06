@@ -23,7 +23,7 @@ from opencda.scenario_testing.utils.customized_map_api import \
     load_customized_world, bcolors
 
 
-def car_blueprint_filter(blueprint_library):
+def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
     """
     Exclude the uncommon vehicles from the default CARLA blueprint library
     (i.e., isetta, carlacola, cybertruck, t2).
@@ -33,31 +33,63 @@ def car_blueprint_filter(blueprint_library):
     blueprint_library : carla.blueprint_library
         The blueprint library that contains all models.
 
+    carla_version : str
+        CARLA simulator version, currently support 0.9.11 and 0.9.12. We need
+        this as since CARLA 0.9.12 the blueprint name has been changed a lot.
+
     Returns
     -------
     blueprints : list
         The list of suitable blueprints for vehicles.
     """
 
-    blueprints = [
-        blueprint_library.find('vehicle.audi.a2'),
-        blueprint_library.find('vehicle.audi.tt'),
-        blueprint_library.find('vehicle.dodge_charger.police'),
-        blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
-        blueprint_library.find('vehicle.chevrolet.impala'),
-        blueprint_library.find('vehicle.mini.cooperst'),
-        blueprint_library.find('vehicle.audi.etron'),
-        blueprint_library.find('vehicle.mercedes-benz.coupe'),
-        blueprint_library.find('vehicle.bmw.grandtourer'),
-        blueprint_library.find('vehicle.toyota.prius'),
-        blueprint_library.find('vehicle.citroen.c3'),
-        blueprint_library.find('vehicle.mustang.mustang'),
-        blueprint_library.find('vehicle.tesla.model3'),
-        blueprint_library.find('vehicle.lincoln.mkz2017'),
-        blueprint_library.find('vehicle.seat.leon'),
-        blueprint_library.find('vehicle.nissan.patrol'),
-        blueprint_library.find('vehicle.nissan.micra'),
-    ]
+    if carla_version == '0.9.11':
+        print('old version')
+        blueprints = [
+            blueprint_library.find('vehicle.audi.a2'),
+            blueprint_library.find('vehicle.audi.tt'),
+            blueprint_library.find('vehicle.dodge_charger.police'),
+            blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+            blueprint_library.find('vehicle.chevrolet.impala'),
+            blueprint_library.find('vehicle.mini.cooperst'),
+            blueprint_library.find('vehicle.audi.etron'),
+            blueprint_library.find('vehicle.mercedes-benz.coupe'),
+            blueprint_library.find('vehicle.bmw.grandtourer'),
+            blueprint_library.find('vehicle.toyota.prius'),
+            blueprint_library.find('vehicle.citroen.c3'),
+            blueprint_library.find('vehicle.mustang.mustang'),
+            blueprint_library.find('vehicle.tesla.model3'),
+            blueprint_library.find('vehicle.lincoln.mkz2017'),
+            blueprint_library.find('vehicle.seat.leon'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.micra'),
+        ]
+
+    else:
+        blueprints = [
+            blueprint_library.find('vehicle.audi.a2'),
+            blueprint_library.find('vehicle.audi.tt'),
+            blueprint_library.find('vehicle.dodge.charger_police'),
+            blueprint_library.find('vehicle.dodge.charger_police_2020'),
+            blueprint_library.find('vehicle.dodge.charger_2020'),
+            blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+            blueprint_library.find('vehicle.chevrolet.impala'),
+            blueprint_library.find('vehicle.mini.cooper_s'),
+            blueprint_library.find('vehicle.audi.etron'),
+            blueprint_library.find('vehicle.mercedes.coupe'),
+            blueprint_library.find('vehicle.mercedes.coupe_2020'),
+            blueprint_library.find('vehicle.bmw.grandtourer'),
+            blueprint_library.find('vehicle.toyota.prius'),
+            blueprint_library.find('vehicle.citroen.c3'),
+            blueprint_library.find('vehicle.ford.mustang'),
+            blueprint_library.find('vehicle.tesla.model3'),
+            blueprint_library.find('vehicle.lincoln.mkz_2017'),
+            blueprint_library.find('vehicle.lincoln.mkz_2020'),
+            blueprint_library.find('vehicle.seat.leon'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.micra'),
+        ]
+
     return blueprints
 
 
@@ -70,6 +102,9 @@ class ScenarioManager:
     ----------
     scenario_params : dict
         The dictionary contains all simulation configurations.
+
+    carla_version : str
+        CARLA simulator version, it currently supports 0.9.11 and 0.9.12
 
     xodr_path : str
         The xodr file to the customized map, default: None.
@@ -101,10 +136,12 @@ class ScenarioManager:
 
     def __init__(self, scenario_params,
                  apply_ml,
+                 carla_version,
                  xodr_path=None,
                  town=None,
                  cav_world=None):
         self.scenario_params = scenario_params
+        self.carla_version = carla_version
 
         simulation_config = scenario_params['world']
 
@@ -176,8 +213,11 @@ class ScenarioManager:
         """
         print('Creating single CAVs.')
         # By default, we use lincoln as our cav model.
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+
         cav_vehicle_bp = \
-            self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
+            self.world.get_blueprint_library().find(default_model)
         single_cav_list = []
 
         for i, cav_config in enumerate(
@@ -196,7 +236,7 @@ class ScenarioManager:
                         yaw=cav_config['spawn_position'][4],
                         roll=cav_config['spawn_position'][3]))
             else:
-                spawn_transform = map_helper(self.carla_map,
+                spawn_transform = map_helper(self.carla_version,
                                              *cav_config['spawn_special'])
 
             cav_vehicle_bp.set_attribute('color', '0, 0, 255')
@@ -250,8 +290,11 @@ class ScenarioManager:
 
         # we use lincoln as default choice since our UCLA mobility lab use the
         # same car
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+
         cav_vehicle_bp = \
-            self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
+            self.world.get_blueprint_library().find(default_model)
 
         # create platoons
         for i, platoon in enumerate(
@@ -269,7 +312,7 @@ class ScenarioManager:
                             yaw=cav['spawn_position'][4],
                             roll=cav['spawn_position'][3]))
                 else:
-                    spawn_transform = map_helper(self.carla_map,
+                    spawn_transform = map_helper(self.carla_version,
                                                  *cav['spawn_special'])
 
                 cav_vehicle_bp.set_attribute('color', '0, 0, 255')
@@ -323,9 +366,12 @@ class ScenarioManager:
 
         blueprint_library = self.world.get_blueprint_library()
 
-        ego_vehicle_random_list = car_blueprint_filter(blueprint_library)
+        ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
+                                                       self.carla_version)
         # if not random select, we always choose lincoln.mkz with green color
-        ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+        ego_vehicle_bp = blueprint_library.find(default_model)
 
         for i, vehicle_config in enumerate(traffic_config['vehicle_list']):
             spawn_transform = carla.Transform(
@@ -382,9 +428,12 @@ class ScenarioManager:
         """
         blueprint_library = self.world.get_blueprint_library()
 
-        ego_vehicle_random_list = car_blueprint_filter(blueprint_library)
+        ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
+                                                       self.carla_version)
         # if not random select, we always choose lincoln.mkz with green color
-        ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+        ego_vehicle_bp = blueprint_library.find(default_model)
 
         spawn_ranges = traffic_config['range']
         spawn_set = set()

@@ -17,11 +17,8 @@ else:
 
 import carla
 
-from opencda.co_simulation.sumo_integration.constants import \
-    INVALID_ACTOR_ID, SPAWN_OFFSET_Z
+from opencda.co_simulation.sumo_integration.constants import SPAWN_OFFSET_Z
 from opencda.co_simulation.sumo_integration.bridge_helper import BridgeHelper
-from opencda.co_simulation.sumo_integration.carla_simulation import \
-    CarlaSimulation
 from opencda.co_simulation.sumo_integration.constants import INVALID_ACTOR_ID
 from opencda.co_simulation.sumo_integration.sumo_simulation import \
     SumoSimulation
@@ -39,6 +36,9 @@ class CoScenarioManager(ScenarioManager):
     scenario_params : dict
         The dictionary contains all simulation configurations.
 
+    carla_version : str
+        CARLA simulator version, it currently supports 0.9.11 and 0.9.12
+
     xodr_path : str
         The xodr file to the customized map, default: None.
 
@@ -50,7 +50,7 @@ class CoScenarioManager(ScenarioManager):
 
     """
 
-    def __init__(self, scenario_params, apply_ml,
+    def __init__(self, scenario_params, apply_ml, carla_version,
                  xodr_path=None,
                  town=None,
                  cav_world=None,
@@ -59,6 +59,7 @@ class CoScenarioManager(ScenarioManager):
         # manager
         super(CoScenarioManager, self).__init__(scenario_params,
                                                 apply_ml,
+                                                carla_version,
                                                 xodr_path,
                                                 town,
                                                 cav_world)
