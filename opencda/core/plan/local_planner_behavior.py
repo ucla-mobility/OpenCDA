@@ -623,13 +623,13 @@ class LocalPlanner(object):
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._waypoint_buffer,
                                   z=0.1,
-                                  size=1.0,
+                                  size=0.1,
                                   color=carla.Color(0, 0, 255),
                                   lt=0.2)
             draw_trajetory_points(self._vehicle.get_world(),
                                   self._history_buffer,
                                   z=0.1,
-                                  size=0.5,
+                                  size=0.1,
                                   color=carla.Color(255, 0, 255),
                                   lt=0.2)
 
