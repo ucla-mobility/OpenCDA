@@ -50,12 +50,9 @@ def draw_trajetory_points(world, waypoints, z=0.25,
         else:
             wpt_t = wpt
 
-        world.debug.draw_arrow(
+        world.debug.draw_point(
             wpt_t.location,
-            wpt_t.location +
-            wpt_t.get_forward_vector(),
-            thickness=size,
-            arrow_size=arrow_size,
+            size=size,
             color=color,
             life_time=lt)
 
@@ -78,9 +75,7 @@ def draw_waypoints(world, waypoints, z=0.5):
     for wpt in waypoints:
         wpt_t = wpt.transform
         begin = wpt_t.location + carla.Location(z=z)
-        angle = math.radians(wpt_t.rotation.yaw)
-        end = begin + carla.Location(x=math.cos(angle), y=math.sin(angle))
-        world.debug.draw_arrow(begin, end, arrow_size=0.3, life_time=1.0)
+        world.debug.draw_point(begin, size=0.1, life_time=1.0)
 
 
 def get_speed(vehicle, meters=False):
