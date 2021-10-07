@@ -10,7 +10,7 @@ world:
   sync_mode: true
   client_port: 2000
   fixed_delta_seconds: &delta 0.05
-  seed: 25
+  seed: 11
 
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
@@ -107,7 +107,7 @@ scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
       spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
-      destination: [630, 145.51, 0.3]
+      destination: [600, 145.51, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45

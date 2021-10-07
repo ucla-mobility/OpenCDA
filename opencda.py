@@ -27,6 +27,9 @@ def arg_parse():
                         action='store_true',
                         help='whether ml/dl framework such as sklearn/pytorch is needed in the testing. '
                              'Set it to true only when you have installed the pytorch/sklearn package.')
+    parser.add_argument('-v', "--version", type=str, default='0.9.11',
+                        help='Specify the CARLA simulator version, default'
+                             'is 0.9.11, 0.9.12 is also supported.')
 
     opt = parser.parse_args()
     return opt

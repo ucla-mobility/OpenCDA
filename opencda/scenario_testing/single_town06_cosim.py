@@ -30,6 +30,7 @@ def run_scenario(opt, config_yaml):
         scenario_manager = \
             sim_api.CoScenarioManager(scenario_params,
                                       opt.apply_ml,
+                                      opt.version,
                                       town='Town06',
                                       cav_world=cav_world,
                                       sumo_file_parent_path=sumo_cfg)
