@@ -179,14 +179,44 @@ class ScenarioManager:
                 simulation_config['fixed_delta_seconds']
         else:
             sys.exit(
-                'ERROR: Current version only supports sync simulation mode, '
-                'v0.2 will support async mode.')
+                'ERROR: Current version only supports sync simulation mode')
 
         self.world.apply_settings(new_settings)
+
+        # set weather
+        weather = self.set_weather(simulation_config['weather'])
+        self.world.set_weather(weather)
 
         self.cav_world = cav_world
         self.carla_map = self.world.get_map()
         self.apply_ml = apply_ml
+
+    @staticmethod
+    def set_weather(weather_settings):
+        """
+        Set CARLA weather params.
+
+        Parameters
+        ----------
+        weather_settings : dict
+            The dictionary that contains all parameters of weather.
+
+        Returns
+        -------
+        The CARLA weather setting.
+        """
+        weather = carla.WeatherParameters(
+            sun_altitude_angle=weather_settings['sun_altitude_angle'],
+            cloudiness=weather_settings['cloudiness'],
+            precipitation=weather_settings['precipitation'],
+            precipitation_deposits=weather_settings['precipitation_deposits'],
+            wind_intensity=weather_settings['wind_intensity'],
+            fog_density=weather_settings['fog_density'],
+            fog_distance=weather_settings['fog_distance'],
+            fog_falloff=weather_settings['fog_falloff'],
+            wetness=weather_settings['wetness']
+        )
+        return weather
 
     def create_vehicle_manager(self, application,
                                map_helper=None,

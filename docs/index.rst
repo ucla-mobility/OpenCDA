@@ -45,6 +45,7 @@ for the latest release.
    :caption: Additional Information
 
    md_files/contributor.md
+   md_files/release_history.md
    modules
 
 
