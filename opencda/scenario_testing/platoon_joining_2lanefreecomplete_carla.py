@@ -25,6 +25,7 @@ def run_scenario(opt, config_yaml):
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
+                                                   opt.version,
                                                    opt.apply_ml)
         if opt.record:
             scenario_manager.client. \

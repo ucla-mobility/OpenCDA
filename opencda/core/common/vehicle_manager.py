@@ -121,7 +121,6 @@ class VehicleManager(object):
 
         if data_dumping:
             self.data_dumper = DataDumper(self.perception_manager,
-                                          self.localizer,
                                           vehicle.id,
                                           save_time=current_time)
         else:
@@ -191,7 +190,8 @@ class VehicleManager(object):
         # dump data
         if self.data_dumper:
             self.data_dumper.run_step(self.perception_manager,
-                                      self.localizer)
+                                      self.localizer,
+                                      self.agent)
 
         return control
 

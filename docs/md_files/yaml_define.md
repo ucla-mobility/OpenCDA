@@ -10,6 +10,17 @@ world:  # define the CARLA server setting
   sync_mode: true # whether to use sync mode
   client_port: 2000 # client port to connect to the server
   fixed_delta_seconds: &delta 0.05 # fixed time step 
+  weather: # set weather parameters
+    sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
+    cloudiness: 0 # 0 is the clean sky and 100 is the thickest cloud
+    precipitation: 0 # rain, 100 is the heaviest rain
+    precipitation_deposits: 0 # Determines the creation of puddles. Values range from 0 to 100, being 0 none at all and 100 a road completely capped with water.
+    wind_intensity: 0 # it will influence the rain
+    fog_density: 0 # fog thickness, 100 is the largest
+    fog_distance: 0  # Fog start distance. Values range from 0 to infinite.
+    fog_falloff: 0 # Density of the fog (as in specific mass) from 0 to infinity. The bigger the value, the more dense and heavy it will be, and the fog will reach smaller heights
+    wetness: 0
+
 
 vehicle_base: &vehicle_base # define cav default parameters
   sensing: &base_sensing # define sensing parameters

@@ -21,6 +21,7 @@ def run_scenario(opt, config_yaml):
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
+                                                   opt.version,
                                                    town='Town06',
                                                    cav_world=cav_world)
 

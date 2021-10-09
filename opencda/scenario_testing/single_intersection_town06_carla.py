@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Scenario testing: merging vehicle joining a platoon in the
-customized 2-lane freeway simplified map sorely with carla
+Scenario testing: single vehicle behavior in intersection
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
@@ -25,6 +24,7 @@ def run_scenario(opt, config_yaml):
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
+                                                   opt.version,
                                                    town='Town06',
                                                    cav_world=cav_world)
 

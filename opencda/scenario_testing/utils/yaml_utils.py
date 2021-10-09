@@ -25,7 +25,7 @@ def load_yaml(file):
     """
 
     stream = open(file, 'r')
-    loader = yaml.SafeLoader
+    loader = yaml.Loader
     loader.add_implicit_resolver(
         u'tag:yaml.org,2002:float',
         re.compile(u'''^(?:
@@ -61,5 +61,5 @@ def save_yaml(data, save_name):
     """
 
     with open(save_name, 'w') as outfile:
-        yaml.dump(data, outfile)
+        yaml.dump(data, outfile, default_flow_style=False)
 

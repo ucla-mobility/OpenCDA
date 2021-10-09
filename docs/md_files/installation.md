@@ -18,7 +18,7 @@
 To get started, the following requirements should be fulfilled.
 * __System requirements.__ Any 64-bits OS should run OpenCDA. We highly recommends Ubuntu  16.04/18.04/20.04.
 
-* __Adequate GPU.__ CARLA is a realistic simulation platform based on Unity, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
+* __Adequate GPU.__ CARLA is a realistic simulation platform based on Unreal Engine 4, which requires at least a 3GB GPU for smooth scene rendering, though 8GB is recommended.
 * __Disk Space.__ Estimate 100GB of space is recommended to install CARLA and Unreal Engine. 
 * __Python__ Python3.7 or higher version is required for full functions.
 
@@ -29,7 +29,7 @@ To get OpenCDA v0.1 running with complete functionality, you will need four thin
 Pytorch (optional). Pytorch is required only when you want to activate the perception module; otherwise OpenCDA
 will retrieve all perception information from the simulation server directly.
 
-###  1. CARLA Installation (0.9.11 required)
+###  1. CARLA Installation (>= 0.9.11 required)
 
 There are two different recommended ways to install the CARLA simulator and either way is fine for using OpenCDA. <br>
 Note: If you want to use the customized highway map with full assets (.fbx, .xml and .xodr) in OpenCDA, 
@@ -40,15 +40,15 @@ you have to build from source. Visit CARLA's tutorial [ADD a new map](https://ca
 
 <div class="build-buttons">
 <p>
-<a href="https://github.com/carla-simulator/carla/releases/tag/0.9.11" target="_blank" class="btn btn-neutral" title="Go to the latest CARLA release">
-<span class="icon icon-github"></span> CARLA 0.9.11 Package</a>
+<a href="https://github.com/carla-simulator/carla/releases" target="_blank" class="btn btn-neutral" title="Go to the latest CARLA release">
+<span class="icon icon-github"></span> CARLA Released Package</a>
 </p>
 </div>
 
-OpenCDA is only tested at 0.9.11 and thus we highly recommend using this version.
+OpenCDA is tested both at 0.9.11 and 0.9.12.
 To install CARLA as a precompiled package, download and extract the release file. It contains a precompiled version of the simulator, the Python API module and some scripts to be used as examples. <br>
 
-<strong>Note: The  AdditionalMaps_0.9.11.tar.gz also need to be downloaded and extract to the CARLA repo to support
+<strong>Note: The  AdditionalMaps_0.9.1x.tar.gz also need to be downloaded and extract to the CARLA repo to support
 scenario testings in Town06.</strong>
 
 #### 1.2 Build From Source
@@ -84,6 +84,7 @@ After dependencies are installed, we need to install the CARLA python library in
 You can do this by running this script:
 ```sh
 export CARLA_HOME=/path/to/your/CARLA_ROOT
+export CARLA_VERSION=0.9.11 #or 0.9.12 depends on your CARLA
 . setup.sh
 ```
 If everything works correctly, you will see a cache folder is created in your OpenCDA root dir, and the terminal shows
@@ -92,7 +93,7 @@ there should be no error.
 ```sh
 python -c "import carla" # check whether carla is installed correctly.
 ```
-<strong>Note: If you are using Python other than 3.7 and CARLA rather than 0.9.11, then you have to change the setup.sh to your
+<strong>Note: If you are using Python other than 3.7 and CARLA < 0.9.11 then you have to change the setup.sh to your
 carla version's egg file or manually installed carla to your conda environment.</strong>
 
 ### 3. Install Pytorch and Yolov5 (Optional)

@@ -13,6 +13,7 @@ import sys
 from random import shuffle
 
 import carla
+import numpy as np
 
 from opencda.core.common.vehicle_manager import VehicleManager
 from opencda.core.application.platooning.platooning_manager import \
@@ -22,7 +23,7 @@ from opencda.scenario_testing.utils.customized_map_api import \
     load_customized_world, bcolors
 
 
-def car_blueprint_filter(blueprint_library):
+def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
     """
     Exclude the uncommon vehicles from the default CARLA blueprint library
     (i.e., isetta, carlacola, cybertruck, t2).
@@ -32,31 +33,63 @@ def car_blueprint_filter(blueprint_library):
     blueprint_library : carla.blueprint_library
         The blueprint library that contains all models.
 
+    carla_version : str
+        CARLA simulator version, currently support 0.9.11 and 0.9.12. We need
+        this as since CARLA 0.9.12 the blueprint name has been changed a lot.
+
     Returns
     -------
     blueprints : list
         The list of suitable blueprints for vehicles.
     """
 
-    blueprints = [
-        blueprint_library.find('vehicle.audi.a2'),
-        blueprint_library.find('vehicle.audi.tt'),
-        blueprint_library.find('vehicle.dodge_charger.police'),
-        blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
-        blueprint_library.find('vehicle.chevrolet.impala'),
-        blueprint_library.find('vehicle.mini.cooperst'),
-        blueprint_library.find('vehicle.audi.etron'),
-        blueprint_library.find('vehicle.mercedes-benz.coupe'),
-        blueprint_library.find('vehicle.bmw.grandtourer'),
-        blueprint_library.find('vehicle.toyota.prius'),
-        blueprint_library.find('vehicle.citroen.c3'),
-        blueprint_library.find('vehicle.mustang.mustang'),
-        blueprint_library.find('vehicle.tesla.model3'),
-        blueprint_library.find('vehicle.lincoln.mkz2017'),
-        blueprint_library.find('vehicle.seat.leon'),
-        blueprint_library.find('vehicle.nissan.patrol'),
-        blueprint_library.find('vehicle.nissan.micra'),
-    ]
+    if carla_version == '0.9.11':
+        print('old version')
+        blueprints = [
+            blueprint_library.find('vehicle.audi.a2'),
+            blueprint_library.find('vehicle.audi.tt'),
+            blueprint_library.find('vehicle.dodge_charger.police'),
+            blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+            blueprint_library.find('vehicle.chevrolet.impala'),
+            blueprint_library.find('vehicle.mini.cooperst'),
+            blueprint_library.find('vehicle.audi.etron'),
+            blueprint_library.find('vehicle.mercedes-benz.coupe'),
+            blueprint_library.find('vehicle.bmw.grandtourer'),
+            blueprint_library.find('vehicle.toyota.prius'),
+            blueprint_library.find('vehicle.citroen.c3'),
+            blueprint_library.find('vehicle.mustang.mustang'),
+            blueprint_library.find('vehicle.tesla.model3'),
+            blueprint_library.find('vehicle.lincoln.mkz2017'),
+            blueprint_library.find('vehicle.seat.leon'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.micra'),
+        ]
+
+    else:
+        blueprints = [
+            blueprint_library.find('vehicle.audi.a2'),
+            blueprint_library.find('vehicle.audi.tt'),
+            blueprint_library.find('vehicle.dodge.charger_police'),
+            blueprint_library.find('vehicle.dodge.charger_police_2020'),
+            blueprint_library.find('vehicle.dodge.charger_2020'),
+            blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+            blueprint_library.find('vehicle.chevrolet.impala'),
+            blueprint_library.find('vehicle.mini.cooper_s'),
+            blueprint_library.find('vehicle.audi.etron'),
+            blueprint_library.find('vehicle.mercedes.coupe'),
+            blueprint_library.find('vehicle.mercedes.coupe_2020'),
+            blueprint_library.find('vehicle.bmw.grandtourer'),
+            blueprint_library.find('vehicle.toyota.prius'),
+            blueprint_library.find('vehicle.citroen.c3'),
+            blueprint_library.find('vehicle.ford.mustang'),
+            blueprint_library.find('vehicle.tesla.model3'),
+            blueprint_library.find('vehicle.lincoln.mkz_2017'),
+            blueprint_library.find('vehicle.lincoln.mkz_2020'),
+            blueprint_library.find('vehicle.seat.leon'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.micra'),
+        ]
+
     return blueprints
 
 
@@ -69,6 +102,9 @@ class ScenarioManager:
     ----------
     scenario_params : dict
         The dictionary contains all simulation configurations.
+
+    carla_version : str
+        CARLA simulator version, it currently supports 0.9.11 and 0.9.12
 
     xodr_path : str
         The xodr file to the customized map, default: None.
@@ -100,12 +136,20 @@ class ScenarioManager:
 
     def __init__(self, scenario_params,
                  apply_ml,
+                 carla_version,
                  xodr_path=None,
                  town=None,
                  cav_world=None):
         self.scenario_params = scenario_params
+        self.carla_version = carla_version
 
         simulation_config = scenario_params['world']
+
+        # set random seed if stated
+        if 'seed' in simulation_config:
+            np.random.seed(simulation_config['seed'])
+            random.seed(simulation_config['seed'])
+
         self.client = \
             carla.Client('localhost', simulation_config['client_port'])
         self.client.set_timeout(10.0)
@@ -135,14 +179,44 @@ class ScenarioManager:
                 simulation_config['fixed_delta_seconds']
         else:
             sys.exit(
-                'ERROR: Current version only supports sync simulation mode, '
-                'v0.2 will support async mode.')
+                'ERROR: Current version only supports sync simulation mode')
 
         self.world.apply_settings(new_settings)
+
+        # set weather
+        weather = self.set_weather(simulation_config['weather'])
+        self.world.set_weather(weather)
 
         self.cav_world = cav_world
         self.carla_map = self.world.get_map()
         self.apply_ml = apply_ml
+
+    @staticmethod
+    def set_weather(weather_settings):
+        """
+        Set CARLA weather params.
+
+        Parameters
+        ----------
+        weather_settings : dict
+            The dictionary that contains all parameters of weather.
+
+        Returns
+        -------
+        The CARLA weather setting.
+        """
+        weather = carla.WeatherParameters(
+            sun_altitude_angle=weather_settings['sun_altitude_angle'],
+            cloudiness=weather_settings['cloudiness'],
+            precipitation=weather_settings['precipitation'],
+            precipitation_deposits=weather_settings['precipitation_deposits'],
+            wind_intensity=weather_settings['wind_intensity'],
+            fog_density=weather_settings['fog_density'],
+            fog_distance=weather_settings['fog_distance'],
+            fog_falloff=weather_settings['fog_falloff'],
+            wetness=weather_settings['wetness']
+        )
+        return weather
 
     def create_vehicle_manager(self, application,
                                map_helper=None,
@@ -169,8 +243,11 @@ class ScenarioManager:
         """
         print('Creating single CAVs.')
         # By default, we use lincoln as our cav model.
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+
         cav_vehicle_bp = \
-            self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
+            self.world.get_blueprint_library().find(default_model)
         single_cav_list = []
 
         for i, cav_config in enumerate(
@@ -189,7 +266,7 @@ class ScenarioManager:
                         yaw=cav_config['spawn_position'][4],
                         roll=cav_config['spawn_position'][3]))
             else:
-                spawn_transform = map_helper(self.carla_map,
+                spawn_transform = map_helper(self.carla_version,
                                              *cav_config['spawn_special'])
 
             cav_vehicle_bp.set_attribute('color', '0, 0, 255')
@@ -243,8 +320,11 @@ class ScenarioManager:
 
         # we use lincoln as default choice since our UCLA mobility lab use the
         # same car
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+
         cav_vehicle_bp = \
-            self.world.get_blueprint_library().find('vehicle.lincoln.mkz2017')
+            self.world.get_blueprint_library().find(default_model)
 
         # create platoons
         for i, platoon in enumerate(
@@ -262,7 +342,7 @@ class ScenarioManager:
                             yaw=cav['spawn_position'][4],
                             roll=cav['spawn_position'][3]))
                 else:
-                    spawn_transform = map_helper(self.carla_map,
+                    spawn_transform = map_helper(self.carla_version,
                                                  *cav['spawn_special'])
 
                 cav_vehicle_bp.set_attribute('color', '0, 0, 255')
@@ -316,9 +396,12 @@ class ScenarioManager:
 
         blueprint_library = self.world.get_blueprint_library()
 
-        ego_vehicle_random_list = car_blueprint_filter(blueprint_library)
+        ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
+                                                       self.carla_version)
         # if not random select, we always choose lincoln.mkz with green color
-        ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+        ego_vehicle_bp = blueprint_library.find(default_model)
 
         for i, vehicle_config in enumerate(traffic_config['vehicle_list']):
             spawn_transform = carla.Transform(
@@ -375,30 +458,34 @@ class ScenarioManager:
         """
         blueprint_library = self.world.get_blueprint_library()
 
-        ego_vehicle_random_list = car_blueprint_filter(blueprint_library)
+        ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
+                                                       self.carla_version)
         # if not random select, we always choose lincoln.mkz with green color
-        ego_vehicle_bp = blueprint_library.find('vehicle.lincoln.mkz2017')
+        default_model = 'vehicle.lincoln.mkz2017' \
+            if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+        ego_vehicle_bp = blueprint_library.find(default_model)
 
-        spawn_num = traffic_config['vehicle_list']
-        spawn_range = traffic_config['range']
-
-        x_min, x_max, y_min, y_max = \
-            math.floor(spawn_range[0]), math.ceil(spawn_range[1]), \
-            math.floor(spawn_range[2]), math.ceil(spawn_range[3])
-
+        spawn_ranges = traffic_config['range']
         spawn_set = set()
+        spawn_num = 0
 
-        for x in range(x_min, x_max, int(spawn_range[4])):
-            for y in range(y_min, y_max, int(spawn_range[5])):
-                location = carla.Location(x=x, y=y, z=0.3)
-                way_point = self.carla_map.get_waypoint(location).transform
+        for spawn_range in spawn_ranges:
+            spawn_num += spawn_range[6]
+            x_min, x_max, y_min, y_max = \
+                math.floor(spawn_range[0]), math.ceil(spawn_range[1]), \
+                math.floor(spawn_range[2]), math.ceil(spawn_range[3])
 
-                spawn_set.add((way_point.location.x,
-                               way_point.location.y,
-                               way_point.location.z,
-                               way_point.rotation.roll,
-                               way_point.rotation.yaw,
-                               way_point.rotation.pitch))
+            for x in range(x_min, x_max, int(spawn_range[4])):
+                for y in range(y_min, y_max, int(spawn_range[5])):
+                    location = carla.Location(x=x, y=y, z=0.3)
+                    way_point = self.carla_map.get_waypoint(location).transform
+
+                    spawn_set.add((way_point.location.x,
+                                   way_point.location.y,
+                                   way_point.location.z,
+                                   way_point.rotation.roll,
+                                   way_point.rotation.yaw,
+                                   way_point.rotation.pitch))
         count = 0
         spawn_list = list(spawn_set)
         shuffle(spawn_list)
@@ -436,6 +523,11 @@ class ScenarioManager:
 
             vehicle.set_autopilot(True, 8000)
             tm.auto_lane_change(vehicle, traffic_config['auto_lane_change'])
+
+            if 'ignore_lights_percentage' in traffic_config:
+                tm.ignore_lights_percentage(vehicle,
+                                            traffic_config[
+                                                'ignore_lights_percentage'])
 
             # each vehicle have slight different speed
             tm.vehicle_percentage_speed_difference(
@@ -477,11 +569,9 @@ class ScenarioManager:
                                                   traffic_config,
                                                   bg_list)
 
-        elif isinstance(traffic_config['vehicle_list'], int):
+        else:
             bg_list = self.spawn_vehicle_by_range(tm, traffic_config, bg_list)
 
-        else:
-            sys.exit('Traffic vehicle list param has to be a list or int!')
         print('CARLA traffic flow generated.')
         return tm, bg_list
 
