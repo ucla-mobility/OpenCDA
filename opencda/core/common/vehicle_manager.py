@@ -32,7 +32,7 @@ class VehicleManager(object):
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
 
     config_yaml : dict
-        The configuration dictionary of the localization module.
+        The configuration dictionary of this CAV.
 
     application : list
         The application category, currently support:['single','platoon'].

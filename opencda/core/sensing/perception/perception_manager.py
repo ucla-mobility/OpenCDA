@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Perception module
+Perception module base.
 """
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
@@ -22,20 +22,26 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import TrafficLight
 from opencda.core.sensing.perception.o3d_lidar_libs import \
-    o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show,\
+    o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
     o3d_camera_lidar_fusion
 
 
 class CameraSensor:
     """
-    Camera manager.
+    Camera manager for vehicle or infrastructure.
 
     Parameters
     ----------
     vehicle : carla.Vehicle
-        The carla.Vehicle. We need this class to spawn sensors.
+        The carla.Vehicle, this is for cav.
 
-    position : str
+    world : carla.World
+        The carla world object, this is for rsu.
+
+    global_position : list
+        Global position of the infrastructure, [x, y, z]
+
+    relative_position : str
         Indicates the sensor is a front or rear camera. option:
         front, left, right.
 
@@ -47,44 +53,22 @@ class CameraSensor:
         The carla sensor that mounts at the vehicle.
 
     """
-    def __init__(self, vehicle, position='front'):
-        world = vehicle.get_world()
+
+    def __init__(self, vehicle, world, relative_position, global_position):
+        if vehicle is not None:
+            world = vehicle.get_world()
+
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
         blueprint.set_attribute('fov', '100')
 
-        if position == 'front':
-            spawn_point = carla.Transform(
-                carla.Location(
-                    x=2.5, y=0.0, z=1.0), carla.Rotation(
-                    pitch=0, roll=0, yaw=0))
-        elif position == 'right':
-            spawn_point = carla.Transform(
-                carla.Location(
-                    x=0.0, y=0.3, z=1.8), carla.Rotation(
-                    pitch=0, roll=0, yaw=100))
-        elif position == 'left':
-            spawn_point = carla.Transform(
-                carla.Location(
-                    x=0.0,
-                    y=-0.3,
-                    z=1.8),
-                carla.Rotation(
-                    pitch=0,
-                    roll=0,
-                    yaw=-100))
-        else:
-            spawn_point = carla.Transform(
-                carla.Location(
-                    x=-2.0,
-                    y=0.0,
-                    z=1.5),
-                carla.Rotation(
-                    pitch=0,
-                    roll=0,
-                    yaw=180))
+        spawn_point = self.spawn_point_estimation(relative_position,
+                                                  global_position)
 
-        self.sensor = world.spawn_actor(
-            blueprint, spawn_point, attach_to=vehicle)
+        if vehicle is not None:
+            self.sensor = world.spawn_actor(
+                blueprint, spawn_point, attach_to=vehicle)
+        else:
+            self.sensor = world.spawn_actor(blueprint, spawn_point)
 
         self.image = None
         self.timstamp = None
@@ -97,6 +81,47 @@ class CameraSensor:
         # camera attributes
         self.image_width = int(self.sensor.attributes['image_size_x'])
         self.image_height = int(self.sensor.attributes['image_size_y'])
+
+    @staticmethod
+    def spawn_point_estimation(relative_position, global_position):
+
+        pitch = 0
+        carla_location = carla.Location(x=0, y=0, z=0)
+
+        if global_position is not None:
+            carla_location = carla.Location(
+                x=global_position[0],
+                y=global_position[1],
+                z=global_position[2])
+            pitch = -35
+
+        if relative_position == 'front':
+            carla_location = carla.Location(x=carla_location.x + 2.5,
+                                            y=carla_location.y,
+                                            z=carla_location.z + 1.0)
+            yaw = 0
+
+        elif relative_position == 'right':
+            carla_location = carla.Location(x=carla_location.x + 0.0,
+                                            y=carla_location.y + 0.3,
+                                            z=carla_location.z + 1.8)
+            yaw = 100
+
+        elif relative_position == 'left':
+            carla_location = carla.Location(x=carla_location.x + 0.0,
+                                            y=carla_location.y - 0.3,
+                                            z=carla_location.z + 1.8)
+            yaw = -100
+        else:
+            carla_location = carla.Location(x=carla_location.x - 2.0,
+                                            y=carla_location.y,
+                                            z=carla_location.z + 1.5)
+            yaw = 180
+
+        carla_rotation = carla.Rotation(roll=0, yaw=yaw, pitch=pitch)
+        spawn_point = carla.Transform(carla_location, carla_rotation)
+
+        return spawn_point
 
     @staticmethod
     def _on_rgb_image_event(weak_self, event):
@@ -121,10 +146,16 @@ class LidarSensor:
     Parameters
     ----------
     vehicle : carla.Vehicle
-        carla Vehicle, we need this to spawn sensors.
+        The carla.Vehicle, this is for cav.
+
+    world : carla.World
+        The carla world object, this is for rsu.
 
     config_yaml : dict
         Configuration dictionary for lidar.
+
+    global_position : list
+        Global position of the infrastructure, [x, y, z]
 
     Attributes
     ----------
@@ -136,8 +167,9 @@ class LidarSensor:
 
     """
 
-    def __init__(self, vehicle, config_yaml):
-        world = vehicle.get_world()
+    def __init__(self, vehicle, world, config_yaml, global_position):
+        if vehicle is not None:
+            world = vehicle.get_world()
         blueprint = world.get_blueprint_library().find('sensor.lidar.ray_cast')
 
         # set attribute based on the configuration
@@ -164,10 +196,18 @@ class LidarSensor:
             'noise_stddev', str(
                 config_yaml['noise_stddev']))
 
-        # spawn sensor on vehicle
-        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.9))
-        self.sensor = world.spawn_actor(
-            blueprint, spawn_point, attach_to=vehicle)
+        # spawn sensor
+        if global_position is None:
+            spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.9))
+        else:
+            spawn_point = carla.Transform(carla.Location(x=global_position[0],
+                                                         y=global_position[1],
+                                                         z=global_position[2]))
+        if vehicle is not None:
+            self.sensor = world.spawn_actor(
+                blueprint, spawn_point, attach_to=vehicle)
+        else:
+            self.sensor = world.spawn_actor(blueprint, spawn_point)
 
         # lidar data
         self.data = None
@@ -206,10 +246,16 @@ class SemanticLidarSensor:
     Parameters
     ----------
     vehicle : carla.Vehicle
-        carla Vehicle, we need this to spawn sensors.
+        The carla.Vehicle, this is for cav.
+
+    world : carla.World
+        The carla world object, this is for rsu.
 
     config_yaml : dict
-        Configuration dictionary, the same as the normal lidar.
+        Configuration dictionary for lidar.
+
+    global_position : list
+        Global position of the infrastructure, [x, y, z]
 
     Attributes
     ----------
@@ -221,10 +267,13 @@ class SemanticLidarSensor:
 
 
     """
-    def __init__(self, vehicle, config_yaml):
-        world = vehicle.get_world()
-        blueprint =\
-            world.get_blueprint_library().\
+
+    def __init__(self, vehicle, world, config_yaml, global_position):
+        if vehicle is not None:
+            world = vehicle.get_world()
+
+        blueprint = \
+            world.get_blueprint_library(). \
                 find('sensor.lidar.ray_cast_semantic')
 
         # set attribute based on the configuration
@@ -239,10 +288,19 @@ class SemanticLidarSensor:
             'rotation_frequency', str(
                 config_yaml['rotation_frequency']))
 
-        # spawn sensor on vehicle
-        spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.9))
-        self.sensor = world.spawn_actor(
-            blueprint, spawn_point, attach_to=vehicle)
+        # spawn sensor
+        if global_position is None:
+            spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.9))
+        else:
+            spawn_point = carla.Transform(carla.Location(x=global_position[0],
+                                                         y=global_position[1],
+                                                         z=global_position[2]))
+
+        if vehicle is not None:
+            self.sensor = world.spawn_actor(
+                blueprint, spawn_point, attach_to=vehicle)
+        else:
+            self.sensor = world.spawn_actor(blueprint, spawn_point)
 
         # lidar data
         self.points = None
@@ -301,6 +359,9 @@ class PerceptionManager:
     data_dump : bool
         Whether dumping data, if true, semantic lidar will be spawned.
 
+    carla_world : carla.world
+        CARLA world, used for rsu.
+
     Attributes
     ----------
     lidar : opencda object
@@ -313,13 +374,19 @@ class PerceptionManager:
         Open3d point cloud visualizer.
     """
 
-    def __init__(self, vehicle, config_yaml, cav_world, data_dump=False):
+    def __init__(self, vehicle, config_yaml, cav_world,
+                 data_dump=False, carla_world=None, infra_id=None):
         self.vehicle = vehicle
+        self.carla_world = carla_world if carla_world is not None \
+            else self.vehicle.get_world()
+        self.id = infra_id if infra_id is not None else vehicle.id
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera_visualize']
         self.camera_num = min(config_yaml['camera_num'], 4)
         self.lidar_visualize = config_yaml['lidar_visualize']
+        self.global_position = config_yaml['global_position'] \
+            if 'global_position' in config_yaml else None
 
         self.cav_world = weakref.ref(cav_world)()
         ml_manager = cav_world.ml_manager
@@ -343,7 +410,8 @@ class PerceptionManager:
             for i in range(self.camera_num):
                 self.rgb_camera.append(
                     CameraSensor(
-                        vehicle, mount_position[i]))
+                        vehicle, self.carla_world, mount_position[i],
+                        self.global_position))
 
         else:
             self.rgb_camera = None
@@ -351,8 +419,11 @@ class PerceptionManager:
         # we only spawn the LiDAR when perception module is activated or lidar
         # visualization is needed
         if self.activate or self.lidar_visualize:
-            self.lidar = LidarSensor(vehicle, config_yaml['lidar'])
-            self.o3d_vis = o3d_visualizer_init(vehicle.id)
+            self.lidar = LidarSensor(vehicle,
+                                     self.carla_world,
+                                     config_yaml['lidar'],
+                                     self.global_position)
+            self.o3d_vis = o3d_visualizer_init(self.id)
         else:
             self.lidar = None
             self.o3d_vis = None
@@ -361,7 +432,9 @@ class PerceptionManager:
         self.data_dump = data_dump
         if data_dump:
             self.semantic_lidar = SemanticLidarSensor(vehicle,
-                                                      config_yaml['lidar'])
+                                                      self.carla_world,
+                                                      config_yaml['lidar'],
+                                                      self.global_position)
 
         # count how many steps have been passed
         self.count = 0
@@ -473,14 +546,14 @@ class PerceptionManager:
         if self.camera_visualize:
             names = ['front', 'right', 'left', 'back']
             for (i, rgb_image) in enumerate(rgb_draw_images):
-                if i > self.camera_num or i > self.camera_visualize - 1:
+                if i > self.camera_num - 1 or i > self.camera_visualize - 1:
                     break
                 rgb_image = self.ml_manager.draw_2d_box(
                     yolo_detection, rgb_image, i)
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
                 cv2.imshow(
                     '%s camera of actor %d, perception activated' %
-                    (names[i], self.vehicle.id), rgb_image)
+                    (names[i], self.id), rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
@@ -514,13 +587,13 @@ class PerceptionManager:
          objects: dict
             Updated object dictionary.
         """
-        world = self.vehicle.get_world()
+        world = self.carla_world
 
         vehicle_list = world.get_actors().filter("*vehicle*")
         thresh = 50 if not self.data_dump else 120
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
-                        v.id != self.vehicle.id]
+                        v.id != self.id]
 
         # use semantic lidar to filter out vehicles out of the range
         if self.data_dump:
@@ -550,18 +623,25 @@ class PerceptionManager:
         if self.camera_visualize:
             while self.rgb_camera[0].image is None:
                 continue
-            # we only visualiz the frontal camera
-            rgb_image = np.array(self.rgb_camera[0].image)
-            # draw the ground truth bbx on the camera image
-            rgb_image = self.visualize_3d_bbx_front_camera(objects, rgb_image)
-            # resize to make it fittable to the screen
-            rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
 
-            # show image using cv2
-            cv2.imshow(
-                'front camera of actor %d, perception deactivated' %
-                self.vehicle.id, rgb_image)
-            cv2.waitKey(1)
+            names = ['front', 'right', 'left', 'back']
+
+            for (i, rgb_camera) in enumerate(self.rgb_camera):
+                if i > self.camera_num - 1 or i > self.camera_visualize - 1:
+                    break
+                # we only visualiz the frontal camera
+                rgb_image = np.array(rgb_camera.image)
+                # draw the ground truth bbx on the camera image
+                rgb_image = self.visualize_3d_bbx_front_camera(objects,
+                                                               rgb_image)
+                # resize to make it fittable to the screen
+                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
+
+                # show image using cv2
+                cv2.imshow(
+                    '%s camera of actor %d, perception deactivated' %
+                    (names[i], self.id), rgb_image)
+                cv2.waitKey(1)
 
         if self.lidar_visualize:
             while self.lidar.data is None:
@@ -657,10 +737,10 @@ class PerceptionManager:
         if 'vehicles' not in objects:
             return
 
-        world = self.vehicle.get_world()
+        world = self.carla_world
         vehicle_list = world.get_actors().filter("*vehicle*")
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
-                        v.id != self.vehicle.id]
+                        v.id != self.id]
 
         # todo: consider the minimum distance to be safer in next version
         for v in vehicle_list:
@@ -704,7 +784,7 @@ class PerceptionManager:
         object : dict
             The updated dictionary.
         """
-        world = self.vehicle.get_world()
+        world = self.carla_world
         tl_list = world.get_actors().filter('traffic.traffic_light*')
 
         objects.update({'traffic_lights': []})
