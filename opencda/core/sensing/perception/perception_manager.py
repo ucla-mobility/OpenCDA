@@ -633,7 +633,8 @@ class PerceptionManager:
                 rgb_image = np.array(rgb_camera.image)
                 # draw the ground truth bbx on the camera image
                 rgb_image = self.visualize_3d_bbx_front_camera(objects,
-                                                               rgb_image)
+                                                               rgb_image,
+                                                               i)
                 # resize to make it fittable to the screen
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
 
@@ -694,7 +695,7 @@ class PerceptionManager:
 
         return new_vehicle_list
 
-    def visualize_3d_bbx_front_camera(self, objects, rgb_image):
+    def visualize_3d_bbx_front_camera(self, objects, rgb_image, camera_index):
         """
         Visualize the 3d bounding box on frontal camera image.
 
@@ -706,17 +707,27 @@ class PerceptionManager:
         rgb_image : np.ndarray
             Received rgb image at current timestamp.
 
+        camera_index : int
+            Indicate the index of the current camera.
+
         """
+        camera_transform = \
+            self.rgb_camera[camera_index].sensor.get_transform()
+        camera_location = \
+            camera_transform.location
+        camera_rotation = \
+            camera_transform.rotation
+
         for v in objects['vehicles']:
             # we only draw the bounding box in the fov of camera
             _, angle = cal_distance_angle(
-                v.get_location(), self.ego_pos.location,
-                self.ego_pos.rotation.yaw)
-            if angle < 30:
+                v.get_location(), camera_location,
+                camera_rotation.yaw)
+            if angle < 60:
                 bbx_camera = st.get_2d_bb(
                     v,
-                    self.rgb_camera[0].sensor,
-                    self.rgb_camera[0].sensor.get_transform())
+                    self.rgb_camera[camera_index].sensor,
+                    camera_transform)
                 cv2.rectangle(rgb_image,
                               (int(bbx_camera[0, 0]), int(bbx_camera[0, 1])),
                               (int(bbx_camera[1, 0]), int(bbx_camera[1, 1])),
