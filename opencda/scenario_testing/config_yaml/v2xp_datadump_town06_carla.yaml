@@ -27,7 +27,7 @@ rsu_base: &rsu_base
   sensing:
     perception:
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
@@ -42,12 +42,12 @@ rsu_base: &rsu_base
         dropoff_zero_intensity: 0.4
         noise_stddev: 0.02
     localization:
-      activate: false # when not activated, ego position will be retrieved from server directly
+      activate: true # when not activated, ego position will be retrieved from server directly
       dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
-        noise_alt_stddev: 0.005
-        noise_lat_stddev: 1e-6
-        noise_lon_stddev: 1e-6
+        noise_alt_stddev: 0.05
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
 
 # Define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
@@ -164,15 +164,15 @@ scenario:
           <<: *base_local_planner
           debug_trajectory: false
           debug: false
-#    - <<: *vehicle_base
-#      spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
-#      destination: [-2.43, 263, 0.3]
-#      v2x:
-#        <<: *base_v2x
-#        communication_range: 45
-#      behavior:
-#        <<: *base_behavior
-#        local_planner:
-#          <<: *base_local_planner
-#          debug_trajectory: false
-#          debug: false
+    - <<: *vehicle_base
+      spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
+      destination: [-2.43, 263, 0.3]
+      v2x:
+        <<: *base_v2x
+        communication_range: 45
+      behavior:
+        <<: *base_behavior
+        local_planner:
+          <<: *base_local_planner
+          debug_trajectory: false
+          debug: false
