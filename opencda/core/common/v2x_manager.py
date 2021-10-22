@@ -79,6 +79,7 @@ class V2XManager(object):
         self.speed_noise = 0.0
         self.lag = 0
 
+        # Add noise to V2X communication if needed.
         if 'loc_noise' in config_yaml:
             self.loc_noise = config_yaml['loc_noise']
         if 'yaw_noise' in config_yaml:

@@ -29,6 +29,9 @@ class CavWorld(object):
     _platooning_dict : dict
         A dictionary that stores platooning managers.
 
+    _rsu_manager_dict : dict
+        A dictionary that stores RSU managers.
+
     ml_manager : opencda object.
         The machine learning manager class.
     """
@@ -38,6 +41,7 @@ class CavWorld(object):
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
+        self._rsu_manager_dict = {}
         self.ml_manager = None
 
         if apply_ml:
@@ -75,6 +79,17 @@ class CavWorld(object):
         """
         self._platooning_dict.update(
             {platooning_manger.pmid: platooning_manger})
+
+    def update_rsu_manager(self, rsu_manager):
+        """
+        Add rsu manager.
+
+        Parameters
+        ----------
+        rsu_manager : opencda object
+            The RSU manager class.
+        """
+        self._rsu_manager_dict.update({rsu_manager.rid: rsu_manager})
 
     def update_sumo_vehicles(self, sumo2carla_ids):
         """
