@@ -37,6 +37,8 @@ def run_scenario(opt, config_yaml):
         single_cav_list = \
             scenario_manager.create_vehicle_manager(application=['single'],
                                                     data_dump=True)
+        rsu_list = \
+            scenario_manager.create_rsu_manager(data_dump=True)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = \
@@ -53,12 +55,11 @@ def run_scenario(opt, config_yaml):
         # save the data collection protocol to the folder
         current_path = os.path.dirname(os.path.realpath(__file__))
         save_yaml_name = os.path.join(current_path,
-                                          '../../data_dumping',
-                                          scenario_params['current_time'],
-                                          'data_protocol.yaml')
+                                      '../../data_dumping',
+                                      scenario_params['current_time'],
+                                      'data_protocol.yaml')
         save_yaml(scenario_params, save_yaml_name)
 
-        # run steps
         while True:
             scenario_manager.tick()
             transform = single_cav_list[0].vehicle.get_transform()
@@ -75,6 +76,10 @@ def run_scenario(opt, config_yaml):
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
 
+            for rsu in rsu_list:
+                rsu.update_info()
+                rsu.run_step()
+
     finally:
         eval_manager.evaluate()
 
@@ -85,6 +90,7 @@ def run_scenario(opt, config_yaml):
 
         for v in single_cav_list:
             v.destroy()
+        for r in rsu_list:
+            r.destroy()
         for v in bg_veh_list:
             v.destroy()
-

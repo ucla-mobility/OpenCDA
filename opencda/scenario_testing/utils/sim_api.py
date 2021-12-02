@@ -18,6 +18,7 @@ import numpy as np
 from opencda.core.common.vehicle_manager import VehicleManager
 from opencda.core.application.platooning.platooning_manager import \
     PlatooningManager
+from opencda.core.common.rsu_manager import RSUManager
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.utils.customized_map_api import \
     load_customized_world, bcolors
@@ -372,6 +373,35 @@ class ScenarioManager:
             platoon_list.append(platoon_manager)
 
         return platoon_list
+
+    def create_rsu_manager(self, data_dump):
+        """
+        Create a list of RSU.
+
+        Parameters
+        ----------
+        data_dump : bool
+            Whether to dump sensor data.
+
+        Returns
+        -------
+        rsu_list : list
+            A list contains all rsu managers..
+        """
+        print('Creating RSU.')
+        rsu_list = []
+        for i, rsu_config in enumerate(
+                self.scenario_params['scenario']['rsu_list']):
+
+            rsu_manager = RSUManager(self.world, rsu_config,
+                                     self.carla_map,
+                                     self.cav_world,
+                                     self.scenario_params['current_time'],
+                                     data_dump)
+
+            rsu_list.append(rsu_manager)
+
+        return rsu_list
 
     def spawn_vehicles_by_list(self, tm, traffic_config, bg_list):
         """
