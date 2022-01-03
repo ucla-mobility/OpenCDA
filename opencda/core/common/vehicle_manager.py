@@ -41,10 +41,10 @@ class VehicleManager(object):
         The CARLA simulation map.
 
     cav_world : opencda object
-        CAV World.
+        CAV World. This is used for V2X communication simulation.
 
     current_time : str
-        Timestamp of the simulation beginning.
+        Timestamp of the simulation beginning, used for data dumping.
 
     data_dumping : bool
         Indicates whether to dump sensor data during simulation.
