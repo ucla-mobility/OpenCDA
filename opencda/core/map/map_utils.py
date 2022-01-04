@@ -8,6 +8,13 @@
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import numpy as np
+from enum import IntEnum
+
+
+class InterpolationMethod(IntEnum):
+    INTER_METER = 0  # fixed interpolation at a given step in meters
+    INTER_ENSURE_LEN = 1  # ensure we always get the same number of elements
+
 
 def lateral_shift(transform, shift):
     transform.rotation.yaw += 90

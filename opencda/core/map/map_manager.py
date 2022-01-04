@@ -5,12 +5,13 @@
 
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
-
+import cv2
 import numpy as np
 import uuid
 
 from opencda.core.map.map_utils import \
-    lateral_shift, list_loc2array, list_wpt2array
+    lateral_shift, list_loc2array, list_wpt2array, InterpolationMethod
+from opencda.core.map.map_drawing import cv2_subpixel, draw_road
 
 
 class MapManager(object):
@@ -33,9 +34,10 @@ class MapManager(object):
 
     def __init__(self, carla_map, pixels_per_meter):
         self.meter_per_pixel = 1 / pixels_per_meter
-        self.meter_per_pixel = pixels_per_meter
+        self.pixels_per_meter = pixels_per_meter
         # todo: hard coded for now
-        self.raster_size = 224
+        self.raster_size = np.array([224, 224])
+        self.intepolation_point = 300
 
         # list of all start waypoints in HD Map
         topology = [x[0] for x in carla_map.get_topology()]
@@ -50,13 +52,8 @@ class MapManager(object):
         # this is mainly used for efficient filtering
         self.bound_info = {'lanes': {},
                            'crosswalks': {}}
-
-        lanes_id, lanes_boundary, crosswalk_id, crosswalk_boundary = \
-            self.generate_lane_cross_dict()
-        self.bound_info['lanes']['ids'] = lanes_id
-        self.bound_info['lanes']['bounds'] = lanes_boundary
-        self.bound_info['crosswalks']['ids'] = crosswalk_id
-        self.bound_info['crosswalks']['bounds'] = crosswalk_boundary
+        # generate lane, crosswalk and boundary information
+        self.generate_lane_cross_dict()
 
     @staticmethod
     def get_bounds(left_lane, right_lane):
@@ -85,8 +82,8 @@ class MapManager(object):
 
         return bounds
 
-    def indices_in_bounds(self,
-                          center: np.ndarray,
+    @staticmethod
+    def indices_in_bounds(center: np.ndarray,
                           bounds: np.ndarray,
                           half_extent: float) -> np.ndarray:
         """
@@ -116,22 +113,10 @@ class MapManager(object):
         y_max_in = y_center < bounds[:, 1, 1] + half_extent
         return np.nonzero(x_min_in & y_min_in & x_max_in & y_max_in)[0]
 
-
     def generate_lane_cross_dict(self):
         """
         From the topology generate all lane and crosswalk
         information in a dictionary.
-
-        Returns
-        -------
-        lanes_id : list
-            The list of lane object uuids.
-        lane_bounds : np.array
-            Lane boundary information.
-        crosswalks_ids : list
-            The list of crosswolk object uuids.
-        crosswalks_bounds : np.array
-            crosswalk boundary information.
         """
         # list of str
         lanes_id = []
@@ -175,6 +160,49 @@ class MapManager(object):
             self.lane_info.update({lane_id: {'xyz_left': left_marking,
                                              'xyz_right': right_marking,
                                              'xyz_mid': mid_lane}})
-        return lanes_id, lanes_bounds, crosswalks_ids, crosswalks_bounds
+            # boundary information
+            self.bound_info['lanes']['ids'] = lanes_id
+            self.bound_info['lanes']['bounds'] = lanes_bounds
+            self.bound_info['crosswalks']['ids'] = crosswalks_ids
+            self.bound_info['crosswalks']['bounds'] = crosswalks_bounds
 
+    def rasterize(self, center):
+        """
+        Todo: only for unit testing for now
+        """
+        img = 255 * np.ones(shape=(self.raster_size[1], self.raster_size[0], 3),
+                            dtype=np.uint8)
+        # filter using half a radius from the center
+        raster_radius = float(np.linalg.norm(self.raster_size *
+                                             np.array([self.meter_per_pixel,
+                                                      self.meter_per_pixel]))) / 2
+        lane_indices = self.indices_in_bounds(center,
+                                              self.bound_info['lanes']['bounds'],
+                                              raster_radius)
+        lanes_area_list = []
+
+        for idx, lane_idx in enumerate(lane_indices):
+            lane_idx = self.bound_info['lanes']['ids'][lane_idx]
+            lane_info = self.lane_info[lane_idx]
+            xyz_left, xyz_right = \
+                lane_info['xyz_left'], lane_info['xyz_right']
+
+            lane_area = np.zeros((2, xyz_left.shape[0], 2))
+            lane_area[0] = xyz_left[:, :2]
+            lane_area[1] = xyz_right[::-1, :2]
+            # todo tmp translation, need to be more organized
+            lane_area[:, :, 0] = \
+                (lane_area[:, :, 0] - center[0]) * self.pixels_per_meter + \
+                self.raster_size[1] // 2
+            lane_area[:, :, 1] = \
+                (lane_area[:, :, 1] - center[1]) * self.pixels_per_meter + \
+                self.raster_size[0] // 2
+            lane_area = cv2_subpixel(lane_area)
+            lanes_area_list.append(lane_area)
+
+        img = draw_road(lanes_area_list, img)
+        # todo: debug purpose
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        cv2.imshow('debug', img)
+        cv2.waitKey(0)
 
