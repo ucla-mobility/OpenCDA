@@ -15,6 +15,10 @@ CV2_SHIFT_VALUE = 2 ** CV2_SUB_VALUES["shift"]
 INTERPOLATION_POINTS = 20
 
 ROAD_COLOR = (17, 17, 31)
+Lane_COLOR = {'normal': (255, 217, 82),
+              'red': (255, 0, 0),
+              'yellow': (255, 255, 0),
+              'green': (0, 255, 0)}
 
 
 def cv2_subpixel(coords: np.ndarray) -> np.ndarray:
@@ -54,4 +58,30 @@ def draw_road(lane_area_list, image):
         lane_area = lane_area.reshape(-1, 2)
         cv2.fillPoly(image, [lane_area], ROAD_COLOR,
                      **CV2_SUB_VALUES)
+    return image
+
+
+def draw_lane(lane_area_list, lane_type_list, image):
+    """
+    Draw lanes on image (polylines).
+
+    Parameters
+    ----------
+    lane_area_list : list
+        List of lane coordinates
+
+    lane_type_list : list
+        List of lane types, normal, red, green or yellow.
+
+    image : np.ndarray
+        image to be drawn
+
+    Returns
+    -------
+    drawed image.
+    """
+    for (lane_area, lane_type) in zip(lane_area_list, lane_type_list):
+        cv2.polylines(image, lane_area, False, Lane_COLOR[lane_type],
+                      **CV2_SUB_VALUES)
+
     return image

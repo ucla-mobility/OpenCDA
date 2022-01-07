@@ -7,6 +7,7 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
+import carla
 import numpy as np
 from enum import IntEnum
 
@@ -63,3 +64,24 @@ def list_wpt2array(list_wpt):
         loc_array[i, 2] = carla_wpt.transform.location.z
 
     return loc_array
+
+
+def convert_tl_status(status):
+    """
+    Convert carla.TrafficLightState to str.
+    Parameters
+    ----------
+    status : carla.TrafficLightState
+
+    Returns
+    -------
+    status_str : str
+    """
+    if status == carla.TrafficLightState.Red:
+        return 'red'
+    elif status == carla.TrafficLightState.Green:
+        return 'green'
+    elif status == carla.TrafficLightState.Yellow:
+        return 'yellow'
+    else:
+        return 'normal'
