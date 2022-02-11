@@ -21,7 +21,7 @@ Users could refer to [OpenCDA documentation](https://opencda-documentation.readt
 
 
 ## Major Components
-![teaser](docs/md_files/images/OpenCDA_diagrams.png )
+![teaser](docs/md_files/images/OpenCDA_new_diagrams.png )
 
 OpenCDA  consists of three major component: <strong>Cooperative Driving System</strong>,  <strong>Co-Simulation Tools</strong>,
 and  <strong>Scenario Manager</strong>.
