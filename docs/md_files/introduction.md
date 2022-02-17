@@ -8,12 +8,12 @@ OpenCDA is created to fill such gaps.
 <div class="build-buttons">
 <p>
 <a href="https://github.com/ucla-mobility/OpenCDA" target="_blank" class="btn btn-neutral" title="Go to the latest OpenCDA page">
-<span class="icon icon-github"></span> OpenCDA 0.1.0</a>
+<span class="icon icon-github"></span> OpenCDA 0.1.1</a>
 </p>
 </div>
 
 ### Major Components
-![](images/OpenCDA_diagrams.png )
+![](images/OpenCDA_new_diagrams.png )
  1. <em>Cooperative Driving System</em>: <br /> OpenCDA  provides  a  <strong>full-stack software </strong>  that  contains  the  common  self-driving  modules including
     <strong>sensing,   planning and actuation  layers </strong>,  and  it  is  developed  purely  in  Python for fast prototyping.
     Built  upon these basic modules, OpenCDA supports a range of  <strong>common cooperative  driving  applications</strong>. <br />
@@ -26,6 +26,8 @@ OpenCDA is created to fill such gaps.
  Through such lightweight configuration, researchers can conveniently test and evaluate their algorithms under different scenarios. In the next verision v0.2, 
  OpenScenario will be supported to trigger special events.
 
+4. <em>CDA Data Manager and Repository</em>: OpenCDA provides a series of practical functions to collect offline CDA data (e.g. V2X perception data, multi-agent trajectory prediction data) and log replay them in the simulator. The recent ICRA work [OPV2V](https://arxiv.org/abs/2109.07644)
+comes out from this component. 
 ### Key Features
 The key features of OpenCDA are:
 * <strong>Integration</strong>: OpenCDA utilizes CARLA and SUMO separately, as well as integrates them together for realistic scene rendering, vehicle modeling, and traffic simulation.
