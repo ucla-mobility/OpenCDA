@@ -77,7 +77,7 @@ python setup.py develop
 
 If conda install failed,  install through pip
 ```sh
-pip install -r requirement.txt
+pip install -r requirements.txt
 ```
 
 After dependencies are installed, we need to install the CARLA python library into opencda conda environment.
