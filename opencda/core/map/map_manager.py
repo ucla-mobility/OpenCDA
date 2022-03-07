@@ -17,7 +17,8 @@ from shapely.geometry import Polygon
 
 from opencda.core.map.map_utils import \
     lateral_shift, list_loc2array, list_wpt2array, convert_tl_status
-from opencda.core.map.map_drawing import cv2_subpixel, draw_road, draw_lane
+from opencda.core.map.map_drawing import \
+    cv2_subpixel, draw_agent, draw_road, draw_lane
 
 
 class MapManager(object):
@@ -94,6 +95,39 @@ class MapManager(object):
         bounds = np.asarray([[[x_min, y_min], [x_max, y_max]]])
 
         return bounds
+
+    @staticmethod
+    def agents_in_range(center,
+                        radius,
+                        agents_dict):
+        """
+        Filter out all agents out of the radius.
+
+        Parameters
+        ----------
+        center : np.ndarray
+            The center of rasterization in carla world coordinate
+
+        radius : float
+            Radius in meters
+
+        agents_dict : dict
+            Dictionary containing all dynamic agents.
+
+        Returns
+        -------
+        The dictionary that only contains the agent in range.
+        """
+        final_agents = {}
+
+        for agent_id, agent in agents_dict.items():
+            location = agent['location']
+            distance = math.sqrt((location[0] - center[0]) ** 2 + \
+                                 (location[1] - center[1]) ** 2)
+            if distance < radius:
+                final_agents.update({agent_id: agent})
+
+        return final_agents
 
     @staticmethod
     def indices_in_bounds(center: np.ndarray,
@@ -188,6 +222,7 @@ class MapManager(object):
             waypoints = [waypoint]
             # todo sample resolution hard-coded
             nxt = waypoint.next(0.1)[0]
+            # looping until next lane
             while nxt.road_id == waypoint.road_id \
                     and nxt.lane_id == waypoint.lane_id:
                 waypoints.append(nxt)
@@ -241,6 +276,7 @@ class MapManager(object):
 
             base_transform = tl_actor.get_transform()
             base_rot = base_transform.rotation.yaw
+            # this is where the vehicle stops
             area_loc = base_transform.transform(
                 tl_actor.trigger_volume.location)
             area_transform = carla.Transform(area_loc,
@@ -300,11 +336,120 @@ class MapManager(object):
         lane_area[:, :, 1] = \
             (lane_area[:, :, 1] - center[1]) * self.pixels_per_meter + \
             self.raster_size[0] // 2
+        # to make more precise polygon
         lane_area = cv2_subpixel(lane_area)
 
         return lane_area
 
-    def rasterize(self, center):
+    def generate_agent_area(self, center, corners):
+        """
+        Convert the agent's bbx corners from world coordinates to
+        rasterization coordinates.
+
+        Parameters
+        ----------
+        center : np.ndarray
+            Center position of the rasterization amp.
+
+        corners : list
+            The four corners of the agent's bbx under world coordinate.
+
+        Returns
+        -------
+        agent four corners in image.
+        """
+        # (4, 2) numpy array
+        corners = np.array(corners)
+        corners[:, 0] = (corners[:, 0] - center[0]) * self.pixels_per_meter + \
+                        self.raster_size[1] // 2
+        corners[:, 1] = (corners[:, 1] - center[1]) * self.pixels_per_meter + \
+                        self.raster_size[0] // 2
+        # to make more precise polygon
+        corner_area = cv2_subpixel(corners[:, :2])
+
+        return corner_area
+
+    def load_agents_world(self):
+        """
+        Load all the agents(todo: currently only vehicles supported) dynamic
+        and static info from server directly into a  dictionary.
+
+        Returns
+        -------
+        The dictionary contains all agents info in the carla world.
+        """
+
+        agent_list = self.world.get_actors().filter('vehicle.*')
+        dynamic_agent_info = {}
+
+        for agent in agent_list:
+            agent_id = agent.id
+
+            agent_transform = agent.get_transform()
+            agent_loc = [agent_transform.location.x,
+                         agent_transform.location.y,
+                         agent_transform.location.z, ]
+
+            agent_yaw = agent_transform.rotation.yaw
+
+            # calculate 4 corners
+            bb = agent.bounding_box.extent
+            corners = [
+                carla.Location(x=-bb.x, y=-bb.y),
+                carla.Location(x=-bb.x, y=bb.y),
+                carla.Location(x=bb.x, y=bb.y),
+                carla.Location(x=bb.x, y=-bb.y)
+            ]
+            # corners are originally in ego coordinate frame, convert to
+            # world coordinate
+            agent_transform.transform(corners)
+            corners_reformat = [[x.x, x.y, x.z] for x in corners]
+
+            dynamic_agent_info[agent_id] = {'location': agent_loc,
+                                            'yaw': agent_yaw,
+                                            'corners': corners_reformat}
+        return dynamic_agent_info
+
+    def rasterize_dynamic(self, center, img):
+        """
+        Rasterize the dynamic agents.
+
+        Parameters
+        ----------
+        center : np.ndarray
+            Center of the map.
+
+        Returns
+        -------
+        Rasterization image.
+        """
+        # img = 255 * np.zeros(
+        #     shape=(self.raster_size[1], self.raster_size[0], 3),
+        #     dtype=np.uint8)
+        # filter using half a radius from the center
+        raster_radius = float(np.linalg.norm(self.raster_size *
+                                             np.array([self.meter_per_pixel,
+                                                       self.meter_per_pixel]))) / 2
+        # retrieve all agents
+        dynamic_agents = self.load_agents_world()
+        # filter out agents out of range
+        final_agents = self.agents_in_range(center,
+                                            raster_radius,
+                                            dynamic_agents)
+
+        corner_list = []
+        for agent_id, agent in final_agents.items():
+            agent_corner = self.generate_agent_area(center,
+                                                    agent['corners'])
+            corner_list.append(agent_corner)
+
+        img = draw_agent(corner_list, img)
+        # todo: debug purpose
+        # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        cv2.imshow('bev_dynamic', img)
+        cv2.waitKey(0)
+
+    def rasterize_static(self, center):
         """
         Todo: only for unit testing for now
         """
@@ -345,5 +490,7 @@ class MapManager(object):
         img = draw_lane(lanes_area_list, lane_type_list, img)
         # todo: debug purpose
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        cv2.imshow('debug', img)
-        cv2.waitKey(0)
+        # cv2.imshow('bev_static', img)
+        # cv2.waitKey(0)
+
+        return img
