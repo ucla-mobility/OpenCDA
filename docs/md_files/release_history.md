@@ -16,7 +16,7 @@ Besides the above dumped data, users can also generate the future trajectory for
 vehicle for trajectory prediction purpose. Run `python root_of_opencda/scripts/generate_prediction_yaml.py`
 to generate the prediction offline.
 
-This new functionality has been proved helpful. The newest paper <strong>OPV2V: An Open Benchmark Dataset and Fusion Pipeline for Perception with Vehicle-to-Vehicle Communication</strong>
+This new functionality has been proved helpful. The newest ICRA 2022 paper <strong>OPV2V: An Open Benchmark Dataset and Fusion Pipeline for Perception with Vehicle-to-Vehicle Communication</strong>
 has utilized this new feature to collect cooperative data. Check https://mobility-lab.seas.ucla.edu/opv2v/ for more information
 
 ![](images/opv2v.png )

@@ -4,14 +4,15 @@
 [![Documentation Status](https://readthedocs.org/projects/opencda-documentation/badge/?version=latest)](https://opencda-documentation.readthedocs.io/en/latest/?badge=latest)
 
 
-OpenCDA is a <strong>SIMULATION</strong> tool integrated with a prototype cooperative driving automation (CDA; see [SAE J3216](https://www.sae.org/standards/content/j3216_202005/)) pipeline as
-well as regular automated driving components (e.g., perception, localization, planning, control). The tool integrates automated driving simulation (CARLA), traffic simulation (SUMO), and Co-simulation (CARLA + SUMO). 
+OpenCDA is an open co-simulation-based **research/engineering framework** integrated with prototype cooperative driving automation (CDA; see [SAE J3216](https://www.sae.org/standards/content/j3216_202005/)) pipelines as well as regular automated driving components (e.g., perception, localization, planning, control).  It not only enables CDA evaluation in a CARLA + SUMO co-simulation environment but also provides a rich library of source codes of CDA research pipelines. 
 
-OpenCDA is <strong>all in Python</strong>. In collaboration with [U.S.DOT CDA Research](https://its.dot.gov/cda/) and the [FHWA CARMA Program](https://highways.dot.gov/research/operations/CARMA), OpenCDA, as an open-source project,  is designed and built to support <strong>initial algorithmic testing</strong> for CDA Features. Through collaboration with CARMA Collaborative, this tool provides a unique capability to the CDA research community and will interface with the [CARMA XiL tools](https://github.com/usdot-fhwa-stol/carma-simulation) being developed by U.S.DOT to support more advanced simulation testing of CDA Features.
+In collaboration with  [U.S.DOT CDA Research](https://its.dot.gov/cda/) and the [FHWA CARMA Program](https://highways.dot.gov/research/operations/CARMA), OpenCDA, as an open-source project, is designed and built to support <strong>early-stage fundamental research </strong>  for CDA research and development. Through collaboration with CARMA Collaborative, this tool provides a unique capability to the CDA research community and will interface with the [CARMA XiL tools](https://github.com/usdot-fhwa-stol/carma-simulation) being developed by U.S.DOT to support more advanced simulation testing of CDA Features.
+
 
 The key features of OpenCDA are:
+* <strong> Research Pipeline </strong>: OpenCDA provides rich research pipelines (i.e., open-source codes for basic and advanced CDA modules, such as platooning, cooperative perception).
 * <strong>Integration</strong>: OpenCDA utilizes CARLA and SUMO separately, as well as integrates them together.
-* <strong> Full-stack Simulation</strong>: OpenCDA provides a simple prototype automated driving and cooperative driving platform, all in Python, that contains perception, localization, planning, control, and V2X communication modules.
+* <strong> Full-stack Simulation</strong>: OpenCDA provides a simple prototype automated driving and cooperative driving platform, <strong>all in Python</strong>, that contains perception, localization, planning, control, and V2X communication modules.
 * <strong>Modularity</strong>: OpenCDA is highly modularized. 
 * <strong>Benchmark</strong>: OpenCDA offers benchmark testing scenarios, benchmark baseline maps, state-of-the-art benchmark algorithms, and benchmark evaluation metrics.
 * <strong>Connectivity and Cooperation</strong>: OpenCDA supports various levels and categories of cooperation between CAVs in simulation. This differentiates OpenCDA from other single vehicle simulation tools.
@@ -21,9 +22,9 @@ Users could refer to [OpenCDA documentation](https://opencda-documentation.readt
 
 
 ## Major Components
-![teaser](docs/md_files/images/OpenCDA_diagrams.png )
+![teaser](docs/md_files/images/OpenCDA_new_diagrams.png)
 
-OpenCDA  consists of three major component: <strong>Cooperative Driving System</strong>,  <strong>Co-Simulation Tools</strong>,
+OpenCDA  consists of four major component: <strong>Cooperative Driving System</strong>,  <strong>Co-Simulation Tools</strong>, <strong>Data Manager and Repository</strong>,
 and  <strong>Scenario Manager</strong>.
 
 Check the [OpenCDA Introduction](https://opencda-documentation.readthedocs.io/en/latest/md_files/introduction.html) for more details.
@@ -60,9 +61,10 @@ We welcome your contributions.
 
 
 ## What's New
+### Feb 2022
+* Our paper [*OPV2V: An Open Benchmark Dataset and Fusion Pipeline for Perception with Vehicle-to-Vehicle Communication*](https://arxiv.org/abs/2109.07644)
+  has been accepted by ICRA 2022! It utilizes  the offline Cooperative Perception(data dumping) function in OpenCDA. Check the [github page](https://github.com/DerrickXuNu/OpenCOOD) of OPV2V if interested.
 ### Oct 2021
-* Offline Cooperative Perception(data dumping) is supported. The paper [*OPV2V: An Open Benchmark Dataset and Fusion Pipeline for Perception with Vehicle-to-Vehicle Communication*](https://arxiv.org/abs/2109.07644)
- comes out from this feature.
  * CARLA 0.9.12 now supported; Different weather conditions are supported.
  * Better traffic management supported: users now can set a customized range to background cars.
 
