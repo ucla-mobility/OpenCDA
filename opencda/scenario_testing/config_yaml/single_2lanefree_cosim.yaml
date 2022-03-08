@@ -55,6 +55,12 @@ vehicle_base: &vehicle_base
         show_animation: false # whether to show real-time trajectory plotting
         x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
         y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
+  map_manager: &base_map_manager
+    pixels_per_meter: 2
+    raster_size: [ 224, 224 ]
+    lane_sample_resolution: 0.1
+    visualize: false
+    activate: false
   behavior: &base_behavior
     max_speed: 111 # maximum speed, km/h
     tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap

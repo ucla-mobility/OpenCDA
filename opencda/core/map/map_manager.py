@@ -94,6 +94,7 @@ class MapManager(object):
         self.carla_map = carla_map
         self.center = None
 
+        self.actvate = config['activate']
         self.visualize = config['visualize']
         self.pixels_per_meter = config['pixels_per_meter']
         self.meter_per_pixel = 1 / self.pixels_per_meter
@@ -148,11 +149,16 @@ class MapManager(object):
 
     def run_step(self):
         """
-        Visualize the bev map if needed.
+        Rasterization + Visualize the bev map if needed.
         """
+        if not self.actvate:
+            return
+        self.rasterize_static()
+        self.rasterize_dynamic()
         if self.visualize:
             cv2.imshow('the bev map of agent %s' % self.agent_id,
                        self.vis_bev)
+            cv2.waitKey(1)
 
     @staticmethod
     def get_bounds(left_lane, right_lane):
@@ -390,11 +396,29 @@ class MapManager(object):
         """
         lane_area = np.zeros((2, xyz_left.shape[0], 2))
         # convert coordinates to center's coordinate frame
-        xyz_left = world_to_sensor(xyz_left, self.center)
-        xyz_right = world_to_sensor(xyz_right, self.center)
+        xyz_left = xyz_left.T
+        xyz_left = np.r_[
+            xyz_left, [np.ones(xyz_left.shape[1])]]
+        xyz_right = xyz_right.T
+        xyz_right = np.r_[
+            xyz_right, [np.ones(xyz_right.shape[1])]]
 
+        # ego's coordinate frame
+        xyz_left = world_to_sensor(xyz_left, self.center).T
+        xyz_right = world_to_sensor(xyz_right, self.center).T
+
+        # to image coordinate frame
         lane_area[0] = xyz_left[:, :2]
         lane_area[1] = xyz_right[::-1, :2]
+        # switch x and y
+        lane_area = lane_area[..., ::-1]
+        # y revert
+        lane_area[:, :, 1] = -lane_area[:, :, 1]
+
+        lane_area[:, :, 0] = lane_area[:, :, 0] * self.pixels_per_meter + \
+            self.raster_size[0] // 2
+        lane_area[:, :, 1] = lane_area[:, :, 1] * self.pixels_per_meter + \
+            self.raster_size[1] // 2
 
         # to make more precise polygon
         lane_area = cv2_subpixel(lane_area)
@@ -417,8 +441,23 @@ class MapManager(object):
         """
         # (4, 3) numpy array
         corners = np.array(corners)
+        # for homogeneous transformation
+        corners = corners.T
+        corners = np.r_[
+            corners, [np.ones(corners.shape[1])]]
         # convert to ego's coordinate frame
-        corners = world_to_sensor(corners, self.center)
+        corners = world_to_sensor(corners, self.center).T
+        corners = corners[:, :2]
+
+        # switch x and y
+        corners = corners[..., ::-1]
+        # y revert
+        corners[:, 1] = -corners[:, 1]
+
+        corners[:, 0] = corners[:, 0] * self.pixels_per_meter + \
+            self.raster_size[0] // 2
+        corners[:, 1] = corners[:, 1] * self.pixels_per_meter + \
+            self.raster_size[1] // 2
 
         # to make more precise polygon
         corner_area = cv2_subpixel(corners[:, :2])
@@ -547,3 +586,6 @@ class MapManager(object):
         self.vis_bev = draw_lane(lanes_area_list, lane_type_list,
                                  self.vis_bev)
         self.vis_bev = cv2.cvtColor(self.vis_bev, cv2.COLOR_RGB2BGR)
+
+    def close(self):
+        cv2.destroyAllWindows()
