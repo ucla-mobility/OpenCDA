@@ -19,6 +19,7 @@ from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
+from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
 
 
@@ -41,10 +42,10 @@ class VehicleManager(object):
         The CARLA simulation map.
 
     cav_world : opencda object
-        CAV World.
+        CAV World. This is used for V2X communication simulation.
 
     current_time : str
-        Timestamp of the simulation beginning.
+        Timestamp of the simulation beginning, used for data dumping.
 
     data_dumping : bool
         Indicates whether to dump sensor data during simulation.
@@ -88,6 +89,7 @@ class VehicleManager(object):
 
         # retrieve the configure for different modules
         sensing_config = config_yaml['sensing']
+        map_config = config_yaml['map_manager']
         behavior_config = config_yaml['behavior']
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
@@ -101,6 +103,10 @@ class VehicleManager(object):
         self.perception_manager = PerceptionManager(
             vehicle, sensing_config['perception'], cav_world,
             data_dumping)
+        # map manager
+        self.map_manager = MapManager(vehicle,
+                                      carla_map,
+                                      map_config)
 
         # behavior agent
         self.agent = None
@@ -172,6 +178,9 @@ class VehicleManager(object):
         # object detection
         objects = self.perception_manager.detect(ego_pos)
 
+        # update the ego pose for map manager
+        self.map_manager.update_information(ego_pos)
+
         # update ego position and speed to v2x manager,
         # and then v2x manager will search the nearby cavs
         self.v2x_manager.update_info(ego_pos, ego_spd)
@@ -184,6 +193,8 @@ class VehicleManager(object):
         """
         Execute one step of navigation.
         """
+        # visualize the bev map if needed
+        self.map_manager.run_step()
         target_speed, target_pos = self.agent.run_step(target_speed)
         control = self.controller.run_step(target_speed, target_pos)
 
@@ -202,3 +213,4 @@ class VehicleManager(object):
         self.perception_manager.destroy()
         self.localizer.destroy()
         self.vehicle.destroy()
+        self.map_manager.destroy()

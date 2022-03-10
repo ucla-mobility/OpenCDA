@@ -24,6 +24,7 @@ class GnssSensor(object):
     The default GNSS sensor module.
 
     Parameters
+    ----------
     vehicle : carla.Vehicle
         The carla.Vehicle. We need this class to spawn our gnss and imu sensor.
 
@@ -31,15 +32,7 @@ class GnssSensor(object):
         The configuration dictionary of the localization module.
 
     Attributes
-    world : carla.world
-        The caral world of the current vehicle.
-
-    blueprint : carla.blueprint
-        The current blueprint of the sensor actor.
-
-    weak_self : opencda Object
-        A weak reference point to avoid circular reference.
-
+    ----------
     sensor : CARLA actor
         The current sensor actors that will be attach to the vehicles.
     """
