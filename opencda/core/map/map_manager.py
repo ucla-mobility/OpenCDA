@@ -587,5 +587,5 @@ class MapManager(object):
                                  self.vis_bev)
         self.vis_bev = cv2.cvtColor(self.vis_bev, cv2.COLOR_RGB2BGR)
 
-    def close(self):
+    def destroy(self):
         cv2.destroyAllWindows()
