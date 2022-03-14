@@ -20,6 +20,18 @@ The key features of OpenCDA are:
 
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) for more details.
 
+## What's New
+### March 2022
+* HD Map manager is online! It currently supports generating rasterization map that includes road topology, traffic light info, and dynamic objects around each cav in real-time. This can be
+used for RL planning, HD Map learning, scene understanding, etc.
+
+### Feb 2022
+* Our paper [*OPV2V: An Open Benchmark Dataset and Fusion Pipeline for Perception with Vehicle-to-Vehicle Communication*](https://arxiv.org/abs/2109.07644)
+  has been accepted by ICRA 2022! It utilizes  the offline Cooperative Perception(data dumping) function in OpenCDA. Check the benchmark codebase [OpenCOOD](https://github.com/DerrickXuNu/OpenCOOD) of OPV2V if interested.
+### Oct 2021
+ * CARLA 0.9.12 now supported; Different weather conditions are supported.
+ * Better traffic management supported: users now can set a customized range to background cars.
+
 
 ## Major Components
 ![teaser](docs/md_files/images/OpenCDA_new_diagrams.png)
@@ -58,15 +70,6 @@ We welcome your contributions.
 - Please report bugs and improvements by submitting issues.
 - Submit your contributions using [pull requests](https://github.com/ucla-mobility/OpenCDA/pulls).
  Please use [this template](.github/PR_TEMPLATE.md) for your pull requests.
-
-
-## What's New
-### Feb 2022
-* Our paper [*OPV2V: An Open Benchmark Dataset and Fusion Pipeline for Perception with Vehicle-to-Vehicle Communication*](https://arxiv.org/abs/2109.07644)
-  has been accepted by ICRA 2022! It utilizes  the offline Cooperative Perception(data dumping) function in OpenCDA. Check the [github page](https://github.com/DerrickXuNu/OpenCOOD) of OPV2V if interested.
-### Oct 2021
- * CARLA 0.9.12 now supported; Different weather conditions are supported.
- * Better traffic management supported: users now can set a customized range to background cars.
 
 
 
