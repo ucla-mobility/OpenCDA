@@ -60,6 +60,7 @@ vehicle_base: &vehicle_base
     raster_size: [224, 224]
     lane_sample_resolution: 0.1
     visualize: true
+    activate: true
 
   behavior: &base_behavior
     max_speed: 111 # maximum speed, km/h

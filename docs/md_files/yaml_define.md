@@ -26,6 +26,7 @@ vehicle_base: &vehicle_base # define cav default parameters
   sensing: &base_sensing # define sensing parameters
     perception: &base_perception # define perception related settings
     localization: &base_localize # define localization related settings
+  map_manager: &base_map_manager # define HDMap manager
   behavior: &base_behavior # define planning related parameters
   controller: &base_controller # define controller
     type: pid_controller # define the type of controller
@@ -104,45 +105,51 @@ the [CARLA Sync documentation](https://carla.readthedocs.io/en/latest/adv_synchr
         the CAV will load the ego position from server directly.
         * `gnss` : related to the parameters of the gnss sensor.
         * `debug_helper` : parameters related to localization debugging and real-time trajectory plotting.
-* `behavior` : Define behavior planning parameters
-    * `max_speed` : int type, the maximum speed (km/h) that the CAV is allowed to reach.
-    * `tailgate_speed` : int type, the target speed (km/h) for CAV when it tries to catch up with a platoon, it is usually larger
-    than `max_speed`
-    * `speed_lim_dist` : int type, during normal driving mode, `target_speed` = `max_speed` - `speed_lim_dist`
-    * `speed_decrease` : int type, when the CAV is in car following mode and it gets too close to the
-    front vehicle, `target_speed` = `front_vehicle_speed` - `speed_decrease`
-    * `safety_time` : float type, ttc thresholding to identify whether the ego vehicle is too close to 
-    the front vehicle.
-    * `emergency_param` : float type, `emergency_stop_distance` = `current_speed` * `emergency_param`
-    * `ignore_traffic_light` : bool type, if set to true, the CAV will ignore the traffic light.
-    * `overtake_allowed` :  bool type, if set to false, overtaking is not allowed during driving.
-    * `collision_time_ahead` : float type, collision detection range
-    * `sample_resolution` : float type, the unit distance (m) between two adjacent waypoints
-    * `local_planner` : Define trajectory planning parameters.
-        * `buffer_size` : dequeue type, waypoint buffer size.
-        * `trajectory_update_freq` : int type, the update frequency for trajectory, when the length of trajectory buffer 
-        is below the frequency number, the ego vehicle will re-generate the trajectory.
-        * `waypoint_update_freq` : int type, the update frequency for waypoint buffer, when the length of the 
-        waypoint buffer is below the frequency, the waypoint buffer will load waypoints from `waypoint_queue`.
-        * `min_dist` : float type, used to pop out the waypoints that are too close to the current location
-        * `trajectory_dt` : float type, trajectory points sampling resolution.
-        * `debug` : bool type, if true, waypoint will be visualized.
-        * `debug_trajectory` : bool type, if true, trajectory will be visualized.
-* `controller` : Define controller parameters.
-    * `type` : string type, the type of controller the ego vehicle uses.
-    * `args` : the arguments related to the selected controller.
+ * `map_manager` : Define HDMap manager parameters
+   * `pixels_per_meter` : The rasterization map precision.
+   * `raster_size` : The rasterization map's H and W in pixels.
+   * `lane_sample_resolution` : Waypoint sampling resolution for lane drawing.
+   * `visualize` : Whether to show the rasterization map during running in real-time.
+   * `activate` : Whether activate the map_manager module.
+ * `behavior` : Define behavior planning parameters
+     * `max_speed` : int type, the maximum speed (km/h) that the CAV is allowed to reach.
+     * `tailgate_speed` : int type, the target speed (km/h) for CAV when it tries to catch up with a platoon, it is usually larger
+     than `max_speed`
+     * `speed_lim_dist` : int type, during normal driving mode, `target_speed` = `max_speed` - `speed_lim_dist`
+     * `speed_decrease` : int type, when the CAV is in car following mode and it gets too close to the
+     front vehicle, `target_speed` = `front_vehicle_speed` - `speed_decrease`
+     * `safety_time` : float type, ttc thresholding to identify whether the ego vehicle is too close to 
+     the front vehicle.
+     * `emergency_param` : float type, `emergency_stop_distance` = `current_speed` * `emergency_param`
+     * `ignore_traffic_light` : bool type, if set to true, the CAV will ignore the traffic light.
+     * `overtake_allowed` :  bool type, if set to false, overtaking is not allowed during driving.
+     * `collision_time_ahead` : float type, collision detection range
+     * `sample_resolution` : float type, the unit distance (m) between two adjacent waypoints
+     * `local_planner` : Define trajectory planning parameters.
+         * `buffer_size` : dequeue type, waypoint buffer size.
+         * `trajectory_update_freq` : int type, the update frequency for trajectory, when the length of trajectory buffer 
+         is below the frequency number, the ego vehicle will re-generate the trajectory.
+         * `waypoint_update_freq` : int type, the update frequency for waypoint buffer, when the length of the 
+         waypoint buffer is below the frequency, the waypoint buffer will load waypoints from `waypoint_queue`.
+         * `min_dist` : float type, used to pop out the waypoints that are too close to the current location
+         * `trajectory_dt` : float type, trajectory points sampling resolution.
+         * `debug` : bool type, if true, waypoint will be visualized.
+         * `debug_trajectory` : bool type, if true, trajectory will be visualized.
+ * `controller` : Define controller parameters.
+     * `type` : string type, the type of controller the ego vehicle uses.
+     * `args` : the arguments related to the selected controller.
 
-* `v2x` : Defome vehicle communication parameters.
-    * `enabled` : bool type, indicate whether v2x is enabled.
-    * `communication_range` : float type, the searching range of the CAV
-    * `loc_noise` : float type, the deviation of the noise added to the received ego position 
-    during communication.
-    * `yaw_noise` : float type, the deviation of the noise added to the received yaw angle
-    during communication.
-    * `speed_noise` : float type, the deviation of the noise added to the received ego speed 
-    during communication.
-    * `lag` : int type, the lagging during the communication. E.g., 2 means the CAV
-     receives the packages of other CAVs at most 2 time steps ago. 
+ * `v2x` : Defome vehicle communication parameters.
+     * `enabled` : bool type, indicate whether v2x is enabled.
+     * `communication_range` : float type, the searching range of the CAV
+     * `loc_noise` : float type, the deviation of the noise added to the received ego position 
+     during communication.
+     * `yaw_noise` : float type, the deviation of the noise added to the received yaw angle
+     during communication.
+     * `speed_noise` : float type, the deviation of the noise added to the received ego speed 
+     during communication.
+     * `lag` : int type, the lagging during the communication. E.g., 2 means the CAV
+      receives the packages of other CAVs at most 2 time steps ago. 
 
 #### platoon_base
 `platoon_base` define the default platooning parameters.
