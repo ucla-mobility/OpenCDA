@@ -12,6 +12,7 @@ OpenCDA
 │   │   └── actutation # implementation of control algorithms
 │   │   ├── application # implementation of cooperative driving applications
 │   │   ├── common # base class and communication class for cavs
+│   │   ├── map # HDMap manager
 │   │   ├── plan # planning algorithms
 │   │   └── sensing # perception adn localization algorithms.
 │   ├── customize # where the users put their customized algorithm to replace the default modules
