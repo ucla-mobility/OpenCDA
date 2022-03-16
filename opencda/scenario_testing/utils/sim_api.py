@@ -10,6 +10,7 @@ please use cosim_api.py.
 import math
 import random
 import sys
+import json
 from random import shuffle
 
 import carla
@@ -91,6 +92,14 @@ def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
             blueprint_library.find('vehicle.nissan.micra'),
         ]
 
+    return blueprints
+
+
+def multi_class_vehicle_blueprint_filter(label, blueprint_library, bp_meta):
+    blueprints = [
+        blueprint_library.find(k)
+        for k, v in bp_meta.items() if v["class"] == label
+    ]
     return blueprints
 
 
@@ -187,6 +196,20 @@ class ScenarioManager:
         # set weather
         weather = self.set_weather(simulation_config['weather'])
         self.world.set_weather(weather)
+        # Define probabilities for each type of blueprint
+        self.use_multi_class_bp = scenario_params[
+            'use_multi_class_bp'] if 'use_multi_class_bp' in scenario_params else False
+        if self.use_multi_class_bp:
+            # bbx/blueprint meta
+            with open(scenario_params['bp_meta_path']) as f:
+                self.bp_meta = json.load(f)
+            self.bp_class_sample_prob = scenario_params[
+                'bp_class_sample_prob']
+
+            # normalize probability
+            self.bp_class_sample_prob = {
+                k: v / sum(self.bp_class_sample_prob.values()) for k, v in
+                self.bp_class_sample_prob.items()}
 
         self.cav_world = cav_world
         self.carla_map = self.world.get_map()
@@ -392,7 +415,6 @@ class ScenarioManager:
         rsu_list = []
         for i, rsu_config in enumerate(
                 self.scenario_params['scenario']['rsu_list']):
-
             rsu_manager = RSUManager(self.world, rsu_config,
                                      self.carla_map,
                                      self.cav_world,
@@ -425,10 +447,15 @@ class ScenarioManager:
         """
 
         blueprint_library = self.world.get_blueprint_library()
+        if not self.use_multi_class_bp:
+            ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
+                                                           self.carla_version)
+        else:
+            label_list = list(self.bp_class_sample_prob.keys())
+            prob = [self.bp_class_sample_prob[itm] for itm in label_list]
 
-        ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
-                                                       self.carla_version)
         # if not random select, we always choose lincoln.mkz with green color
+        color = '0, 255, 0'
         default_model = 'vehicle.lincoln.mkz2017' \
             if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
         ego_vehicle_bp = blueprint_library.find(default_model)
@@ -445,17 +472,30 @@ class ScenarioManager:
                     roll=vehicle_config['spawn_position'][3]))
 
             if not traffic_config['random']:
-                ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+                ego_vehicle_bp.set_attribute('color', color)
 
             else:
+                # sample a bp from various classes
+                if self.use_multi_class_bp:
+                    label = np.random.choice(label_list, p=prob)
+                    # Given the label (class), find all associated blueprints in CARLA
+                    ego_vehicle_random_list = multi_class_vehicle_blueprint_filter(
+                        label, blueprint_library, self.bp_meta)
                 ego_vehicle_bp = random.choice(ego_vehicle_random_list)
 
-                color = random.choice(
-                    ego_vehicle_bp.get_attribute('color').recommended_values)
-                ego_vehicle_bp.set_attribute('color', color)
+                if ego_vehicle_bp.has_attribute("color"):
+                    color = random.choice(
+                        ego_vehicle_bp.get_attribute(
+                            'color').recommended_values)
+                    ego_vehicle_bp.set_attribute('color', color)
 
             vehicle = self.world.spawn_actor(ego_vehicle_bp, spawn_transform)
             vehicle.set_autopilot(True, 8000)
+
+            # augment the original carla.vehicle with bp id and color
+            vehicle.bp_id = ego_vehicle_bp.id
+            vehicle.color = color if ego_vehicle_bp.has_attribute(
+                "color") else None
 
             if 'vehicle_speed_perc' in vehicle_config:
                 tm.vehicle_percentage_speed_difference(
@@ -487,10 +527,15 @@ class ScenarioManager:
             Update traffic list.
         """
         blueprint_library = self.world.get_blueprint_library()
+        if not self.use_multi_class_bp:
+            ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
+                                                           self.carla_version)
+        else:
+            label_list = list(self.bp_class_sample_prob.keys())
+            prob = [self.bp_class_sample_prob[itm] for itm in label_list]
 
-        ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
-                                                       self.carla_version)
         # if not random select, we always choose lincoln.mkz with green color
+        color = '0, 255, 0'
         default_model = 'vehicle.lincoln.mkz2017' \
             if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
         ego_vehicle_bp = blueprint_library.find(default_model)
@@ -536,14 +581,21 @@ class ScenarioManager:
                                                   yaw=coordinates[4],
                                                   pitch=coordinates[5]))
             if not traffic_config['random']:
-                ego_vehicle_bp.set_attribute('color', '0, 255, 0')
+                ego_vehicle_bp.set_attribute('color', color)
 
             else:
+                # sample a bp from various classes
+                if self.use_multi_class_bp:
+                    label = np.random.choice(label_list, p=prob)
+                    # Given the label (class), find all associated blueprints in CARLA
+                    ego_vehicle_random_list = multi_class_vehicle_blueprint_filter(
+                        label, blueprint_library, self.bp_meta)
                 ego_vehicle_bp = random.choice(ego_vehicle_random_list)
-
-                color = random.choice(
-                    ego_vehicle_bp.get_attribute('color').recommended_values)
-                ego_vehicle_bp.set_attribute('color', color)
+                if ego_vehicle_bp.has_attribute("color"):
+                    color = random.choice(
+                        ego_vehicle_bp.get_attribute(
+                            'color').recommended_values)
+                    ego_vehicle_bp.set_attribute('color', color)
 
             vehicle = \
                 self.world.try_spawn_actor(ego_vehicle_bp, spawn_transform)
@@ -563,6 +615,11 @@ class ScenarioManager:
             tm.vehicle_percentage_speed_difference(
                 vehicle,
                 traffic_config['global_speed_perc'] + random.randint(-30, 30))
+
+            # augment the original carla.vehicle with bp id and color
+            vehicle.bp_id = ego_vehicle_bp.id
+            vehicle.color = color if ego_vehicle_bp.has_attribute(
+                "color") else None
 
             bg_list.append(vehicle)
             count += 1

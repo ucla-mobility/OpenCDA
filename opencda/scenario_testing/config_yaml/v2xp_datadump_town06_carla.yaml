@@ -22,6 +22,16 @@ world:
     fog_falloff: 0 # Density of the fog (as in specific mass) from 0 to infinity. The bigger the value, the more dense and heavy it will be, and the fog will reach smaller heights
     wetness: 0
 
+bp_meta_path: "/home/hao/code/python/bbx_stats.json"
+use_multi_class_bp: true
+# Define blueprint type sample probabilities
+bp_class_sample_prob:
+  car: 0.5
+  truck: 0.1
+  bus: 0.1
+  bicycle: 0.1
+  motorcycle: 0.1
+
 # Define the basic parameters of the rsu
 rsu_base: &rsu_base
   sensing:
