@@ -261,3 +261,126 @@ def get_speed_sumo(sumo2carla_ids, carla_id):
             return vehicle_speed
 
     return -1
+
+
+#---------- RL helper functions -------------
+
+def compute_magnitude_angle(target_location, current_location, orientation):
+    """
+    Compute relative angle and distance between a target_location and a current_location
+
+    Parameters
+    ----------
+    target_location : carla.location
+        location of the target object.
+
+    current_location : carla.location
+        location of the reference object.
+
+    orientation : carla.orientation
+        orientation of the reference object
+
+    Returns
+    -------
+     : tuple
+        A tuple composed by the distance to the object and the angle between both objects.
+    """
+
+    target_vector = np.array([target_location.x - current_location.x, target_location.y - current_location.y])
+    norm_target = np.linalg.norm(target_vector)
+
+    forward_vector = np.array([math.cos(math.radians(orientation)), math.sin(math.radians(orientation))])
+    d_angle = math.degrees(math.acos(np.clip(np.dot(forward_vector, target_vector) / norm_target, -1., 1.)))
+
+    return (norm_target, d_angle)
+
+
+def is_within_distance_ahead(target_transform, current_transform, max_distance):
+    """
+    Check if a target object is within a certain distance in front of a reference object.
+
+    Parameters
+    ----------
+    target_transform : carla.transform
+        transform of the target object.
+
+    current_transform : carla.transform
+        transform of the reference object.
+
+    max_distance : float
+        maximum allowed distance.
+
+    Returns
+    -------
+     : bool
+        True if target object is within max_distance ahead of the reference object.
+    """
+    target_vector = np.array(
+        [
+            target_transform.location.x - current_transform.location.x,
+            target_transform.location.y - current_transform.location.y
+        ]
+    )
+    norm_target = np.linalg.norm(target_vector)
+
+    # If the vector is too short, we can simply stop here
+    if norm_target < 0.001:
+        return True
+
+    if norm_target > max_distance:
+        return False
+
+    fwd = current_transform.get_forward_vector()
+    forward_vector = np.array([fwd.x, fwd.y])
+    d_angle = math.degrees(math.acos(np.clip(np.dot(forward_vector, target_vector) / norm_target, -1., 1.)))
+
+    return d_angle < 90.0
+
+
+def is_within_distance(target_location, current_location, orientation, max_distance, d_angle_th_up, d_angle_th_low=0):
+    """
+    Check if a target object is within a certain distance from a reference object.
+    A vehicle in front would be something around 0 deg, while one behind around 180 deg.
+
+    Parameters
+    ----------
+    target_location : carla.location
+        location of the target object.
+
+    current_location : carla.location
+        location of the reference object.
+
+    orientation : carla.orientation
+        orientation of the reference object
+
+    max_distance : float
+        maximum allowed distance.
+
+    d_angle_th_up : float
+        upper bond for angle.
+
+    d_angle_th_low : float
+        lowwer bond for angle (optional, default is 0).
+
+
+    Returns
+    -------
+     : bool
+        True if target object is within max_distance ahead of the reference object.
+    """
+    target_vector = np.array([target_location.x - current_location.x, target_location.y - current_location.y])
+    norm_target = np.linalg.norm(target_vector)
+
+    # If the vector is too short, we can simply stop here
+    if norm_target < 0.001:
+        return True
+
+    if norm_target > max_distance:
+        return False
+
+    forward_vector = np.array([math.cos(math.radians(orientation)), math.sin(math.radians(orientation))])
+    d_angle = math.degrees(math.acos(np.clip(np.dot(forward_vector, target_vector) / norm_target, -1., 1.)))
+
+    return d_angle_th_low < d_angle < d_angle_th_up
+
+#--------------------------------------------
