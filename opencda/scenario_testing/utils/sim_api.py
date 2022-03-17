@@ -492,11 +492,6 @@ class ScenarioManager:
             vehicle = self.world.spawn_actor(ego_vehicle_bp, spawn_transform)
             vehicle.set_autopilot(True, 8000)
 
-            # augment the original carla.vehicle with bp id and color
-            vehicle.bp_id = ego_vehicle_bp.id
-            vehicle.color = color if ego_vehicle_bp.has_attribute(
-                "color") else None
-
             if 'vehicle_speed_perc' in vehicle_config:
                 tm.vehicle_percentage_speed_difference(
                     vehicle, vehicle_config['vehicle_speed_perc'])
@@ -615,11 +610,6 @@ class ScenarioManager:
             tm.vehicle_percentage_speed_difference(
                 vehicle,
                 traffic_config['global_speed_perc'] + random.randint(-30, 30))
-
-            # augment the original carla.vehicle with bp id and color
-            vehicle.bp_id = ego_vehicle_bp.id
-            vehicle.color = color if ego_vehicle_bp.has_attribute(
-                "color") else None
 
             bg_list.append(vehicle)
             count += 1
