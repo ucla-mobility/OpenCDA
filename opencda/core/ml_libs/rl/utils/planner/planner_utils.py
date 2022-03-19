@@ -1,4 +1,4 @@
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils import RoadOption
+from opencda.core.ml_libs.rl.utils.simulator_utils import RoadOption
 
 def get_next_until_junction(start_waypoint, max_dis=float('inf')):
     start_loc = start_waypoint.transform.location

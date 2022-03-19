@@ -1,77 +1,79 @@
 import os
 import time
+import math
+import copy
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from typing import Any, Dict, Optional, Tuple
+
+import gym
 import carla
 import torch
 import numpy as np
-from typing import Any, Dict, Optional, Tuple
-import math
-import gym
-from gym import spaces
-from collections import defaultdict
-
-from opencda.core.ml_libs.reinforcement_learning.simulators import CarlaSimulator
-from opencda.core.ml_libs.reinforcement_learning.utils.env_utils.stuck_detector import StuckDetector
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils.carla_utils import lane_mid_distance
+from gym import spaces, utils
+from easydict import EasyDict
 
 from ding.utils.default_helper import deep_merge_dicts
 from ding.envs.env.base_env import BaseEnvTimestep, BaseEnvInfo
 from ding.envs.common.env_element import EnvElementInfo
 from ding.torch_utils.data_helper import to_ndarray
 
-from abc import ABC, abstractmethod
-import copy
-from easydict import EasyDict
-from gym import utils
+from opencda.core.ml_libs.rl.simulators import CarlaSimulator
+from opencda.core.ml_libs.rl.utils.env_utils.stuck_detector import StuckDetector
+from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils import lane_mid_distance
 
-# class SimpleCarlaEnv(BaseDriveEnv):
+# -------------- simple carla env default config ----------------
+metadata = {'render.modes': ['rgb_array']}
+action_space = spaces.Dict({})
+observation_space = spaces.Dict({})
+reward_type = ['goal', 'distance', 'speed', 'angle', 'steer', 'lane', 'failure']
+config = dict(
+    simulator=dict(),
+    # reward types total reward take into account
+    reward_type=['goal', 'distance', 'speed', 'angle', 'failure'],
+    # reward value if success
+    success_reward=10,
+    # failure judgement
+    col_is_failure=False,
+    stuck_is_failure=False,
+    ignore_light=False,
+    ran_light_is_failure=False,
+    off_road_is_failure=False,
+    wrong_direction_is_failure=False,
+    off_route_is_failure=False,
+    # failure judgement hyper-parameters
+    off_route_distance=6,
+    success_distance=5,
+    stuck_len=300,
+    max_speed=5,
+    # whether open visualize
+    visualize=None,
+)
+# ---------------------------------------------------------------
+
 class SimpleCarlaEnv(gym.Env, utils.EzPickle):
     """
-    A simple deployment of Carla Environment with single hero vehicle. It use ``CarlaSimulator`` to interact with
-    Carla server and gets running status. The observation is obtained from simulator's state, information and
-    sensor data, along with reward which can be calculated and retrived.
+        A simple deployment of Carla Environment with single hero vehicle. It use ``CarlaSimulator`` to interact with
+        Carla server and gets running status. The observation is obtained from simulator's state, information and
+        sensor data, along with reward which can be calculated and retrived.
 
-    When created, it will initialize environment with config and Carla TCP host & port. This method will NOT create
-    simulator instance. It only creates some data structures to store information when running env.
+        When created, it will initialize environment with config and Carla TCP host & port. This method will NOT create
+        simulator instance. It only creates some data structures to store information when running env.
 
-    :Arguments:
-        - cfg (Dict): Env config dict.
-        - host (str, optional): Carla server IP host. Defaults to 'localhost'.
-        - port (int, optional): Carla server IP port. Defaults to 9000.
-        - tm_port (Optional[int], optional): Carla Traffic Manager port. Defaults to None.
+        Parameters
+        ----------
+        cfg : Dict
+            Env config dict.
 
-    :Interfaces: reset, step, close, is_success, is_failure, render, seed
+        host : str, optional
+            Carla server IP host. Defaults to 'localhost'.
 
-    :Properties:
-        - hero_player (carla.Actor): Hero vehicle in simulator.
-    """
+        port : int, optional
+            Carla server IP port. Defaults to 9000.
 
-    metadata = {'render.modes': ['rgb_array']}
-    action_space = spaces.Dict({})
-    observation_space = spaces.Dict({})
-    reward_type = ['goal', 'distance', 'speed', 'angle', 'steer', 'lane', 'failure']
-    config = dict(
-        simulator=dict(),
-        # reward types total reward take into account
-        reward_type=['goal', 'distance', 'speed', 'angle', 'failure'],
-        # reward value if success
-        success_reward=10,
-        # failure judgement
-        col_is_failure=False,
-        stuck_is_failure=False,
-        ignore_light=False,
-        ran_light_is_failure=False,
-        off_road_is_failure=False,
-        wrong_direction_is_failure=False,
-        off_route_is_failure=False,
-        # failure judgement hyper-parameters
-        off_route_distance=6,
-        success_distance=5,
-        stuck_len=300,
-        max_speed=5,
-        # whether open visualize
-        visualize=None,
-    )
-
+        tm_port : int, optional
+            Carla Traffic Manager port. Defaults to None.
+        """
     def __init__(
             self,
             cfg: Dict,
@@ -93,8 +95,7 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         """
         Initialize environment with config and Carla TCP host & port.
         """
-        super().__init__(cfg, **kwargs)
-
+        # simulation parameters
         self._simulator_cfg = self._cfg.simulator
         self._carla_host = host
         self._carla_port = port
@@ -106,32 +107,35 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
             self._use_local_carla = True
         self._simulator = None
 
-        self._col_is_failure = self._cfg.col_is_failure
-        self._stuck_is_failure = self._cfg.stuck_is_failure
-        self._ignore_light = self._cfg.ignore_light
-        self._ran_light_is_failure = self._cfg.ran_light_is_failure
-        self._off_road_is_failure = self._cfg.off_road_is_failure
-        self._wrong_direction_is_failure = self._cfg.wrong_direction_is_failure
-        self._off_route_is_failure = self._cfg.off_route_is_failure
-        self._off_route_distance = self._cfg.off_route_distance
-
+        # rl related configurations
+        # Failure Config
+        self._col_is_failure = self._cfg.col_is_failure                             # whether to consider collision as failure
+        self._stuck_is_failure = self._cfg.stuck_is_failure                         # whether to consider getting stucked on road as failure
+        self._ignore_light = self._cfg.ignore_light                                 # whether to ignore traffic light
+        self._ran_light_is_failure = self._cfg.ran_light_is_failure                 # whether to consider running red light as failure
+        self._off_road_is_failure = self._cfg.off_road_is_failure                   # whether to consider running off road as failure
+        self._wrong_direction_is_failure = self._cfg.wrong_direction_is_failure     # whether to consider driving in wrong direction as failure
+        self._off_route_is_failure = self._cfg.off_route_is_failure                 # whether to consider driving off planned route as failure
+        self._off_route_distance = self._cfg.off_route_distance                     # distance to route threshold to mark current episode as failure
+        # reward config
         self._reward_type = self._cfg.reward_type
-        assert set(self._reward_type).issubset(self.reward_type), set(self._reward_type)
-        self._success_distance = self._cfg.success_distance
-        self._success_reward = self._cfg.success_reward
-        self._max_speed = self._cfg.max_speed
-        self._collided = False
-        self._stuck = False
-        self._ran_light = False
-        self._off_road = False
-        self._wrong_direction = False
-        self._off_route = False
+        assert set(self._reward_type).issubset(self._reward_type), \
+            set(self._reward_type)
+        self._success_distance = self._cfg.success_distance                         # distance to navigation target threshold to determine success
+        self._success_reward = self._cfg.success_reward                             # numerical reward for a successful navigation
+        self._max_speed = self._cfg.max_speed                                       # maximum allowed speed
+        self._collided = False                                                      # take penalty for collision
+        self._stuck = False                                                         # take penalty for stucking in traffic
+        self._ran_light = False                                                     # take penalty for running red light
+        self._off_road = False                                                      # take penalty for running off road
+        self._wrong_direction = False                                               # take penalty for driving in wrong direction
+        self._off_route = False                                                     # take penalty for driving off planned route
         self._stuck_detector = StuckDetector(self._cfg.stuck_len)
-
+        # time configs
         self._tick = 0
         self._timeout = float('inf')
         self._launched_simulator = False
-
+        # visualization configs
         self._visualize_cfg = self._cfg.visualize
         self._simulator_databuffer = dict()
         self._visualizer = None
@@ -141,23 +145,19 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         self._acc_list = self._cfg.ACC_LIST
         self._steer_list = self._cfg.STEER_LIST
 
-        # add configuration for discrete and continuous
+        # configurate discrete or continuous env
         self._env_is_discrete = False
         self._env_is_continuous = False
 
-        # episode reward
+        # accumulated final reward
         self._final_eval_reward = 0.0
 
         # make sure the two settings are exclusive
-        # print('Debug: the action space is in config: ' + str('env_action_space' in self._cfg))
         if 'env_action_space' in self._cfg:
             self._env_is_discrete = True if (
                     self._cfg['env_action_space'] == 'discrete' and not self._env_is_continuous) else False
             self._env_is_continuous = True if (
                     self._cfg['env_action_space'] == 'continuous' and not self._env_is_discrete) else False
-
-        # print('Debug: the action space is discrete: ' + str(self._env_is_discrete))
-        # print('Debug: the action space is continuous: ' + str(self._env_is_continuous))
 
     def _init_carla_simulator(self) -> None:
         if not self._use_local_carla:
@@ -327,19 +327,9 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         # reshape action
         if self._env_is_discrete:
             action_dict = self.discrete_action_from_num(action)
-            # print('Stepwise DEBUG !!!! ')
-            # print('The current numerical action is:' + str(action))
-            # print('The format of the action key is' + str(type(action)))
-            # print('The action in dict is: ' + str(action_dict))
-            # print('--------------------------------------------')
             action = action_dict
         if self._env_is_continuous:
             action_dict = self.continuous_action_from_num(action)
-            # print('Stepwise DEBUG !!!! ')
-            # print('The current numerical action is:' + str(action))
-            # print('The format of the action key is' + str(type(action)))
-            # print('The action in dict is: ' + str(action_dict))
-            # print('--------------------------------------------')
             action = action_dict
 
         # clip the action values
@@ -674,30 +664,8 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         :Returns:
             Any: visualized canvas, mainly used by tensorboard and gym monitor wrapper
         """
-        # Disablr visualizer
+        # TODO: Disablr visualizer for the current version. Refer to DI-drive when adding visualization function.
         self._visualizer = None
-        # if self._visualizer is None:
-        #     return self._last_canvas
-        #
-        # render_info = {
-        #     'collided': self._collided,
-        #     'off_road': self._off_road,
-        #     'wrong_direction': self._wrong_direction,
-        #     'off_route': self._off_route,
-        #     'reward': self._reward,
-        #     'tick': self._tick,
-        #     'end_timeout': self._simulator.end_timeout,
-        #     'end_distance': self._simulator.end_distance,
-        #     'total_distance': self._simulator.total_distance,
-        # }
-        # render_info.update(self._simulator_databuffer['state'])
-        # render_info.update(self._simulator_databuffer['navigation'])
-        # render_info.update(self._simulator_databuffer['information'])
-        # render_info.update(self._simulator_databuffer['action'])
-        #
-        # self._visualizer.paint(self._render_buffer, render_info)
-        # self._visualizer.run_visualize()
-        # self._last_canvas = self._visualizer.canvas
         return self._visualizer.canvas
 
     def seed(self, seed: int, dynamic_seed: bool = True) -> None:
@@ -721,6 +689,7 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
 
     @classmethod
     def default_config(cls: type) -> EasyDict:
-        cfg = EasyDict(cls.config)
+        # cfg = EasyDict(cls.config)
+        cfg = EasyDict(config)
         cfg.cfg_type = cls.__name__ + 'Config'
         return copy.deepcopy(cfg)

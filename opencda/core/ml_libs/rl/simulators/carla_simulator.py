@@ -14,17 +14,17 @@ from abc import ABC, abstractmethod
 from easydict import EasyDict
 import copy
 
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils.sensor_utils \
+from opencda.core.ml_libs.rl.utils.simulator_utils.sensor_utils \
     import SensorHelper, CollisionSensor, TrafficLightHelper
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils.map_utils \
+from opencda.core.ml_libs.rl.utils.simulator_utils.map_utils \
     import BeVWrapper
-from opencda.core.ml_libs.reinforcement_learning.simulators.carla_data_provider \
+from opencda.core.ml_libs.rl.simulators.carla_data_provider \
     import CarlaDataProvider
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils.carla_utils \
+from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils \
     import control_to_signal, get_birdview
-from opencda.core.ml_libs.reinforcement_learning.utils.planner \
+from opencda.core.ml_libs.rl.utils.planner \
     import BasicPlanner, BehaviorPlanner # , LBCPlannerNew
-from opencda.core.ml_libs.reinforcement_learning.utils.others.tcp_helper \
+from opencda.core.ml_libs.rl.utils.others.tcp_helper \
     import find_traffic_manager_port
 
 from ding.utils.default_helper import deep_merge_dicts

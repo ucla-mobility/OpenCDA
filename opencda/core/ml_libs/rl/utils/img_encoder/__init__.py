@@ -6,4 +6,4 @@
 # from .model_wrappers import SteerNoiseWrapper
 # from .cilrs_model import CILRSModel
 
-from .bev_speed_model import BEVSpeedConvEncoder
+from opencda.core.ml_libs.rl.utils.img_encoder.bev_speed_model import BEVSpeedConvEncoder

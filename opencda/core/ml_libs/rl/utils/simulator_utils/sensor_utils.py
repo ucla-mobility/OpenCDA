@@ -12,7 +12,7 @@ from easydict import EasyDict
 from collections import deque
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from opencda.core.ml_libs.reinforcement_learning.simulators.carla_data_provider import CarlaDataProvider
+from opencda.core.ml_libs.rl.simulators.carla_data_provider import CarlaDataProvider
 from ding.utils.default_helper import deep_merge_dicts
 
 DEFAULT_CAMERA_CONFIG = {

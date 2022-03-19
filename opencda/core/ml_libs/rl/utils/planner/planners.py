@@ -6,16 +6,17 @@ from typing import Dict, List, Tuple, Union
 import copy
 import carla
 
-from opencda.core.common.misc import is_within_distance, compute_distance, positive
+from opencda.core.common.misc import compute_distance, positive
+from opencda.core.common.misc import cal_distance_angle
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils \
+from opencda.core.ml_libs.rl.utils.simulator_utils \
     import RoadOption
-from opencda.core.ml_libs.reinforcement_learning.simulators.carla_data_provider \
+from opencda.core.ml_libs.rl.simulators.carla_data_provider \
     import CarlaDataProvider
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils \
+from opencda.core.ml_libs.rl.utils.simulator_utils \
     import Cautious, Aggressive, Normal
-from opencda.core.ml_libs.reinforcement_learning.utils.planner.planner_utils \
+from opencda.core.ml_libs.rl.utils.planner.planner_utils \
     import get_next_until_junction, generate_change_lane_route
 
 from ding.utils.default_helper import deep_merge_dicts
@@ -436,10 +437,13 @@ class BehaviorPlanner(BasicPlanner):
                 if not find_in_next:
                     continue
 
-            if is_within_distance(target_vehicle_loc, self._vehicle_location,
-                                  self._hero_vehicle.get_transform().rotation.yaw, proximity_th, up_angle_th,
-                                  low_angle_th):
-
+            # calculate norm and angle
+            norm_target, d_angle = cal_distance_angle(target_vehicle_loc, self._vehicle_location,
+                                                      self._hero_vehicle.get_transform().rotation.yaw)
+            # determine if obstacle is within proximity angle
+            is_within_proximity_angle = (norm_target < 0.001 or low_angle_th < d_angle < up_angle_th) \
+                                            if norm_target <= proximity_th else False
+            if is_within_proximity_angle:
                 return (True, target_vehicle, compute_distance(target_vehicle_loc, self._vehicle_location))
 
         return (False, None, -1)

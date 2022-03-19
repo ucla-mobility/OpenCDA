@@ -6,8 +6,8 @@ from easydict import EasyDict
 import copy
 from tensorboardX import SummaryWriter
 
-from opencda.core.ml_libs.reinforcement_learning.envs import SimpleCarlaEnv
-from opencda.core.ml_libs.reinforcement_learning.utils.others.tcp_helper import parse_carla_tcp
+from opencda.core.ml_libs.rl.envs import SimpleCarlaEnv
+from opencda.core.ml_libs.rl.utils.others.tcp_helper import parse_carla_tcp
 
 from ding.envs import SyncSubprocessEnvManager, BaseEnvManager
 from ding.policy import DQNPolicy, PPOPolicy, TD3Policy, SACPolicy, DDPGPolicy
@@ -15,9 +15,9 @@ from ding.worker import BaseLearner, SampleSerialCollector, AdvancedReplayBuffer
 from ding.utils import set_pkg_seed
 from ding.rl_utils import get_epsilon_greedy_fn
 
-from opencda.core.ml_libs.reinforcement_learning.rl_models import DQNRLModel
-from opencda.core.ml_libs.reinforcement_learning.utils.others.ding_utils import compile_config
-from opencda.core.ml_libs.reinforcement_learning.utils.others.ding_utils import read_ding_config
+from opencda.core.ml_libs.rl.rl_models import DQNRLModel
+from opencda.core.ml_libs.rl.utils.others.ding_utils import compile_config
+from opencda.core.ml_libs.rl.utils.others.ding_utils import read_ding_config
 
 
 def wrapped_discrete_env(env_cfg, wrapper_cfg, host, port, tm_port=None):
@@ -81,8 +81,10 @@ def main(args, seed=0):
     model = model_cls(**cfg.policy.model)
     policy = policy_cls(cfg.policy, model=model)
 
-    # uncomment to record loger
+    # Switch to SummaryWriter to log training process.
+    tb_logger = None
     # tb_logger = SummaryWriter('./log/{}/'.format(cfg.exp_name))
+
 
     # initiate learner and collector
     learner = BaseLearner(cfg.policy.learn.learner, policy.learn_mode, tb_logger, exp_name=cfg.exp_name)
@@ -115,7 +117,7 @@ def main(args, seed=0):
 
     replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
 
-    # trianing loop 
+    # Uncomment to enable RL training loop
     # while True:
     #     # evaluate policy
     #     if evaluator.should_eval(learner.train_iter):

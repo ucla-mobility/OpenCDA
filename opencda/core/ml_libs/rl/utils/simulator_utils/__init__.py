@@ -2,13 +2,12 @@
 Copyright 2021 OpenDILab. All Rights Reserved:
 Description:
 '''
-from opencda.core.ml_libs.reinforcement_learning import SIMULATORS
+from opencda.core.ml_libs.rl import SIMULATORS
 
 if 'carla' in SIMULATORS:
-    from .map_utils import BeVWrapper
+    from opencda.core.ml_libs.rl.utils.simulator_utils.map_utils import BeVWrapper
 
 from enum import Enum
-
 
 class RoadOption(Enum):
     """
@@ -23,7 +22,6 @@ class RoadOption(Enum):
     CHANGELANERIGHT = 6
 
 # types behaviors
-
 class Cautious(object):
     """Class for Cautious agent."""
     max_speed = 40

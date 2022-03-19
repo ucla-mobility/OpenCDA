@@ -7,10 +7,10 @@ from typing import Any, Dict, List, Optional, Tuple
 import carla
 import shapely
 
-from opencda.core.common.misc import is_within_distance_ahead
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils.carla_utils \
+from opencda.core.common.misc import cal_distance_angle
+from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils \
     import calculate_speed, convert_waypoint_to_transform
-from opencda.core.ml_libs.reinforcement_learning.utils.simulator_utils \
+from opencda.core.ml_libs.rl.utils.simulator_utils \
     import RoadOption
 
 
@@ -490,7 +490,15 @@ class CarlaDataProvider(object):
                 else:
                     break
 
-            if is_within_distance_ahead(object_waypoint.transform, vehicle.get_transform(), proximity_tlight_threshold):
+            # find norm and angle
+            norm_target, d_angle = cal_distance_angle(object_waypoint.transform.location,
+                                             vehicle.get_transform().location,
+                                             vehicle.get_transform().rotation.yaw)
+            # determine if obstacle is in front
+            is_within_distance_ahead_host = (norm_target < 0.001 or d_angle < 90) \
+                                            if norm_target <= proximity_tlight_threshold else False
+
+            if is_within_distance_ahead_host:
                 if traffic_light.state == carla.TrafficLightState.Red:
                     return (True, traffic_light)
 
@@ -824,8 +832,15 @@ class CarlaDataProvider(object):
                     target_vehicle_waypoint.lane_id != vehicle_waypoint.lane_id:
                 continue
 
-            if is_within_distance_ahead(target_vehicle.get_transform(), CarlaDataProvider.get_transform(vehicle),
-                                        proximity_vehicle_threshold):
+            # find norm and angle
+            norm_target, d_angle = cal_distance_angle(object_waypoint.transform.location,
+                                                      vehicle.get_transform().location,
+                                                      vehicle.get_transform().rotation.yaw)
+            # determine if obstacle is in front
+            is_within_distance_ahead_host = (norm_target < 0.001 or d_angle < 90) \
+                if norm_target <= proximity_tlight_threshold else False
+
+            if is_within_distance_ahead_host:
                 return (True, target_vehicle)
 
         return (False, None)

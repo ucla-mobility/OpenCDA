@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from typing import List, Tuple, Union, Dict, Optional
 
-from opencda.core.ml_libs.reinforcement_learning.utils.img_encoder import BEVSpeedConvEncoder
+from opencda.core.ml_libs.rl.utils.img_encoder import BEVSpeedConvEncoder
 from ding.model.common.head import DuelingHead, RegressionHead, ReparameterizationHead, MultiHead, DiscreteHead
 
 
