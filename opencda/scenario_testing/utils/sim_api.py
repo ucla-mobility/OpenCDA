@@ -96,6 +96,26 @@ def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
 
 
 def multi_class_vehicle_blueprint_filter(label, blueprint_library, bp_meta):
+    """
+    Get a list of blueprints that have the class equals the specified label.
+
+    Parameters
+    ----------
+    label : str
+        Specified blueprint.
+
+    blueprint_library : carla.blueprint_library
+        The blueprint library that contains all models.
+
+    bp_meta : dict
+        Dictionary of {blueprint name: blueprint class}.
+
+    Returns
+    -------
+    blueprints : list
+        List of blueprints that have the class equals the specified label.
+
+    """
     blueprints = [
         blueprint_library.find(k)
         for k, v in bp_meta.items() if v["class"] == label
@@ -196,14 +216,15 @@ class ScenarioManager:
         # set weather
         weather = self.set_weather(simulation_config['weather'])
         self.world.set_weather(weather)
+
         # Define probabilities for each type of blueprint
-        self.use_multi_class_bp = scenario_params[
-            'use_multi_class_bp'] if 'use_multi_class_bp' in scenario_params else False
+        self.use_multi_class_bp = scenario_params["blueprint"][
+            'use_multi_class_bp'] if 'blueprint' in scenario_params else False
         if self.use_multi_class_bp:
             # bbx/blueprint meta
-            with open(scenario_params['bp_meta_path']) as f:
+            with open(scenario_params['blueprint']['bp_meta_path']) as f:
                 self.bp_meta = json.load(f)
-            self.bp_class_sample_prob = scenario_params[
+            self.bp_class_sample_prob = scenario_params['blueprint'][
                 'bp_class_sample_prob']
 
             # normalize probability

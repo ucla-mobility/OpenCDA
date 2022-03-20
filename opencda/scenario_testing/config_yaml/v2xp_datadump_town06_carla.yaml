@@ -22,15 +22,18 @@ world:
     fog_falloff: 0 # Density of the fog (as in specific mass) from 0 to infinity. The bigger the value, the more dense and heavy it will be, and the fog will reach smaller heights
     wetness: 0
 
-bp_meta_path: "/home/hao/code/python/bbx_stats.json"
-use_multi_class_bp: true
-# Define blueprint type sample probabilities
-bp_class_sample_prob:
-  car: 0.5
-  truck: 0.1
-  bus: 0.1
-  bicycle: 0.1
-  motorcycle: 0.1
+# Define settings for multi-class blueprint spawning
+# Comment out this chunk of code or set use_multi_class_bp to be False if you don't want to spawn multi-class actors
+blueprint:
+  use_multi_class_bp: true
+  bp_meta_path: "/home/hao/code/python/bbx_stats.json" # Define the path for loading the blueprint metadata for defining the class of each blueprint
+  # Define blueprint type sample probabilities
+  bp_class_sample_prob:
+    car: 0.5
+    truck: 0.1
+    bus: 0.1
+    bicycle: 0.1
+    motorcycle: 0.1
 
 # Define the basic parameters of the rsu
 rsu_base: &rsu_base
