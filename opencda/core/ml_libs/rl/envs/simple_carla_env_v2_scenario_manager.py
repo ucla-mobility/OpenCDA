@@ -18,40 +18,15 @@ from ding.envs.env.base_env import BaseEnvTimestep, BaseEnvInfo
 from ding.envs.common.env_element import EnvElementInfo
 from ding.torch_utils.data_helper import to_ndarray
 
-from opencda.core.ml_libs.rl.simulators import CarlaSimulator
+from opencda.core.ml_libs.rl.simulators.rl_scenario_manager import RLScenarioManager
 from opencda.core.ml_libs.rl.utils.env_utils.stuck_detector import StuckDetector
 from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils import lane_mid_distance
 
-# -------------- simple carla env default config ----------------
 metadata = {'render.modes': ['rgb_array']}
 action_space = spaces.Dict({})
 observation_space = spaces.Dict({})
-reward_type = ['goal', 'distance', 'speed', 'angle', 'steer', 'lane', 'failure']
-config = dict(
-    simulator=dict(),
-    # reward types total reward take into account
-    reward_type=['goal', 'distance', 'speed', 'angle', 'failure'],
-    # reward value if success
-    success_reward=10,
-    # failure judgement
-    col_is_failure=False,
-    stuck_is_failure=False,
-    ignore_light=False,
-    ran_light_is_failure=False,
-    off_road_is_failure=False,
-    wrong_direction_is_failure=False,
-    off_route_is_failure=False,
-    # failure judgement hyper-parameters
-    off_route_distance=6,
-    success_distance=5,
-    stuck_len=300,
-    max_speed=5,
-    # whether open visualize
-    visualize=None,
-)
-# ---------------------------------------------------------------
 
-class SimpleCarlaEnv(gym.Env, utils.EzPickle):
+class CarlaRLEnv(gym.Env, utils.EzPickle):
     """
         A simple deployment of Carla Environment with single hero vehicle. It use ``CarlaSimulator`` to interact with
         Carla server and gets running status. The observation is obtained from simulator's state, information and
@@ -74,27 +49,20 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         tm_port : int, optional
             Carla Traffic Manager port. Defaults to None.
         """
+
     def __init__(
             self,
             cfg: Dict,
             host: str = 'localhost',
             port: int = 9000,
             tm_port: Optional[int] = None,
-            carla_timeout: Optional[int] = 60.0,
-            **kwargs,
+            carla_timeout: Optional[int] = 60.0
     ) -> None:
-
-        # ------------ copy from base class -------------
-        if 'cfg_type' not in cfg:
-            self._cfg = self.__class__.default_config()
-            self._cfg = deep_merge_dicts(self._cfg, cfg)
-        else:
-            self._cfg = cfg
-        utils.EzPickle.__init__(self)
-        # ----------------------------------------------
         """
         Initialize environment with config and Carla TCP host & port.
         """
+        # load config
+        self._cfg = cfg
         # simulation parameters
         self._simulator_cfg = self._cfg.simulator
         self._carla_host = host
@@ -105,7 +73,15 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         self._use_local_carla = False
         if self._carla_host != 'localhost':
             self._use_local_carla = True
-        self._simulator = None
+
+        # OpenCDA Simulator interfaces
+        self._cav_world = None
+        self._rl_scenario_manager = None
+        self._tm = None
+        self._bg_list = None
+        self._single_cav_list = None
+        self._hero_vehicle = None
+        self._hero_vehicle_manager = None
 
         # rl related configurations
         # Failure Config
@@ -118,6 +94,9 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         self._off_route_is_failure = self._cfg.off_route_is_failure                 # whether to consider driving off planned route as failure
         self._off_route_distance = self._cfg.off_route_distance                     # distance to route threshold to mark current episode as failure
         # reward config
+        self._reward = 0
+        self._last_steer = 0
+        self._last_distance = None
         self._reward_type = self._cfg.reward_type
         assert set(self._reward_type).issubset(self._reward_type), \
             set(self._reward_type)
@@ -155,39 +134,48 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         # make sure the two settings are exclusive
         if 'env_action_space' in self._cfg:
             self._env_is_discrete = True if (
-                    self._cfg['env_action_space'] == 'discrete' and not self._env_is_continuous) else False
-            self._env_is_continuous = True if (
-                    self._cfg['env_action_space'] == 'continuous' and not self._env_is_discrete) else False
+                    self._cfg['env_action_space'] == 'discrete') else False
+            self._env_is_continuous = not self._env_is_discrete
 
     def _init_carla_simulator(self) -> None:
-        if not self._use_local_carla:
-            print("------ Run Carla on Port: %d, GPU: %d ------" % (self._carla_port, 0))
-            #self.carla_process = subprocess.Popen()
-            self._simulator = CarlaSimulator(
-                cfg=self._simulator_cfg,
-                client=None,
-                host=self._carla_host,
-                port=self._carla_port,
-                tm_port=self._carla_tm_port,
-                timeout=self._carla_timeout,
-            )
-        else:
-            print('------ Using Remote carla @ {}:{} ------'.format(self._carla_host, self._carla_port))
-            self._simulator = CarlaSimulator(
-                cfg=self._simulator_cfg,
-                client=None,
-                host=self._carla_host,
-                port=self._carla_port,
-                tm_port=self._carla_tm_port
-            )
+        """
+        Initialize CARLA simulator, CAV world and vehicle manager. Spawn all vheicles in simulation world
+        including CAVs and background vehicles.
+        """
+        # init CAV world
+        cav_world = CavWorld(opt.apply_ml)
+
+        # init rl scenario manager
+        print("------ Run Carla on Port: %d, GPU: %d ------" % (self._carla_port, 0))
+        # overwrite port info in scenario paramrs so the CARLA client is assign to the correct port
+        scenario_params = self._simulator_cfg['scenario_params']
+        scenario_params['world']['client_port'] = port
+        self._rl_scenario_manager = RLScenarioManager(scenario_params,
+                                                     cfg=self._simulator_cfg,
+                                                     town = self._simulator_cfg['town'],
+                                                     cav_world = cav_world)
+        # set simulation launch indicator
         self._launched_simulator = True
 
     def discrete_action_from_num(self, np_action):
+        """
+        A function to map model output to a descrete action.
+        Parameters
+        ----------
+        action_ids:int
+            The output of the RL model.
+
+        Returns
+        -------
+        action:dict
+            The corresponding action of the RL model output.
+        """
         #  convert action from numpy to number
         if isinstance(np_action, torch.Tensor):
             np_action = np_action.item()
         action_index = np.squeeze(np_action)
-        assert action_index < len(self._acc_list) * len(self._steer_list), (action_index, len(self._acc_list) * len(self._steer_list))
+        assert action_index < len(self._acc_list) * len(self._steer_list), (
+        action_index, len(self._acc_list) * len(self._steer_list))
 
         # find corresponding discrete action combination
         mod_value = len(self._acc_list)
@@ -201,6 +189,18 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         return action
 
     def continuous_action_from_num(self, action_ids):
+        """
+        A function to map model output to a continuous action.
+        Parameters
+        ----------
+        action_ids:int
+            The output of the RL model.
+
+        Returns
+        -------
+        action:dict
+            The corresponding action of the RL model output.
+        """
         action_ids = to_ndarray(action_ids, dtype=int)
         action_ids = np.squeeze(action_ids)
         acc_id = action_ids[0]
@@ -218,6 +218,9 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
 
     # print step
     def print_step(self, info):
+        """
+        An  utility function to print step information.
+        """
         done_tick = info['tick']
         done_reward = info['final_eval_reward']
         if info['success']:
@@ -240,268 +243,28 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
             )
         )
 
-    # DI-engine required function
-    def reset(self, **kwargs) -> Dict:
-        """
-        Reset environment to start a new episode, with provided reset params. If there is no simulator, this method will
-        create a new simulator instance. The reset param is sent to simulator's ``init`` method to reset simulator,
-        then reset all statues recording running states, and create a visualizer if needed. It returns the first frame
-        observation.
-
-        :Returns:
-            Dict: The initial observation.
-        """
-        if not self._launched_simulator:
-            self._init_carla_simulator()
-
-        self._simulator.init(**kwargs)
-
-        # if self._visualize_cfg is not None:
-        #     if self._visualizer is not None:
-        #         self._visualizer.done()
-        #     else:
-        #         self._visualizer = Visualizer(self._visualize_cfg)
-        #
-        #     if 'name' in kwargs:
-        #         vis_name = kwargs['name']
-        #     else:
-        #         vis_name = "{}_{}".format(
-        #             self._simulator.town_name, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        #         )
-        #
-        #     self._visualizer.init(vis_name)
-
-        if 'col_is_failure' in kwargs:
-            self._col_is_failure = kwargs['col_is_failure']
-        if 'stuck_is_failure' in kwargs:
-            self._stuck_is_failure = kwargs['stuck_is_failure']
-        self._simulator_databuffer.clear()
-        self._collided = False
-        self._stuck = False
-        self._ran_light = False
-        self._off_road = False
-        self._wrong_direction = False
-        self._off_route = False
-        self._stuck_detector.clear()
-        self._tick = 0
-        self._reward = 0
-        self._last_steer = 0
-        self._last_distance = None
-        self._timeout = self._simulator.end_timeout
-        # reset episodic reward
-        self._final_eval_reward = 0.0
-
-        # # add configuration for discrete and continous
-        # self._env_is_discrete = False
-        # self._env_is_continuous = False
-
-        # reshape obs_out for reset (discrete/continuous wrapper)
-        obs = self.get_observations()
-        obs_out = {
-            'birdview': obs['birdview'][..., [0, 1, 5, 6, 8]],
-            'speed': (obs['speed'] / 25).astype(np.float32),
-        }
-
-        # reshape obs_out (benchmark wrapper)
-        obs_out = to_ndarray(obs_out, dtype=np.float32)
-        if isinstance(obs_out, np.ndarray) and len(obs.shape) == 3:
-            obs_out = obs_out.transpose((2, 0, 1))
-
-        return obs_out
-
-    # DI-engine required function
-    def step(self, action) -> Tuple[Any, float, bool, Dict]:
-        """
-        Run one time step of environment, get observation from simulator and calculate reward. The environment will
-        be set to 'done' only at success or failure. And if so, all visualizers will end. Its interfaces follow
-        the standard definition of ``gym.Env``.
-
-        :Arguments:
-            - action (Dict): Action provided by policy.
-
-        :Returns:
-            Tuple[Any, float, bool, Dict]: A tuple contains observation, reward, done and information.
-        """
-        # cast action to np array
-        action = to_ndarray(action)
-        # reshape action
-        if self._env_is_discrete:
-            action_dict = self.discrete_action_from_num(action)
-            action = action_dict
-        if self._env_is_continuous:
-            action_dict = self.continuous_action_from_num(action)
-            action = action_dict
-
-        # clip the action values
-        if action is not None:
-            for key in ['throttle', 'brake']:
-                if key in action:
-                    np.clip(action[key], 0, 1)
-            if 'steer' in action:
-                np.clip(action['steer'], -1, 1)
-            self._simulator.apply_control(action)
-            self._simulator_databuffer['action'] = action
-        else:
-            self._simulator_databuffer['action'] = dict()
-
-        self._simulator.run_step()
-        self._tick += 1
-
-        obs = self.get_observations()
-
-        self._collided = self._simulator.collided
-        self._stuck = self._stuck_detector.stuck
-        self._ran_light = self._simulator.ran_light
-        self._off_road = self._simulator.off_road
-        self._wrong_direction = self._simulator.wrong_direction
-
-        location = self._simulator_databuffer['state']['location'][:2]
-        target = self._simulator_databuffer['navigation']['target']
-        self._off_route = np.linalg.norm(location - target) >= self._off_route_distance
-
-        self._reward, reward_info = self.compute_reward()
-        info = self._simulator.get_information()
-        info.update(reward_info)
-        info.update(
-            {
-                'collided': self._collided,
-                'stuck': self._stuck,
-                'ran_light': self._ran_light,
-                'off_road': self._off_road,
-                'wrong_direction': self._wrong_direction,
-                'off_route': self._off_route,
-                'timeout': self._tick > self._timeout,
-                'success': self.is_success(),
-            }
-        )
-
-        done = self.is_success() or self.is_failure()
-        # if done:
-        #     self._simulator.clean_up()
-        #     if self._visualizer is not None:
-        #         self._visualizer.done()
-        #         self._visualizer = None
-
-        # regulate observation (discrete/continuous wrapper)
-        obs_out = {
-            'birdview': obs['birdview'][..., [0, 1, 5, 6, 8]],
-            'speed': (obs['speed'] / 25).astype(np.float32),
-        }
-
-        # original return
-        # return obs_out, self._reward, done, info
-
-        # prepare Base Env step (benchmark wrapper)
-        # update final episode reward
-        self._final_eval_reward += self._reward
-        # reshape obs
-        obs_out = to_ndarray(obs_out, dtype=np.float32)
-        if isinstance(obs_out, np.ndarray) and len(obs_out.shape) == 3:
-            obs_out = obs_out.transpose((2, 0, 1))
-        # reshape reward
-        reward_out = to_ndarray([self._reward], dtype=np.float32)
-        if done:
-            info['final_eval_reward'] = self._final_eval_reward
-            self.print_step(info)
-
-        return BaseEnvTimestep(obs_out, reward_out, done, info)
-
-    # DI-Engine required function
-    def info(self) -> BaseEnvInfo:
-        """
-        Interface of ``info`` method to suit DI-engine format env.
-        It returns a named tuple ``BaseEnvInfo`` defined in DI-engine
-        which contains information about observation, action and reward space.
-
-        :Returns:
-            BaseEnvInfo: Env information instance defined in DI-engine.
-        """
-        obs_space = EnvElementInfo(shape=self.env.observation_space, value={'min': 0., 'max': 1., 'dtype': np.float32})
-        act_space = EnvElementInfo(
-            shape=self.env.action_space,
-            value={
-                'min': np.float32("-inf"),
-                'max': np.float32("inf"),
-                'dtype': np.float32
-            },
-        )
-        rew_space = EnvElementInfo(
-            shape=1,
-            value={
-                'min': np.float32("-inf"),
-                'max': np.float32("inf")
-            },
-        )
-        return BaseEnvInfo(
-            agent_num=1, obs_space=obs_space, act_space=act_space, rew_space=rew_space, use_wrappers=None
-        )
-
-    def close(self) -> None:
-        """
-        Delete simulator & visualizer instances and close the environment.
-        """
-        if self._launched_simulator:
-            self._simulator.clean_up()
-            self._simulator._set_sync_mode(False)
-            del self._simulator
-            self._launched_simulator = False
-        # if self._visualizer is not None:
-        #     self._visualizer.done()
-        #     self._visualizer = None
-
-    def is_success(self) -> bool:
-        """
-        Check if the task succeed. It only happens when hero vehicle is close to target waypoint.
-
-        :Returns:
-            bool: Whether success.
-        """
-        if self._simulator.end_distance < self._success_distance:
-            return True
-        return False
-
-    def is_failure(self) -> bool:
-        """
-        Check if env fails. colliding, being stuck, running light, running off road, running in
-        wrong direction according to config. It will certainly happen when time is out.
-
-        :Returns:
-            bool: Whether failure.
-        """
-        if self._stuck_is_failure and self._stuck:
-            return True
-        if self._col_is_failure and self._collided:
-            return True
-        if self._ran_light_is_failure and self._ran_light:
-            return True
-        if self._off_road_is_failure and self._off_road:
-            return True
-        if self._wrong_direction_is_failure and self._wrong_direction:
-            return True
-        if self._off_route_is_failure and self._off_route:
-            return True
-        if self._tick > self._timeout:
-            return True
-
-        return False
-
-    def get_observations(self) -> Dict:
-        """
+    def get_observations(self):
+        '''
         Get observations from simulator. The sensor data, navigation, state and information in simulator
-        are used, while not all these are added into observation dict.
+        are examined.
 
-        :Returns:
-            Dict: Observation dict.
-        """
+        Returns
+        -------
+        obs:dict
+            The current observation of the simulation step.
+
+        '''
         obs = dict()
-        state = self._simulator.get_state()
-        navigation = self._simulator.get_navigation()
-        sensor_data = self._simulator.get_sensor_data()
-        information = self._simulator.get_information()
+        state = self._rl_scenario_manager.get_state(self._single_cav_list[0])
+        # note: the get navigation function are moved to vehicle_manager: get_navigation_state()
+        navigation = self._hero_vehicle_manager.get_navigation_state()
+        sensor_data = self._rl_scenario_manager.get_sensor_data()
+        information = self._rl_scenario_manager.get_information()
 
         self._simulator_databuffer['state'] = state
         self._simulator_databuffer['navigation'] = navigation
         self._simulator_databuffer['information'] = information
+
         if 'action' not in self._simulator_databuffer:
             self._simulator_databuffer['action'] = dict()
         if not navigation['agent_state'] == 4 or self._ignore_light:
@@ -534,16 +297,308 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
             }
         )
 
-        # if self._visualizer is not None:
-        #     if self._visualize_cfg.type not in sensor_data:
-        #         raise ValueError("visualize type {} not in sensor data!".format(self._visualize_cfg.type))
-        #     self._render_buffer = sensor_data[self._visualize_cfg.type].copy()
-        #     if self._visualize_cfg.type == 'birdview':
-        #         self._render_buffer = visualize_birdview(self._render_buffer)
+        if self._visualizer is not None:
+            if self._visualize_cfg.type not in sensor_data:
+                raise ValueError("visualize type {} not in sensor data!".format(self._visualize_cfg.type))
+            self._render_buffer = sensor_data[self._visualize_cfg.type].copy()
+            if self._visualize_cfg.type == 'birdview':
+                self._render_buffer = visualize_birdview(self._render_buffer)
 
         return obs
 
+    # DI-engine required function
+    def reset(self, **kwargs) -> Dict:
+        """
+        Reset environment to start a new episode, with provided reset params. If there is no simulator, this method will
+        create a new simulator instance. The reset param is sent to simulator's ``init`` method to reset simulator,
+        then reset all statues recording running states, and create a visualizer if needed. It returns the first frame
+        observation.
+
+        Returns
+        -------
+        obs:ndarray
+            The initial observation of the simulation world.
+
+        """
+
+        if not self._launched_simulator:
+            self._init_carla_simulator()
+
+        # kill all actors in world
+        if self._single_cav_list is not None:
+            self._rl_scenario_manager.destroyActors()
+            self._single_cav_list = None
+            self._bg_list = None
+
+        # init cav list (note: the first in list is the host vehicle)
+        # note destination has been set in "create_vehicle_manager" method
+        single_cav_list = self._rl_scenario_manager.create_vehicle_manager(application=['single'])
+        self._single_cav_list = single_cav_list
+        self._hero_vehicle = single_cav_list[0].vehicle
+
+        # init background traffic
+        # todo: add background traffic
+        # self._tm, self._bg_list = self._rl_scenario_manager.create_traffic_carla()
+
+        # prepare sensors
+        self._rl_scenario_manager.prepare_observations(self._hero_vehicle)
+
+        if self._visualize_cfg is not None:
+            if self._visualizer is not None:
+                self._visualizer.done()
+            else:
+                self._visualizer = Visualizer(self._visualize_cfg)
+
+            if 'name' in kwargs:
+                vis_name = kwargs['name']
+            else:
+                vis_name = "{}_{}".format(
+                    self._rl_scenario_manager.town_name, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+                )
+
+            self._visualizer.init(vis_name)
+
+        if 'col_is_failure' in kwargs:
+            self._col_is_failure = kwargs['col_is_failure']
+        if 'stuck_is_failure' in kwargs:
+            self._stuck_is_failure = kwargs['stuck_is_failure']
+        self._simulator_databuffer.clear()
+        self._collided = False
+        self._stuck = False
+        self._ran_light = False
+        self._off_road = False
+        self._wrong_direction = False
+        self._off_route = False
+        self._stuck_detector.clear()
+        self._tick = 0
+        self._reward = 0
+        self._last_steer = 0
+        self._last_distance = None
+        self._timeout = self._hero_vehicle_manager.get_total_timeout()
+        # reset episodic reward
+        self._final_eval_reward = 0.0
+        # configuration for discrete and continous
+        # self._env_is_discrete = False
+        # self._env_is_continuous = False
+
+        # reshape obs_out for reset (discrete/continuous wrapper)
+        obs = self.get_observations()
+        obs_out = {
+            'birdview': obs['birdview'][..., [0, 1, 5, 6, 8]],
+            'speed': (obs['speed'] / 25).astype(np.float32),
+        }
+
+        # reshape obs_out (benchmark wrapper)
+        obs_out = to_ndarray(obs_out, dtype=np.float32)
+        if isinstance(obs_out, np.ndarray) and len(obs.shape) == 3:
+            obs_out = obs_out.transpose((2, 0, 1))
+
+        return obs_out
+
+    # DI-engine required function
+    def step(self, action) -> Tuple[Any, float, bool, Dict]:
+        """
+        Run one step of RL environment, get observation from simulator and calculate reward. The environment will
+        be set to 'done' upon success or failure, in which case all visualizers will end. The interfaces follow
+        the standard ``gym.Env``.
+
+        Parameters
+        ----------
+        action:dict
+            The action provided by the policy.
+
+        Returns
+        -------
+        :tuple
+            A tuple contains observation, reward, done and information.
+        """
+
+        # cast action to np array
+        action = to_ndarray(action)
+        # reshape action
+        if self._env_is_discrete:
+            action_dict = self.discrete_action_from_num(action)
+            action = action_dict
+        if self._env_is_continuous:
+            action_dict = self.continuous_action_from_num(action)
+            action = action_dict
+        # clip the action values
+        if action is not None:
+            for key in ['throttle', 'brake']:
+                if key in action:
+                    np.clip(action[key], 0, 1)
+            if 'steer' in action:
+                np.clip(action['steer'], -1, 1)
+            # appy action to host vehicle
+            self._hero_vehicle.apply_control(action)
+            self._simulator_databuffer['action'] = action
+        else:
+            self._simulator_databuffer['action'] = dict()
+
+        # Run one simulation step for all interfaces
+        # 1.scenario run step
+        self._rl_scenario_manager.run_step()
+        # 2. vehicle manager run step
+        self._hero_vehicle_manager.run_step()
+        # 3. increase one tick
+        self._tick += 1
+
+        # get observation
+        obs = self.get_observations()
+        # determine success/failure
+        # todo: implement related detactors in vehicle manager
+        self._collided = self._simulator.collided
+        self._stuck = self._stuck_detector.stuck
+        self._ran_light = self._simulator.ran_light
+        self._off_road = self._simulator.off_road
+        # use vehicle manager to get navigation data
+        self._wrong_direction = self._hero_vehicle_manager.is_vehicle_wrong_direction()
+
+        location = self._simulator_databuffer['state']['location'][:2]
+        target = self._simulator_databuffer['navigation']['target']
+        self._off_route = np.linalg.norm(location - target) >= self._off_route_distance
+
+        self._reward, reward_info = self.compute_reward()
+        info = self._rl_scenario_manager.get_information()
+        info.update(reward_info)
+        info.update(
+            {
+                'collided': self._collided,
+                'stuck': self._stuck,
+                'ran_light': self._ran_light,
+                'off_road': self._off_road,
+                'wrong_direction': self._wrong_direction,
+                'off_route': self._off_route,
+                'timeout': self._tick > self._timeout,
+                'success': self.is_success(),
+            }
+        )
+        # determine if done
+        done = self.is_success() or self.is_failure()
+        if done:
+            # reset all params and destroy all actors (including vehicle, sensor and RSUs)
+            self._rl_scenario_manager.clean_up()
+            if self._visualizer is not None:
+                self._visualizer.done()
+                self._visualizer = None
+
+        # regulate observation (discrete/continuous wrapper)
+        obs_out = {
+            'birdview': obs['birdview'][..., [0, 1, 5, 6, 8]],
+            'speed': (obs['speed'] / 25).astype(np.float32),
+        }
+
+        # update final episode reward
+        self._final_eval_reward += self._reward
+        # reshape obs
+        obs_out = to_ndarray(obs_out, dtype=np.float32)
+        if isinstance(obs_out, np.ndarray) and len(obs_out.shape) == 3:
+            obs_out = obs_out.transpose((2, 0, 1))
+        # reshape reward
+        reward_out = to_ndarray([self._reward], dtype=np.float32)
+        if done:
+            info['final_eval_reward'] = self._final_eval_reward
+            self.print_step(info)
+
+        return BaseEnvTimestep(obs_out, reward_out, done, info)
+
+    # DI-Engine required function
+    def info(self) -> BaseEnvInfo:
+        """
+        Interface of ``info`` method to suit DI-engine requirement.
+        It returns a named tuple ``BaseEnvInfo`` defined in DI-engine
+        which contains information about observation, action and reward space.
+
+        Returns
+        -------
+        :BaseEnvInfo
+            Env information instance defined in DI-engine.
+        """
+
+        obs_space = EnvElementInfo(shape=self.env.observation_space, value={'min': 0., 'max': 1., 'dtype': np.float32})
+        act_space = EnvElementInfo(
+            shape=self.env.action_space,
+            value={
+                'min': np.float32("-inf"),
+                'max': np.float32("inf"),
+                'dtype': np.float32
+            },
+        )
+        rew_space = EnvElementInfo(
+            shape=1,
+            value={
+                'min': np.float32("-inf"),
+                'max': np.float32("inf")
+            },
+        )
+        return BaseEnvInfo(
+            agent_num=1, obs_space=obs_space, act_space=act_space, rew_space=rew_space, use_wrappers=None
+        )
+
+    def close(self) -> None:
+        """
+        Stop the simulator and visualizer instances and close the environment.
+        """
+        if self._launched_simulator:
+            self._rl_scenario_manager.clean_up()
+            del self._rl_scenario_manager
+            self._launched_simulator = False
+        if self._visualizer is not None:
+            self._visualizer.done()
+            self._visualizer = None
+
+    def is_success(self) -> bool:
+        """
+        Check if the task has succeeded. It is defined as when the host vehicle is close
+        to the target location.
+
+        Returns
+        -------
+        : bool
+        Whether the episode is successful.
+        """
+
+        # todo: this vaiarble could be a vheicle manager variable
+        if self._hero_vehicle_manager.get_end_distance() < self._success_distance:
+            return True
+        return False
+
+    def is_failure(self) -> bool:
+        """
+        Check if the task has failed.The failure definition is listed in the config file.
+
+        Returns
+        -------
+        : bool
+        Whether the episode has failed.
+        """
+        if self._stuck_is_failure and self._stuck:
+            return True
+        if self._col_is_failure and self._collided:
+            return True
+        if self._ran_light_is_failure and self._ran_light:
+            return True
+        if self._off_road_is_failure and self._off_road:
+            return True
+        if self._wrong_direction_is_failure and self._wrong_direction:
+            return True
+        if self._off_route_is_failure and self._off_route:
+            return True
+        if self._tick > self._timeout:
+            return True
+
+        return False
+
     def compute_reward(self) -> Tuple[float, Dict]:
+        """
+        Compute reward for current step, whose details will be summarized in a dict.
+
+        Returns
+        -------
+        :tuple[float, Dict]
+            Total reward value and detail for each value.
+
+        """
         """
         Compute reward for current frame, with details returned in a dict. In short, in contains goal reward,
         route following reward calculated by route length in current and last frame, some navigation attitude reward
@@ -565,7 +620,7 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
 
         # goal reward
         goal_reward = 0
-        plan_distance = self._simulator.end_distance
+        plan_distance = self._hero_vehicle_manager.get_end_distance()
         if self.is_success():
             goal_reward += self._success_reward
         elif self.is_failure():
@@ -661,11 +716,40 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         Render a runtime visualization on screen, save a gif or video according to visualizer config.
         The main canvas is from a specific sensor data. It only works when 'visualize' is set in config dict.
 
-        :Returns:
-            Any: visualized canvas, mainly used by tensorboard and gym monitor wrapper
+        Parameters
+        ----------
+        mode:str
+            The rendering mode of the visualizer.
+
+        Returns
+        -------
+        :visualizer.canvas
+            One frame of the visualozation.
+
         """
-        # TODO: Disablr visualizer for the current version. Refer to DI-drive when adding visualization function.
-        self._visualizer = None
+        if self._visualizer is None:
+            return self._last_canvas
+
+        render_info = {
+            'collided': self._collided,
+            'off_road': self._off_road,
+            'wrong_direction': self._wrong_direction,
+            'off_route': self._off_route,
+            'reward': self._reward,
+            'tick': self._tick,
+            # todo: the end time, end dist, and total dist may be added to vehicle manager
+            'end_timeout': self._hero_vehicle_manager.get_total_timeout(),
+            'end_distance': self._hero_vehicle_manager.get_end_distance(),
+            'total_distance': self._hero_vehicle_manager.get_total_distance(),
+        }
+        render_info.update(self._simulator_databuffer['state'])
+        render_info.update(self._simulator_databuffer['navigation'])
+        render_info.update(self._simulator_databuffer['information'])
+        render_info.update(self._simulator_databuffer['action'])
+
+        self._visualizer.paint(self._render_buffer, render_info)
+        self._visualizer.run_visualize()
+        self._last_canvas = self._visualizer.canvas
         return self._visualizer.canvas
 
     def seed(self, seed: int, dynamic_seed: bool = True) -> None:
@@ -674,22 +758,19 @@ class SimpleCarlaEnv(gym.Env, utils.EzPickle):
         :Arguments:
             - seed (int): Random seed value.
         """
-        self._seed = seed
-        self._dynamic_seed = dynamic_seed
-        np.random.seed(self._seed)
-        print('[ENV] Setting seed:', seed)
-        # np.random.seed(seed)
+        if 'seed' in self._simulator_cfg['scenario_params']['world']:
+            seed = self._simulator_cfg['scenario_params']['world']['seed']
+            self._seed = seed
+            self._dynamic_seed = dynamic_seed
+            print('[ENV] Setting seed:', seed)
+        else:
+            print('No random seed provided, use ' + str(seed) + ' as random seed and update config...')
+            self._simulator_cfg['scenario_params']['world']['seed'] = seed
 
     def __repr__(self) -> str:
         return "SimpleCarlaEnv - host %s : port %s" % (self._carla_host, self._carla_port)
 
     @property
     def hero_player(self) -> carla.Actor:
-        return self._simulator.hero_player
-
-    @classmethod
-    def default_config(cls: type) -> EasyDict:
-        # cfg = EasyDict(cls.config)
-        cfg = EasyDict(config)
-        cfg.cfg_type = cls.__name__ + 'Config'
-        return copy.deepcopy(cfg)
+        # return self._simulator.hero_player
+        return self._hero_vehicle

@@ -9,7 +9,7 @@ import uuid
 
 from opencda.core.actuation.control_manager \
     import ControlManager
-from opencda.core.application.platooning.platoon_behavior_agent\
+from opencda.core.application.platooning.platoon_behavior_agent \
     import PlatooningBehaviorAgent
 from opencda.core.common.v2x_manager \
     import V2XManager
@@ -132,6 +132,12 @@ class VehicleManager(object):
         else:
             self.data_dumper = None
 
+        # RL related attributes
+        self._end_distance = float('inf')
+        self._end_timeout = float('inf')
+        self._total_distance = float('inf')
+        self._wrong_direction = False
+
         cav_world.update_vehicle_manager(self)
 
     def set_destination(
@@ -163,6 +169,8 @@ class VehicleManager(object):
 
         self.agent.set_destination(
             start_location, end_location, clean, end_reset)
+        # first time set destination, calculate total distance to goal here.
+        self._total_distance = self._agent.distance_to_goal
 
     def update_info(self):
         """
@@ -214,3 +222,108 @@ class VehicleManager(object):
         self.localizer.destroy()
         self.vehicle.destroy()
         self.map_manager.destroy()
+
+    def get_navigation_state(self):
+        """
+        Get navigation info in current world, including agent state, command, navigation node,
+        navigation target, and speed limit and speed list.
+
+        Returns
+        -------
+        navigation:dict
+            The current navigation information summarized in a dictionary.
+
+        """
+        command = self.agent.node_road_option
+        node_location = self.agent.node_waypoint.transform.location
+        node_forward = self.agent.node_waypoint.transform.rotation.get_forward_vector()
+        target_location = self.agent.target_waypoint.transform.location
+        target_forward = self.agent.target_waypoint.transform.rotation.get_forward_vector()
+        waypoint_list = self.agent.get_waypoints_list(self._waypoint_num)
+        direction_list = self.agent.get_direction_list(self._waypoint_num)
+        agent_state = self.agent.agent_state
+        speed_limit = self.agent.speed_limit
+        self._end_distance = self.agent.distance_to_goal
+        self._end_timeout = self.agent.timeout
+
+        if self._bev_wrapper is not None:
+            self._bev_wrapper.update_waypoints(waypoint_list)
+
+        waypoint_location_list = []
+        for wp in waypoint_list:
+            wp_loc = wp.transform.location
+            wp_vec = wp.transform.rotation.get_forward_vector()
+            waypoint_location_list.append([wp_loc.x, wp_loc.y, wp_vec.x, wp_vec.y])
+
+        if not self._off_road:
+            current_waypoint = self.agent.current_waypoint
+            node_waypoint = self.agent.node_waypoint
+
+            # Lanes and roads are too chaotic at junctions
+            if current_waypoint.is_junction or node_waypoint.is_junction:
+                self._wrong_direction = False
+            else:
+                node_yaw = node_waypoint.transform.rotation.yaw % 360
+                cur_yaw = current_waypoint.transform.rotation.yaw % 360
+
+                wp_angle = (node_yaw - cur_yaw) % 360
+
+                if 150 <= wp_angle <= (360 - 150):
+                    self._wrong_direction = True
+                else:
+                    # Changing to a lane with the same direction
+                    self._wrong_direction = False
+
+        navigation = {
+            'agent_state': agent_state.value,
+            'command': command.value,
+            'node': np.array([node_location.x, node_location.y]),
+            'node_forward': np.array([node_forward.x, node_forward.y]),
+            'target': np.array([target_location.x, target_location.y]),
+            'target_forward': np.array([target_forward.x, target_forward.y]),
+            'waypoint_list': np.array(waypoint_location_list),
+            'speed_limit': np.array(speed_limit),
+            'direction_list': np.array(direction_list)
+        }
+        return navigation
+
+    def is_vehicle_wrong_direction(self):
+        """
+        Get the wrong direction indicator result.
+        Returns
+        -------
+        :bool
+            Whether the current host vehicle is driving in the wrong direction.
+
+        """
+        return self._wrong_direction
+
+    def get_end_distance(self):
+        """
+        Get the distance to target (along current route) for host vehicle in the current frame.
+        Returns
+        -------
+        : float
+            The distance to target value along the current planned route.
+        """
+        return self._end_distance
+
+    def get_total_distance(self):
+        """
+        Get the total distance to navigation goal along current route.
+        Returns
+        -------
+        :float
+            The calculated total distance to goal along current route.
+        """
+        return self._total_distance
+
+    def get_total_timeout(self):
+        """
+        Get the current timeout value.
+        Returns
+        -------
+        :flaot
+            The current timeout value.
+        """
+        return self.get_total_timeout()

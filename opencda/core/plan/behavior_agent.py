@@ -20,6 +20,7 @@ from opencda.core.plan.local_planner_behavior import LocalPlanner
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.plan.planer_debug_helper import PlanDebugHelper
+from opencda.core.plan.plan_utils import RoadOption, AgentState
 
 
 class BehaviorAgent(object):
@@ -139,6 +140,25 @@ class BehaviorAgent(object):
         self.white_list = []
         self.obstacle_vehicles = []
         self.objects = {}
+
+        # rl related
+        self.node_road_option = None
+        self.node_waypoint = None
+        self.target_waypoint = None
+        self.agent_state = None
+        self.speed_limit = 0
+        self.distance_to_goal = 0.0
+        self._waypoints_queue = deque()
+        self.distances = deque()
+        self.timeout = -1
+        self.timeout_in_seconds = 0
+        # note: No need to make buffer size configurable. Just use 100.
+        self._buffer_size = 100
+        self._waypoints_buffer = deque(maxlen=100)
+        self._route = None
+        self._vehicle_location = None
+        self.current_waypoint = None
+
 
         # debug helper
         self.debug_helper = PlanDebugHelper(self.vehicle.id)
@@ -266,6 +286,12 @@ class BehaviorAgent(object):
             self.get_local_planner().get_waypoints_queue().clear()
             self.get_local_planner().get_trajectory().clear()
             self.get_local_planner().get_waypoint_buffer().clear()
+            # reset rl variables
+            self.distance_to_goal = 0.0
+            self._waypoints_queue.clear()
+            self._waypoints_buffer.clear()
+            self.distances.clear()
+
         if clean_history:
             self.get_local_planner().get_history_buffer().clear()
 
@@ -290,6 +316,67 @@ class BehaviorAgent(object):
         route_trace = self._trace_route(self.start_waypoint, end_waypoint)
 
         self._local_planner.set_global_plan(route_trace, clean)
+
+        # update route distance (actual distance along route) to goal
+        if not clean:
+            self._route += route_trace
+        prev_loc = None
+        for elem in route_trace:
+            self._waypoints_queue.append(elem)
+            cur_loc = elem[0].transform.location
+            if prev_loc is not None:
+                delta = cur_loc.distance(prev_loc)
+                self.distance_to_goal += delta
+                self.distances.append(delta)
+            prev_loc = cur_loc
+        # add rl related variables
+        self.node_waypoint = start_waypoint
+        self.node_road_option = RoadOption.LANEFOLLOW
+        self.timeout_in_seconds = ((self.distance_to_goal / 1000.0) / 5.0) * 3600.0 + 20.0
+        # note: do not see a point to make fps configurable, just use fps=10
+        self.timeout = self.timeout_in_seconds * 10
+
+    def set_route(self, route: List, clean: bool = False):
+        """
+        This method add a route into planner to trace. If ``clean`` is set true, it will clean current
+        route and waypoint queue.
+
+        Parameters
+        ----------
+        route:list
+            Route add to agent.
+        clean:bool
+            Whether to clean current route. Defaults to False.
+        """
+
+        if clean:
+            self._waypoints_queue.clear()
+            self._waypoints_buffer.clear()
+            self._route = route
+            self.distance_to_goal = 0
+            self.distances.clear()
+        else:
+            self._route.extend(route)
+
+        self.end_waypoint = self._route[-1][0]
+
+        prev_loc = None
+        for elem in route:
+            self._waypoints_queue.append(elem)
+            cur_loc = elem[0].transform.location
+            if prev_loc is not None:
+                delta = cur_loc.distance(prev_loc)
+                self.distance_to_goal += delta
+                self.distances.append(delta)
+            prev_loc = cur_loc
+
+        if self.distances:
+            cur_resolution = np.average(list(self.distances)[:100])
+            self._buffer_size = min(100, int(100 // cur_resolution))
+        self.node_waypoint, self.node_road_option = self._waypoints_queue[0]
+        self.timeout_in_seconds = ((self.distance_to_goal / 1000.0) / 5.0) * 3600.0 + 20.0
+        # note: do not see a point to make fps configurable, just use fps=10
+        self.timeout = self.timeout_in_seconds * self._fps
 
     def get_local_planner(self):
         """
@@ -737,6 +824,59 @@ class BehaviorAgent(object):
              reset_target.transform.location.z))
         return reset_target
 
+    def run_rl_step(self):
+        """
+        Run one step of local planner for RL model. This method will update node, target waypoint,
+        road option, and check agent states. The vehicle manager will get the updated info to
+        compose navigation dict for carla_env class.
+        """
+        assert self._route is not None
+
+        vehicle_transform = CarlaDataProvider.get_transform(self._hero_vehicle)
+        self._vehicle_location = vehicle_transform.location
+        self.current_waypoint = self._map.get_waypoint(
+            self._vehicle_location, lane_type=carla.LaneType.Driving, project_to_road=True
+        )
+
+        # Add waypoints into buffer if empty
+        if not self._waypoints_buffer:
+            for i in range(min(self._buffer_size, len(self._waypoints_queue))):
+                if self._waypoints_queue:
+                    self._waypoints_buffer.append(self._waypoints_queue.popleft())
+                else:
+                    break
+
+            # If no waypoints return with current waypoint
+            if not self._waypoints_buffer:
+                self.target_waypoint = self.current_waypoint
+                self.node_waypoint = self.current_waypoint
+                self.target_road_option = RoadOption.VOID
+                self.node_road_option = RoadOption.VOID
+                self.agent_state = AgentState.VOID
+                return
+
+        # Find the most far waypoint within min distance
+        max_index = -1
+        for i, (waypoint, _) in enumerate(self._waypoints_buffer):
+            cur_dis = waypoint.transform.location.distance(vehicle_transform.location)
+            if cur_dis < self._min_distance:
+                max_index = i
+        if max_index >= 0:
+            for i in range(max_index + 1):
+                self.node_waypoint, self.node_road_option = self._waypoints_buffer.popleft()
+                if self._waypoints_queue:
+                    self._waypoints_buffer.append(self._waypoints_queue.popleft())
+                if self.distances:
+                    self.distance_to_goal -= self.distances.popleft()
+
+        # Update information
+        if self._waypoints_buffer:
+            self.target_waypoint, self.target_road_option = self._waypoints_buffer[0]
+        self.agent_state = AgentState.NAVIGATING
+        self._speed = CarlaDataProvider.get_speed(self._hero_vehicle) * 3.6
+        self.speed_limit = self._hero_vehicle.get_speed_limit()
+        # note: Only update RL data, vehicle behaviors are regulated by the agent. The "speed limit" is now target speed.
+
     def run_step(
             self,
             target_speed=None,
@@ -887,6 +1027,11 @@ class BehaviorAgent(object):
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
+
+        # 9. Update RL waypoint queue/buffer
+        self.run_rl_step()
+
+
         return target_speed, target_loc
 
 

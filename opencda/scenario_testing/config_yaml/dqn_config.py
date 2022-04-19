@@ -1,4 +1,8 @@
+import os
 from easydict import EasyDict
+
+from opencda.scenario_testing.utils.yaml_utils import load_yaml
+
 '''
 1. [env] defines state, reward, action and episode. It is related to specific learning task. This should be 
    specified by user and should support agent learns the RL objective. 
@@ -20,6 +24,11 @@ next:
 4. [policy] defines learning parameters/hyper-parameters. 
     --> This should also be defined in the main script and pass to this script.
 '''
+
+config_yaml = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'rl_single_town06_carla.yaml')
+
+scenario_params = load_yaml(config_yaml)
 
 dqn_config = dict(
     exp_name='dqn21_bev32_buf2e5_lr1e4_bs128_ns3000_update4_train_ft',
@@ -44,7 +53,13 @@ dqn_config = dict(
         collector_env_num=1,
         evaluator_env_num=1,
         simulator=dict(
-            town='Town01',
+            # cfg.simulator --> **world_param
+            town='Town06',
+            col_threshold=400,
+            camera_aug=None,
+            debug=False,
+            # opencda world configs
+            scenario_params=scenario_params,
             disable_two_wheels=True,
             verbose=False,
             waypoint_num=32,
@@ -62,6 +77,7 @@ dqn_config = dict(
                 ),
             )
         ),
+        # failure judgement
         col_is_failure=True,
         stuck_is_failure=False,
         ignore_light=True,
@@ -70,6 +86,19 @@ dqn_config = dict(
         wrong_direction_is_failure=True,
         off_route_is_failure=True,
         off_route_distance=7.5,
+        # -------- default settings from script --------
+        simulator=dict(),
+        # reward types total reward take into account
+        reward_type=['goal', 'distance', 'speed', 'angle', 'failure'],
+        # reward value if success
+        success_reward=10,
+        # failure judgement hyper-parameters
+        success_distance=5,
+        stuck_len=300,
+        max_speed=5,
+        # whether open visualize
+        visualize=None,
+        # ---------------------------------------------
         replay_path='./dqn_video',
         visualize=dict(
             type='birdview',

@@ -67,7 +67,8 @@ def main(args, seed=0):
 
 
     collector_env = SyncSubprocessEnvManager(
-        
+
+        # wrapped_env = wrapped_discrete_env = SimpleCarlaEnv( env_cfg, host, port, TM_port = None)
         env_fn=[partial(wrapped_env, cfg.env, cfg.env.wrapper.collect, *tcp_list[i]) for i in range(collector_env_num)],
         
         cfg=cfg.env.manager.collect,
@@ -82,8 +83,8 @@ def main(args, seed=0):
     policy = policy_cls(cfg.policy, model=model)
 
     # Switch to SummaryWriter to log training process.
-    tb_logger = None
-    # tb_logger = SummaryWriter('./log/{}/'.format(cfg.exp_name))
+    # tb_logger = None
+    tb_logger = SummaryWriter('./log/{}/'.format(cfg.exp_name))
 
 
     # initiate learner and collector

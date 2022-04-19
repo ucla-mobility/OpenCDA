@@ -301,7 +301,11 @@ class CollisionSensor(object):
         self._threshold = col_threshold
         world = self._parent.get_world()
         bp = world.get_blueprint_library().find('sensor.other.collision')
-        self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent)
+        print('If parent alive: ' + str(parent_actor.is_alive))
+        parent = world.get_actor(parent_actor.id)
+
+        self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=parent_actor)
+        # self.sensor = world.try_spawn_actor(bp, carla.Transform(), attach_to=parent_actor)
         # We need to pass the lambda a weak reference to self to avoid circular
         # reference.
         weak_self = weakref.ref(self)
