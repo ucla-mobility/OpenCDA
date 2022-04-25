@@ -18,9 +18,12 @@ from ding.envs.env.base_env import BaseEnvTimestep, BaseEnvInfo
 from ding.envs.common.env_element import EnvElementInfo
 from ding.torch_utils.data_helper import to_ndarray
 
+from opencda.core.common.cav_world import CavWorld
 from opencda.core.ml_libs.rl.simulators.rl_scenario_manager import RLScenarioManager
 from opencda.core.ml_libs.rl.utils.env_utils.stuck_detector import StuckDetector
 from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils import lane_mid_distance
+from opencda.core.ml_libs.rl.utils.others.visualizer import Visualizer
+from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils import visualize_birdview
 
 metadata = {'render.modes': ['rgb_array']}
 action_space = spaces.Dict({})
@@ -82,8 +85,18 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._single_cav_list = None
         self._hero_vehicle = None
         self._hero_vehicle_manager = None
+        # visualization configs
+        self._visualize_cfg = self._cfg.visualize
+        self._simulator_databuffer = dict()
+        self._visualizer = None
+        self._last_canvas = None
 
+        # Scenario Configs
         # rl related configurations
+        self._carla_town_name = None
+        self._start_location = None
+        self._end_location = None
+        self._bev_wrapper = None
         # Failure Config
         self._col_is_failure = self._cfg.col_is_failure                             # whether to consider collision as failure
         self._stuck_is_failure = self._cfg.stuck_is_failure                         # whether to consider getting stucked on road as failure
@@ -110,26 +123,21 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._wrong_direction = False                                               # take penalty for driving in wrong direction
         self._off_route = False                                                     # take penalty for driving off planned route
         self._stuck_detector = StuckDetector(self._cfg.stuck_len)
+        # accumulated final reward
+        self._final_eval_reward = 0.0
         # time configs
         self._tick = 0
         self._timeout = float('inf')
         self._launched_simulator = False
-        # visualization configs
-        self._visualize_cfg = self._cfg.visualize
-        self._simulator_databuffer = dict()
-        self._visualizer = None
-        self._last_canvas = None
 
+        # Action configs
         # import the action list
         self._acc_list = self._cfg.ACC_LIST
         self._steer_list = self._cfg.STEER_LIST
-
         # configurate discrete or continuous env
         self._env_is_discrete = False
         self._env_is_continuous = False
 
-        # accumulated final reward
-        self._final_eval_reward = 0.0
 
         # make sure the two settings are exclusive
         if 'env_action_space' in self._cfg:
@@ -143,19 +151,23 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         including CAVs and background vehicles.
         """
         # init CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        cav_world = CavWorld()
 
         # init rl scenario manager
-        print("------ Run Carla on Port: %d, GPU: %d ------" % (self._carla_port, 0))
         # overwrite port info in scenario paramrs so the CARLA client is assign to the correct port
         scenario_params = self._simulator_cfg['scenario_params']
-        scenario_params['world']['client_port'] = port
+        scenario_params['world']['client_port'] = self._carla_port
+        self._carla_town_name = self._simulator_cfg['town']
         self._rl_scenario_manager = RLScenarioManager(scenario_params,
-                                                     cfg=self._simulator_cfg,
-                                                     town = self._simulator_cfg['town'],
-                                                     cav_world = cav_world)
+                                                      cfg=self._simulator_cfg,
+                                                      town=self._carla_town_name,
+                                                      cav_world=cav_world)
+        # Display status
+        print("------ Run Carla on Port: %d, GPU: %d ------" % (self._carla_port, 0))
+        print("------ Initiate Scenario Manager at Map: %s ------" % self._carla_town_name)
         # set simulation launch indicator
         self._launched_simulator = True
+        self._cav_world = self._rl_scenario_manager.world
 
     def discrete_action_from_num(self, np_action):
         """
@@ -252,12 +264,15 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         -------
         obs:dict
             The current observation of the simulation step.
-
         '''
         obs = dict()
-        state = self._rl_scenario_manager.get_state(self._single_cav_list[0])
+        state, is_off_road = self._rl_scenario_manager.get_state(self._hero_vehicle_manager)
+        # update off road status
+        self._hero_vehicle_manager.set_off_road(is_off_road)
         # note: the get navigation function are moved to vehicle_manager: get_navigation_state()
-        navigation = self._hero_vehicle_manager.get_navigation_state()
+        navigation, waypoint_list = self._hero_vehicle_manager.get_navigation_state()
+        # update bev wrapper
+        self._rl_scenario_manager.update_bev_waypoints(waypoint_list)
         sensor_data = self._rl_scenario_manager.get_sensor_data()
         information = self._rl_scenario_manager.get_information()
 
@@ -325,24 +340,51 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             self._init_carla_simulator()
 
         # kill all actors in world
+        live_actors = self._cav_world.get_actors()
+        # if live_actors is not None:
         if self._single_cav_list is not None:
             self._rl_scenario_manager.destroyActors()
             self._single_cav_list = None
             self._bg_list = None
+            for actor in live_actors:
+                actor.destroy()
 
         # init cav list (note: the first in list is the host vehicle)
         # note destination has been set in "create_vehicle_manager" method
         single_cav_list = self._rl_scenario_manager.create_vehicle_manager(application=['single'])
+        # update manager and vehicle list
         self._single_cav_list = single_cav_list
+        self._hero_vehicle_manager = single_cav_list[0]
         self._hero_vehicle = single_cav_list[0].vehicle
+
+        # prepare sensors (# init sensor helper, collision sensor and traffic light sensor)
+        self._rl_scenario_manager.prepare_observations(self._hero_vehicle)
+
+        # update location
+        self._start_location = self._hero_vehicle.get_location()
+        cav_config = self._simulator_cfg['scenario_params']['scenario']['single_cav_list'][0]
+        self._end_location = carla.Location(x=cav_config['destination'][0],
+                                            y=cav_config['destination'][1],
+                                            z=cav_config['destination'][2])
+        # set destination
+        self._hero_vehicle_manager.set_destination(self._start_location, self._end_location)
+        # warmup simulation for 30 ticks
+        for _ in range(10):
+            # 1.scenario run step
+            self._rl_scenario_manager.run_step()
+            self._rl_scenario_manager.get_state(self._hero_vehicle_manager)
+            # 2. vehicle manager run step
+            self._hero_vehicle_manager.run_step()
+            # 3. increase one tick
+            self._tick += 1
+            # 4. tick carla
+            self._cav_world.tick()
 
         # init background traffic
         # todo: add background traffic
         # self._tm, self._bg_list = self._rl_scenario_manager.create_traffic_carla()
 
-        # prepare sensors
-        self._rl_scenario_manager.prepare_observations(self._hero_vehicle)
-
+        # organize initial observation
         if self._visualize_cfg is not None:
             if self._visualizer is not None:
                 self._visualizer.done()
@@ -353,7 +395,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
                 vis_name = kwargs['name']
             else:
                 vis_name = "{}_{}".format(
-                    self._rl_scenario_manager.town_name, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+                    self._carla_town_name, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
                 )
 
             self._visualizer.init(vis_name)
@@ -374,7 +416,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._reward = 0
         self._last_steer = 0
         self._last_distance = None
-        self._timeout = self._hero_vehicle_manager.get_total_timeout()
+        self._timeout = self._hero_vehicle_manager.get_sim_timeout()
         # reset episodic reward
         self._final_eval_reward = 0.0
         # configuration for discrete and continous
@@ -437,6 +479,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         # Run one simulation step for all interfaces
         # 1.scenario run step
+        empty_route = self._hero_vehicle_manager.get_route() is None
         self._rl_scenario_manager.run_step()
         # 2. vehicle manager run step
         self._hero_vehicle_manager.run_step()

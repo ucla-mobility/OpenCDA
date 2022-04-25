@@ -5,10 +5,10 @@ envs = []
 env_map = {}
 
 if 'carla' in SIMULATORS:
-    from opencda.core.ml_libs.rl.envs.simple_carla_env import SimpleCarlaEnv
+    from opencda.core.ml_libs.rl.envs.simple_carla_env_v2_scenario_manager import CarlaRLEnv
     # from .scenario_carla_env import ScenarioCarlaEnv
     env_map.update({
-        "SimpleCarla-v1": 'core.envs.simple_carla_env.SimpleCarlaEnv'
+        "CarlaScenarioManger-v1": 'core.ml_libs.rl.envs.simple_carla_env_v2_scenario_manager'
         # "ScenarioCarla-v1": 'core.envs.scenario_carla_env.ScenarioCarlaEnv'
     })
 

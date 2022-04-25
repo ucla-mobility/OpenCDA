@@ -258,15 +258,19 @@ class ScenarioManager:
             # if the spawn position is a single scalar, we need to use map
             # helper to transfer to spawn transform
             if 'spawn_special' not in cav_config:
-                spawn_transform = carla.Transform(
-                    carla.Location(
-                        x=cav_config['spawn_position'][0],
-                        y=cav_config['spawn_position'][1],
-                        z=cav_config['spawn_position'][2]),
-                    carla.Rotation(
-                        pitch=cav_config['spawn_position'][5],
-                        yaw=cav_config['spawn_position'][4],
-                        roll=cav_config['spawn_position'][3]))
+                if cav_config['spawn_random']:
+                    spawn_list = self.carla_map.get_spawn_points()
+                    spawn_transform = spawn_list[random.randint(0, len(spawn_list))]
+                else:
+                    spawn_transform = carla.Transform(
+                        carla.Location(
+                            x=cav_config['spawn_position'][0],
+                            y=cav_config['spawn_position'][1],
+                            z=cav_config['spawn_position'][2]),
+                        carla.Rotation(
+                            pitch=cav_config['spawn_position'][5],
+                            yaw=cav_config['spawn_position'][4],
+                            roll=cav_config['spawn_position'][3]))
             else:
                 spawn_transform = map_helper(self.carla_version,
                                              *cav_config['spawn_special'])
@@ -275,10 +279,11 @@ class ScenarioManager:
 
             # set role_name in blue print for RL module
             # note: currently only consider one RL agent, set to be the first CAV on the list
-            if i == 0: 
+            if i == 0:
                 cav_vehicle_bp.set_attribute('role_name', 'hero')
-            
-            #  spawn actor 
+
+            #  spawn actor
+            print('The current spawn transform is: ' + str(spawn_transform))
             vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
             print('The spawned vehicle ID is : ' + str(vehicle.id))
 

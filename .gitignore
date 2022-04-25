@@ -149,3 +149,5 @@ docs/tmp.py
 video_dumping
 *data_dumping*
 
+# RL logs
+opencda/scenario_testing/log/

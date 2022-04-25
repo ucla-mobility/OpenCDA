@@ -24,97 +24,81 @@ from opencda.core.ml_libs.rl.utils.simulator_utils.sensor_utils \
     import SensorHelper, CollisionSensor, TrafficLightHelper
 from opencda.core.ml_libs.rl.utils.simulator_utils.map_utils \
     import BeVWrapper
-from opencda.core.ml_libs.rl.simulators.carla_data_provider \
-    import CarlaDataProvider
+# from opencda.core.ml_libs.rl.simulators.carla_data_provider \
+#     import CarlaDataProvider
 from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils \
     import control_to_signal, get_birdview
-from opencda.core.ml_libs.rl.utils.planner \
-    import BasicPlanner, BehaviorPlanner # , LBCPlannerNew
+# from opencda.core.ml_libs.rl.utils.planner \
+#     import BasicPlanner, BehaviorPlanner # , LBCPlannerNew
 from opencda.core.ml_libs.rl.utils.others.tcp_helper \
     import find_traffic_manager_port
+from opencda.core.ml_libs.rl.utils.simulator_utils.map_utils import BeVWrapper
 
 
 VEHICLE_NAME = 'vehicle.lincoln.mkz'
 ROLE_NAME = 'hero'
 OBS_TYPE_LIST = ['state', 'depth', 'rgb', 'segmentation', 'bev', 'lidar', 'gnss']
 
-PLANNER_DICT = {
-    'basic': BasicPlanner,
-    'behavior': BehaviorPlanner
-}
-
-
-# class CarlaSimulator(BaseSimulator):
-# class CarlaSimulator(ABC):
-
 class RLScenarioManager(ScenarioManager):
     """
-    A scenario manager class with special RL functionalities. 
+    A scenario manager class with special RL functionalities.
     The RL scenario manager creates a client to Carla server, and is able to get observation, send
-    control signals to the hero vehicle and record essential data from the simulated world. The 
-    RL scenario manager may change the environment parameters including maps and weathers and can 
+    control signals to the hero vehicle and record essential data from the simulated world. The
+    RL scenario manager may change the environment parameters including maps and weathers and can
     add actors.The RL scenario manager also retrieve running state and information of the hero vehicle.
+    Note: The xodr is defined as none as RL is based on CARLA. The apply_ml is set to False as RL is used.
 
-    :Arguments:
-        - cfg (Dict): Config Dict.
-        - client (carla.Client, optional): Already established Carla client. Defaults to None.
-        - host (str, optional): TCP host Carla client link to. Defaults to 'localhost'.
-        - port (int, optional): TCP port Carla client link to. Defaults to 9000.
-        - tm_port (int, optional): Traffic manager port Carla client link to. Defaults to None.
-        - timeout (float, optional): Carla client link timeout. Defaults to 60.0.
+    Parameters
+    ----------
+    scenario_params : dict
+        The dictionary contains all simulation configurations.
 
-    :Interfaces:
-        init, get_state, get_sensor_data, get_navigation, get_information, apply_planner,
-        apply_control, run_step, clean_up
+    cfg : dict
+        The RL configuration file.
 
-    :Properties:
-        - town_name (str): Current town name.
-        - hero_player (carla.Actor): hero actor in simulation.
-        - collided (bool): Whether collided in current episode.
-        - ran_light (bool): Whether ran light in current frame.
-        - off_road (bool): Whether ran off road in current frame.
+    town : str
+        Town name if not using customized map, eg. 'Town06'.
 
+    cav_world : opencda object
+        CAV World that contains the information of all CAVs.
+
+    Attributes
+    ----------
+    client : carla.client
+        The client that connects to carla server.
+
+    world : carla.world
+        Carla simulation server.
+
+    origin_settings : dict
+        The origin setting of the simulation server.
+
+    carla_map : carla.map
+        Carla HD Map.
     """
-
     def __init__(self,
                  scenario_params,
                  cfg,
                  town,
-                 cav_world) -> None:
+                 cav_world,
+                 version='0.9.11') -> None:
         """
         Init RL_Scenario_manager.
         """
         super().__init__(scenario_params=scenario_params,
                          apply_ml=False,
-                         version='0.9.11',
+                         carla_version=version,
                          xodr_path=None,
                          town=town,
                          cav_world=cav_world)
-
         self._cfg = cfg
         self._cav_world = cav_world
-
-        # todo: redering
-        self._no_rendering = self._cfg.no_rendering
+        self._no_rendering = cfg.no_rendering
 
         self._simulation_config = scenario_params['world']
-        self._carla_port = port
         self._town_name = cfg['town']
-        self._sync_mode = self._simulation_config['world']['sync_mode']
+        self._sync_mode = self._simulation_config['sync_mode']
 
-        # todo Note: use parent class varaibles instead
-        self._client = None  # --> parent class has self.client
-        self._world = None   # --> parent class has self.world
-        self._map = None     # --> parent class has self.carla_map
-
-        # todo: vheicle manager functions
-        self._hero_actor = None
-        self._single_cav_list = None
-        self._start_location = None
-        self._end_location = None
-
-        #
-        #
         self._col_threshold = self._cfg.col_threshold
         self._waypoint_num = self._cfg.waypoint_num
         self._obs_cfg = self._cfg.obs
@@ -156,7 +140,17 @@ class RLScenarioManager(ScenarioManager):
                 self._bev_wrapper.init(self.client, self.world, self.carla_map, hero_vehicle)
 
         self._collision_sensor = CollisionSensor(hero_vehicle, self._col_threshold)
-        self._traffic_light_helper = TrafficLightHelper(hero_vehicle)
+        self._traffic_light_helper = TrafficLightHelper(hero_vehicle, self.carla_map)
+
+    def update_bev_waypoints(self, waypoint_list):
+        """
+        Update bev wrapper with waypoint lists.
+        Parameters
+        ----------
+        waypoint_list:list
+            The current waypoint list.
+        """
+        self._bev_wrapper.update_waypoints(waypoint_list)
 
     def get_state(self, hero_vehicle_manager):
         """
@@ -165,7 +159,7 @@ class RLScenarioManager(ScenarioManager):
 
         Parameters
         ----------
-        hero_vehicle_manager: opencda.vechile_manager
+        hero_vehicle_manager: opencda.vehicle_manager
             The current vehicle manager of the hero vehicle. It was used to read all simulation data.
 
         Returns
@@ -174,19 +168,20 @@ class RLScenarioManager(ScenarioManager):
             The organized state data (vehicle dynamic and navigation info) in a dictionary.
         """
         # vehicle state info
-        speed = hero_vehicle_manager.get_speed() * 3.6
-        transform = hero_vehicle_manager.get_transform()
-        location = hero_vehicle_manager.get_location()
-        forward_vector = hero_vehicle_manager.get_forward_vector()
-        acceleration = hero_vehicle_manager.get_acceleration()
-        angular_velocity = hero_vehicle_manager.get_angular_velocity()
-        velocity = hero_vehicle_manager.get_speed_vector()
+        speed = hero_vehicle_manager.get_ego_speed()                        # speed in km/h
+        transform = hero_vehicle_manager.get_ego_transform()                # ego transform
+        location = hero_vehicle_manager.get_ego_location()                  # ego location
+        forward_vector = hero_vehicle_manager.get_ego_forward_vector()      # ego forward vector
+        acceleration = hero_vehicle_manager.get_ego_acceleration()          # ego acceleration vector
+        angular_velocity = hero_vehicle_manager.get_ego_angular_velocity()  # ego angular velocity
+        velocity = hero_vehicle_manager.get_speed_vector()                  # ego speed in x,y,z direction
 
         # todo: check light state helper
         light_state = self._traffic_light_helper.active_light_state.value
 
         # navigation info
-        drive_waypoint = self.map.get_waypoint(
+        # Note: Only use scenario manager attribute to access the carla map. Retrieve map is expensive.
+        drive_waypoint = self.carla_map.get_waypoint(
             location,
             project_to_road=False
         )
@@ -196,8 +191,8 @@ class RLScenarioManager(ScenarioManager):
             self._off_road = False
         else:
             self._off_road = True
-
-        lane_waypoint = self.map.get_waypoint(location, project_to_road=True, lane_type=carla.LaneType.Driving)
+        # Note: Only use scenario manager attribute to access the carla map. Retrieve map is expensive.
+        lane_waypoint = self.carla_map.get_waypoint(location, project_to_road=True, lane_type=carla.LaneType.Driving)
         lane_location = lane_waypoint.transform.location
         lane_forward_vector = lane_waypoint.transform.rotation.get_forward_vector()
 
@@ -212,7 +207,6 @@ class RLScenarioManager(ScenarioManager):
             'is_junction': is_junction,
             'lane_location': np.array([lane_location.x, lane_location.y]),
             'lane_forward': np.array([lane_forward_vector.x, lane_forward_vector.y]),
-            # todo: check light state helper
             'tl_state': light_state,
             'tl_dis': self._traffic_light_helper.active_light_dis,
         }
@@ -222,7 +216,7 @@ class RLScenarioManager(ScenarioManager):
             lane_forward_vector = lane_waypoint.transform.get_forward_vector()
             state['lane_forward'] = np.array([lane_forward_vector.x, lane_forward_vector.y])
 
-        return state
+        return state, self._off_road
 
     def get_sensor_data(self) -> Dict:
         """
@@ -274,8 +268,7 @@ class RLScenarioManager(ScenarioManager):
 
         # prepare BEV map
         if self._bev_wrapper is not None:
-            if CarlaDataProvider._hero_vehicle_route is not None:
-                self._bev_wrapper.tick()
+            self._bev_wrapper.tick()
 
     def clean_up(self) -> None:
         """
@@ -299,38 +292,3 @@ class RLScenarioManager(ScenarioManager):
         self._ran_light = False
         self._off_road = False
         self._wrong_direction = False
-
-
-
-
-
-
-    # !!! todo: List of todo items.... !!!
-    """
-    1. need-to-implement function list:          
-        a. Navigation modules (planner class vs. openCDA BehaviorAgent) 
-            self._rl_scenario_manager.get_navigation() --> Involves DI_drive planner:
-                                                           Rewrite the planner class using opencda planner.
-                                                           Preserve the same function to calculate distance/orientation from 
-                                                           current host position to navigation target.
-            related params:  (parmas that will be used by carla_env)
-                    * self._off_road                             --> use next waypoint to determine if on road
-                    * self._wrong_direction                      --> use planner to determine orientation 
-                    * self._rl_scenario_manager.end_distance     --> current distance to navigation goal  (dist(current,end))
-                    * self._rl_scenario_manager.total_distance   --> total route distance to navigation goal (dist(start,end))
-                    * self._rl_scenario_manager.end_timeout      --> timeout for entire route provided by planner.
-                    ** carla_env interface 
-                    self._stuck = self._stuck_detector.stuck   --> if speed buffer has a low avg value then the vehicle 
-                                                                    is determined to be stucked. This shold also be implemented
-                                                                    in planner/agent class, so carla_env can directly use it.
-                                                       
-    2. Implementation Notes:      
-        self._collided = self._simulator.collided --> use collide sensor to determine colllision
-        self._ran_light = self._simulator.ran_light --> use traffic light helper to determine if ran light
-    
-    3. Next note:   
-       Double check function in planner and carla simulator. Implement all functions that involves vehicle
-       state. Use new class (vehicle manager and behavioral agent) to get reward related info (state, traffic, 
-       direction, stuck detec etc).
-    
-    """

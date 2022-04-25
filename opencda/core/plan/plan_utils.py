@@ -25,6 +25,7 @@ class AgentState(Enum):
     BLOCKED_BY_WALKER = 3
     BLOCKED_RED_LIGHT = 4
     BLOCKED_BY_BIKE = 5
+    IDLE = 6
 
 # types behaviors
 class Cautious(object):

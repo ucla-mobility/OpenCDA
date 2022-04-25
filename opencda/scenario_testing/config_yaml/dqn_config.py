@@ -55,6 +55,7 @@ dqn_config = dict(
         simulator=dict(
             # cfg.simulator --> **world_param
             town='Town06',
+            no_rendering=False,
             col_threshold=400,
             camera_aug=None,
             debug=False,
@@ -86,8 +87,8 @@ dqn_config = dict(
         wrong_direction_is_failure=True,
         off_route_is_failure=True,
         off_route_distance=7.5,
-        # -------- default settings from script --------
-        simulator=dict(),
+        # -------- default settings from carla env script --------
+        # simulator=dict(),
         # reward types total reward take into account
         reward_type=['goal', 'distance', 'speed', 'angle', 'failure'],
         # reward value if success
@@ -96,9 +97,9 @@ dqn_config = dict(
         success_distance=5,
         stuck_len=300,
         max_speed=5,
-        # whether open visualize
-        visualize=None,
-        # ---------------------------------------------
+        # # whether open visualize
+        # visualize=None,
+        # -------------------------------------------------------
         replay_path='./dqn_video',
         visualize=dict(
             type='birdview',
@@ -108,7 +109,7 @@ dqn_config = dict(
                 auto_reset=True,
                 shared_memory=False,
                 context='spawn',
-                max_retry=2,
+                max_retry=1,
                 retry_type='renew',
                 step_timeout=120,
                 reset_timeout=120,

@@ -12,7 +12,6 @@ from easydict import EasyDict
 from collections import deque
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from opencda.core.ml_libs.rl.simulators.carla_data_provider import CarlaDataProvider
 from ding.utils.default_helper import deep_merge_dicts
 
 DEFAULT_CAMERA_CONFIG = {
@@ -54,7 +53,6 @@ def get_random_sample(range_list):
         num = np.random.random() * _range * 2 - _range
         res.append(num)
     return res
-
 
 class SensorHelper(object):
     """
@@ -349,10 +347,10 @@ class TrafficLightHelper(object):
         - tick
     """
 
-    def __init__(self, hero_vehicle: carla.Actor, debug: bool = False) -> None:
+    def __init__(self, hero_vehicle: carla.Actor, map: carla.Map, debug: bool = False) -> None:
         self._hero_vehicle = hero_vehicle
-        self._world = CarlaDataProvider.get_world()
-        self._map = CarlaDataProvider.get_map()
+        self._world = self._hero_vehicle.get_world()
+        self._map = map
 
         self._light_dis_thresh = 20
         self._active_light = None
@@ -373,7 +371,7 @@ class TrafficLightHelper(object):
         in current road and check if the vehicle has crossed them.
         """
         self.ran_light = False
-        vehicle_transform = CarlaDataProvider.get_transform(self._hero_vehicle)
+        vehicle_transform = self._hero_vehicle.get_transform()
         vehicle_location = vehicle_transform.location
 
         self._active_light, light_trigger_location = self._get_active_light()
@@ -456,16 +454,40 @@ class TrafficLightHelper(object):
                         self.total_lights_ran += 1
                         self._last_light = None
 
-    def _get_active_light(self) -> Tuple[Optional[carla.Actor], Optional[carla.Vector3D]]:
-        lights_list = CarlaDataProvider.get_actor_list().filter("*traffic_light*")
+    def get_trafficlight_trigger_location(self, traffic_light: carla.Actor):
+        """
+        Calculates the yaw of the waypoint that represents the trigger volume of the traffic light
+        """
 
-        vehicle_transform = CarlaDataProvider.get_transform(self._hero_vehicle)
+        def rotate_point(point, angle):
+            """
+            rotate a given point by a given angle
+            """
+            x_ = math.cos(math.radians(angle)) * point.x - math.sin(math.radians(angle)) * point.y
+            y_ = math.sin(math.radians(angle)) * point.x - math.cos(math.radians(angle)) * point.y
+
+            return carla.Vector3D(x_, y_, point.z)
+
+        base_transform = traffic_light.get_transform()
+        base_rot = base_transform.rotation.yaw
+        area_loc = base_transform.transform(traffic_light.trigger_volume.location)
+        area_ext = traffic_light.trigger_volume.extent
+
+        point = rotate_point(carla.Vector3D(0, 0, area_ext.z), base_rot)
+        point_location = area_loc + carla.Location(x=point.x, y=point.y)
+
+        return carla.Location(point_location.x, point_location.y, point_location.z)
+
+    def _get_active_light(self) -> Tuple[Optional[carla.Actor], Optional[carla.Vector3D]]:
+        lights_list = self._world.get_actors().filter("*traffic_light*")
+
+        vehicle_transform = self._hero_vehicle.get_transform()
         vehicle_location = vehicle_transform.location
-        vehicle_waypoint = CarlaDataProvider._map.get_waypoint(vehicle_location)
+        vehicle_waypoint = self._map.get_waypoint(vehicle_location)
 
         for traffic_light in lights_list:
-            object_location = CarlaDataProvider.get_trafficlight_trigger_location(traffic_light)
-            object_waypoint = CarlaDataProvider._map.get_waypoint(object_location)
+            object_location = self.get_trafficlight_trigger_location(traffic_light)
+            object_waypoint = self._map.get_waypoint(object_location)
 
             if object_waypoint.road_id != vehicle_waypoint.road_id:
                 continue

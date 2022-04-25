@@ -7,6 +7,8 @@ Basic class of CAV
 
 import uuid
 
+import numpy as np
+
 from opencda.core.actuation.control_manager \
     import ControlManager
 from opencda.core.application.platooning.platoon_behavior_agent \
@@ -21,6 +23,7 @@ from opencda.core.plan.behavior_agent \
     import BehaviorAgent
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
+from opencda.core.common.misc import get_acc
 
 
 class VehicleManager(object):
@@ -93,6 +96,8 @@ class VehicleManager(object):
         behavior_config = config_yaml['behavior']
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
+        # number of waypoints to consider in front
+        self._waypoint_num = config_yaml['waypoint_num']
 
         # v2x module
         self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
@@ -132,11 +137,14 @@ class VehicleManager(object):
         else:
             self.data_dumper = None
 
-        # RL related attributes
+        # RL module
+        # todo add rl maanger:
+        #  self.rl_manager = RLManager(cav_world, v2x_config, self.vid)
         self._end_distance = float('inf')
         self._end_timeout = float('inf')
         self._total_distance = float('inf')
         self._wrong_direction = False
+        self._off_road = False
 
         cav_world.update_vehicle_manager(self)
 
@@ -170,7 +178,7 @@ class VehicleManager(object):
         self.agent.set_destination(
             start_location, end_location, clean, end_reset)
         # first time set destination, calculate total distance to goal here.
-        self._total_distance = self._agent.distance_to_goal
+        self._total_distance = self.agent.distance_to_goal
 
     def update_info(self):
         """
@@ -246,9 +254,6 @@ class VehicleManager(object):
         self._end_distance = self.agent.distance_to_goal
         self._end_timeout = self.agent.timeout
 
-        if self._bev_wrapper is not None:
-            self._bev_wrapper.update_waypoints(waypoint_list)
-
         waypoint_location_list = []
         for wp in waypoint_list:
             wp_loc = wp.transform.location
@@ -285,7 +290,7 @@ class VehicleManager(object):
             'speed_limit': np.array(speed_limit),
             'direction_list': np.array(direction_list)
         }
-        return navigation
+        return navigation, waypoint_list
 
     def is_vehicle_wrong_direction(self):
         """
@@ -297,6 +302,16 @@ class VehicleManager(object):
 
         """
         return self._wrong_direction
+
+    def set_off_road(self, is_off_road):
+        """
+        Set the off-road status for vehicle manager based on scenario manager output.
+        Parameters
+        ----------
+        is_off_road: bool
+            The current off-road status.
+        """
+        self._off_road = is_off_road
 
     def get_end_distance(self):
         """
@@ -318,12 +333,80 @@ class VehicleManager(object):
         """
         return self._total_distance
 
-    def get_total_timeout(self):
+    def get_sim_timeout(self):
         """
-        Get the current timeout value.
+        Get the current timeout value from planner/agent.
         Returns
         -------
-        :flaot
+        :float
             The current timeout value.
         """
-        return self.get_total_timeout()
+        return self._end_timeout
+
+    def get_route(self):
+        """
+        Get the current route of the behavioral agent.
+        Returns
+        -------
+        :list
+            The current route of the vehicle as a list of waypoints.
+        """
+        return self.agent.get_route()
+
+    def get_ego_speed(self):
+        """
+        Get the true speed of the ego vehicle.
+        Returns
+        -------
+        :float
+            Get the true speed of the ego vehicle, in km/h.
+        """
+        return self.localizer.get_ego_spd()
+
+    def get_ego_transform(self):
+        """
+        Get the transform of the ego vehicle.
+        Returns
+        -------
+        :carla.transform
+            The transform of the ego vehicle.
+        """
+        return self.localizer.get_ego_pos()
+
+    def get_ego_location(self):
+        return self.localizer.get_ego_pos().location
+
+    def get_ego_forward_vector(self):
+        return self.localizer.get_ego_pos().rotation.get_forward_vector()
+
+    def get_ego_acceleration(self):
+        """
+        Get the true acceleration of the ego vehicle.
+        Returns
+        -------
+        :carla.vector
+            The acceleration of the ego vehicle in x,y,z direction.
+            Note: IMU sensor returns a rectified (0~1) acceleration value (accelerometer).
+        """
+        return self.vehicle.get_acceleration()
+        # return get_acc(self.vehicle, meters=True)
+
+    def get_ego_angular_velocity(self):
+        """
+        Get the angular velocity of the ego vehicle.
+        Returns
+        -------
+        :carla.vector
+            The angular velocity of the ego vehicle in deg/s.
+        """
+        return self.vehicle.get_angular_velocity()
+
+    def get_speed_vector(self):
+        """
+        Get the x,y,z velocity vector of the ego vehicle.
+        Returns
+        -------
+        :carla.vector
+            The current ego vehicle speed vector in m/s on x,y,z direction.
+        """
+        return self.vehicle.get_velocity()

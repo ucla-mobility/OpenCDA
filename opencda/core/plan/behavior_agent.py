@@ -6,11 +6,11 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
-
 import math
 import random
 import sys
 
+from collections import deque
 import numpy as np
 import carla
 
@@ -144,8 +144,7 @@ class BehaviorAgent(object):
         # rl related
         self.node_road_option = None
         self.node_waypoint = None
-        self.target_waypoint = None
-        self.agent_state = None
+        self.agent_state = AgentState.IDLE
         self.speed_limit = 0
         self.distance_to_goal = 0.0
         self._waypoints_queue = deque()
@@ -155,10 +154,14 @@ class BehaviorAgent(object):
         # note: No need to make buffer size configurable. Just use 100.
         self._buffer_size = 100
         self._waypoints_buffer = deque(maxlen=100)
-        self._route = None
-        self._vehicle_location = None
-        self.current_waypoint = None
-
+        self._route = []
+        # self._vehicle_location = None
+        # init current waypoint based on ego vehicle position
+        self.current_waypoint = self._map.get_waypoint(
+            self.vehicle.get_location(), lane_type=carla.LaneType.Driving, project_to_road=True
+        )
+        self.target_waypoint = self.current_waypoint
+        self._min_distance = config_yaml['min_distance']
 
         # debug helper
         self.debug_helper = PlanDebugHelper(self.vehicle.id)
@@ -287,6 +290,7 @@ class BehaviorAgent(object):
             self.get_local_planner().get_trajectory().clear()
             self.get_local_planner().get_waypoint_buffer().clear()
             # reset rl variables
+            self._route = []
             self.distance_to_goal = 0.0
             self._waypoints_queue.clear()
             self._waypoints_buffer.clear()
@@ -330,13 +334,13 @@ class BehaviorAgent(object):
                 self.distances.append(delta)
             prev_loc = cur_loc
         # add rl related variables
-        self.node_waypoint = start_waypoint
+        self.node_waypoint = self.start_waypoint
         self.node_road_option = RoadOption.LANEFOLLOW
         self.timeout_in_seconds = ((self.distance_to_goal / 1000.0) / 5.0) * 3600.0 + 20.0
         # note: do not see a point to make fps configurable, just use fps=10
         self.timeout = self.timeout_in_seconds * 10
 
-    def set_route(self, route: List, clean: bool = False):
+    def set_route(self, route, clean=False):
         """
         This method add a route into planner to trace. If ``clean`` is set true, it will clean current
         route and waypoint queue.
@@ -377,12 +381,6 @@ class BehaviorAgent(object):
         self.timeout_in_seconds = ((self.distance_to_goal / 1000.0) / 5.0) * 3600.0 + 20.0
         # note: do not see a point to make fps configurable, just use fps=10
         self.timeout = self.timeout_in_seconds * self._fps
-
-    def get_local_planner(self):
-        """
-        return the local planner
-        """
-        return self._local_planner
 
     def reroute(self, spawn_points):
         """
@@ -824,6 +822,68 @@ class BehaviorAgent(object):
              reset_target.transform.location.z))
         return reset_target
 
+    def get_route(self):
+        """
+        Get the current route of the behavioral agent.
+        Returns
+        -------
+        :list
+            The current route of the vehicle as a list of waypoints.
+        """
+        return self._route
+
+    def get_local_planner(self):
+        """
+        return the local planner
+        """
+        return self._local_planner
+
+    def get_waypoints_list(self, waypoint_num):
+        """
+        Return a list of wapoints from the end of waypoint buffer.
+        Parameters
+        ----------
+        waypoint_num:int
+            Number of waypoint to put in the list.
+        Returns
+        -------
+        :List
+            A list of waypoints.
+        """
+        num = 0
+        i = 0
+        waypoint_list = []
+        while num < waypoint_num and i < len(self._waypoints_buffer):
+            waypoint = self._waypoints_buffer[i][0]
+            i += 1
+            if len(waypoint_list) == 0:
+                waypoint_list.append(waypoint)
+                num + 1
+            elif waypoint_list[-1].transform.location.distance(waypoint.transform.location) > 1e-4:
+                waypoint_list.append(waypoint)
+                num += 1
+        return waypoint_list
+
+    def get_direction_list(self, waypoint_num):
+        """
+        Get a list of possible direction in the current location.
+        Parameters
+        ----------
+        waypoint_num:int
+            The desired waypoint number to look ahead.
+
+        Returns
+        -------
+        :list
+            A list of direction.
+        """
+        num = min(waypoint_num, len(self._waypoints_buffer))
+        direction_list = []
+        for i in range(num):
+            direction = self._waypoints_buffer[i][1].value
+            direction_list.append(direction)
+        return direction_list
+
     def run_rl_step(self):
         """
         Run one step of local planner for RL model. This method will update node, target waypoint,
@@ -832,10 +892,8 @@ class BehaviorAgent(object):
         """
         assert self._route is not None
 
-        vehicle_transform = CarlaDataProvider.get_transform(self._hero_vehicle)
-        self._vehicle_location = vehicle_transform.location
         self.current_waypoint = self._map.get_waypoint(
-            self._vehicle_location, lane_type=carla.LaneType.Driving, project_to_road=True
+            self._ego_pos.location, lane_type=carla.LaneType.Driving, project_to_road=True
         )
 
         # Add waypoints into buffer if empty
@@ -858,7 +916,7 @@ class BehaviorAgent(object):
         # Find the most far waypoint within min distance
         max_index = -1
         for i, (waypoint, _) in enumerate(self._waypoints_buffer):
-            cur_dis = waypoint.transform.location.distance(vehicle_transform.location)
+            cur_dis = waypoint.transform.location.distance(self._ego_pos.location)
             if cur_dis < self._min_distance:
                 max_index = i
         if max_index >= 0:
@@ -873,8 +931,7 @@ class BehaviorAgent(object):
         if self._waypoints_buffer:
             self.target_waypoint, self.target_road_option = self._waypoints_buffer[0]
         self.agent_state = AgentState.NAVIGATING
-        self._speed = CarlaDataProvider.get_speed(self._hero_vehicle) * 3.6
-        self.speed_limit = self._hero_vehicle.get_speed_limit()
+        self.speed_limit = self.vehicle.get_speed_limit()
         # note: Only update RL data, vehicle behaviors are regulated by the agent. The "speed limit" is now target speed.
 
     def run_step(
@@ -922,6 +979,8 @@ class BehaviorAgent(object):
         # 0. Simulation ends condition
         if self.is_close_to_destination():
             print('Simulation is Over')
+            # update ego vehicle state
+            self.agent_state = AgentState.IDLE
             sys.exit(0)
 
         # 1. Traffic light management
@@ -992,6 +1051,8 @@ class BehaviorAgent(object):
                             self.overtake_counter > 0
                             or self.get_local_planner().potential_curved_road):
             car_following_flag = True
+            # update vehicle status
+            self.agent_state = AgentState.BLOCKED_BY_VEHICLE
         # 6. overtake handeling
         elif is_hazard and self.overtake_allowed and \
                 self.overtake_counter <= 0:
@@ -1027,10 +1088,11 @@ class BehaviorAgent(object):
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
+        # update vehicle status
+        self.agent_state = AgentState.BLOCKED_BY_VEHICLE
 
         # 9. Update RL waypoint queue/buffer
         self.run_rl_step()
-
 
         return target_speed, target_loc
 

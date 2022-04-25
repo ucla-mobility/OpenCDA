@@ -73,6 +73,7 @@ vehicle_base: &vehicle_base
     collision_time_ahead: 2.0 # used for collision checking
     overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
+    min_distance: 5.0 #look ahead distance to find the closest node waypoint
     local_planner: &base_local_planner # trajectory planning related
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
@@ -123,8 +124,12 @@ carla_traffic_manager:
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - <<: *vehicle_base
-      spawn_position: [47.7194, 139.51, 0.3, 0, 0, 0]
-      destination: [600, 145.51, 0.3]
+      spawn_position: [-228.052826, 53.127300, 0.300000, 0, 0, 0] #(one of the read spawn points)
+      spawn_random: False                  # todo:Currently spawn random and backgrouond traffic may have conflict!
+      destination: [535.102478, 237.708511, 0.300000] #(one of the read spawn points)
+      waypoint_num: 32
+      planner_type: 'basic'
+      planner_res: 1 
       v2x:
         <<: *base_v2x
         communication_range: 45

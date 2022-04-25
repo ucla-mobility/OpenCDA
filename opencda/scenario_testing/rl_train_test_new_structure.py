@@ -1,3 +1,6 @@
+'''
+./CarlaUE4.sh --world-port=20000 -carla-streaming-port=8001
+'''
 import os
 import argparse
 import numpy as np
@@ -6,7 +9,7 @@ from easydict import EasyDict
 import copy
 from tensorboardX import SummaryWriter
 
-from opencda.core.ml_libs.rl.envs.simple_carla_env_v1 import CarlaRLEnv
+from opencda.core.ml_libs.rl.envs.simple_carla_env_v2_scenario_manager import CarlaRLEnv
 from opencda.core.ml_libs.rl.utils.others.tcp_helper import parse_carla_tcp
 
 from ding.envs import SyncSubprocessEnvManager, BaseEnvManager
@@ -20,7 +23,7 @@ from opencda.core.ml_libs.rl.utils.others.ding_utils import compile_config
 from opencda.core.ml_libs.rl.utils.others.ding_utils import read_ding_config
 
 
-def wrapped_discrete_env(env_cfg, wrapper_cfg, host, port, tm_port=None):
+def wrapped_discrete_env(env_cfg, host, port, tm_port=None):
     env = CarlaRLEnv(env_cfg, host, port, tm_port)
     return env
 
@@ -70,7 +73,7 @@ def main(args, seed=0):
     # collector_env = SyncSubprocessEnvManager(
     collector_env = BaseEnvManager(
         # wrapped_env = wrapped_discrete_env = CarlaRLEnv( env_cfg, host, port, TM_port = None)
-        env_fn=[partial(wrapped_env, cfg.env, cfg.env.wrapper.collect, *tcp_list[i]) for i in range(collector_env_num)],
+        env_fn=[partial(wrapped_env, cfg.env, *tcp_list[i]) for i in range(collector_env_num)],
         cfg=cfg.env.manager.collect,
     )
 
