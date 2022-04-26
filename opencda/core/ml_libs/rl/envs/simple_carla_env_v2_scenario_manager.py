@@ -29,6 +29,7 @@ metadata = {'render.modes': ['rgb_array']}
 action_space = spaces.Dict({})
 observation_space = spaces.Dict({})
 
+
 class CarlaRLEnv(gym.Env, utils.EzPickle):
     """
         A simple deployment of Carla Environment with single hero vehicle. It use ``CarlaSimulator`` to interact with
@@ -98,14 +99,14 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._end_location = None
         self._bev_wrapper = None
         # Failure Config
-        self._col_is_failure = self._cfg.col_is_failure                             # whether to consider collision as failure
-        self._stuck_is_failure = self._cfg.stuck_is_failure                         # whether to consider getting stucked on road as failure
-        self._ignore_light = self._cfg.ignore_light                                 # whether to ignore traffic light
-        self._ran_light_is_failure = self._cfg.ran_light_is_failure                 # whether to consider running red light as failure
-        self._off_road_is_failure = self._cfg.off_road_is_failure                   # whether to consider running off road as failure
-        self._wrong_direction_is_failure = self._cfg.wrong_direction_is_failure     # whether to consider driving in wrong direction as failure
-        self._off_route_is_failure = self._cfg.off_route_is_failure                 # whether to consider driving off planned route as failure
-        self._off_route_distance = self._cfg.off_route_distance                     # distance to route threshold to mark current episode as failure
+        self._col_is_failure = self._cfg.col_is_failure  # whether to consider collision as failure
+        self._stuck_is_failure = self._cfg.stuck_is_failure  # whether to consider getting stucked on road as failure
+        self._ignore_light = self._cfg.ignore_light  # whether to ignore traffic light
+        self._ran_light_is_failure = self._cfg.ran_light_is_failure  # whether to consider running red light as failure
+        self._off_road_is_failure = self._cfg.off_road_is_failure  # whether to consider running off road as failure
+        self._wrong_direction_is_failure = self._cfg.wrong_direction_is_failure  # whether to consider driving in wrong direction as failure
+        self._off_route_is_failure = self._cfg.off_route_is_failure  # whether to consider driving off planned route as failure
+        self._off_route_distance = self._cfg.off_route_distance  # distance to route threshold to mark current episode as failure
         # reward config
         self._reward = 0
         self._last_steer = 0
@@ -113,15 +114,15 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._reward_type = self._cfg.reward_type
         assert set(self._reward_type).issubset(self._reward_type), \
             set(self._reward_type)
-        self._success_distance = self._cfg.success_distance                         # distance to navigation target threshold to determine success
-        self._success_reward = self._cfg.success_reward                             # numerical reward for a successful navigation
-        self._max_speed = self._cfg.max_speed                                       # maximum allowed speed
-        self._collided = False                                                      # take penalty for collision
-        self._stuck = False                                                         # take penalty for stucking in traffic
-        self._ran_light = False                                                     # take penalty for running red light
-        self._off_road = False                                                      # take penalty for running off road
-        self._wrong_direction = False                                               # take penalty for driving in wrong direction
-        self._off_route = False                                                     # take penalty for driving off planned route
+        self._success_distance = self._cfg.success_distance  # distance to navigation target threshold to determine success
+        self._success_reward = self._cfg.success_reward  # numerical reward for a successful navigation
+        self._max_speed = self._cfg.max_speed  # maximum allowed speed
+        self._collided = False  # take penalty for collision
+        self._stuck = False  # take penalty for stucking in traffic
+        self._ran_light = False  # take penalty for running red light
+        self._off_road = False  # take penalty for running off road
+        self._wrong_direction = False  # take penalty for driving in wrong direction
+        self._off_route = False  # take penalty for driving off planned route
         self._stuck_detector = StuckDetector(self._cfg.stuck_len)
         # accumulated final reward
         self._final_eval_reward = 0.0
@@ -137,7 +138,6 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # configurate discrete or continuous env
         self._env_is_discrete = False
         self._env_is_continuous = False
-
 
         # make sure the two settings are exclusive
         if 'env_action_space' in self._cfg:
@@ -187,7 +187,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             np_action = np_action.item()
         action_index = np.squeeze(np_action)
         assert action_index < len(self._acc_list) * len(self._steer_list), (
-        action_index, len(self._acc_list) * len(self._steer_list))
+            action_index, len(self._acc_list) * len(self._steer_list))
 
         # find corresponding discrete action combination
         mod_value = len(self._acc_list)
@@ -266,16 +266,23 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             The current observation of the simulation step.
         '''
         obs = dict()
-        state, is_off_road = self._rl_scenario_manager.get_state(self._hero_vehicle_manager)
-        # update off road status
-        self._hero_vehicle_manager.set_off_road(is_off_road)
-        # note: the get navigation function are moved to vehicle_manager: get_navigation_state()
-        navigation, waypoint_list = self._hero_vehicle_manager.get_navigation_state()
-        # update bev wrapper
+        # 1. update vehicle manager
+        self._hero_vehicle_manager.update_info()
+        # 2. read vehicle state
+        vehicle_state = self._hero_vehicle_manager.rl_manager.get_vehicle_state()
+        # 3. read scenario state
+        scenario_state = self._rl_scenario_manager.get_state()
+        # 4. update off road status
+        self._off_road = self._rl_scenario_manager.is_vehicle_off_road()
+        self._hero_vehicle_manager.rl_manager.set_off_road(self._off_road)
+        # 5. read navigation state
+        navigation, waypoint_list = self._hero_vehicle_manager.rl_manager.get_navigation_state()
+        # 6. update bev wrapper
         self._rl_scenario_manager.update_bev_waypoints(waypoint_list)
         sensor_data = self._rl_scenario_manager.get_sensor_data()
         information = self._rl_scenario_manager.get_information()
-
+        # 7. update data buffer
+        state = {**vehicle_state, **scenario_state}  # merge the two states from scenario/rl manager
         self._simulator_databuffer['state'] = state
         self._simulator_databuffer['navigation'] = navigation
         self._simulator_databuffer['information'] = information
@@ -296,17 +303,17 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
                 'target': np.float32(navigation['target']),
                 'target_forward': np.float32(navigation['target_forward']),
                 'command': navigation['command'],
-                'speed': np.float32(state['speed']),
+                'speed': np.float32(vehicle_state['speed']),
                 'speed_limit': np.float32(navigation['speed_limit']),
-                'location': np.float32(state['location']),
-                'forward_vector': np.float32(state['forward_vector']),
-                'acceleration': np.float32(state['acceleration']),
-                'velocity': np.float32(state['velocity']),
-                'angular_velocity': np.float32(state['angular_velocity']),
-                'rotation': np.float32(state['rotation']),
-                'is_junction': np.float32(state['is_junction']),
-                'tl_state': state['tl_state'],
-                'tl_dis': np.float32(state['tl_dis']),
+                'location': np.float32(vehicle_state['location']),
+                'forward_vector': np.float32(vehicle_state['forward_vector']),
+                'acceleration': np.float32(vehicle_state['acceleration']),
+                'velocity': np.float32(vehicle_state['velocity']),
+                'angular_velocity': np.float32(vehicle_state['angular_velocity']),
+                'rotation': np.float32(vehicle_state['rotation']),
+                'is_junction': np.float32(scenario_state['is_junction']),
+                'tl_state': scenario_state['tl_state'],
+                'tl_dis': np.float32(scenario_state['tl_dis']),
                 'waypoint_list': navigation['waypoint_list'],
                 'direction_list': navigation['direction_list'],
             }
@@ -368,16 +375,22 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
                                             z=cav_config['destination'][2])
         # set destination
         self._hero_vehicle_manager.set_destination(self._start_location, self._end_location)
-        # warmup simulation for 30 ticks
+
+        # warmup simulation for 10 ticks
         for _ in range(10):
-            # 1.scenario run step
-            self._rl_scenario_manager.run_step()
-            self._rl_scenario_manager.get_state(self._hero_vehicle_manager)
-            # 2. vehicle manager run step
+            # 1. vehicle manager run step
             self._hero_vehicle_manager.run_step()
-            # 3. increase one tick
+            # 2.scenario run step
+            self._rl_scenario_manager.run_step()
+            # 3. update states
+            self._hero_vehicle_manager.rl_manager.get_vehicle_state()
+            self._rl_scenario_manager.get_state()
+            self._off_road = self._rl_scenario_manager.is_vehicle_off_road()
+            self._hero_vehicle_manager.rl_manager.set_off_road(self._off_road)
+            self._hero_vehicle_manager.rl_manager.get_navigation_state()
+            # 4. increase one tick
             self._tick += 1
-            # 4. tick carla
+            # 5. tick carla
             self._cav_world.tick()
 
         # init background traffic
@@ -416,7 +429,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._reward = 0
         self._last_steer = 0
         self._last_distance = None
-        self._timeout = self._hero_vehicle_manager.get_sim_timeout()
+        self._timeout = self._hero_vehicle_manager.rl_manager.get_sim_end_timeout()
         # reset episodic reward
         self._final_eval_reward = 0.0
         # configuration for discrete and continous
@@ -478,24 +491,24 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             self._simulator_databuffer['action'] = dict()
 
         # Run one simulation step for all interfaces
-        # 1.scenario run step
-        empty_route = self._hero_vehicle_manager.get_route() is None
-        self._rl_scenario_manager.run_step()
-        # 2. vehicle manager run step
+        # 1. vehicle manager update run step
         self._hero_vehicle_manager.run_step()
+        # 2.scenario run step
+        self._rl_scenario_manager.run_step()
         # 3. increase one tick
         self._tick += 1
+        # 4. tick carla
+        self._cav_world.tick()
 
         # get observation
         obs = self.get_observations()
         # determine success/failure
-        # todo: implement related detactors in vehicle manager
-        self._collided = self._simulator.collided
+        self._collided = self._rl_scenario_manager.is_vehicle_collided()
         self._stuck = self._stuck_detector.stuck
-        self._ran_light = self._simulator.ran_light
-        self._off_road = self._simulator.off_road
+        self._ran_light = self._rl_scenario_manager.is_vehicle_ran_light()
+        self._off_road = self._rl_scenario_manager.is_vehicle_off_road()
         # use vehicle manager to get navigation data
-        self._wrong_direction = self._hero_vehicle_manager.is_vehicle_wrong_direction()
+        self._wrong_direction = self._hero_vehicle_manager.rl_manager.is_vehicle_wrong_direction()
 
         location = self._simulator_databuffer['state']['location'][:2]
         target = self._simulator_databuffer['navigation']['target']
@@ -519,7 +532,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # determine if done
         done = self.is_success() or self.is_failure()
         if done:
-            # reset all params and destroy all actors (including vehicle, sensor and RSUs)
+            # reset sceanrio manager
             self._rl_scenario_manager.clean_up()
             if self._visualizer is not None:
                 self._visualizer.done()
@@ -601,8 +614,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         Whether the episode is successful.
         """
 
-        # todo: this vaiarble could be a vheicle manager variable
-        if self._hero_vehicle_manager.get_end_distance() < self._success_distance:
+        if self._hero_vehicle_manager.rl_manager.get_end_distance() < self._success_distance:
             return True
         return False
 
@@ -780,10 +792,9 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             'off_route': self._off_route,
             'reward': self._reward,
             'tick': self._tick,
-            # todo: the end time, end dist, and total dist may be added to vehicle manager
-            'end_timeout': self._hero_vehicle_manager.get_total_timeout(),
-            'end_distance': self._hero_vehicle_manager.get_end_distance(),
-            'total_distance': self._hero_vehicle_manager.get_total_distance(),
+            'end_timeout': self._hero_vehicle_manager.rl_manager.get_sim_end_timeout(),
+            'end_distance': self._hero_vehicle_manager.rl_manager.get_end_distance(),
+            'total_distance': self._hero_vehicle_manager.rl_manager.get_total_distance(),
         }
         render_info.update(self._simulator_databuffer['state'])
         render_info.update(self._simulator_databuffer['navigation'])
@@ -815,5 +826,4 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
     @property
     def hero_player(self) -> carla.Actor:
-        # return self._simulator.hero_player
         return self._hero_vehicle

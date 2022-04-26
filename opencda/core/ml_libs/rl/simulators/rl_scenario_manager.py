@@ -105,19 +105,19 @@ class RLScenarioManager(ScenarioManager):
         self._planner_cfg = self._cfg.planner
         self._camera_aug_cfg = self._cfg.camera_aug
         self._verbose = self._cfg.verbose
+        self._debug = self._cfg.debug
 
         self._tick = 0
         self._timestamp = 0
         self._collided = False
         self._ran_light = False
         self._off_road = False
-        self._wrong_direction = False
+
+        self._vehicle = None
         self._sensor_helper = None
         self._bev_wrapper = None
         self._collision_sensor = None
         self._traffic_light_helper = None
-
-        self._debug = self._cfg.debug
 
     def prepare_observations(self, hero_vehicle) -> None:
         """
@@ -129,6 +129,7 @@ class RLScenarioManager(ScenarioManager):
         hero_vehicle:carla.vehicle
             The host vehicle that the rl agent is controlling.
         """
+        self._vehicle = hero_vehicle
         self._sensor_helper = SensorHelper(self._obs_cfg, self._camera_aug_cfg)
         self._sensor_helper.setup_sensors(self.world, hero_vehicle)
         while not self._sensor_helper.all_sensors_ready():
@@ -152,63 +153,45 @@ class RLScenarioManager(ScenarioManager):
         """
         self._bev_wrapper.update_waypoints(waypoint_list)
 
-    def get_state(self, hero_vehicle_manager):
+    def get_state(self):
         """
         Get the current hero vehicle state (vehicle dynamic and navigation info), and organize them as an
         observation dictionary which will be used by carla ENV to generate observation for RL model.
-
-        Parameters
-        ----------
-        hero_vehicle_manager: opencda.vehicle_manager
-            The current vehicle manager of the hero vehicle. It was used to read all simulation data.
 
         Returns
         -------
         state:dict
             The organized state data (vehicle dynamic and navigation info) in a dictionary.
         """
-        # vehicle state info
-        speed = hero_vehicle_manager.get_ego_speed()                        # speed in km/h
-        transform = hero_vehicle_manager.get_ego_transform()                # ego transform
-        location = hero_vehicle_manager.get_ego_location()                  # ego location
-        forward_vector = hero_vehicle_manager.get_ego_forward_vector()      # ego forward vector
-        acceleration = hero_vehicle_manager.get_ego_acceleration()          # ego acceleration vector
-        angular_velocity = hero_vehicle_manager.get_ego_angular_velocity()  # ego angular velocity
-        velocity = hero_vehicle_manager.get_speed_vector()                  # ego speed in x,y,z direction
-
-        # todo: check light state helper
+        # check traffic light state
         light_state = self._traffic_light_helper.active_light_state.value
-
-        # navigation info
+        # read location
+        location = self._vehicle.get_location()
+        # map info
         # Note: Only use scenario manager attribute to access the carla map. Retrieve map is expensive.
         drive_waypoint = self.carla_map.get_waypoint(
             location,
-            project_to_road=False
-        )
+            project_to_road=False)
         is_junction = False
+
+        # check if off-road
         if drive_waypoint is not None:
             is_junction = drive_waypoint.is_junction
             self._off_road = False
         else:
             self._off_road = True
+
         # Note: Only use scenario manager attribute to access the carla map. Retrieve map is expensive.
         lane_waypoint = self.carla_map.get_waypoint(location, project_to_road=True, lane_type=carla.LaneType.Driving)
         lane_location = lane_waypoint.transform.location
         lane_forward_vector = lane_waypoint.transform.rotation.get_forward_vector()
 
         state = {
-            'speed': speed,
-            'location': np.array([location.x, location.y, location.z]),
-            'forward_vector': np.array([forward_vector.x, forward_vector.y]),
-            'acceleration': np.array([acceleration.x, acceleration.y, acceleration.z]),
-            'velocity': np.array([velocity.x, velocity.y, velocity.z]),
-            'angular_velocity': np.array([angular_velocity.x, angular_velocity.y, angular_velocity.z]),
-            'rotation': np.array([transform.rotation.pitch, transform.rotation.yaw, transform.rotation.roll]),
             'is_junction': is_junction,
             'lane_location': np.array([lane_location.x, lane_location.y]),
             'lane_forward': np.array([lane_forward_vector.x, lane_forward_vector.y]),
             'tl_state': light_state,
-            'tl_dis': self._traffic_light_helper.active_light_dis,
+            'tl_dis': self._traffic_light_helper.active_light_dis
         }
         if lane_waypoint is None:
             state['lane_forward'] = None
@@ -216,7 +199,7 @@ class RLScenarioManager(ScenarioManager):
             lane_forward_vector = lane_waypoint.transform.get_forward_vector()
             state['lane_forward'] = np.array([lane_forward_vector.x, lane_forward_vector.y])
 
-        return state, self._off_road
+        return state
 
     def get_sensor_data(self) -> Dict:
         """
@@ -291,4 +274,12 @@ class RLScenarioManager(ScenarioManager):
         self._collided = False
         self._ran_light = False
         self._off_road = False
-        self._wrong_direction = False
+
+    def is_vehicle_off_road(self):
+        return self._off_road
+
+    def is_vehicle_ran_light(self):
+        return self._ran_light
+
+    def is_vehicle_collided(self):
+        return self._collided

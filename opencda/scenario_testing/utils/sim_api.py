@@ -309,13 +309,6 @@ class ScenarioManager:
 
             single_cav_list.append(vehicle_manager)
 
-            # # record start and end location for RL module 
-            # # note: currently only consider one RL agent, set to be the first CAV on the list
-            # if i == 0: 
-            #     self.first_cav_start_location = spawn_transform.location
-            #     self.first_cav_end_location = destination
-
-
         return single_cav_list
 
     def create_platoon_manager(self, map_helper=None, data_dump=False):

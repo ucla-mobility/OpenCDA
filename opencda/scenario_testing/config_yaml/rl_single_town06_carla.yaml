@@ -101,6 +101,8 @@ vehicle_base: &vehicle_base
   v2x: &base_v2x # communication related
     enabled: true
     communication_range: 35
+  rl:  
+    waypoint_number: 32
 
 # define the background traffic control by carla
 carla_traffic_manager:
