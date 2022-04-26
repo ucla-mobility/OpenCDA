@@ -77,11 +77,12 @@ We welcome your contributions.
  If you are using our OpenCDA framework or codes for your development, please cite the following paper:
  ```bibtex
 @inproceedings{xu2021opencda,
-title={OpenCDA:  An  Open  Cooperative  Driving  Automation  Framework
-Integrated  with  Co-Simulation},
-author={Runsheng Xu, Yi Guo, Xu Han, Xin Xia, Hao Xiang, Jiaqi Ma},
-booktitle={2021 IEEE Intelligent Transportation Systems Conference (ITSC)},
-year={2021}
+  title={OpenCDA: an open cooperative driving automation framework integrated with co-simulation},
+  author={Xu, Runsheng and Guo, Yi and Han, Xu and Xia, Xin and Xiang, Hao and Ma, Jiaqi},
+  booktitle={2021 IEEE International Intelligent Transportation Systems Conference (ITSC)},
+  pages={1155--1162},
+  year={2021},
+  organization={IEEE}
 }
 ```
 The arxiv link to the paper:  https://arxiv.org/abs/2107.06260
