@@ -11,7 +11,7 @@ from opencda.core.plan.plan_utils import RoadOption, AgentState
 
 class RLBehaviorAgent(BehaviorAgent):
     """
-    RL Behavior Agent 
+    RL Behavior Agent that inherits the single vehicle behavior agent.
     
     Parameters
     ----------
@@ -110,7 +110,8 @@ class RLBehaviorAgent(BehaviorAgent):
         for i in range(num):
             direction = self._waypoints_buffer[i][1].value
             direction_list.append(direction)
-        return direction_list        
+        return direction_list
+    
     def run_step(self):
         """
         Run one step of local planner for RL model. This method will update node, target waypoint,
@@ -160,7 +161,6 @@ class RLBehaviorAgent(BehaviorAgent):
         self.agent_state = AgentState.NAVIGATING
         self.speed_limit = self.vehicle.get_speed_limit()
         # note: Only update RL data, vehicle behaviors are regulated by the agent. The "speed limit" is now target speed.
-
 
 if __name__ == "__main__":
     pass
