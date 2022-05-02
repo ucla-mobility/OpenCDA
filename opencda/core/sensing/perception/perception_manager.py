@@ -666,18 +666,18 @@ class PerceptionManager:
         By utilizing semantic lidar, we can retrieve the objects that
         are in the lidar detection range from the server.
         This function is important for collect training data for object
-        detection as it can filter out the objects out of the senor range.
+        detection as it can filter out the objects out of the senores range.
 
         Parameters
         ----------
         vehicle_list : list
-            The list contains all vehicles information retrieves from the
+            The list contains all vehicles' information retrieves from the
             server.
 
         Returns
         -------
         new_vehicle_list : list
-            The list that filters out the out of scope vehicles.
+            The list that filters out the out-of-scope vehicles.
 
         """
         semantic_idx = self.semantic_lidar.obj_idx

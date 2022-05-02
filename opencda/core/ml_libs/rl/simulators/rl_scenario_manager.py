@@ -1,7 +1,11 @@
-'''
-Copyright 2021 OpenDILab. All Rights Reserved:
-Description: Carla simulator.
-'''
+# -*- coding: utf-8 -*-
+"""
+Utilize scenario manager to manage CARLA simulation construction. This script
+is used for carla simulation only, and if you want to manage the Co-simulation,
+please use cosim_api.py.
+"""
+# Author: Xu Han
+# License: TDG-Attribution-NonCommercial-NoDistrib
 import os
 import numpy as np
 import random
@@ -135,10 +139,9 @@ class RLScenarioManager(ScenarioManager):
         while not self._sensor_helper.all_sensors_ready():
             self.world.tick()
 
-        for obs_item in self._obs_cfg:
-            if obs_item.type == 'bev':
-                self._bev_wrapper = BeVWrapper(obs_item)
-                self._bev_wrapper.init(self.client, self.world, self.carla_map, hero_vehicle)
+        if self._obs_cfg.type == 'bev':
+            self._bev_wrapper = BeVWrapper(self._obs_cfg)
+            self._bev_wrapper.init(self.client, self.world, self.carla_map, hero_vehicle)
 
         self._collision_sensor = CollisionSensor(hero_vehicle, self._col_threshold)
         self._traffic_light_helper = TrafficLightHelper(hero_vehicle, self.carla_map)
@@ -208,12 +211,11 @@ class RLScenarioManager(ScenarioManager):
         """
         sensor_data = self._sensor_helper.get_sensors_data()
 
-        for obs_item in self._obs_cfg:
-            if obs_item.type not in OBS_TYPE_LIST:
-                raise NotImplementedError("observation type %s not implemented" % obs_item.type)
-            elif obs_item.type == 'bev':
-                key = obs_item.name
-                sensor_data.update({key: get_birdview(self._bev_wrapper.get_bev_data())})
+        if self._obs_cfg.type not in OBS_TYPE_LIST:
+            raise NotImplementedError("observation type %s not implemented" % obs_item.type)
+        elif self._obs_cfg.type == 'bev':
+            key = self._obs_cfg.name
+            sensor_data.update({key: get_birdview(self._bev_wrapper.get_bev_data())})
 
         return sensor_data
 

@@ -74,6 +74,7 @@ class SensorHelper(object):
             aug_cfg: Optional[Dict] = None,
     ) -> None:
         self._obs_cfg = obs_cfg
+        self._obs_cfg_list = [self._obs_cfg]
         self._aug_cfg = aug_cfg
         self._sensors_dict = {}
         self._data_buffers = {}
@@ -99,7 +100,7 @@ class SensorHelper(object):
         else:
             self._random_aug_pos = [0, 0, 0]
             self._random_aug_rot = [0, 0, 0]
-        for obs_item in self._obs_cfg:
+        for obs_item in self._obs_cfg_list:
             if obs_item.type in ['rgb', 'depth', 'segmentation']:
                 obs_item = EasyDict(deep_merge_dicts(DEFAULT_CAMERA_CONFIG, obs_item))
                 bp_name = {
@@ -198,7 +199,7 @@ class SensorHelper(object):
             Dict: all newest sensor data
         """
         sensor_data = {}
-        for obs_item in self._obs_cfg:
+        for obs_item in self._obs_cfg_list:
             if obs_item.type in ['rgb', 'segmentation', 'lidar', 'gnss']:
                 key = obs_item.name
                 img = self._data_buffers[key]

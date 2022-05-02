@@ -161,7 +161,9 @@ class BehaviorAgent(object):
             self.vehicle.get_location(), lane_type=carla.LaneType.Driving, project_to_road=True
         )
         self.target_waypoint = self.current_waypoint
-        self._min_distance = config_yaml['min_distance']
+
+        # todo: change it to rl specific module
+        self._min_distance = 5
 
         # debug helper
         self.debug_helper = PlanDebugHelper(self.vehicle.id)

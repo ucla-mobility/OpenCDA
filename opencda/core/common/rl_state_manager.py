@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """ Manager for calculating navigation status of RL ego vehicle
+function to add: set total distance
 """
-# Author: Runsheng Xu <rxx3386@ucla.edu>
+# Author: Xu Han
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 from collections import deque
@@ -16,32 +17,34 @@ from opencda.core.application.platooning.platooning_plugin \
 from opencda.core.common.misc import compute_distance
 
 
-class RLManager(object):
+class RLStateManager(object):
     def __init__(
             self,
-            vehicle,
-            agent,
-            localizer,
+            vehicle_manager_list,
             rl_config):
 
         # init interface
-        self.agent = agent
-        self.vehicle = vehicle
-        self.localizer = localizer
-        self.off_road = False
-        self._waypoint_num = rl_config['waypoint_number']
+        self._rl_config = rl_config
+        self.vehicle_manager_list = vehicle_manager_list
+        self.ego_agent = vehicle_manager_list[0].agent
+        self.ego_vehicle = vehicle_manager_list[0].vehicle
+        self.ego_localizer = vehicle_manager_list[0].localizer
+        self.ego_off_road = False
+        self._is_v2v = self._rl_config.env.activate_v2v
+        self._waypoint_num = self._rl_config.env.simulator.waypoint_num
+
         # init params
-        self._end_distance = float('inf')
-        self._end_timeout = float('inf')
-        self._total_distance = float('inf')
-        self._wrong_direction = False
+        self._ego_end_distance = float('inf')
+        self._ego_end_timeout = float('inf')
+        self._ego_total_distance = float('inf')
+        self._ego_wrong_direction = False
 
     # ----- set parameters -----
     def set_total_distance(self):
         """
         Update the total distance to navigation goal.
         """
-        self._total_distance = self.agent.distance_to_goal
+        self._ego_total_distance = self.ego_agent.distance_to_goal
 
     def set_off_road(self, off_road):
         """
@@ -51,7 +54,7 @@ class RLManager(object):
         off_road:bool
             The indicator of off-road status.
         """
-        self.off_road = off_road
+        self.ego_off_road = off_road
 
     # ----- get parameters -----
     def get_end_distance(self):
@@ -62,9 +65,9 @@ class RLManager(object):
         : float
             The distance to target value along the current planned route.
         """
-        return self._end_distance
+        return self._ego_end_distance
 
-    def get_sim_end_timeout(self):
+    def get_ego_end_timeout(self):
         """
         Get the current timeout value from planner/agent.
         Returns
@@ -72,7 +75,7 @@ class RLManager(object):
         :float
             The current timeout value.
         """
-        return self._end_timeout
+        return self._ego_end_timeout
 
     def get_total_distance(self):
         """
@@ -82,7 +85,7 @@ class RLManager(object):
         :float
             The calculated total distance to goal along current route.
         """
-        return self._total_distance
+        return self._ego_total_distance
 
     def is_vehicle_wrong_direction(self):
         """
@@ -92,7 +95,7 @@ class RLManager(object):
         :bool
             Whether the current host vehicle is driving in the wrong direction.
         """
-        return self._wrong_direction
+        return self._ego_wrong_direction
 
     def get_route(self):
         """
@@ -102,7 +105,7 @@ class RLManager(object):
         :list
             The current route of the vehicle as a list of waypoints.
         """
-        return self.agent.get_route()
+        return self.ego_agent.get_route()
 
     def get_ego_speed(self):
         """
@@ -112,7 +115,7 @@ class RLManager(object):
         :float
             Get the true speed of the ego vehicle, in km/h.
         """
-        return self.localizer.get_ego_spd()
+        return self.ego_localizer.get_ego_spd()
 
     def get_ego_transform(self):
         """
@@ -122,7 +125,7 @@ class RLManager(object):
         :carla.transform
             The transform of the ego vehicle.
         """
-        return self.localizer.get_ego_pos()
+        return self.ego_localizer.get_ego_pos()
 
     def get_ego_location(self):
         """
@@ -132,7 +135,7 @@ class RLManager(object):
         :carla.location
             The location of the ego vehicle.
         """
-        return self.localizer.get_ego_pos().location
+        return self.ego_localizer.get_ego_pos().location
 
     def get_ego_forward_vector(self):
         """
@@ -142,7 +145,7 @@ class RLManager(object):
         :carla.vector
             The foward vector of the ego vehicle.s
         """
-        return self.localizer.get_ego_pos().rotation.get_forward_vector()
+        return self.ego_localizer.get_ego_pos().rotation.get_forward_vector()
 
     def get_ego_acceleration(self):
         """
@@ -153,8 +156,8 @@ class RLManager(object):
             The acceleration of the ego vehicle in x,y,z direction.
             Note: IMU sensor returns a rectified (0~1) acceleration value (accelerometer).
         """
-        return self.vehicle.get_acceleration()
-        # return get_acc(self.vehicle, meters=True)
+        return self.ego_vehicle.get_acceleration()
+        # return get_acc(self.ego_vehicle, meters=True)
 
     def get_ego_angular_velocity(self):
         """
@@ -164,7 +167,7 @@ class RLManager(object):
         :carla.vector
             The angular velocity of the ego vehicle in deg/s.
         """
-        return self.vehicle.get_angular_velocity()
+        return self.ego_vehicle.get_angular_velocity()
 
     def get_speed_vector(self):
         """
@@ -174,7 +177,7 @@ class RLManager(object):
         :carla.vector
             The current ego vehicle speed vector in m/s on x,y,z direction.
         """
-        return self.vehicle.get_velocity()
+        return self.ego_vehicle.get_velocity()
 
     # ----- rl functions -----
     def get_vehicle_state(self):
@@ -220,17 +223,17 @@ class RLManager(object):
             The current navigation information summarized in a dictionary.
 
         """
-        command = self.agent.node_road_option
-        node_location = self.agent.node_waypoint.transform.location
-        node_forward = self.agent.node_waypoint.transform.rotation.get_forward_vector()
-        target_location = self.agent.target_waypoint.transform.location
-        target_forward = self.agent.target_waypoint.transform.rotation.get_forward_vector()
-        waypoint_list = self.agent.get_waypoints_list(self._waypoint_num)
-        direction_list = self.agent.get_direction_list(self._waypoint_num)
-        agent_state = self.agent.agent_state
-        speed_limit = self.agent.speed_limit
-        self._end_distance = self.agent.distance_to_goal
-        self._end_timeout = self.agent.timeout
+        command = self.ego_agent.node_road_option
+        node_location = self.ego_agent.node_waypoint.transform.location
+        node_forward = self.ego_agent.node_waypoint.transform.rotation.get_forward_vector()
+        target_location = self.ego_agent.target_waypoint.transform.location
+        target_forward = self.ego_agent.target_waypoint.transform.rotation.get_forward_vector()
+        waypoint_list = self.ego_agent.get_waypoints_list(self._waypoint_num)
+        direction_list = self.ego_agent.get_direction_list(self._waypoint_num)
+        agent_state = self.ego_agent.agent_state
+        speed_limit = self.ego_agent.speed_limit
+        self._ego_end_distance = self.ego_agent.distance_to_goal
+        self._ego_end_timeout = self.ego_agent.timeout
 
         waypoint_location_list = []
         for wp in waypoint_list:
@@ -238,13 +241,13 @@ class RLManager(object):
             wp_vec = wp.transform.rotation.get_forward_vector()
             waypoint_location_list.append([wp_loc.x, wp_loc.y, wp_vec.x, wp_vec.y])
 
-        if not self.off_road:
-            current_waypoint = self.agent.current_waypoint
-            node_waypoint = self.agent.node_waypoint
+        if not self.ego_off_road:
+            current_waypoint = self.ego_agent.current_waypoint
+            node_waypoint = self.ego_agent.node_waypoint
 
             # Lanes and roads are too chaotic at junctions
             if current_waypoint.is_junction or node_waypoint.is_junction:
-                self._wrong_direction = False
+                self._ego_wrong_direction = False
             else:
                 node_yaw = node_waypoint.transform.rotation.yaw % 360
                 cur_yaw = current_waypoint.transform.rotation.yaw % 360
@@ -252,10 +255,10 @@ class RLManager(object):
                 wp_angle = (node_yaw - cur_yaw) % 360
 
                 if 150 <= wp_angle <= (360 - 150):
-                    self._wrong_direction = True
+                    self._ego_wrong_direction = True
                 else:
                     # Changing to a lane with the same direction
-                    self._wrong_direction = False
+                    self._ego_wrong_direction = False
 
         navigation = {
             'agent_state': agent_state.value,
@@ -269,3 +272,15 @@ class RLManager(object):
             'direction_list': np.array(direction_list)
         }
         return navigation, waypoint_list
+
+    def get_lidar_frames(self):
+        lidar_frames = {}
+        for iter, v_manager in enumerate(self.vehicle_manager_list):
+            point_cloud = v_manager.data_dumper.lidar.data
+            point_xyz = point_cloud[:, :-1]
+            # point_intensity = point_cloud[:, -1]   todo: intensity may not be necessary
+            if iter == 0:
+                lidar_frames['ego_lidar_frame'] = point_xyz
+            else:
+                lidar_frames['lidar_frame_%d' % iter] = point_xyz
+        return lidar_frames

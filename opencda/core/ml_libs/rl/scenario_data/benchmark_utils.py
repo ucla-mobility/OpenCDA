@@ -6,7 +6,7 @@ from typing import Union, List
 from pathlib import Path
 from terminaltables import DoubleTable
 
-from .benchmark_suite import ALL_SUITES, ALL_SUITES_ALIASES
+from opencda.core.ml_libs.rl.scenario_data.benchmark_suite import ALL_SUITES, ALL_SUITES_ALIASES
 
 
 def get_suites_list(suite_name) -> List:

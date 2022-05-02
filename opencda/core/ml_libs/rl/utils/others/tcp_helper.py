@@ -41,10 +41,10 @@ class TCPManager(object):
 
 def parse_carla_tcp(server_cfg):
     carla_tcp_list = []
-    for item in server_cfg:
-        host = item.carla_host
-        for port in range(*item.carla_ports):
-            carla_tcp_list.append((host, port))
+    host = server_cfg.carla_host
+    for port in server_cfg.carla_ports:
+        carla_tcp_list.append((host, port))
+
     return carla_tcp_list
 
 

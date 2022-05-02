@@ -257,20 +257,17 @@ class ScenarioManager:
 
             # if the spawn position is a single scalar, we need to use map
             # helper to transfer to spawn transform
+            # todo: rearrange this config as part of rl config
             if 'spawn_special' not in cav_config:
-                if cav_config['spawn_random']:
-                    spawn_list = self.carla_map.get_spawn_points()
-                    spawn_transform = spawn_list[random.randint(0, len(spawn_list))]
-                else:
-                    spawn_transform = carla.Transform(
-                        carla.Location(
-                            x=cav_config['spawn_position'][0],
-                            y=cav_config['spawn_position'][1],
-                            z=cav_config['spawn_position'][2]),
-                        carla.Rotation(
-                            pitch=cav_config['spawn_position'][5],
-                            yaw=cav_config['spawn_position'][4],
-                            roll=cav_config['spawn_position'][3]))
+                spawn_transform = carla.Transform(
+                    carla.Location(
+                        x=cav_config['spawn_position'][0],
+                        y=cav_config['spawn_position'][1],
+                        z=cav_config['spawn_position'][2]),
+                    carla.Rotation(
+                        pitch=cav_config['spawn_position'][5],
+                        yaw=cav_config['spawn_position'][4],
+                        roll=cav_config['spawn_position'][3]))
             else:
                 spawn_transform = map_helper(self.carla_version,
                                              *cav_config['spawn_special'])

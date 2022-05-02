@@ -27,6 +27,17 @@ def arg_parse():
                         action='store_true',
                         help='whether ml/dl framework such as sklearn/pytorch is needed in the testing. '
                              'Set it to true only when you have installed the pytorch/sklearn package.')
+    
+    parser.add_argument("--train_rl",
+                        action='store_false',
+                        help='whether the scenario is to train rl agent. If true, also pass a desired rl policy ('
+                             'default poicy: DQN). '
+                             'Set it to true only when you have installed the pytorch package and DI_engine RL '
+                             'framework.')
+
+    parser.add_argument('-r', "--policy", default='dqn', choices=['dqn', 'ppo', 'td', 'sac', 'ddpg'],
+                        help='The name of the rl policy of choice. ')
+
     parser.add_argument('-v', "--version", type=str, default='0.9.11',
                         help='Specify the CARLA simulator version, default'
                              'is 0.9.11, 0.9.12 is also supported.')

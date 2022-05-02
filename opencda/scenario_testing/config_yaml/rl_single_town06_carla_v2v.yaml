@@ -8,9 +8,9 @@ description: |-
 # define carla simulation setting
 world:
   sync_mode: true
-  client_port: 9000
-  fixed_delta_seconds: &delta 0.1
-  seed: 11
+  client_port: 2000
+  fixed_delta_seconds: &delta 0.05
+  seed: 22
   weather:
     sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
     cloudiness: 0 # 0 is the clean sky and 100 is the thickest cloud
@@ -27,9 +27,9 @@ rsu_base: &rsu_base
   sensing:
     perception:
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
-      lidar_visualize: false # whether to visualize lidar points using open3d
+      lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 120
@@ -42,39 +42,39 @@ rsu_base: &rsu_base
         dropoff_zero_intensity: 0.4
         noise_stddev: 0.02
     localization:
-      activate: fasle # when not activated, ego position will be retrieved from server directly
+      activate: true # when not activated, ego position will be retrieved from server directly
       dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.05
         noise_lat_stddev: 3e-6
         noise_lon_stddev: 3e-6
 
-# First define the basic parameters of the vehicles
+# Define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+      camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
-      lidar_visualize: false # whether to visualize lidar points using open3d
+      lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
-        range: 50
-        points_per_second: 100000
+        range: 120
+        points_per_second: 1000000
         rotation_frequency: 20 # the simulation is 20 fps
-        upper_fov: 2.0
-        lower_fov: -25.0
+        upper_fov: 2
+        lower_fov: -25
         dropoff_general_rate: 0.3
         dropoff_intensity_limit: 0.7
         dropoff_zero_intensity: 0.4
         noise_stddev: 0.02
     localization: &base_localize
-      activate: false # when not activated, ego position will be retrieved from server directly
+      activate: true # when not activated, ego position will be retrieved from server directly
       dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
-        noise_alt_stddev: 0.001
-        noise_lat_stddev: 2e-6
-        noise_lon_stddev: 2e-6
+        noise_alt_stddev: 0.005
+        noise_lat_stddev: 1e-6
+        noise_lon_stddev: 1e-6
         heading_direction_stddev: 0.1 # degree
         speed_stddev: 0.2
       debug_helper: &loc_debug_helper
@@ -88,24 +88,23 @@ vehicle_base: &vehicle_base
     visualize: false
     activate: false
   behavior: &base_behavior
-    max_speed: 70 # maximum speed, km/h
-    tailgate_speed: 80 # when a vehicles needs to be close to another vehicle asap
+    max_speed: 30 # maximum speed, km/h
+    tailgate_speed: 34 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
     safety_time: 4 # ttc safety thresholding for decreasing speed
     emergency_param: 0.4 # used to identify whether a emergency stop needed
     ignore_traffic_light: true # whether to ignore traffic light
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
-    collision_time_ahead: 1.1 # used for collision checking
+    collision_time_ahead: 1.5 # used for collision checking
     overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
-    min_distance: 5
     local_planner: &base_local_planner # trajectory planning related
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
       waypoint_update_freq: 9 # used to control waypoint updating frequency
-      min_dist: 3 # used to pop out the waypoints too close to current location
       trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
+      min_dist: 3 # used to pop out the waypoints too close to current location
       debug: false # whether to draw future/history waypoints
       debug_trajectory: false # whether to draw the trajectory points and path
   controller: &base_controller
@@ -127,33 +126,28 @@ vehicle_base: &vehicle_base
   v2x: &base_v2x # communication related
     enabled: true
     communication_range: 35
+    loc_noise: 0.0
+    yaw_noise: 0.0
+    speed_noise: 0.0
+    lag: 0
 
 # define the background traffic control by carla
 carla_traffic_manager:
   sync_mode: true # has to be same as the world setting
-  global_distance: 4.0 # the minimum distance in meters that vehicles have to keep with the rest
+  global_distance: 5 # the minimum distance in meters that vehicles have to keep with the rest
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -50
+  global_speed_perc: -10
   set_osm_mode: true # Enables or disables the OSM mode.
-  auto_lane_change: false
-  random: false # whether to random select vehicles' color and model
-  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
-  vehicle_list:
-    - spawn_position: [101.7194, 136.51, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -200
-    - spawn_position: [57.7194, 143.51, 0.3, 0, 0, 0]
-    - spawn_position: [75.7194, 139.51, 0.3, 0, 0, 0]
-      vehicle_speed_perc: 0
-    - spawn_position: [161.7194, 139.51, 0.3, 0, 0, 0]
-      vehicle_speed_perc: -300
-    - spawn_position: [ 141.7194, 139.51, 0.3, 0, 0, 0 ]
-      vehicle_speed_perc: -300
+  auto_lane_change: true
+  random: true # whether to random select vehicles' color and model
+  ignore_lights_percentage: 100 # whether set the traffic ignore traffic lights
+  vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
-  # x_min, x_max, y_min, y_max, x_step, y_step
-  # range:
-  #   - [ 50, 250, 135, 145, 50, 4, 30]
+  #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
+  range:
+    - [-11, 12, 100, 200, 3.5, 15, 25]
 
 # define scenario. In this scenario, only a single CAV will be spawned
 scenario:
@@ -162,23 +156,10 @@ scenario:
       spawn_position: [12.00, 192.31, 3.0]
       id: -1
 
-  single_cav_list: # this is for merging vehicle or single cav without v2x
-  # vehicle #1 --> ego vehicle   
+  single_cav_list:
     - <<: *vehicle_base
-      spawn_position: [-228.052826, 53.127300, 0.300000, 0, 0, 0] #(one of the read spawn points)
-      
-      # need to change
-      spawn_random: False                  # todo:need to change
-      # !!!
-      
-      destination: [535.102478, 237.708511, 0.300000] #(one of the read spawn points)
-      
-      # !!! need to change  
-      waypoint_num: 32                     # todo: need  to change 
-      # !!! 
-      
-      planner_type: 'basic'
-      planner_res: 1 
+      spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
+      destination: [67.12, 150.2, 1.0]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -188,31 +169,9 @@ scenario:
           <<: *base_local_planner
           debug_trajectory: false
           debug: false
-  # vehicle #2 --> nearby CAV [x+5, y+5]
-    - <<: *vehicle_base 
-      spawn_position: [-233.052826, 58.127300, 0.300000, 0, 0, 0] #(one of the read spawn points)
-      spawn_random: False                  # todo:Currently spawn random and backgrouond traffic may have conflict!
-      # destination: [540.102478, 242.708511, 0.300000] #(one of the read spawn points)
-      waypoint_num: 32
-      planner_type: 'basic'
-      planner_res: 1 
-      v2x:
-        <<: *base_v2x
-        communication_range: 45
-      behavior:
-        <<: *base_behavior
-        local_planner:
-          <<: *base_local_planner
-          debug_trajectory: false
-          debug: false
-  # vehicle #3 --> nearby CAV [x-5, y-5]
     - <<: *vehicle_base
-      spawn_position: [-223.052826, 48.127300, 0.300000, 0, 0, 0] #(one of the read spawn points)
-      spawn_random: False                  # todo:Currently spawn random and backgrouond traffic may have conflict!
-      # destination: [530.102478, 232.708511, 0.300000] #(one of the read spawn points)
-      waypoint_num: 32
-      planner_type: 'basic'
-      planner_res: 1 
+      spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
+      destination: [-2.43, 263, 0.3]
       v2x:
         <<: *base_v2x
         communication_range: 45
@@ -225,4 +184,135 @@ scenario:
 
 # rl_configs
 rl_config: 
-  waypoint_number: 32
+  exp_name: 'dqn21_bev32_buf2e5_lr1e4_bs128_ns3000_update4_train_ft'
+  # rl env config 
+  env:  
+    # configure wheter to use V2V as state 
+    activate_v2v: True
+    # Configure action space (i.e., continuous or discrete)
+    env_action_space: 'discrete'
+    ACC_LIST: [(0, 1),
+               (0.25, 0),
+               (0.75, 0)]
+    STEER_LIST: [
+                -0.8,
+                -0.5,
+                -0.2,
+                0,
+                0.2,
+                0.5,
+                0.8,]
+    # Collect and eval env num
+    collector_env_num: 1
+    evaluator_env_num: 1
+    simulator: 
+      # cfg.simulator --> **world_param
+      town: 'Town06'
+      no_rendering: False
+      col_threshold: 400
+      # this needs to be None type, type "None" will input a string
+      camera_aug:
+      debug: False
+      disable_two_wheels: True
+      verbose: False
+      waypoint_num: 32
+      planner:
+        type: 'behavior'
+        resolution: 1
+        waypoint_number: 32
+        min_distance: 5
+      obs: 
+        name: 'birdview'
+        type: 'bev'
+        size: [32, 32]
+        pixels_per_meter: 1
+        pixels_ahead_vehicle: 14
+    # failure judgement
+    col_is_failure: True
+    stuck_is_failure: False
+    ignore_light: True
+    ran_light_is_failure: False
+    off_road_is_failure: True
+    wrong_direction_is_failure: True
+    off_route_is_failure: True
+    off_route_distance: 7.5
+    reward_type: ['goal', 'distance', 'speed', 'angle', 'failure']
+    # reward value if success
+    success_reward: 10
+    # failure judgement hyper-parameters
+    success_distance: 5
+    stuck_len: 300
+    max_speed: 5
+    replay_path: './opencda/scenario_testing/dqn_video'
+    visualize:
+      type: 'birdview'
+    manager:
+      collect:
+        auto_reset: True
+        shared_memory: False
+        context: 'spawn'
+        max_retry: 1
+        retry_type: 'renew'
+        step_timeout: 120
+        reset_timeout: 120
+      eval:
+    wrapper:
+      collect:
+        suite: 'train_ft'
+      eval: 
+        suite: 'FullTown02-v1'
+
+    carla_sim_config:
+      suite: 'FullTown01-v0'
+      benchmark_dir: None
+      mode: 'random'
+
+  # rl server config  
+  server: 
+    carla_host: 'localhost'
+    carla_ports: [9000, 9002]
+
+  # rl policy config  
+  policy:
+    cuda: True
+    priority: True
+    nstep: 1
+    model: {}
+    learn: 
+      batch_size: 128
+      learning_rate: 0.0001
+      weight_decay: 0.0001
+      target_update_freq: 100
+      learner:
+        hook:
+          # Pre-train model path
+          load_ckpt_before_run: ''
+          log_show_after_iter: 1000
+  
+    collect: 
+      n_sample: 3000
+      collector: 
+        collect_print_freq: 1000
+        deepcopy_obs: True
+        transform_obs: True
+
+    eval: 
+      evaluator: 
+        eval_freq: 2000
+        n_episode: 5
+        stop_rate: 0.7
+        transform_obs: True
+
+    other: 
+      eps: 
+        type: 'exp'
+        start: 0.95
+        end: 0.1
+        decay: 10000
+        replay_buffer: 
+          replay_buffer_size: 200000
+          monitor:
+            sampled_data_attr: 
+              print_freq: 100
+            periodic_thruput:
+              seconds: 120
