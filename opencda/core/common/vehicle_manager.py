@@ -15,14 +15,14 @@ from opencda.core.application.platooning.platoon_behavior_agent \
     import PlatooningBehaviorAgent
 from opencda.core.common.v2x_manager \
     import V2XManager
-from opencda.core.common.rl_manager \
-    import RLManager
 from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
 from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
+from opencda.core.ml_libs.rl.planner.rl_behavior_agent \
+    import RLBehaviorAgent
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
 from opencda.core.common.misc import get_acc
@@ -98,11 +98,6 @@ class VehicleManager(object):
         behavior_config = config_yaml['behavior']
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
-        # rl config
-        rl_config = config_yaml['rl']
-
-        # number of waypoints to consider in front
-        self._waypoint_num = config_yaml['waypoint_num']
 
         # v2x module
         self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
@@ -129,11 +124,10 @@ class VehicleManager(object):
                 behavior_config,
                 platoon_config,
                 carla_map)
+        elif 'rl' in application:
+            self.agent = RLBehaviorAgent(vehicle, carla_map, behavior_config)
         else:
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
-
-        # RL module
-        self.rl_manager = RLManager(self.vehicle, self.agent, self.localizer, rl_config)
 
         # Control module
         self.controller = ControlManager(control_config)
@@ -176,9 +170,6 @@ class VehicleManager(object):
 
         self.agent.set_destination(
             start_location, end_location, clean, end_reset)
-
-        # first time set destination in rl manager, use as total distance to goal.
-        self.rl_manager.set_total_distance()
 
     def update_info(self):
         """
