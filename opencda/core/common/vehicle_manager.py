@@ -21,6 +21,8 @@ from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
+from opencda.core.ml_libs.rl.planner.rl_behavior_agent \
+    import RLBehaviorAgent
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
 from opencda.core.common.misc import get_acc
@@ -122,6 +124,8 @@ class VehicleManager(object):
                 behavior_config,
                 platoon_config,
                 carla_map)
+        elif 'rl' in application:
+            self.agent = RLBehaviorAgent(vehicle, carla_map, behavior_config)
         else:
             self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
 
