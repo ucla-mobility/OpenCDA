@@ -141,30 +141,6 @@ class BehaviorAgent(object):
         self.obstacle_vehicles = []
         self.objects = {}
 
-        # rl related
-        self.node_road_option = None
-        self.node_waypoint = None
-        self.agent_state = AgentState.IDLE
-        self.speed_limit = 0
-        self.distance_to_goal = 0.0
-        self._waypoints_queue = deque()
-        self.distances = deque()
-        self.timeout = -1
-        self.timeout_in_seconds = 0
-        # note: No need to make buffer size configurable. Just use 100.
-        self._buffer_size = 100
-        self._waypoints_buffer = deque(maxlen=100)
-        self._route = []
-        # self._vehicle_location = None
-        # init current waypoint based on ego vehicle position
-        self.current_waypoint = self._map.get_waypoint(
-            self.vehicle.get_location(), lane_type=carla.LaneType.Driving, project_to_road=True
-        )
-        self.target_waypoint = self.current_waypoint
-
-        # todo: change it to rl specific module
-        self._min_distance = 5
-
         # debug helper
         self.debug_helper = PlanDebugHelper(self.vehicle.id)
 

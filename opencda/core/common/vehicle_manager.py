@@ -7,8 +7,6 @@ Basic class of CAV
 
 import uuid
 
-import numpy as np
-
 from opencda.core.actuation.control_manager \
     import ControlManager
 from opencda.core.application.platooning.platoon_behavior_agent \
@@ -25,8 +23,6 @@ from opencda.core.ml_libs.rl.planner.rl_behavior_agent \
     import RLBehaviorAgent
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
-from opencda.core.common.misc import get_acc
-
 
 class VehicleManager(object):
     """

@@ -47,7 +47,9 @@ class RLBehaviorAgent(BehaviorAgent):
             self.vehicle.get_location(), lane_type=carla.LaneType.Driving, project_to_road=True
         )
         self.target_waypoint = self.current_waypoint
-        self._min_distance = behavior_yaml['min_distance']
+
+        # todo: change it to rl specific module
+        self._min_distance = 5
         
     def get_route(self):
         """
