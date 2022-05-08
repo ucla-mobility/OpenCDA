@@ -163,39 +163,36 @@ def rl_train(opt, config_yaml, seed=0):
                                       exp_name=rl_cfg.exp_name)
 
     print('Init leaner and collector!')
-    # # initiate replay buffer
-    # if cfg.policy.get('priority', False):
-    #     replay_buffer = AdvancedReplayBuffer(cfg.policy.other.replay_buffer, tb_logger, exp_name=cfg.exp_name)
-    # else:
-    #     replay_buffer = NaiveReplayBuffer(cfg.policy.other.replay_buffer, tb_logger, exp_name=cfg.exp_name)
-    #
-    # # initiate epislon greedy
-    # if opt.policy == 'dqn':
-    #     eps_cfg = cfg.policy.other.eps
-    #     epsilon_greedy = get_epsilon_greedy_fn(eps_cfg.start, eps_cfg.end, eps_cfg.decay, eps_cfg.type)
-    #
-    # learner.call_hook('before_run')
-    #
-    # # initiate replay buffer and push the first step
-    # if opt.policy != 'ppo':
-    #     if opt.policy == 'dqn':
-    #         eps = epsilon_greedy(collector.envstep)
-    #         new_data = collector.collect(n_sample=10000, train_iter=learner.train_iter, policy_kwargs={'eps': eps})
-    #         print('---Current step is: ---')
-    #         print(new_data)
-    #         print('-----------------------')
-    #     else:
-    #         new_data = collector.collect(n_sample=10000, train_iter=learner.train_iter)
-    #
-    # replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
-    #
-    # learner.call_hook('after_run')
-    #
-    # collector.close()
-    # # evaluator.close()
-    # learner.close()
-    # if opt.policy != 'ppo':
-    #     replay_buffer.close()
+    # initiate replay buffer
+    replay_buffer = NaiveReplayBuffer(cfg.policy.other.replay_buffer, tb_logger, exp_name=cfg.exp_name)
+
+    # initiate epsilon greedy
+    if opt.policy == 'dqn':
+        eps_cfg = cfg.policy.other.eps
+        epsilon_greedy = get_epsilon_greedy_fn(eps_cfg.start, eps_cfg.end, eps_cfg.decay, eps_cfg.type)
+
+    learner.call_hook('before_run')
+
+    # initiate replay buffer and push the first step
+    if opt.policy != 'ppo':
+        if opt.policy == 'dqn':
+            eps = epsilon_greedy(collector.envstep)
+            new_data = collector.collect(n_sample=10000, train_iter=learner.train_iter, policy_kwargs={'eps': eps})
+            # print('---Current step is: ---')
+            # print(new_data)
+            # print('-----------------------')
+        else:
+            new_data = collector.collect(n_sample=10000, train_iter=learner.train_iter)
+
+    replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
+
+    learner.call_hook('after_run')
+
+    collector.close()
+    # evaluator.close()
+    learner.close()
+    if opt.policy != 'ppo':
+        replay_buffer.close()
 
 
 def rl_eval(opt, config_yaml, seed=0):

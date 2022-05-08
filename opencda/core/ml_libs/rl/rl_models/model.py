@@ -11,7 +11,7 @@ class DQNRLModel(nn.Module):
     def __init__(
             self,
             obs_shape: Tuple = [5, 32, 32],
-            action_shape: Union[int, Tuple] = 21,
+            action_shape: Union[int, Tuple] = 9,
             encoder_hidden_size_list: Tuple = [64, 128, 256],
             dueling: bool = True,
             head_hidden_size: Optional[int] = 512,

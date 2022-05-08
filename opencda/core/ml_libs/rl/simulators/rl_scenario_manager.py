@@ -28,12 +28,8 @@ from opencda.core.ml_libs.rl.utils.simulator_utils.sensor_utils \
     import SensorHelper, CollisionSensor, TrafficLightHelper
 from opencda.core.ml_libs.rl.utils.simulator_utils.map_utils \
     import BeVWrapper
-# from opencda.core.ml_libs.rl.simulators.carla_data_provider \
-#     import CarlaDataProvider
 from opencda.core.ml_libs.rl.utils.simulator_utils.carla_utils \
     import control_to_signal, get_birdview
-# from opencda.core.ml_libs.rl.utils.planner \
-#     import BasicPlanner, BehaviorPlanner # , LBCPlannerNew
 from opencda.core.ml_libs.rl.utils.others.tcp_helper \
     import find_traffic_manager_port
 from opencda.core.ml_libs.rl.utils.simulator_utils.map_utils import BeVWrapper

@@ -184,9 +184,12 @@ scenario:
 
 # rl_configs
 rl_config: 
-  exp_name: 'dqn21_bev32_buf2e5_lr1e4_bs128_ns3000_update4_train_ft'
+  exp_name: 'dqn9_bev32_buf2e5_lr1e4_bs128_ns3000_update4_train_ft'
+  action_delta_t: 1
   # rl env config 
-  env:  
+  env:
+    # whether enable v2v percpetion
+    v2v: False
     # configure wheter to use V2V as state 
     activate_v2v: True
     # Configure action space (i.e., continuous or discrete)

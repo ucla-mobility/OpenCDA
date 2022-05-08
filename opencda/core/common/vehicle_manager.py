@@ -19,8 +19,7 @@ from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
-from opencda.core.ml_libs.rl.planner.rl_behavior_agent \
-    import RLBehaviorAgent
+from opencda.core.plan.rl_behavior_agent import RLBehaviorAgent
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
 

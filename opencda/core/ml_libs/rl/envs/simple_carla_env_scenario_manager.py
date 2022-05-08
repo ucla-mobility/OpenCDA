@@ -101,6 +101,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._single_cav_list = None
         self._hero_vehicle = None
         self._hero_vehicle_manager = None
+        self._v2v = self._cfg['rl_config']['env']['v2v']
         # visualization configs
         self._visualize_cfg = self._cfg['rl_config']['env']['visualize']
         self._simulator_databuffer = dict()
@@ -109,19 +110,20 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         # Scenario Configs
         # rl related configurations
+        self._rl_action_dt = self._cfg['rl_config']['action_delta_t']
         self._carla_town_name = None
         self._start_location = None
         self._end_location = None
         self._bev_wrapper = None
         # Failure Config
-        self._col_is_failure = self._rl_config.env.col_is_failure                             # whether to consider collision as failure
-        self._stuck_is_failure = self._rl_config.env.stuck_is_failure                         # whether to consider getting stucked on road as failure
-        self._ignore_light = self._rl_config.env.ignore_light                                 # whether to ignore traffic light
-        self._ran_light_is_failure = self._rl_config.env.ran_light_is_failure                 # whether to consider running red light as failure
-        self._off_road_is_failure = self._rl_config.env.off_road_is_failure                   # whether to consider running off road as failure
-        self._wrong_direction_is_failure = self._rl_config.env.wrong_direction_is_failure     # whether to consider driving in wrong direction as failure
-        self._off_route_is_failure = self._rl_config.env.off_route_is_failure                 # whether to consider driving off planned route as failure
-        self._off_route_distance = self._rl_config.env.off_route_distance                     # distance to route threshold to mark current episode as failure
+        self._col_is_failure = self._rl_config.env.col_is_failure  # whether to consider collision as failure
+        self._stuck_is_failure = self._rl_config.env.stuck_is_failure  # whether to consider getting stucked on road as failure
+        self._ignore_light = self._rl_config.env.ignore_light  # whether to ignore traffic light
+        self._ran_light_is_failure = self._rl_config.env.ran_light_is_failure  # whether to consider running red light as failure
+        self._off_road_is_failure = self._rl_config.env.off_road_is_failure  # whether to consider running off road as failure
+        self._wrong_direction_is_failure = self._rl_config.env.wrong_direction_is_failure  # whether to consider driving in wrong direction as failure
+        self._off_route_is_failure = self._rl_config.env.off_route_is_failure  # whether to consider driving off planned route as failure
+        self._off_route_distance = self._rl_config.env.off_route_distance  # distance to route threshold to mark current episode as failure
         # reward config
         self._reward = 0
         self._last_steer = 0
@@ -129,15 +131,15 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._reward_type = self._rl_config.env.reward_type
         assert set(self._reward_type).issubset(self._reward_type), \
             set(self._reward_type)
-        self._success_distance = self._rl_config.env.success_distance      # distance to navigation target threshold to determine success
-        self._success_reward = self._rl_config.env.success_reward          # numerical reward for a successful navigation
-        self._max_speed = self._rl_config.env.max_speed                    # maximum allowed speed
-        self._collided = False                                   # take penalty for collision
-        self._stuck = False                                      # take penalty for stuck in traffic
-        self._ran_light = False                                  # take penalty for running red light
-        self._off_road = False                                   # take penalty for running off-road
-        self._wrong_direction = False                            # take penalty for driving in wrong direction
-        self._off_route = False                                  # take penalty for driving off planned route
+        self._success_distance = self._rl_config.env.success_distance  # distance to navigation target threshold to determine success
+        self._success_reward = self._rl_config.env.success_reward  # numerical reward for a successful navigation
+        self._max_speed = self._rl_config.env.max_speed  # maximum allowed speed
+        self._collided = False  # take penalty for collision
+        self._stuck = False  # take penalty for stuck in traffic
+        self._ran_light = False  # take penalty for running red light
+        self._off_road = False  # take penalty for running off-road
+        self._wrong_direction = False  # take penalty for driving in wrong direction
+        self._off_route = False  # take penalty for driving off planned route
         self._stuck_detector = StuckDetector(self._rl_config.env.stuck_len)
         # accumulated final reward
         self._final_eval_reward = 0.0
@@ -151,14 +153,9 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._acc_list = self._rl_config.env.ACC_LIST
         self._steer_list = self._rl_config.env.STEER_LIST
         # configurate discrete or continuous env
-        self._env_is_discrete = False
-        self._env_is_continuous = False
-
-        # make sure the two settings are exclusive
-        if 'env_action_space' in self._rl_config.env:
-            self._env_is_discrete = True if (
-                    self._rl_config.env.env_action_space == 'discrete') else False
-            self._env_is_continuous = not self._env_is_discrete
+        self._env_is_discrete = True if (
+                self._rl_config.env.env_action_space == 'discrete') else False
+        self._env_is_continuous = not self._env_is_discrete
 
     def _init_carla_simulator(self) -> None:
         """
@@ -184,64 +181,46 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         self._launched_simulator = True
         self._cav_world = self._rl_scenario_manager.world
 
-    def discrete_action_from_num(self, np_action):
+    def action_to_waypoint(self, np_action):
         """
-        A function to map model output to a descrete action.
-        Parameters
+        A function to map RL action to a discrete target waypoint.
+        Parameters. There are 9 actions total, we devide the target waypoint
+        to left, same and right area and each area contains 9 candidate points.
         ----------
-        action_ids:int
+        np_action:int
             The output of the RL model.
 
         Returns
         -------
-        action:dict
-            The corresponding action of the RL model output.
+        waypoint:Carla.Waypoint
+            The corresponding target waypoint.
         """
-        #  convert action from numpy to number
-        if isinstance(np_action, torch.Tensor):
-            np_action = np_action.item()
-        action_index = np.squeeze(np_action)
-        assert action_index < len(self._acc_list) * len(self._steer_list), (
-            action_index, len(self._acc_list) * len(self._steer_list))
+        #  find ego waypoint
+        ego_waypoint = self._hero_vehicle_manager.agent.get_current_waypoint()
+        egp_speed = self._hero_vehicle_manager.agent.get_ego_speed()
+        # action_delta_t default value is 1
+        ds = egp_speed / 3.6 * self._rl_action_dt
 
-        # find corresponding discrete action combination
-        mod_value = len(self._acc_list)
-        acc = self._acc_list[action_index % mod_value]
-        steer = self._steer_list[action_index // mod_value]
-        action = {
-            'steer': steer,
-            'throttle': acc[0],
-            'brake': acc[1],
-        }
-        return action
+        def get_next(waypoint,dist):
+            return waypoint.next(dist)[0] if waypoint.next(dist) else None
 
-    def continuous_action_from_num(self, action_ids):
-        """
-        A function to map model output to a continuous action.
-        Parameters
-        ----------
-        action_ids:int
-            The output of the RL model.
+        next_waypoint_mid = get_next(ego_waypoint, ds)
+        if next_waypoint_mid:
+            next_waypoint_left = next_waypoint_mid.get_left_lane()[0] if next_waypoint_mid.get_left_lane() else None
+            next_waypoint_right = next_waypoint_mid.get_right_lane()[0] if next_waypoint_mid.get_right_lane() else None
+        else:
+            next_waypoint_left = None
+            next_waypoint_right = None
 
-        Returns
-        -------
-        action:dict
-            The corresponding action of the RL model output.
-        """
-        action_ids = to_ndarray(action_ids, dtype=int)
-        action_ids = np.squeeze(action_ids)
-        acc_id = action_ids[0]
-        steer_id = action_ids[1]
-        assert acc_id < len(self._acc_list), (acc_id, len(self._acc_list))
-        assert steer_id < len(self._steer_list), (steer_id, len(self._steer_list))
-        acc = self._acc_list[acc_id]
-        steer = self._steer_list[steer_id]
-        action = {
-            'steer': steer,
-            'throttle': acc[0],
-            'brake': acc[1],
-        }
-        return action
+        # convert np_action (action_shape = 9) to waypoint
+        candidate_waypoints = np.array([
+            [next_waypoint_left, get_next(next_waypoint_left, ds), get_next(next_waypoint_left, 2*ds)],
+            [next_waypoint_mid, get_next(next_waypoint_mid, ds), get_next(next_waypoint_mid, 2*ds)],
+            [next_waypoint_right, get_next(next_waypoint_right, ds), get_next(next_waypoint_right, 2*ds)] ])
+
+        target_waypoint = candidate_waypoints[np_action // 3, np_action % 3]
+
+        return target_waypoint
 
     # print step
     def print_step(self, info):
@@ -375,7 +354,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         # 1. init managers
         self._single_cav_list = self._rl_scenario_manager.create_vehicle_manager(application=['single'],
-                                                                                 data_dump=True)    
+                                                                                 data_dump=True)
         # RSU module
         self._rsu_list = \
             self._rl_scenario_manager.create_rsu_manager(data_dump=True)
@@ -471,8 +450,9 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             'speed': (obs['speed'] / 25).astype(np.float32),
         }
         # read lidar data
-        lidar_data = self._rl_state_manager.get_lidar_frames()
-        obs_out.update(lidar_data)
+        if self._v2v:
+            lidar_data = self._rl_state_manager.get_lidar_frames()
+            obs_out.update(lidar_data)
 
         # reshape obs_out (benchmark wrapper)
         obs_out = to_ndarray(obs_out, dtype=np.float32)
@@ -499,37 +479,40 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             A tuple contains observation, reward, done and information.
         """
 
-        # cast action to np array
-        action = to_ndarray(action)
-        # reshape action
-        if self._env_is_discrete:
-            action_dict = self.discrete_action_from_num(action)
-            action = action_dict
-        if self._env_is_continuous:
-            action_dict = self.continuous_action_from_num(action)
-            action = action_dict
         # clip the action values
         if action is not None:
-            for key in ['throttle', 'brake']:
-                if key in action:
-                    np.clip(action[key], 0, 1)
-            if 'steer' in action:
-                np.clip(action['steer'], -1, 1)
-            # appy action to host vehicle
-            # todo: use waypoint as action (continous/descrete -> target waypoint)
-            # todo: use vehicle manager to set_target.
-            self._hero_vehicle.apply_control(action)
+            # update buffer
             self._simulator_databuffer['action'] = action
+
         else:
             self._simulator_databuffer['action'] = dict()
+
+        # convert action to target waypoint
+        one_step_target_waypoint = self.action_to_waypoint(action)
+
+        if one_step_target_waypoint is not None:
+            # apply action
+            ego_vehicle_loc = self._hero_vehicle.get_location()
+            one_step_target_location = one_step_target_waypoint.location
+            # apply RL action (update target location)
+            self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc, one_step_target_location)
+            control = self._hero_vehicle_manager.runstep()
+            # apply control
+            self._hero_vehicle.apply_control(control)
+        else:
+            # agent selected out-of-range location, use current location as target and take penalty
+            self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc, ego_vehicle_loc)
+            control = self._hero_vehicle_manager.runstep()
+            # apply control
+            self._hero_vehicle.apply_control(control)
+
 
         # Run one simulation step for all interfaces
         # 1. vehicle manager update run step
         # self._hero_vehicle_manager.run_step()
         for i, single_cav in enumerate(self._single_cav_list):
             single_cav.update_info()
-            control = single_cav.run_step()
-            single_cav.vehicle.apply_control(control)
+            single_cav.run_step()
         # 2.scenario run step
         self._rl_scenario_manager.run_step()
         # 3. update RSU
@@ -554,7 +537,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         target = self._simulator_databuffer['navigation']['target']
         self._off_route = np.linalg.norm(location - target) >= self._off_route_distance
 
-        self._reward, reward_info = self.compute_reward()
+        self._reward, reward_info = self.compute_reward(one_step_target_waypoint)
         info = self._rl_scenario_manager.get_information()
         info.update(reward_info)
         info.update(
@@ -572,7 +555,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # determine if done
         done = self.is_success() or self.is_failure()
         if done:
-            # reset sceanrio manager
+            # reset scenario manager
             self._rl_scenario_manager.clean_up()
             if self._visualizer is not None:
                 self._visualizer.done()
@@ -584,8 +567,9 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             'speed': (obs['speed'] / 25).astype(np.float32),
         }
         # read and update lidar data
-        lidar_data = self._rl_state_manager.get_lidar_frames()
-        obs_out.update(lidar_data)
+        if self._v2v:
+            lidar_data = self._rl_state_manager.get_lidar_frames()
+            obs_out.update(lidar_data)
 
         # update final episode reward
         self._final_eval_reward += self._reward
@@ -688,7 +672,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         return False
 
-    def compute_reward(self) -> Tuple[float, Dict]:
+    def compute_reward(self, target_waypoint) -> Tuple[float, Dict]:
         """
         Compute reward for current step, whose details will be summarized in a dict.
 
@@ -752,6 +736,10 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             speed_reward -= 1
         if speed > target_speed:
             speed_reward -= 1
+        # consider reward for action selection
+        action_reward = 0
+        if target_waypoint is None:
+            action_reward -= 1
 
         forward_vector = self._simulator_databuffer['state']['forward_vector']
         target_forward = self._simulator_databuffer['navigation']['target_forward']
@@ -791,6 +779,8 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         reward_info['goal_reward'] = goal_reward
         reward_info['distance_reward'] = distance_reward
         reward_info['speed_reward'] = speed_reward
+        # add action reward
+        reward_info['action_reward'] = action_reward
         reward_info['angle_reward'] = angle_reward
         reward_info['steer_reward'] = steer_reward
         reward_info['lane_reward'] = lane_reward
@@ -800,6 +790,8 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             'goal': goal_reward,
             'distance': distance_reward,
             'speed': speed_reward,
+            # add action reward
+            'actin': action_reward,
             'angle': angle_reward,
             'steer': steer_reward,
             'lane': lane_reward,
@@ -836,9 +828,6 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             'off_route': self._off_route,
             'reward': self._reward,
             'tick': self._tick,
-            # 'end_timeout': self._hero_vehicle_manager.rl_manager.get_sim_end_timeout(),
-            # 'end_distance': self._hero_vehicle_manager.rl_manager.get_end_distance(),
-            # 'total_distance': self._hero_vehicle_manager.rl_manager.get_total_distance(),
             'end_timeout': self._rl_state_manager.get_ego_end_timeout(),
             'end_distance': self._rl_state_manager.get_end_distance(),
             'total_distance': self._rl_state_manager.get_total_distance(),

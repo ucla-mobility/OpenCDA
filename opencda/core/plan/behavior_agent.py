@@ -6,11 +6,11 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
+
 import math
 import random
 import sys
 
-from collections import deque
 import numpy as np
 import carla
 
@@ -20,7 +20,6 @@ from opencda.core.plan.local_planner_behavior import LocalPlanner
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.plan.planer_debug_helper import PlanDebugHelper
-from opencda.core.plan.plan_utils import RoadOption, AgentState
 
 
 class BehaviorAgent(object):
@@ -267,13 +266,6 @@ class BehaviorAgent(object):
             self.get_local_planner().get_waypoints_queue().clear()
             self.get_local_planner().get_trajectory().clear()
             self.get_local_planner().get_waypoint_buffer().clear()
-            # reset rl variables
-            self._route = []
-            self.distance_to_goal = 0.0
-            self._waypoints_queue.clear()
-            self._waypoints_buffer.clear()
-            self.distances.clear()
-
         if clean_history:
             self.get_local_planner().get_history_buffer().clear()
 
@@ -299,66 +291,11 @@ class BehaviorAgent(object):
 
         self._local_planner.set_global_plan(route_trace, clean)
 
-        # update route distance (actual distance along route) to goal
-        if not clean:
-            self._route += route_trace
-        prev_loc = None
-        for elem in route_trace:
-            self._waypoints_queue.append(elem)
-            cur_loc = elem[0].transform.location
-            if prev_loc is not None:
-                delta = cur_loc.distance(prev_loc)
-                self.distance_to_goal += delta
-                self.distances.append(delta)
-            prev_loc = cur_loc
-        # add rl related variables
-        self.node_waypoint = self.start_waypoint
-        self.node_road_option = RoadOption.LANEFOLLOW
-        self.timeout_in_seconds = ((self.distance_to_goal / 1000.0) / 5.0) * 3600.0 + 20.0
-        # note: do not see a point to make fps configurable, just use fps=10
-        self.timeout = self.timeout_in_seconds * 10
-
-    def set_route(self, route, clean=False):
+    def get_local_planner(self):
         """
-        This method add a route into planner to trace. If ``clean`` is set true, it will clean current
-        route and waypoint queue.
-
-        Parameters
-        ----------
-        route:list
-            Route add to agent.
-        clean:bool
-            Whether to clean current route. Defaults to False.
+        return the local planner
         """
-
-        if clean:
-            self._waypoints_queue.clear()
-            self._waypoints_buffer.clear()
-            self._route = route
-            self.distance_to_goal = 0
-            self.distances.clear()
-        else:
-            self._route.extend(route)
-
-        self.end_waypoint = self._route[-1][0]
-
-        prev_loc = None
-        for elem in route:
-            self._waypoints_queue.append(elem)
-            cur_loc = elem[0].transform.location
-            if prev_loc is not None:
-                delta = cur_loc.distance(prev_loc)
-                self.distance_to_goal += delta
-                self.distances.append(delta)
-            prev_loc = cur_loc
-
-        if self.distances:
-            cur_resolution = np.average(list(self.distances)[:100])
-            self._buffer_size = min(100, int(100 // cur_resolution))
-        self.node_waypoint, self.node_road_option = self._waypoints_queue[0]
-        self.timeout_in_seconds = ((self.distance_to_goal / 1000.0) / 5.0) * 3600.0 + 20.0
-        # note: do not see a point to make fps configurable, just use fps=10
-        self.timeout = self.timeout_in_seconds * self._fps
+        return self._local_planner
 
     def reroute(self, spawn_points):
         """
@@ -845,8 +782,6 @@ class BehaviorAgent(object):
         # 0. Simulation ends condition
         if self.is_close_to_destination():
             print('Simulation is Over')
-            # update ego vehicle state
-            self.agent_state = AgentState.IDLE
             sys.exit(0)
 
         # 1. Traffic light management
@@ -917,8 +852,6 @@ class BehaviorAgent(object):
                             self.overtake_counter > 0
                             or self.get_local_planner().potential_curved_road):
             car_following_flag = True
-            # update vehicle status
-            self.agent_state = AgentState.BLOCKED_BY_VEHICLE
         # 6. overtake handeling
         elif is_hazard and self.overtake_allowed and \
                 self.overtake_counter <= 0:
@@ -954,12 +887,5 @@ class BehaviorAgent(object):
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
-        # update vehicle status
-        self.agent_state = AgentState.BLOCKED_BY_VEHICLE
-
-        # 9. Update RL waypoint queue/buffer
-        self.run_rl_step()
-
         return target_speed, target_loc
-
 
