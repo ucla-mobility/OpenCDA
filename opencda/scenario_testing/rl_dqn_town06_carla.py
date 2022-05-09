@@ -11,6 +11,7 @@ import copy
 
 import carla
 import numpy as np
+import torch
 from functools import partial
 from easydict import EasyDict
 from tensorboardX import SummaryWriter
@@ -25,7 +26,7 @@ import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import load_yaml, save_yaml
-from opencda.core.ml_libs.rl.envs.simple_carla_env_v2_scenario_manager import CarlaRLEnv
+from opencda.core.ml_libs.rl.envs.simple_carla_env_scenario_manager import CarlaRLEnv
 from opencda.core.ml_libs.rl.utils.others.tcp_helper import parse_carla_tcp
 from opencda.core.ml_libs.rl.rl_models import DQNRLModel, TD3RLModel
 from opencda.core.ml_libs.rl.utils.others.ding_utils import compile_config
@@ -233,6 +234,8 @@ def rl_eval(opt, config_yaml, seed=0):
     eval_env.seed(seed)
     print('Init carla eval env !')
     set_pkg_seed(seed)
+
+    policy_cls, model_cls = get_rl_policy(opt.policy)
     model = model_cls(**rl_cfg.policy.model)
     policy = policy_cls(rl_cfg.policy, model=model, enable_field=['eval'])
 
@@ -280,6 +283,7 @@ def rl_test(opt, config_yaml, seed=0):
     set_pkg_seed(seed)
 
     # init model and policy
+    policy_cls, model_cls = get_rl_policy(opt.policy)
     model = model_cls(**rl_cfg.policy.model)
     policy = policy_cls(rl_cfg.policy, model=model, enable_field=['eval'])
 
@@ -297,15 +301,15 @@ def rl_test(opt, config_yaml, seed=0):
 
 
 def run_scenario(opt, config_yaml):
-    if opt.train:
+    if opt.train_rl:
         # start rl training
         rl_train(opt, config_yaml)
         print('RL train function complete...')
-    elif opt.eval:
+    elif opt.eval_rl:
         # start rl training
         rl_eval(opt, config_yaml)
         print('RL evaluation complete...')
-    elif opt.test:
+    elif opt.test_rl:
         # start rl training
         rl_train(opt, config_yaml)
         print('RL testing complete...')

@@ -35,6 +35,21 @@ def arg_parse():
                              'Set it to true only when you have installed the pytorch package and DI_engine RL '
                              'framework.')
 
+    parser.add_argument("--test_rl",
+                        action='store_true',
+                        help='whether the scenario is to test rl agent. If there is a pretrained model, configure'
+                             'its directory by setting "rl_model_dir" argument. ')
+
+    parser.add_argument("--eval_rl",
+                        action='store_true',
+                        help='whether the scenario is to evaluate rl agent. If evaluating, it is necessary to set the '
+                             '"auto_reset" to be False in config yaml. If there is a pretrained model, configure '
+                             'its directory by setting "rl_model_dir" argument. ')
+
+    parser.add_argument("--rl_model_dir",
+                        action='store_true',
+                        help='The pre-trained RL model directory.')
+
     parser.add_argument('-r', "--policy", default='dqn', choices=['dqn', 'ppo', 'td', 'sac', 'ddpg'],
                         help='The name of the rl policy of choice. ')
 
@@ -50,10 +65,12 @@ def main():
     opt = arg_parse()
     print("OpenCDA Version: %s" % __version__)
 
-    try:
-        testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
-    except ModuleNotFoundError:
-        sys.exit("ERROR: %s.py not found under opencda/scenario_testing" % opt.test_scenario)
+    testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
+
+    # try:
+    #     testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
+    # except ModuleNotFoundError:
+    #     sys.exit("ERROR: %s.py not found under opencda/scenario_testing" % opt.test_scenario)
 
     config_yaml = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'opencda/scenario_testing/config_yaml/%s.yaml' % opt.test_scenario)

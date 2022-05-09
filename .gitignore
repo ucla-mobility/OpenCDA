@@ -152,3 +152,5 @@ video_dumping
 # RL logs
 opencda/scenario_testing/log/
 opencda/scenario_testing/simple-rl/
+opencda/scenario_testing/rl_log
+opencda/simple-rl
