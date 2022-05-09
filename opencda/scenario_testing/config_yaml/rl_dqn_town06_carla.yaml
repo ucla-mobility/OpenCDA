@@ -277,6 +277,7 @@ rl_config:
 
   # rl policy config  
   policy:
+    type: dqn
     cuda: True
     priority: True
     nstep: 1
