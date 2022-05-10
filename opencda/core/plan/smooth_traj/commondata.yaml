@@ -1,0 +1,12 @@
+TrajectoryPoint:
+  x: 0
+  y: 0
+  z: 0
+  dir_x: 0
+  dir_y: 0
+  dir_z: 0
+  theta: 0
+  velocity: 0
+  acceleration: 0
+  curvature: 0
+  sumdistance: 0
