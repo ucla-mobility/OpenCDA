@@ -3,14 +3,29 @@ reference:
 __author__      = "Yingdi Guo"
 """
 
-from opencda.core.ml_libs.rl.planner.commondata import TrajectoryPoint
-from opencda.core.ml_libs.rl.velocityplanner import planrelaxvelocity
-from opencda.core.ml_libs.rl.qpvelocityplanner_quad import planqpvelocity
+
+from velocityplanner import planrelaxvelocity
+from qpvelocityplanner_quad import planqpvelocity
 import math
 import matplotlib.pyplot as plt
 import pickle
 # todo: need to fix
-from baselines import logger
+# from baselines import logger
+
+class TrajectoryPoint:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.dir_x = 0
+        self.dir_y = 0
+        self.dir_z = 0
+        self.theta = 0
+        self.velocity = 0
+        self.acceleration = 0
+        self.curvature = 0
+        self.sumdistance = 0
+        
 def gen_bpp_without_velocity(goal_pos, goal_dir, start_pos, start_dir, interval):
     control_point_shift = 1.0 / 3
     length = math.sqrt((goal_pos[0] - start_pos[0]) ** 2 + (goal_pos[1] - start_pos[1]) ** 2)
@@ -114,12 +129,10 @@ def gen_bpp_based_on_refline(start_pos, start_dir, interval, refline):
         con_i=con_i+1
     return traj_ret
 
-def gen_bpp_based_on_refline_with_velocity_qp(start_pos, start_dir, interval, refline, cur_vel, tgt_vel, cur_acc, vel_index):
+def gen_bpp_based_on_refline_with_velocity_qp(start_pos, start_dir, interval, refline, cur_vel, tgt_vel, cur_acc):
     traj_ret = gen_bpp_based_on_refline(start_pos, start_dir, interval, refline)
-    if logger.scenario_name == "OverTake":
-        index = vel_index
-    else:
-        index=int(len(traj_ret)*0.7)
+
+    index=int(len(traj_ret)*0.7)
     return planqpvelocity(traj_ret, index, cur_vel, tgt_vel, cur_acc)
 
 # test_list=gen_bpp_with_velocity_qp([60, 0], [1, 0], [0, 0], [1, 0], 0.2, 2.7778, 8.3334, 1.0)
@@ -154,8 +167,8 @@ class BppPlanner(object):
         return gen_bpp_based_on_refline_with_velocity_qp(start_pos, start_dir, self.interval, refline, cur_vel, tgt_vel, cur_acc, self.vel_index)
 
 if __name__ == '__main__':
-    test_list, refline_pos_x, refline_pos_y=loadrefline()
-    # test_list=gen_bpp_with_velocity_qp([60, 0], [1, 0], [0, 0], [1, 0], 0.2, 2.7778, 8.3334, 1.0)
+    # test_list, refline_pos_x, refline_pos_y=loadrefline()
+    test_list=gen_bpp_with_velocity_qp([60, 0], [1, 0], [0, 0], [1, 0], 0.2, 2.7778, 8.3334, 1.0)
     test_list=gen_bpp_based_on_refline_with_velocity_qp([2, 2], [1, 0], 0.2, test_list, 2.7778, 8.3334, 1.0)
     xx=[]
     yy=[]
@@ -187,7 +200,7 @@ if __name__ == '__main__':
             t = s / v_mid
             i = i + t
             s_s = s_s + s
-    plt.plot(refline_pos_x, refline_pos_y, "y")
+    # plt.plot(refline_pos_x, refline_pos_y, "y")
     plt.figure()
     plt.plot(xx, yy, "g")
     plt.figure()

@@ -1,8 +1,24 @@
-from opencda.core.ml_libs.rl.planner.commondata import TrajectoryPoint
-from opencda.core.ml_libs.rl.planner.velocityplanner import planrelaxvelocity
+
+from velocityplanner import planrelaxvelocity
 import math
 import matplotlib.pyplot as plt
+
+class TrajectoryPoint:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.dir_x = 0
+        self.dir_y = 0
+        self.dir_z = 0
+        self.theta = 0
+        self.velocity = 0
+        self.acceleration = 0
+        self.curvature = 0
+        self.sumdistance = 0
+        
 def gen_bpp_without_velocity(goal_pos, goal_dir, start_pos, start_dir, interval):
+
     control_point_shift = 1.0 / 3
     length = math.sqrt((goal_pos[0] - start_pos[0]) ** 2 + (goal_pos[1] - start_pos[1]) ** 2)
     norm_goal_dir = math.sqrt(goal_dir[0]**2 + goal_dir[1]**2)
@@ -85,7 +101,7 @@ class BppPlanner(object):
         return gen_bpp_without_velocity(goal_pos, goal_dir, start_pos, start_dir, self.interval)
 
 if __name__ == '__main__':
-    test_list=gen_bpp_with_velocity([22, 15], [0, 1], [0, 0], [1, 0], 0.2, 1, 8.333, 2.335, 7.0)
+    test_list=gen_bpp_with_velocity([22, 15], [0, 1, 0], [0, 0], [1, 0, 0], 0.2, 1, 8.333, 2.335, 7.0)
     xx=[]
     yy=[]
     for x in test_list:

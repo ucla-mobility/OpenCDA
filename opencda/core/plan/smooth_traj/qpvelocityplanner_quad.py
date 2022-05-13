@@ -10,8 +10,8 @@ import string
 from qpsolvers import solve_qp
 import numpy as np
 import math
-from opencda.core.ml_libs.rl.planner.velocityplanner import BVPStage
-from opencda.core.ml_libs.rl.planner.velocityplanner import applybvpstage
+from velocityplanner import BVPStage
+from velocityplanner import applybvpstage
 
 # simple version
 
