@@ -102,6 +102,8 @@ class BppPlanner(object):
 
 if __name__ == '__main__':
     test_list=gen_bpp_with_velocity([22, 15], [0, 1, 0], [0, 0], [1, 0, 0], 0.2, 1, 8.333, 2.335, 7.0)
+    # Bugs for this 
+    test_list=gen_bpp_with_velocity_qp([60, 0], [1, 0], [0, 0], [1, 0], 0.2, 2.7778, 8.3334, 1.0)
     xx=[]
     yy=[]
     for x in test_list:

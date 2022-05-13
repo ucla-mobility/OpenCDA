@@ -168,8 +168,10 @@ class BppPlanner(object):
 
 if __name__ == '__main__':
     # test_list, refline_pos_x, refline_pos_y=loadrefline()
-    test_list=gen_bpp_with_velocity_qp([60, 0], [1, 0], [0, 0], [1, 0], 0.2, 2.7778, 8.3334, 1.0)
-    test_list=gen_bpp_based_on_refline_with_velocity_qp([2, 2], [1, 0], 0.2, test_list, 2.7778, 8.3334, 1.0)
+    # Step 1
+    test_list=gen_bpp_with_velocity_qp([5, 5], [1, 0], [0, 0], [1, 0], 0.1, 2.7778, 8.3334, 1.0)
+    # Step 2: Step 1 test_list to step 2 test_list is wired. Don't know what it drift for -2 meters    
+    # test_list=gen_bpp_based_on_refline_with_velocity_qp([0, 1], [1, 0], 0.2, test_list, 2.7778, 8.3334, 1.0)
     xx=[]
     yy=[]
     for x in test_list:
