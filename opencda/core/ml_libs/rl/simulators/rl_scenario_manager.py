@@ -102,7 +102,7 @@ class RLScenarioManager(ScenarioManager):
         self._col_threshold = self._cfg.col_threshold
         self._waypoint_num = self._cfg.waypoint_num
         self._obs_cfg = self._cfg.obs
-        self._planner_cfg = self._cfg.planner
+        # self._planner_cfg = self._cfg.planner
         self._camera_aug_cfg = self._cfg.camera_aug
         self._verbose = self._cfg.verbose
         self._debug = self._cfg.debug

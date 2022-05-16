@@ -39,23 +39,6 @@ class RLStateManager(object):
         self._ego_total_distance = float('inf')
         self._ego_wrong_direction = False
 
-    # ----- set parameters -----
-    def set_total_distance(self):
-        """
-        Update the total distance to navigation goal.
-        """
-        self._ego_total_distance = self.ego_agent.distance_to_goal
-
-    def set_off_road(self, off_road):
-        """
-        Update off-road indicator based on carla env condition.
-        Parameters
-        ----------
-        off_road:bool
-            The indicator of off-road status.
-        """
-        self.ego_off_road = off_road
-
     # ----- get parameters -----
     def get_end_distance(self):
         """
@@ -178,6 +161,23 @@ class RLStateManager(object):
             The current ego vehicle speed vector in m/s on x,y,z direction.
         """
         return self.ego_vehicle.get_velocity()
+
+    # ----- set parameters -----
+    def set_total_distance(self):
+        """
+        Update the total distance to navigation goal.
+        """
+        self._ego_total_distance = self.ego_agent.distance_to_goal
+
+    def set_off_road(self, off_road):
+        """
+        Update off-road indicator based on carla env condition.
+        Parameters
+        ----------
+        off_road:bool
+            The indicator of off-road status.
+        """
+        self.ego_off_road = off_road
 
     # ----- rl functions -----
     def get_vehicle_state(self):
