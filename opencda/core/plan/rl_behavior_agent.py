@@ -9,6 +9,7 @@ from opencda.core.plan.local_planner_behavior import LocalPlanner
 from opencda.core.plan.rl_local_planner_behavior import RLLocalPlanner
 from opencda.core.plan.behavior_agent import BehaviorAgent
 from opencda.core.plan.plan_utils import RoadOption, AgentState
+from opencda.core.common.misc import get_speed, positive, cal_distance_angle
 
 
 class RLBehaviorAgent(BehaviorAgent):
@@ -30,13 +31,13 @@ class RLBehaviorAgent(BehaviorAgent):
         self.agent_state = AgentState.IDLE
         self.speed_limit = 0
         self.distance_to_goal = 0.0
-        self._waypoints_queue = deque()
+        self._navigation_waypoints_queue = deque()
         self.distances = deque()
         self.timeout = -1
         self.timeout_in_seconds = 0
         # note: No need to make buffer size configurable. Just use 100.
         self._buffer_size = 100
-        self._waypoints_buffer = deque(maxlen=100)
+        self._navigation_waypoints_buffer = deque(maxlen=100)
         self._route = []
         # self._vehicle_location = None
         # init current waypoint based on ego vehicle position
@@ -44,10 +45,47 @@ class RLBehaviorAgent(BehaviorAgent):
             self.vehicle.get_location(), lane_type=carla.LaneType.Driving, project_to_road=True
         )
         self.target_waypoint = self.current_waypoint
-        self._min_distance = config_yaml['min_distance']
+        self._min_distance = config_yaml['rl_planner']['min_rl_plan_dist']
 
         self._rl_planner = RLLocalPlanner(
-            self, carla_map, config_yaml['action_local_planner'])
+            self, carla_map, config_yaml['rl_planner'])
+
+    def update_information(self, ego_pos, ego_speed, objects):
+        """
+        Update the perception and localization information
+        to the behavior agent.
+
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego position from localization module.
+
+        ego_speed : float
+            km/h, ego speed.
+
+        objects : dict
+            Objects detection results from perception module.
+        """
+        # update localization information
+        self._ego_speed = ego_speed
+        self._ego_pos = ego_pos
+        self.break_distance = self._ego_speed / 3.6 * self.emergency_param
+        # update the localization info to trajectory planner
+        self.get_rl_planner().update_information(ego_pos, ego_speed)
+
+        self.objects = objects
+        # current version only consider about vehicles
+        obstacle_vehicles = objects['vehicles']
+        self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
+
+        # update the debug helper
+        self.debug_helper.update(ego_speed, self.ttc)
+
+        if self.ignore_traffic_light:
+            self.light_state = "Green"
+        else:
+            # This method also includes stop signs and intersections.
+            self.light_state = str(self.vehicle.get_traffic_light_state())
 
     def set_destination(self,
                         start_location,
@@ -62,19 +100,22 @@ class RLBehaviorAgent(BehaviorAgent):
                                                      end_reset=True,
                                                      clean_history=False)
 
+        end_waypoint = self._map.get_waypoint(end_location)
+        route_trace = self._trace_route(self.start_waypoint, end_waypoint)
+        prev_loc = None
+
         if clean:
             # reset rl variables
             self._route = []
             self.distance_to_goal = 0.0
-            self._waypoints_queue.clear()
-            self._waypoints_buffer.clear()
+            self._navigation_waypoints_queue.clear()
+            self._navigation_waypoints_buffer.clear()
             self.distances.clear()
         if not clean:
             self._route += route_trace
 
-        prev_loc = None
         for elem in route_trace:
-            self._waypoints_queue.append(elem)
+            self._navigation_waypoints_queue.append(elem)
             cur_loc = elem[0].transform.location
             if prev_loc is not None:
                 delta = cur_loc.distance(prev_loc)
@@ -113,7 +154,7 @@ class RLBehaviorAgent(BehaviorAgent):
 
         end_waypoint = self._map.get_waypoint(end_location)
 
-        # one-step rpute
+        # one-step route
         route_trace = self._trace_route(self.start_waypoint, end_waypoint)
 
         # send the new route to rl local planner for single step planning
@@ -134,8 +175,8 @@ class RLBehaviorAgent(BehaviorAgent):
         """
 
         if clean:
-            self._waypoints_queue.clear()
-            self._waypoints_buffer.clear()
+            self._navigation_waypoints_queue.clear()
+            self._navigation_waypoints_buffer.clear()
             self._route = route
             self.distance_to_goal = 0
             self.distances.clear()
@@ -146,7 +187,7 @@ class RLBehaviorAgent(BehaviorAgent):
 
         prev_loc = None
         for elem in route:
-            self._waypoints_queue.append(elem)
+            self._navigation_waypoints_queue.append(elem)
             cur_loc = elem[0].transform.location
             if prev_loc is not None:
                 delta = cur_loc.distance(prev_loc)
@@ -157,7 +198,7 @@ class RLBehaviorAgent(BehaviorAgent):
         if self.distances:
             cur_resolution = np.average(list(self.distances)[:100])
             self._buffer_size = min(100, int(100 // cur_resolution))
-        self.node_waypoint, self.node_road_option = self._waypoints_queue[0]
+        self.node_waypoint, self.node_road_option = self._navigation_waypoints_queue[0]
         self.timeout_in_seconds = ((self.distance_to_goal / 1000.0) / 5.0) * 3600.0 + 20.0
         # note: do not see a point to make fps configurable, just use fps=10
         self.timeout = self.timeout_in_seconds * self._fps
@@ -174,9 +215,15 @@ class RLBehaviorAgent(BehaviorAgent):
 
     def get_local_planner(self):
         """
-        return the local planner
+        return the local planner.
         """
         return self._local_planner
+
+    def get_rl_planner(self):
+        """
+        Returns the RL local planner object.
+        """
+        return self._rl_planner
 
     def get_waypoints_list(self, waypoint_num):
         """
@@ -193,8 +240,8 @@ class RLBehaviorAgent(BehaviorAgent):
         num = 0
         i = 0
         waypoint_list = []
-        while num < waypoint_num and i < len(self._waypoints_buffer):
-            waypoint = self._waypoints_buffer[i][0]
+        while num < waypoint_num and i < len(self._navigation_waypoints_buffer):
+            waypoint = self._navigation_waypoints_buffer[i][0]
             i += 1
             if len(waypoint_list) == 0:
                 waypoint_list.append(waypoint)
@@ -217,10 +264,10 @@ class RLBehaviorAgent(BehaviorAgent):
         :list
             A list of direction.
         """
-        num = min(waypoint_num, len(self._waypoints_buffer))
+        num = min(waypoint_num, len(self._navigation_waypoints_buffer))
         direction_list = []
         for i in range(num):
-            direction = self._waypoints_buffer[i][1].value
+            direction = self._navigation_waypoints_buffer[i][1].value
             direction_list.append(direction)
         return direction_list
 
@@ -257,15 +304,15 @@ class RLBehaviorAgent(BehaviorAgent):
         )
 
         # Add waypoints into buffer if empty
-        if not self._waypoints_buffer:
-            for i in range(min(self._buffer_size, len(self._waypoints_queue))):
-                if self._waypoints_queue:
-                    self._waypoints_buffer.append(self._waypoints_queue.popleft())
+        if not self._navigation_waypoints_buffer:
+            for i in range(min(self._buffer_size, len(self._navigation_waypoints_queue))):
+                if self._navigation_waypoints_queue:
+                    self._navigation_waypoints_buffer.append(self._navigation_waypoints_queue.popleft())
                 else:
                     break
 
             # If no waypoints return with current waypoint
-            if not self._waypoints_buffer:
+            if not self._navigation_waypoints_buffer:
                 self.target_waypoint = self.current_waypoint
                 self.node_waypoint = self.current_waypoint
                 self.target_road_option = RoadOption.VOID
@@ -275,31 +322,31 @@ class RLBehaviorAgent(BehaviorAgent):
 
         # Find the most far waypoint within min distance
         max_index = -1
-        for i, (waypoint, _) in enumerate(self._waypoints_buffer):
+        for i, (waypoint, _) in enumerate(self._navigation_waypoints_buffer):
             cur_dis = waypoint.transform.location.distance(self._ego_pos.location)
             if cur_dis < self._min_distance:
                 max_index = i
         if max_index >= 0:
             for i in range(max_index + 1):
-                self.node_waypoint, self.node_road_option = self._waypoints_buffer.popleft()
-                if self._waypoints_queue:
-                    self._waypoints_buffer.append(self._waypoints_queue.popleft())
+                self.node_waypoint, self.node_road_option = self._navigation_waypoints_buffer.popleft()
+                if self._navigation_waypoints_queue:
+                    self._navigation_waypoints_buffer.append(self._navigation_waypoints_queue.popleft())
                 if self.distances:
                     self.distance_to_goal -= self.distances.popleft()
 
         # Update information
-        if self._waypoints_buffer:
-            self.target_waypoint, self.target_road_option = self._waypoints_buffer[0]
+        if self._navigation_waypoints_buffer:
+            self.target_waypoint, self.target_road_option = self._navigation_waypoints_buffer[0]
         self.agent_state = AgentState.NAVIGATING
         self.speed_limit = self.vehicle.get_speed_limit()
 
         # ----- apply new action -----
         # Path generation based on the global route
-        rx, ry, rk, ryaw = self._local_planner.generate_path()
-        # calculate speed and target location
+        # rx, ry, rk, ryaw = self._local_planner.generate_path()
+        rx, ry, rk, ryaw = self._rl_planner.generate_path()
+        # calculate speed and target location (note: delete manual target speed)
         target_speed, target_loc = self._rl_planner.run_step(
-            rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
-            if not target_speed else target_speed)
+            rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist)
 
         return target_speed, target_loc
 

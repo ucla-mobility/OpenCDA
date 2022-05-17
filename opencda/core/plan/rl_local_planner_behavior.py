@@ -32,9 +32,7 @@ class RLLocalPlanner(LocalPlanner):
 
     def __init__(self, agent, carla_map, config_yaml):
 
-        super(RLLocalPlanner, self).__init__(agent,
-                                             carla_map,
-                                             config_yaml)
+        super(RLLocalPlanner, self).__init__(agent, carla_map, config_yaml)
 
     def set_current_plan(self, current_plan):
         """
@@ -48,7 +46,7 @@ class RLLocalPlanner(LocalPlanner):
 
         """
         # For RL, clear waypoint queue each time a new action coming in.
-        self.get_waypoint_queue.clear()
+        self.waypoints_queue.clear()
         self._waypoint_buffer.clear()
 
         # update route

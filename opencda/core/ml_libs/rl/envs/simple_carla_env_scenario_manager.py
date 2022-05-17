@@ -198,16 +198,16 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         #  find ego waypoint
         ego_waypoint = self._hero_vehicle_manager.agent.get_current_waypoint()
         egp_speed = self._hero_vehicle_manager.agent.get_ego_speed()
-        # action_delta_t default value is 1
-        ds = egp_speed / 3.6 * self._rl_action_dt
+        # action_delta_t default value is 1 (if vehicle standstill, use 3m/s as default)
+        ds = max(egp_speed, 3) / 3.6 * self._rl_action_dt
 
-        def get_next(waypoint,dist):
+        def get_next(waypoint, dist):
             return waypoint.next(dist)[0] if waypoint.next(dist) else None
 
         next_waypoint_mid = get_next(ego_waypoint, ds)
         if next_waypoint_mid:
-            next_waypoint_left = next_waypoint_mid.get_left_lane()[0] if next_waypoint_mid.get_left_lane() else None
-            next_waypoint_right = next_waypoint_mid.get_right_lane()[0] if next_waypoint_mid.get_right_lane() else None
+            next_waypoint_left = next_waypoint_mid.get_left_lane() if next_waypoint_mid.get_left_lane() else None
+            next_waypoint_right = next_waypoint_mid.get_right_lane() if next_waypoint_mid.get_right_lane() else None
         else:
             next_waypoint_left = None
             next_waypoint_right = None
@@ -353,14 +353,17 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
                 actor.destroy()
 
         # 1. init managers
-        self._single_cav_list = self._rl_scenario_manager.create_vehicle_manager(application=['single'],
-                                                                                 data_dump=True)
+        is_data_dump = self._rl_config.env.v2v
+        self._single_cav_list = self._rl_scenario_manager.create_vehicle_manager(application=['rl'],
+                                                                                 data_dump=is_data_dump)
         # RSU module
-        self._rsu_list = \
-            self._rl_scenario_manager.create_rsu_manager(data_dump=True)
+        if 'rsu_base' in self._cfg.keys():
+            self._rsu_list = \
+                self._rl_scenario_manager.create_rsu_manager(data_dump=is_data_dump)
 
         # background traffic
-        traffic_manager, bg_veh_list = self._rl_scenario_manager.create_traffic_carla()
+        if 'carla_traffic_manager' in self._cfg.keys():
+            traffic_manager, bg_veh_list = self._rl_scenario_manager.create_traffic_carla()
 
         # RL module
         self._rl_state_manager = RLStateManager(self._single_cav_list,
@@ -374,7 +377,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # 2. prepare sensors (# init sensor helper, collision sensor and traffic light sensor)
         self._rl_scenario_manager.prepare_observations(self._hero_vehicle)
 
-        # 3. update total distance
+        # 3. set destination and update total distance
         self._rl_state_manager.set_total_distance()
 
         # warmup simulation for 10 ticks
@@ -383,14 +386,15 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             # self._hero_vehicle_manager.run_step()
             for i, single_cav in enumerate(self._single_cav_list):
                 single_cav.update_info()
-                control = single_cav.run_step()
-                single_cav.vehicle.apply_control(control)
+                # control = single_cav.run_step()
+                # single_cav.vehicle.apply_control(control)
             # 2.scenario run step
             self._rl_scenario_manager.run_step()
             # 3. update RSU
-            for rsu in self._rsu_list:
-                rsu.update_info()
-                rsu.run_step()
+            if 'rsu_base' in self._cfg.keys():
+                for rsu in self._rsu_list:
+                    rsu.update_info()
+                    rsu.run_step()
             # 4. update states
             # self._hero_vehicle_manager.rl_manager.get_vehicle_state()
             self._rl_state_manager.get_vehicle_state()
@@ -482,21 +486,21 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # clip the action values
         if action is not None:
             # update buffer
-            self._simulator_databuffer['action'] = action
+            self._simulator_databuffer['action'] = action.item()
 
         else:
             self._simulator_databuffer['action'] = dict()
 
         # convert action to target waypoint
-        one_step_target_waypoint = self.action_to_waypoint(action)
+        one_step_target_waypoint = self.action_to_waypoint(action.item())
 
         if one_step_target_waypoint is not None:
             # apply action
             ego_vehicle_loc = self._hero_vehicle.get_location()
-            one_step_target_location = one_step_target_waypoint.location
+            one_step_target_location = one_step_target_waypoint.transform.location
             # apply RL action (update target location)
             self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc, one_step_target_location)
-            control = self._hero_vehicle_manager.runstep()
+            control = self._hero_vehicle_manager.run_step()
             # apply control
             self._hero_vehicle.apply_control(control)
         else:
@@ -516,9 +520,10 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # 2.scenario run step
         self._rl_scenario_manager.run_step()
         # 3. update RSU
-        for rsu in self._rsu_list:
-            rsu.update_info()
-            rsu.run_step()
+        if 'rsu_base' in self._cfg.keys():
+            for rsu in self._rsu_list:
+                rsu.update_info()
+                rsu.run_step()
         # 4. increase one tick
         self._tick += 1
         # 5. tick carla
@@ -703,7 +708,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         # goal reward
         goal_reward = 0
-        plan_distance = self._hero_vehicle_manager.get_end_distance()
+        plan_distance = self._rl_state_manager.get_end_distance()
         if self.is_success():
             goal_reward += self._success_reward
         elif self.is_failure():
@@ -745,17 +750,10 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         target_forward = self._simulator_databuffer['navigation']['target_forward']
         angle_reward = 3 * (0.1 - angle(forward_vector, target_forward) / np.pi)
 
-        steer = self._simulator_databuffer['action'].get('steer', 0)
-        command = self._simulator_databuffer['navigation']['command']
+        steer = self._hero_vehicle.get_control().steer
         steer_reward = 0.5
         if abs(steer - self._last_steer) > 0.5:
             steer_reward -= 0.2
-        if command == 1 and steer > 0.1:
-            steer_reward = 0
-        elif command == 2 and steer < -0.1:
-            steer_reward = 0
-        elif (command == 3 or command == 4) and abs(steer) > 0.3:
-            steer_reward = 0
         self._last_steer = steer
 
         waypoint_list = self._simulator_databuffer['navigation']['waypoint_list']

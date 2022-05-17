@@ -166,11 +166,11 @@ def rl_train(opt, config_yaml, seed=0):
 
     print('Init leaner and collector!')
     # initiate replay buffer
-    replay_buffer = NaiveReplayBuffer(cfg.policy.other.replay_buffer, tb_logger, exp_name=cfg.exp_name)
+    replay_buffer = NaiveReplayBuffer(rl_cfg.policy.other.replay_buffer, tb_logger, exp_name=rl_cfg.exp_name)
 
     # initiate epsilon greedy
     if policy_type == 'dqn':
-        eps_cfg = cfg.policy.other.eps
+        eps_cfg = rl_cfg.policy.other.eps
         epsilon_greedy = get_epsilon_greedy_fn(eps_cfg.start, eps_cfg.end, eps_cfg.decay, eps_cfg.type)
 
     learner.call_hook('before_run')

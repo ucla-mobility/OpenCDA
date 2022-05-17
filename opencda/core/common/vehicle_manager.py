@@ -191,13 +191,13 @@ class VehicleManager(object):
         # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
 
-    def run_step(self, target_speed=None):
+    def run_step(self):
         """
         Execute one step of navigation.
         """
         # visualize the bev map if needed
         self.map_manager.run_step()
-        target_speed, target_pos = self.agent.run_step(target_speed)
+        target_speed, target_pos = self.agent.run_step()
         control = self.controller.run_step(target_speed, target_pos)
 
         # dump data
