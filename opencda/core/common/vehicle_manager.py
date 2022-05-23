@@ -86,6 +86,7 @@ class VehicleManager(object):
         self.vid = str(uuid.uuid1())
         self.vehicle = vehicle
         self.carla_map = carla_map
+        self.application = application
 
         # retrieve the configure for different modules
         sensing_config = config_yaml['sensing']
@@ -197,7 +198,15 @@ class VehicleManager(object):
         """
         # visualize the bev map if needed
         self.map_manager.run_step()
-        target_speed, target_pos = self.agent.run_step()
+
+        if 'rl' in self.application:
+            # udpate agent info
+            self.agent.run_step()
+            target_speed, target_pos = self.agent.run_rl_action_step()
+        else:
+            target_speed, target_pos = self.agent.run_step()
+
+        # apply control
         control = self.controller.run_step(target_speed, target_pos)
 
         # dump data

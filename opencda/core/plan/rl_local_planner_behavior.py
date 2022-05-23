@@ -2,7 +2,7 @@
 """ This module contains a local planner to perform
 low-level waypoint following based on PID controllers. """
 
-# Author: Runsheng Xu <rxx3386@ucla.edu>
+# Author: Xu Han <rxx3386@ucla.edu>
 # License:  TDG-Attribution-NonCommercial-NoDistrib
 
 from collections import deque
@@ -13,6 +13,7 @@ import math
 import carla
 import numpy as np
 
+from mistgen.mist import mist_generator
 from opencda.core.common.misc import distance_vehicle, draw_trajetory_points, \
     cal_distance_angle, compute_distance
 from opencda.core.plan.spline import Spline2D
@@ -33,6 +34,8 @@ class RLLocalPlanner(LocalPlanner):
     def __init__(self, agent, carla_map, config_yaml):
 
         super(RLLocalPlanner, self).__init__(agent, carla_map, config_yaml)
+        self.target_waypoint = None
+        self._target_speed = None
 
     def set_current_plan(self, current_plan):
         """
@@ -45,18 +48,194 @@ class RLLocalPlanner(LocalPlanner):
             List of waypoints in the actual plan.
 
         """
-        # For RL, clear waypoint queue each time a new action coming in.
-        self.waypoints_queue.clear()
-        self._waypoint_buffer.clear()
-
         # update route
         for elem in current_plan:
             self.waypoints_queue.append(elem)
 
-        # update buffer
-        for _ in range(self._buffer_size):
-            if self.waypoints_queue:
-                self._waypoint_buffer.append(
-                    self.waypoints_queue.popleft())
-            else:
-                break
+    def generate_path(self, plan_time, v_init, a_init, v_end, a_end):
+        """
+        Generate the smooth path using MiSTGen to replace the spline generation.
+
+        Parameters
+        ----------
+        plan_time
+
+        v_init
+
+        a_init
+
+        v_end
+
+        a_end
+
+        Returns :
+        ----------
+        rx : list
+            List of planned path points' x coordinates.
+
+        ry : list
+            List of planned path points' y coordinates.
+
+        ryaw : list
+            List of planned path points' yaw angles.
+
+        rk : list
+            List of planned path points' curvatures.
+
+        """
+
+        # 1. Find X and Y list for trajectory generation
+        # used to save all key spline node
+        x = []
+        y = []
+
+        # pop out the waypoints that may damage driving performance
+        self.buffer_filter()
+
+        # [m] distance of each interpolated points
+        ds = 0.1
+
+        # retrieve current location, yaw angle
+        current_location = self._ego_pos.location
+        current_yaw = self._ego_pos.rotation.yaw
+
+        # retrieve the corresponding waypoint of the current location
+        current_wpt = self._map.get_waypoint(current_location).next(1)[0]
+        current_wpt_loc = current_wpt.transform.location
+
+        # we consider history waypoint to generate trajectory
+        index = 0
+        for i in range(len(self._history_buffer)):
+            prev_wpt = self._history_buffer[i][0].transform.location
+            _, angle = cal_distance_angle(
+                prev_wpt, current_location, current_yaw)
+            # make sure the history waypoint is already passed by
+            if angle > 90 and not self.potential_curved_road:
+                x.append(prev_wpt.x)
+                y.append(prev_wpt.y)
+                index += 1
+
+                _, angle = cal_distance_angle(
+                    current_wpt_loc, current_location, current_yaw)
+                # we prefer to use waypoint as the current position for path
+                # generation if the waypoint is in front of us.
+                # This is because waypoint always sits in the center
+                if angle < 90:
+                    x.append(current_wpt_loc.x)
+                    y.append(current_wpt_loc.y)
+                else:
+                    x.append(current_location.x)
+                    y.append(current_location.y)
+
+        # used to filter the waypoints that are too close
+        index = max(0, index - 1) if self.potential_curved_road else index
+        prev_x = x[index]
+        prev_y = y[index]
+        for i in range(len(self._waypoint_buffer)):
+            cur_x = self._waypoint_buffer[i][0].transform.location.x
+            cur_y = self._waypoint_buffer[i][0].transform.location.y
+            if abs(prev_x - cur_x) < 0.5 and abs(prev_y - cur_y) < 0.5:
+                continue
+            prev_x = cur_x
+            prev_y = cur_y
+
+            x.append(cur_x)
+            y.append(cur_y)
+
+        # 2. generate trajectory using MistGen
+        # note: An naive way that updates waypnt queue each step.
+        # x = [waypoint.location.x for waypoint in self.waypoints_queue]
+        # y = [waypoint.location.y for waypoint in self.waypoints_queue]
+
+        # Use previous waypoint history to generate a more smooth trajectory
+        waypoint_ori = np.array([x, y])
+
+        myMistGen = mist_generator()
+        # generated trajectory (x-coordinate, y-coordinate, and timestamp)
+        xxs, yys, tts = myMistGen.mist_2d_gen(waypoint_ori, v_init, a_init,
+                                              v_end, a_end, plan_time)
+        # generated velocity, acceleration, and jerk trajectory
+        # note: vaj_xy = [vxx,axx,jxx,vyy,ayy,jyy]
+        vxx, axx, jxx, vyy, ayy, jyy = myMistGen.mist_2d_vaj_gen(xxs, yys, tts)
+
+        # find yaw angle
+        yaw_rad, yaw_deg = myMistGen.calc_yaw(vxx, vyy)
+
+        return xxs, yys, vxx, vyy, yaw_deg
+
+    def run_step(
+            self,
+            xxs,
+            yys,
+            vxx,
+            vyy,
+            trajectory=None,
+            following=False):
+        """
+        Execute one step of local planning which involves
+        running the longitudinal and lateral PID controllers to
+        follow the smooth waypoints trajectory.
+
+        Parameters
+        ----------
+        rx : list
+            List of planned path points' x coordinates.
+
+        ry : list
+            List of planned path points' y coordinates.
+
+        ryaw : list
+            List of planned path points' yaw angles.
+
+        rk : list
+            List of planned path points' curvatures.
+
+        following : boolean
+            Indicator of whether the vehicle is under following status.
+
+        trajectory : list
+            Pre-generated car-following trajectory only for platoon members.
+
+        target_speed : float
+            The ego vehicle's desired speed.
+
+        Returns
+        -------
+        speed : float
+            Next trajectory point's target speed.
+
+        waypoint : carla.waypoint
+            Next trajectory point's waypoint.
+
+        """
+
+        # Buffering the waypoints. Always keep the waypoint buffer alive
+        if len(self._waypoint_buffer) < self.waypoint_update_freq:
+            for i in range(self._buffer_size - len(self._waypoint_buffer)):
+                if self.waypoints_queue:
+                    self._waypoint_buffer.append(
+                        self.waypoints_queue.popleft())
+                else:
+                    break
+
+        # Generate the trajectory buffer based on mistgen
+        default_z = self._waypoint_buffer[0][0].transform.location.z + 0.5
+        for i in range(len(xxs)):
+            self._trajectory_buffer.append(
+                # append target waypoint
+                (carla.Transform(carla.Location(xxs[i], yys[i], default_z)),
+                 # append target speed
+                 math.sqrt(vxx[i] ** 2 + vyy[i] ** 2)))
+
+        # Target waypoint
+        self.target_waypoint, self._target_speed = \
+            self._trajectory_buffer[min(1, len(self._trajectory_buffer) - 1)]
+
+        # Purge the queue of obsolete waypoints
+        vehicle_transform = self._ego_pos
+        self.pop_buffer(vehicle_transform)
+
+        return self._target_speed, \
+               self.target_waypoint.transform.location if hasattr(
+                   self.target_waypoint,
+                   'is_junction') else self.target_waypoint.location

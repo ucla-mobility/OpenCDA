@@ -743,7 +743,7 @@ class BehaviorAgent(object):
             collision_detector_enabled=True,
             lane_change_allowed=True):
         """
-        Execute one step of navigation
+        Execute one step of navigation.
 
         Parameters
         __________

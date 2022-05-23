@@ -156,7 +156,6 @@ def rl_train(opt, config_yaml, seed=0):
     policy = policy_cls(rl_cfg.policy, model=model)
 
     # Switch to SummaryWriter to log training process.
-    # tb_logger = None
     tb_logger = SummaryWriter('./opencda/scenario_testing/rl_log/{}/'.format(rl_cfg.exp_name))
 
     # initiate learner and collector

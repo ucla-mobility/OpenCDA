@@ -383,6 +383,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # warmup simulation for 10 ticks
         for _ in range(10):
             # 1. vehicle manager run step
+            # todo: change this to dedicated agent step
             # self._hero_vehicle_manager.run_step()
             for i, single_cav in enumerate(self._single_cav_list):
                 single_cav.update_info()
@@ -493,26 +494,36 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         # convert action to target waypoint
         one_step_target_waypoint = self.action_to_waypoint(action.item())
+        ego_vehicle_loc = self._hero_vehicle.get_location()
+        # find target speed (note: temporarly using speed limit as a target speed, in m/s)
+        target_speed = max(self._hero_vehicle.get_speed_limit(), 20)
+
 
         if one_step_target_waypoint is not None:
             # apply action
-            ego_vehicle_loc = self._hero_vehicle.get_location()
-            one_step_target_location = one_step_target_waypoint.transform.location
+
             # apply RL action (update target location)
-            self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc, one_step_target_location)
+            self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc,
+                                                             one_step_target_waypoint,
+                                                             target_speed,
+                                                             self._rl_action_dt)
             control = self._hero_vehicle_manager.run_step()
-            # apply control
+            # apply ed and control
             self._hero_vehicle.apply_control(control)
         else:
             # agent selected out-of-range location, use current location as target and take penalty
-            self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc, ego_vehicle_loc)
+            self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc,
+                                                             ego_vehicle_loc,
+                                                             target_speed,
+                                                             self._rl_action_dt)
             control = self._hero_vehicle_manager.runstep()
-            # apply control
+            # apply speed and control
             self._hero_vehicle.apply_control(control)
 
 
         # Run one simulation step for all interfaces
         # 1. vehicle manager update run step
+        # todo: change this to dedicated agent step
         # self._hero_vehicle_manager.run_step()
         for i, single_cav in enumerate(self._single_cav_list):
             single_cav.update_info()

@@ -3,7 +3,10 @@
 Behavior manager for RL specifically
 """
 import carla
+import math
 from collections import deque
+
+import numpy as np
 
 from opencda.core.plan.local_planner_behavior import LocalPlanner
 from opencda.core.plan.rl_local_planner_behavior import RLLocalPlanner
@@ -25,7 +28,7 @@ class RLBehaviorAgent(BehaviorAgent):
             carla_map,
             config_yaml)
 
-        # rl related
+        # reward related
         self.node_road_option = None
         self.node_waypoint = None
         self.agent_state = AgentState.IDLE
@@ -46,9 +49,10 @@ class RLBehaviorAgent(BehaviorAgent):
         )
         self.target_waypoint = self.current_waypoint
         self._min_distance = config_yaml['rl_planner']['min_rl_plan_dist']
-
+        # action related
         self._rl_planner = RLLocalPlanner(
             self, carla_map, config_yaml['rl_planner'])
+        self.rl_step = {}
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -133,11 +137,35 @@ class RLBehaviorAgent(BehaviorAgent):
     def apply_rl_action(
             self,
             start_location,
-            end_location):
+            target_waypoint,
+            target_speed,
+            rl_action_dt):
         """
-        This method set the route for ego vehicle, from agent's
-        position to the destination location based on RL's action.
+        This method  the destination of the ego vehicle based on RL agent's output.
+        With the current parameters, the rl_local_planner will compute the minimum snap
+        trajectory using mistGen. The parameters of this function will be updated at
+        each RL step.
+
+        Parameters
+        __________
+        start_location : float
+
+        end_location : float
+
+        target_speed : float
+
         """
+        target_location = target_waypoint.transform.location
+        target_yaw = target_waypoint.transform.rotation
+        target_speed_x = target_speed * math.cos(target_yaw)
+        target_speed_y = target_speed * math.sin(target_yaw)
+        self.rl_step['target_loc_yaw'] = target_yaw
+        self.rl_step['start_loc'] = start_location
+        self.rl_step['end_location'] = target_location
+        self.rl_step['target_speed'] = [target_speed_x, target_speed_y]
+        self.rl_step['rl_action_time_step'] = rl_action_dt
+
+        # trace a trajectory from start to current target waypoint
         self.start_waypoint = self._map.get_waypoint(start_location)
 
         # make sure the start waypoint is behind the vehicle
@@ -152,7 +180,7 @@ class RLBehaviorAgent(BehaviorAgent):
                 _, angle = cal_distance_angle(
                     self.start_waypoint.transform.location, cur_loc, cur_yaw)
 
-        end_waypoint = self._map.get_waypoint(end_location)
+        end_waypoint = self._map.get_waypoint(target_location)
 
         # one-step route
         route_trace = self._trace_route(self.start_waypoint, end_waypoint)
@@ -272,31 +300,31 @@ class RLBehaviorAgent(BehaviorAgent):
         return direction_list
 
     def get_current_waypoint(self):
-        '''
+        """
         Get the CARLA waypoint based on ego position.
 
         Returns
         -------
         current_wpt: carla.waypoint
             The closest waypoint based on current position.
-        '''
+        """
 
         current_location = self._ego_pos.location
         current_wpt = self._map.get_waypoint(current_location)
         return current_wpt
 
     def get_ego_speed(self):
-        '''
+        """
         Get the ego vehicle speed in km/h.
-        '''
+        """
         return self._ego_speed
 
     def run_step(self):
         """
         Run one step of local planner for RL model. This method updates global navigation
-        status to for reward calculation, and apply new action by sending a new target waypoint
-        to the rl local planner.
+        status to for reward calculation.
         """
+
         # ----- update global navigation status -----
         assert self._route is not None
         self.current_waypoint = self._map.get_waypoint(
@@ -340,15 +368,82 @@ class RLBehaviorAgent(BehaviorAgent):
         self.agent_state = AgentState.NAVIGATING
         self.speed_limit = self.vehicle.get_speed_limit()
 
-        # ----- apply new action -----
-        # Path generation based on the global route
-        # rx, ry, rk, ryaw = self._local_planner.generate_path()
-        rx, ry, rk, ryaw = self._rl_planner.generate_path()
-        # calculate speed and target location (note: delete manual target speed)
-        target_speed, target_loc = self._rl_planner.run_step(
-            rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist)
+    def run_rl_action_step(self,
+                           target_speed=None,
+                           collision_detector_enabled=True):
+        """
+        Calculate next step target speed and target location for the current rl destination.
+        The behavior account for emergency braking as safety constrain.
+        
+        Returns
+        -------
+        target_speed:float
+            The suggested target speed based on rl local planner.
+
+        target_loc:carla.location
+            The suggested target location based on rl local planner.
+
+        """
+        # retrieve ego location
+        ego_vehicle_loc = self._ego_pos.location
+        ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
+
+        # ttc reset to 1000 at the beginning
+        self.ttc = 1000
+
+        # Basic parameters for path generation
+        rl_action_dt = self.rl_step['rl_action_time_step']  # time step, float, in s
+        ego_speed = np.array([self.vehicle.get_velocity().x,
+                              self.vehicle.get_velocity().y])  # speed vector, 2D np.array
+        ego_acc = np.array([self.vehicle.get_acceleration().x,
+                            self.vehicle.get_acceleration().y])  # acceleration vector, 2D np.array
+        target_speed_vec = np.array(self.rl_step['target_speed'])  # target speed,2D np.array
+        target_acc = [0, 0]  # target acceleration vector, 2D
+        # np.array, set 0 as default
+        # 1. generate trajectory
+        xxs, yys, vxx, vyy, yaw_deg = self._rl_planner.generate_path(rl_action_dt,  # plan_time
+                                                                     ego_speed,  # v_init
+                                                                     ego_acc,  # a_init
+                                                                     target_speed_vec,  # v_end
+                                                                     target_acc)  # a_end
+        # 2. Collision check
+        is_hazard = False
+        if collision_detector_enabled:
+            is_hazard, obstacle_vehicle, distance = self.collision_manager(
+                xxs, yys, yaw_deg, ego_vehicle_wp)
+        car_following_flag = False
+
+        if not is_hazard:
+            self.hazard_flag = False
+
+        # 3. check for vehicle blocking in front
+        elif is_hazard and self.get_local_planner().potential_curved_road:
+            car_following_flag = True
+
+        # 4. Car following behavior (generate car-following target speed)
+        if car_following_flag:
+            if distance < max(self.break_distance, 3):
+                return 0, None
+            # overwrite the target speed
+            target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
+            target_speed_x = target_speed * math.cos(self.rl_step['target_loc_yaw'])
+            target_speed_y = target_speed * math.sin(self.rl_step['target_loc_yaw'])
+            target_speed_vec = np.array([target_speed_x, target_speed_y])
+
+            # generate new trajectory
+            xxs, yys, vxx, vyy, yaw_deg = self._rl_planner.generate_path(rl_action_dt,  # plan_time
+                                                                         ego_speed,  # v_init
+                                                                         ego_acc,  # a_init
+                                                                         target_speed_vec,  # v_end
+                                                                         target_acc)  # a_end
+            target_speed, target_loc = self._rl_planner.run_step(xxs, yys, vxx, vyy)
+            return target_speed, target_loc
+
+        # 5. calculate target speed and target location for normal behavior
+        target_speed, target_loc = self._rl_planner.run_step(xxs, yys, vxx, vyy)
 
         return target_speed, target_loc
+
 
 if __name__ == "__main__":
     pass
