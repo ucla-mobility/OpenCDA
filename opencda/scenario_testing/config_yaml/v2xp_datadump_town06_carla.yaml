@@ -27,13 +27,15 @@ rsu_base: &rsu_base
   sensing:
     perception:
       activate: false # when not activated, objects positions will be retrieved from server directly
+      off_screen_render: true # whether to turn-off the o3d visualization window to reduce computation time (the lidar/camera frames are still rendered)
       camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 120
-        points_per_second: 1000000
+        # points_per_second: 1000000
+        points_per_second: 100000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 2
         lower_fov: -25
@@ -54,13 +56,15 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
+      off_screen_render: true # whether to turn-off the o3d visualization window to reduce computation time (the lidar/camera frames are still rendered)
       camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         channels: 32
         range: 120
-        points_per_second: 1000000
+        # points_per_second: 1000000
+        points_per_second: 100000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 2
         lower_fov: -25

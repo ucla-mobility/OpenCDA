@@ -12,6 +12,7 @@ import time
 
 import carla
 import cv2
+import pygame
 import numpy as np
 import open3d as o3d
 
@@ -387,6 +388,9 @@ class PerceptionManager:
         self.lidar_visualize = config_yaml['lidar_visualize']
         self.global_position = config_yaml['global_position'] \
             if 'global_position' in config_yaml else None
+        
+        # configuration for off-screen-render
+        self.is_off_screen = config_yaml['off_screen_render']
 
         self.cav_world = weakref.ref(cav_world)()
         ml_manager = cav_world.ml_manager
@@ -423,7 +427,9 @@ class PerceptionManager:
                                      self.carla_world,
                                      config_yaml['lidar'],
                                      self.global_position)
-            self.o3d_vis = o3d_visualizer_init(self.id)
+            # temporarly disable o3d visulization window
+            if not self.is_off_screen:
+                self.o3d_vis = o3d_visualizer_init(self.id)
         else:
             self.lidar = None
             self.o3d_vis = None
@@ -559,12 +565,14 @@ class PerceptionManager:
         if self.lidar_visualize:
             while self.lidar.data is None:
                 continue
+
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show(
-                self.o3d_vis,
-                self.count,
-                self.lidar.o3d_pointcloud,
-                objects)
+            if not self.is_off_screen:
+                o3d_visualizer_show(
+                    self.o3d_vis,
+                    self.count,
+                    self.lidar.o3d_pointcloud,
+                    objects)
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
@@ -626,34 +634,39 @@ class PerceptionManager:
 
             names = ['front', 'right', 'left', 'back']
 
-            for (i, rgb_camera) in enumerate(self.rgb_camera):
-                if i > self.camera_num - 1 or i > self.camera_visualize - 1:
-                    break
-                # we only visualiz the frontal camera
-                rgb_image = np.array(rgb_camera.image)
-                # draw the ground truth bbx on the camera image
-                rgb_image = self.visualize_3d_bbx_front_camera(objects,
-                                                               rgb_image,
-                                                               i)
-                # resize to make it fittable to the screen
-                rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
+            if not self.is_off_screen:
+                for (i, rgb_camera) in enumerate(self.rgb_camera):
+                    if i > self.camera_num - 1 or i > self.camera_visualize - 1:
+                        break
 
-                # show image using cv2
-                cv2.imshow(
-                    '%s camera of actor %d, perception deactivated' %
-                    (names[i], self.id), rgb_image)
-                cv2.waitKey(1)
+                    # we only visualize the frontal camera
+                    rgb_image = np.array(rgb_camera.image)
+
+                    # draw the ground truth bbx on the camera image
+                    rgb_image = self.visualize_3d_bbx_front_camera(objects,
+                                                                   rgb_image,
+                                                                   i)
+                    # resize to make it fittable to the screen
+                    rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
+
+                    # show image using cv2
+                    cv2.imshow(
+                        '%s camera of actor %d, perception deactivated' %
+                        (names[i], self.id), rgb_image)
+                    cv2.waitKey(1)
 
         if self.lidar_visualize:
             while self.lidar.data is None:
                 continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            # render the raw lidar
-            o3d_visualizer_show(
-                self.o3d_vis,
-                self.count,
-                self.lidar.o3d_pointcloud,
-                objects)
+
+            if not self.is_off_screen:
+                # render the raw lidar
+                o3d_visualizer_show(
+                    self.o3d_vis,
+                    self.count,
+                    self.lidar.o3d_pointcloud,
+                    objects)
 
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)
@@ -822,7 +835,7 @@ class PerceptionManager:
         if self.camera_visualize:
             cv2.destroyAllWindows()
 
-        if self.lidar_visualize:
+        if self.lidar_visualize and not self.is_off_screen:
             self.o3d_vis.destroy_window()
 
         if self.data_dump:
