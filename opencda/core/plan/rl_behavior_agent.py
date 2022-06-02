@@ -156,7 +156,7 @@ class RLBehaviorAgent(BehaviorAgent):
 
         """
         target_location = target_waypoint.transform.location
-        target_yaw = target_waypoint.transform.rotation
+        target_yaw = target_waypoint.transform.rotation.yaw
         target_speed_x = target_speed * math.cos(target_yaw)
         target_speed_y = target_speed * math.sin(target_yaw)
         self.rl_step['target_loc_yaw'] = target_yaw
@@ -319,7 +319,7 @@ class RLBehaviorAgent(BehaviorAgent):
         """
         return self._ego_speed
 
-    def run_step(self):
+    def run_rl_reward_step(self):
         """
         Run one step of local planner for RL model. This method updates global navigation
         status to for reward calculation.
@@ -392,20 +392,20 @@ class RLBehaviorAgent(BehaviorAgent):
         self.ttc = 1000
 
         # Basic parameters for path generation
-        rl_action_dt = self.rl_step['rl_action_time_step']  # time step, float, in s
+        rl_action_dt = self.rl_step['rl_action_time_step']          # time step, float, in s
         ego_speed = np.array([self.vehicle.get_velocity().x,
-                              self.vehicle.get_velocity().y])  # speed vector, 2D np.array
+                              self.vehicle.get_velocity().y])       # speed vector, 2D np.array
         ego_acc = np.array([self.vehicle.get_acceleration().x,
-                            self.vehicle.get_acceleration().y])  # acceleration vector, 2D np.array
-        target_speed_vec = np.array(self.rl_step['target_speed'])  # target speed,2D np.array
-        target_acc = [0, 0]  # target acceleration vector, 2D
-        # np.array, set 0 as default
+                            self.vehicle.get_acceleration().y])     # acceleration vector, 2D np.array
+        target_speed_vec = np.array(self.rl_step['target_speed'])   # target speed,2D np.array
+        target_acc = np.array([0, 0])                               # target acceleration vector, 2D np.array
+
         # 1. generate trajectory
-        xxs, yys, vxx, vyy, yaw_deg = self._rl_planner.generate_path(rl_action_dt,  # plan_time
-                                                                     ego_speed,  # v_init
-                                                                     ego_acc,  # a_init
+        xxs, yys, vxx, vyy, yaw_deg = self._rl_planner.generate_path(rl_action_dt,      # plan_time
+                                                                     ego_speed,         # v_init
+                                                                     ego_acc,           # a_init
                                                                      target_speed_vec,  # v_end
-                                                                     target_acc)  # a_end
+                                                                     target_acc)        # a_end
         # 2. Collision check
         is_hazard = False
         if collision_detector_enabled:

@@ -200,8 +200,8 @@ class VehicleManager(object):
         self.map_manager.run_step()
 
         if 'rl' in self.application:
-            # udpate agent info
-            self.agent.run_step()
+            # update agent info
+            self.agent.run_rl_reward_step()
             target_speed, target_pos = self.agent.run_rl_action_step()
         else:
             target_speed, target_pos = self.agent.run_step()

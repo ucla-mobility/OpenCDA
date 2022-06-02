@@ -49,10 +49,13 @@ def main():
     opt = arg_parse()
     print("OpenCDA Version: %s" % __version__)
 
-    try:
-        testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
-    except ModuleNotFoundError:
-        sys.exit("ERROR: %s.py not found under opencda/scenario_testing" % opt.test_scenario)
+    testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
+
+    # try:
+    #     testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
+    # except ModuleNotFoundError as error:
+    #     raise error
+
 
     config_yaml = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'opencda/scenario_testing/config_yaml/%s.yaml' % opt.test_scenario)

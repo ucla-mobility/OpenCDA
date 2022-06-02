@@ -48,9 +48,15 @@ class RLLocalPlanner(LocalPlanner):
             List of waypoints in the actual plan.
 
         """
-        # update route
+        # trace element in plan
         for elem in current_plan:
+            # update route
             self.waypoints_queue.append(elem)
+            # update waypoint buffer
+            if not self._waypoint_buffer:
+                self._waypoint_buffer.append(elem)
+                print('The current buffer: ')
+                print(self._waypoint_buffer)
 
     def generate_path(self, plan_time, v_init, a_init, v_end, a_end):
         """
@@ -85,12 +91,12 @@ class RLLocalPlanner(LocalPlanner):
         """
 
         # 1. Find X and Y list for trajectory generation
-        # used to save all key spline node
+        # used to save all key spline node and init start index
         x = []
         y = []
 
         # pop out the waypoints that may damage driving performance
-        self.buffer_filter()
+        # self.buffer_filter()
 
         # [m] distance of each interpolated points
         ds = 0.1
@@ -103,7 +109,14 @@ class RLLocalPlanner(LocalPlanner):
         current_wpt = self._map.get_waypoint(current_location).next(1)[0]
         current_wpt_loc = current_wpt.transform.location
 
-        # we consider history waypoint to generate trajectory
+        print('before read future wpt, the waypoint buffer is: ')
+        print(self._waypoint_buffer)
+        # retrieve the future and past waypoint
+        future_wpt = self._waypoint_buffer[-1][0]
+        previous_wpt = self._history_buffer[0][0] if len(
+            self._history_buffer) > 0 else current_wpt
+
+        # used to filter the waypoints that are too close
         index = 0
         for i in range(len(self._history_buffer)):
             prev_wpt = self._history_buffer[i][0].transform.location
@@ -114,33 +127,6 @@ class RLLocalPlanner(LocalPlanner):
                 x.append(prev_wpt.x)
                 y.append(prev_wpt.y)
                 index += 1
-
-                _, angle = cal_distance_angle(
-                    current_wpt_loc, current_location, current_yaw)
-                # we prefer to use waypoint as the current position for path
-                # generation if the waypoint is in front of us.
-                # This is because waypoint always sits in the center
-                if angle < 90:
-                    x.append(current_wpt_loc.x)
-                    y.append(current_wpt_loc.y)
-                else:
-                    x.append(current_location.x)
-                    y.append(current_location.y)
-
-        # used to filter the waypoints that are too close
-        index = max(0, index - 1) if self.potential_curved_road else index
-        prev_x = x[index]
-        prev_y = y[index]
-        for i in range(len(self._waypoint_buffer)):
-            cur_x = self._waypoint_buffer[i][0].transform.location.x
-            cur_y = self._waypoint_buffer[i][0].transform.location.y
-            if abs(prev_x - cur_x) < 0.5 and abs(prev_y - cur_y) < 0.5:
-                continue
-            prev_x = cur_x
-            prev_y = cur_y
-
-            x.append(cur_x)
-            y.append(cur_y)
 
         # 2. generate trajectory using MistGen
         # note: An naive way that updates waypnt queue each step.
@@ -162,6 +148,22 @@ class RLLocalPlanner(LocalPlanner):
         yaw_rad, yaw_deg = myMistGen.calc_yaw(vxx, vyy)
 
         return xxs, yys, vxx, vyy, yaw_deg
+
+    # def pop_buffer(self, vehicle_transform):
+    #     """
+    #     Remove waypoints the ego vehicle has achieved.
+    #
+    #     Parameters
+    #     ----------
+    #     vehicle_transform : carla.position
+    #         The position of vehicle.
+    #     """
+    #     super(RLLocalPlanner, self).pop_buffer(vehicle_transform)
+    #
+    #     # add condition that controls one-step waypoint (i.e., len(waypoint buffer) = 1)
+    #     if len(self._history_buffer) == 0:
+    #         current_wpt = self._map.get_waypoint(vehicle_transform.location)
+    #         self._history_buffer.append(current_wpt)
 
     def run_step(
             self,

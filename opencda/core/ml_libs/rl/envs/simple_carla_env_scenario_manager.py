@@ -500,13 +500,12 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
 
         if one_step_target_waypoint is not None:
-            # apply action
-
             # apply RL action (update target location)
             self._hero_vehicle_manager.agent.apply_rl_action(ego_vehicle_loc,
                                                              one_step_target_waypoint,
                                                              target_speed,
                                                              self._rl_action_dt)
+            # run both reward step and action step
             control = self._hero_vehicle_manager.run_step()
             # apply ed and control
             self._hero_vehicle.apply_control(control)
@@ -527,7 +526,8 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # self._hero_vehicle_manager.run_step()
         for i, single_cav in enumerate(self._single_cav_list):
             single_cav.update_info()
-            single_cav.run_step()
+            # only run reward step
+            single_cav.agent.run_rl_reward_step()
         # 2.scenario run step
         self._rl_scenario_manager.run_step()
         # 3. update RSU
