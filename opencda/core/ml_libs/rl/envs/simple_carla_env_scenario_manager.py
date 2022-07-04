@@ -110,7 +110,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         # Scenario Configs
         # rl related configurations
-        self._rl_action_dt = self._cfg['rl_config']['action_delta_t']
+        self._rl_action_dt = self._cfg['rl_config']['action_delta_t']   # temporary value == 1
         self._carla_town_name = None
         self._start_location = None
         self._end_location = None
@@ -205,23 +205,39 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             return waypoint.next(dist)[0] if waypoint.next(dist) else None
 
         next_waypoint_mid = get_next(ego_waypoint, ds)
-        if next_waypoint_mid:
-            next_waypoint_left = next_waypoint_mid.get_left_lane() if next_waypoint_mid.get_left_lane() else None
-            next_waypoint_right = next_waypoint_mid.get_right_lane() if next_waypoint_mid.get_right_lane() else None
-        else:
-            next_waypoint_left = None
-            next_waypoint_right = None
+        # debug visualization
+        # start
+        self._cav_world.debug.draw_string(ego_waypoint.transform.location, 'x',
+                                          color=carla.Color(r=0, g=255, b=255),
+                                          life_time=1.0,
+                                          persistent_lines=True)
+        # target
+        self._cav_world.debug.draw_string(next_waypoint_mid.transform.location, 'x',
+                                          color=carla.Color(r=0, g=255, b=0),
+                                          life_time=1.0,
+                                          persistent_lines=True)
+        # testing draw point at next watpoint
+        # todo: testing mid only
+        return next_waypoint_mid
 
-        # convert np_action (action_shape = 9) to waypoint
-        candidate_waypoints = np.array([
-            [next_waypoint_left, get_next(next_waypoint_left, ds), get_next(next_waypoint_left, 2*ds)],
-            [next_waypoint_mid, get_next(next_waypoint_mid, ds), get_next(next_waypoint_mid, 2*ds)],
-            [next_waypoint_right, get_next(next_waypoint_right, ds), get_next(next_waypoint_right, 2*ds)] ])
-
-        target_waypoint = candidate_waypoints[np_action // 3, np_action % 3]
-
-        return target_waypoint
-
+        # todo: revert whole function after testing ------------------------------------------
+        # if next_waypoint_mid:
+        #     next_waypoint_left = next_waypoint_mid.get_left_lane() if next_waypoint_mid.get_left_lane() else None
+        #     next_waypoint_right = next_waypoint_mid.get_right_lane() if next_waypoint_mid.get_right_lane() else None
+        # else:
+        #     next_waypoint_left = None
+        #     next_waypoint_right = None
+        #
+        # # convert np_action (action_shape = 9) to waypoint
+        # candidate_waypoints = np.array([
+        #     [next_waypoint_left, get_next(next_waypoint_left, ds), get_next(next_waypoint_left, 2*ds)],
+        #     [next_waypoint_mid, get_next(next_waypoint_mid, ds), get_next(next_waypoint_mid, 2*ds)],
+        #     [next_waypoint_right, get_next(next_waypoint_right, ds), get_next(next_waypoint_right, 2*ds)] ])
+        #
+        # target_waypoint = candidate_waypoints[np_action // 3, np_action % 3]
+        #
+        # return target_waypoint
+        # todo: revert whole function after testing ------------------------------------------
     # print step
     def print_step(self, info):
         """
@@ -237,17 +253,23 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
             done_state = "Wrong Direction"
         elif info['off_road']:
             done_state = "Off road"
+        elif info['off_route']:
+            done_state = "Off route"
         elif info['stuck']:
             done_state = "Stuck"
         elif info['timeout']:
             done_state = "Timeout"
+        elif info['ran_light']:
+            done_state = "ran red light"
         else:
             done_state = 'None'
         print(
-            "[ENV] {} done with tick: {}, state: {}, reward: {}".format(
+            "[ENV] {} done with tick: {}, finish state: {}, episodic reward: {}".format(
                 repr(self), done_tick, done_state, done_reward
             )
         )
+
+        print('Add this line for debug...')
 
     def get_observations(self):
         '''
@@ -383,8 +405,6 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         # warmup simulation for 10 ticks
         for _ in range(10):
             # 1. vehicle manager run step
-            # todo: change this to dedicated agent step
-            # self._hero_vehicle_manager.run_step()
             for i, single_cav in enumerate(self._single_cav_list):
                 single_cav.update_info()
                 # control = single_cav.run_step()
@@ -522,8 +542,7 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         # Run one simulation step for all interfaces
         # 1. vehicle manager update run step
-        # todo: change this to dedicated agent step
-        # self._hero_vehicle_manager.run_step()
+
         for i, single_cav in enumerate(self._single_cav_list):
             single_cav.update_info()
             # only run reward step
@@ -551,7 +570,11 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
 
         location = self._simulator_databuffer['state']['location'][:2]
         target = self._simulator_databuffer['navigation']['target']
-        self._off_route = np.linalg.norm(location - target) >= self._off_route_distance
+
+        # add calculation step for debug purpose
+        veh_target_dist = np.linalg.norm(location - target)
+
+        self._off_route = veh_target_dist >= self._off_route_distance
 
         self._reward, reward_info = self.compute_reward(one_step_target_waypoint)
         info = self._rl_scenario_manager.get_information()
@@ -671,20 +694,20 @@ class CarlaRLEnv(gym.Env, utils.EzPickle):
         : bool
         Whether the episode has failed.
         """
-        if self._stuck_is_failure and self._stuck:
-            return True
-        if self._col_is_failure and self._collided:
-            return True
-        if self._ran_light_is_failure and self._ran_light:
-            return True
-        if self._off_road_is_failure and self._off_road:
-            return True
-        if self._wrong_direction_is_failure and self._wrong_direction:
-            return True
-        if self._off_route_is_failure and self._off_route:
-            return True
-        if self._tick > self._timeout:
-            return True
+        # if self._stuck_is_failure and self._stuck:
+        #     return True
+        # if self._col_is_failure and self._collided:
+        #     return True
+        # if self._ran_light_is_failure and self._ran_light:
+        #     return True
+        # if self._off_road_is_failure and self._off_road:
+        #     return True
+        # if self._wrong_direction_is_failure and self._wrong_direction:
+        #     return True
+        # if self._off_route_is_failure and self._off_route:
+        #     return True
+        # if self._tick > self._timeout:
+        #     return True
 
         return False
 

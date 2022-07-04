@@ -253,7 +253,7 @@ class RLScenarioManager(ScenarioManager):
 
     def clean_up(self) -> None:
         """
-        Destroy all actors and sensors in current world. Clear all messages saved in simulator and data provider.
+        Destroy all actors and sensors in current world. Clear all messages saved in simulator.
         This will NOT destroy the Carla client, so simulator can use same carla client to start next episode.
         """
         # destroy all actors (vehicles, sensors, BEVs)

@@ -157,8 +157,8 @@ class RLBehaviorAgent(BehaviorAgent):
         """
         target_location = target_waypoint.transform.location
         target_yaw = target_waypoint.transform.rotation.yaw
-        target_speed_x = target_speed * math.cos(target_yaw)
-        target_speed_y = target_speed * math.sin(target_yaw)
+        target_speed_x = target_speed * math.cos(math.radians(target_yaw))
+        target_speed_y = target_speed * math.sin(math.radians(target_yaw))
         self.rl_step['target_loc_yaw'] = target_yaw
         self.rl_step['start_loc'] = start_location
         self.rl_step['end_location'] = target_location

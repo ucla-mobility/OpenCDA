@@ -39,8 +39,9 @@ class RLLocalPlanner(LocalPlanner):
 
     def set_current_plan(self, current_plan):
         """
-        Sets new route plan. For RL, the new route plan is based on the new target
-        waypoint that selected by RL agent.
+        Sets new route plan. For RL, it is necessary to clean the previous buffer as
+        the new route plan is based on the new action (i.e., target waypoint) that
+        was selected by RL agent.
 
         Parameters
         ----------
@@ -48,15 +49,26 @@ class RLLocalPlanner(LocalPlanner):
             List of waypoints in the actual plan.
 
         """
+        # reset buffer and queue
+        self.waypoints_queue.clear()
+        self._waypoint_buffer.clear()
+
         # trace element in plan
         for elem in current_plan:
             # update route
             self.waypoints_queue.append(elem)
-            # update waypoint buffer
-            if not self._waypoint_buffer:
-                self._waypoint_buffer.append(elem)
-                print('The current buffer: ')
-                print(self._waypoint_buffer)
+            self._waypoint_buffer.append(elem)
+
+        # update waypoint buffer
+
+        # 1. below is opencda method, continous for stability
+        # for _ in range(self._buffer_size):
+        #     if self.waypoints_queue:
+        #         self._waypoint_buffer.append(
+        #             self.waypoints_queue.popleft())
+        #
+        # for RL, update waypoint buffer directly from elem,
+        #       this way buffer will not include old points, less stable
 
     def generate_path(self, plan_time, v_init, a_init, v_end, a_end):
         """
@@ -107,63 +119,50 @@ class RLLocalPlanner(LocalPlanner):
 
         # retrieve the corresponding waypoint of the current location
         current_wpt = self._map.get_waypoint(current_location).next(1)[0]
-        current_wpt_loc = current_wpt.transform.location
+        end_wpt = self._waypoint_buffer[-1][0]
 
-        print('before read future wpt, the waypoint buffer is: ')
-        print(self._waypoint_buffer)
-        # retrieve the future and past waypoint
-        future_wpt = self._waypoint_buffer[-1][0]
-        previous_wpt = self._history_buffer[0][0] if len(
-            self._history_buffer) > 0 else current_wpt
-
-        # used to filter the waypoints that are too close
-        index = 0
-        for i in range(len(self._history_buffer)):
-            prev_wpt = self._history_buffer[i][0].transform.location
-            _, angle = cal_distance_angle(
-                prev_wpt, current_location, current_yaw)
-            # make sure the history waypoint is already passed by
-            if angle > 90 and not self.potential_curved_road:
-                x.append(prev_wpt.x)
-                y.append(prev_wpt.y)
-                index += 1
+        # retrieve past waypoint
+        previous_wpt = self._history_buffer[0][0] \
+            if len(self._history_buffer) > 0 \
+            else current_wpt
+        prev_x = previous_wpt.transform.location.x
+        prev_y = previous_wpt.transform.location.y
+        # append previous position to x and y
+        x.append(prev_x)
+        y.append(prev_y)
+        # append waypoints points
+        for i in range(len(self._waypoint_buffer)):
+            cur_x = self._waypoint_buffer[i][0].transform.location.x
+            cur_y = self._waypoint_buffer[i][0].transform.location.y
+            # filter the waypoints that are too close
+            if abs(prev_x - cur_x) < 0.5 and abs(prev_y - cur_y) < 0.5:
+                continue
+            prev_x = cur_x
+            prev_y = cur_y
+            # populate x and y
+            x.append(cur_x)
+            y.append(cur_y)
 
         # 2. generate trajectory using MistGen
-        # note: An naive way that updates waypnt queue each step.
-        # x = [waypoint.location.x for waypoint in self.waypoints_queue]
-        # y = [waypoint.location.y for waypoint in self.waypoints_queue]
-
-        # Use previous waypoint history to generate a more smooth trajectory
+        # generate waypoint array based on x,y
         waypoint_ori = np.array([x, y])
 
-        myMistGen = mist_generator()
+        # debug stream
+        print('Debug @ rl_planner, mistgen: ...')
+        print('The current init points are: ' + str(waypoint_ori))
+        print('--------------------------------------------------')
+
+        my_mist_gen = mist_generator()
         # generated trajectory (x-coordinate, y-coordinate, and timestamp)
-        xxs, yys, tts = myMistGen.mist_2d_gen(waypoint_ori, v_init, a_init,
+        xxs, yys, tts = my_mist_gen.mist_2d_gen(waypoint_ori, v_init, a_init,
                                               v_end, a_end, plan_time)
         # generated velocity, acceleration, and jerk trajectory
         # note: vaj_xy = [vxx,axx,jxx,vyy,ayy,jyy]
-        vxx, axx, jxx, vyy, ayy, jyy = myMistGen.mist_2d_vaj_gen(xxs, yys, tts)
-
+        vxx, axx, jxx, vyy, ayy, jyy = my_mist_gen.mist_2d_vaj_gen(xxs, yys, tts)
         # find yaw angle
-        yaw_rad, yaw_deg = myMistGen.calc_yaw(vxx, vyy)
+        yaw_rad, yaw_deg = my_mist_gen.calc_yaw(vxx, vyy)
 
         return xxs, yys, vxx, vyy, yaw_deg
-
-    # def pop_buffer(self, vehicle_transform):
-    #     """
-    #     Remove waypoints the ego vehicle has achieved.
-    #
-    #     Parameters
-    #     ----------
-    #     vehicle_transform : carla.position
-    #         The position of vehicle.
-    #     """
-    #     super(RLLocalPlanner, self).pop_buffer(vehicle_transform)
-    #
-    #     # add condition that controls one-step waypoint (i.e., len(waypoint buffer) = 1)
-    #     if len(self._history_buffer) == 0:
-    #         current_wpt = self._map.get_waypoint(vehicle_transform.location)
-    #         self._history_buffer.append(current_wpt)
 
     def run_step(
             self,

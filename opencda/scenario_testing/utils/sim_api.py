@@ -257,7 +257,6 @@ class ScenarioManager:
 
             # if the spawn position is a single scalar, we need to use map
             # helper to transfer to spawn transform
-            # todo: rearrange this config as part of rl config
             if 'spawn_special' not in cav_config:
                 spawn_transform = carla.Transform(
                     carla.Location(
@@ -283,6 +282,16 @@ class ScenarioManager:
             print('The current spawn transform is: ' + str(spawn_transform))
             vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
             print('The spawned vehicle ID is : ' + str(vehicle.id))
+
+            # spawn camera for debug
+            spectator = self.world.get_spectator()
+            spectator.set_transform(carla.Transform(
+                spawn_transform.location +
+                carla.Location(
+                    z=70),
+                carla.Rotation(
+                    pitch=-
+                    90)))
 
             # create vehicle manager for each cav
             vehicle_manager = VehicleManager(

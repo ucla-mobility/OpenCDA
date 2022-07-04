@@ -100,25 +100,25 @@ vehicle_base: &vehicle_base
     overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
     local_planner: &base_local_planner # trajectory planning related
-      buffer_size: 12 # waypoint buffer size
+      buffer_size: 4 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
       waypoint_update_freq: 9 # used to control waypoint updating frequency
       trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
       min_dist: 5 # used to pop out the waypoints too close to current location
-      debug: false # whether to draw future/history waypoints
-      debug_trajectory: false # whether to draw the trajectory points and path
+      debug: true # whether to draw future/history waypoints
+      debug_trajectory: true # whether to draw the trajectory points and path
     rl_planner: 
       type: 'behavior'
       resolution: 1
       waypoint_number: 32
       min_rl_plan_dist: 5
-      buffer_size: 12 # waypoint buffer size
+      buffer_size: 4 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
       waypoint_update_freq: 9 # used to control waypoint updating frequency
       trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
       min_dist: 5 # used to pop out the waypoints too close to current location
-      debug: false # whether to draw future/history waypoints
-      debug_trajectory: false # whether to draw the trajectory points and path
+      debug: true # whether to draw future/history waypoints
+      debug_trajectory: true # whether to draw the trajectory points and path
   controller: &base_controller
     type: pid_controller # this has to be exactly the same name as the controller py file
     args:
@@ -170,7 +170,7 @@ scenario:
 
   single_cav_list:
     - <<: *vehicle_base
-      spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
+      spawn_position: [8.01842, 192.31, 0.3, 0, -90, 0]  # middle lane
       destination: [67.12, 150.2, 1.0]
       v2x:
         <<: *base_v2x
@@ -197,7 +197,9 @@ scenario:
 # rl_configs
 rl_config: 
   exp_name: 'dqn9_bev32_buf2e5_lr1e4_bs128_ns3000_update4_train_ft'
-  action_delta_t: 1
+  action_delta_t: 15   # 1 second will result in short target (1 meters away)
+                       # 10 second will lead to "route traced" return only current position
+                       # 15s is the threshold of generating enough waypoints in route
   # rl env config 
   env:
     # whether enable v2v percpetion
