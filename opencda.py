@@ -27,6 +27,16 @@ def arg_parse():
                         action='store_true',
                         help='whether ml/dl framework such as sklearn/pytorch is needed in the testing. '
                              'Set it to true only when you have installed the pytorch/sklearn package.')
+
+    parser.add_argument('-rl', "--rl_func", required=False, type=str,
+                        help='whether RL framework is needed in the testing. '
+                             'Set it to true only when the pytorch and DI-engine is installed.'
+                             'Please specifies one of the following RL scenarios [train, eval, test].'
+                             'The pre-trained model directory is configured by "--rl_model_dir". ')
+
+    parser.add_argument("--rl_model_dir", required=False, type=str,
+                        help='The pre-trained RL model directory.')
+
     parser.add_argument('-v', "--version", type=str, default='0.9.11',
                         help='Specify the CARLA simulator version, default'
                              'is 0.9.11, 0.9.12 is also supported.')
@@ -39,10 +49,13 @@ def main():
     opt = arg_parse()
     print("OpenCDA Version: %s" % __version__)
 
-    try:
-        testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
-    except ModuleNotFoundError:
-        sys.exit("ERROR: %s.py not found under opencda/scenario_testing" % opt.test_scenario)
+    testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
+
+    # try:
+    #     testing_scenario = importlib.import_module("opencda.scenario_testing.%s" % opt.test_scenario)
+    # except ModuleNotFoundError as error:
+    #     raise error
+
 
     config_yaml = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'opencda/scenario_testing/config_yaml/%s.yaml' % opt.test_scenario)

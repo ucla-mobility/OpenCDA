@@ -135,8 +135,8 @@ def cal_distance_angle(target_location, current_location, orientation):
     current_location : carla.Location
         The current location .
 
-    orientation : carla.Rotation
-        Orientation of the reference object.
+    orientation : float
+        Orientation (i.e. yaw angle, "transform.rotation.yaw") of the reference object.
 
     Returns
     -------

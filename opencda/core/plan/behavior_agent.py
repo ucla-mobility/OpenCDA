@@ -743,7 +743,7 @@ class BehaviorAgent(object):
             collision_detector_enabled=True,
             lane_change_allowed=True):
         """
-        Execute one step of navigation
+        Execute one step of navigation.
 
         Parameters
         __________
@@ -888,5 +888,4 @@ class BehaviorAgent(object):
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
         return target_speed, target_loc
-
 

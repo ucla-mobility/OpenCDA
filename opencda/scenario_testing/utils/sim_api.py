@@ -131,7 +131,7 @@ class ScenarioManager:
         CAV World that contains the information of all CAVs.
 
     carla_map : carla.map
-        Car;a HD Map.
+        Carla HD Map.
 
     """
 
@@ -162,6 +162,7 @@ class ScenarioManager:
                 self.world = self.client.load_world(town)
             except RuntimeError:
                 print(
+                    f"Incorrect port CARLA server port number ! Or "
                     f"{bcolors.FAIL} %s is not found in your CARLA repo! "
                     f"Please download all town maps to your CARLA "
                     f"repo!{bcolors.ENDC}" % town)
@@ -271,7 +272,26 @@ class ScenarioManager:
                                              *cav_config['spawn_special'])
 
             cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+
+            # set role_name in blue print for RL module
+            # note: currently only consider one RL agent, set to be the first CAV on the list
+            if i == 0:
+                cav_vehicle_bp.set_attribute('role_name', 'hero')
+
+            #  spawn actor
+            print('The current spawn transform is: ' + str(spawn_transform))
             vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
+            print('The spawned vehicle ID is : ' + str(vehicle.id))
+
+            # spawn camera for debug
+            spectator = self.world.get_spectator()
+            spectator.set_transform(carla.Transform(
+                spawn_transform.location +
+                carla.Location(
+                    z=70),
+                carla.Rotation(
+                    pitch=-
+                    90)))
 
             # create vehicle manager for each cav
             vehicle_manager = VehicleManager(
