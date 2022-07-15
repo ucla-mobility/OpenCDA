@@ -2122,3 +2122,75 @@ DQNRLModel(
     )
   )
 )
+[2022-07-15 13:45:42,701][base_learner.py][line: 333][    INFO] [RANK0]: DI-engine DRL Policy
+DQNRLModel(
+  (_encoder): BEVSpeedConvEncoder(
+    (_relu): ReLU()
+    (_model): Sequential(
+      (0): Conv2d(5, 64, kernel_size=(3, 3), stride=(2, 2))
+      (1): ReLU()
+      (2): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2))
+      (3): ReLU()
+      (4): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2))
+      (5): ReLU()
+      (6): Flatten(start_dim=1, end_dim=-1)
+    )
+    (_mid): Linear(in_features=2304, out_features=256, bias=True)
+  )
+  (_head): DuelingHead(
+    (A): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=512, out_features=512, bias=True)
+        (1): ReLU()
+      )
+      (1): Sequential(
+        (0): Linear(in_features=512, out_features=9, bias=True)
+      )
+    )
+    (V): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=512, out_features=512, bias=True)
+        (1): ReLU()
+      )
+      (1): Sequential(
+        (0): Linear(in_features=512, out_features=1, bias=True)
+      )
+    )
+  )
+)
+[2022-07-15 13:46:18,650][base_learner.py][line: 333][    INFO] [RANK0]: DI-engine DRL Policy
+DQNRLModel(
+  (_encoder): BEVSpeedConvEncoder(
+    (_relu): ReLU()
+    (_model): Sequential(
+      (0): Conv2d(5, 64, kernel_size=(3, 3), stride=(2, 2))
+      (1): ReLU()
+      (2): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2))
+      (3): ReLU()
+      (4): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2))
+      (5): ReLU()
+      (6): Flatten(start_dim=1, end_dim=-1)
+    )
+    (_mid): Linear(in_features=2304, out_features=256, bias=True)
+  )
+  (_head): DuelingHead(
+    (A): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=512, out_features=512, bias=True)
+        (1): ReLU()
+      )
+      (1): Sequential(
+        (0): Linear(in_features=512, out_features=9, bias=True)
+      )
+    )
+    (V): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=512, out_features=512, bias=True)
+        (1): ReLU()
+      )
+      (1): Sequential(
+        (0): Linear(in_features=512, out_features=1, bias=True)
+      )
+    )
+  )
+)

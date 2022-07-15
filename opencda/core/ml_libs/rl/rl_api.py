@@ -69,13 +69,11 @@ def get_rl_policy(spec):
     return policy_cls, model_cls
 
 
-def get_rl_cfg(opt, default_train_config):
+def get_rl_cfg(default_rl_config):
     """
     Get the structured configurations for DI-engine's environment manager.
     Parameters
     ----------
-    opt:str
-        The terminal argument passed in from opencda.py.
     default_train_config:dict
         The Default configuration file.
 
@@ -85,8 +83,8 @@ def get_rl_cfg(opt, default_train_config):
         The structured configuration file, matches the format requirement of environment manager.
     """
     # read config
-    default_train_config.exp_name = 'simple-rl'
-    policy_name = default_train_config.policy.type
+    default_rl_config.exp_name = 'simple-rl'
+    policy_name = default_rl_config.policy.type
     opt_policy, _ = get_rl_policy(policy_name)
     # compile cfg
     cfg = compile_config(
