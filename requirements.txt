@@ -13,3 +13,5 @@ scipy==1.6.3
 seaborn
 lxml
 shapely
+mistgen
+terminaltables

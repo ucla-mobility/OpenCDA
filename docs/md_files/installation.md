@@ -140,3 +140,8 @@ Finally, add the following path to your ~/.bashrc:
 ```yaml
 export SUMO_HOME=/usr/share/sumo
 ```
+### 5. Install RL environment (Optional)
+RL environment is only required for the users who want to try our RL implementation.
+```sh
+pip install DI-engine
+```

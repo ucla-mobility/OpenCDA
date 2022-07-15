@@ -7,22 +7,15 @@ please use cosim_api.py.
 # Author: Xu Han
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
-import os
 import time
-import math
-import copy
-from abc import ABC, abstractmethod
-from collections import defaultdict
 from typing import Any, Dict, Optional, Tuple
 
 import gym
 import carla
-import torch
 import numpy as np
 from gym import spaces, utils
 from easydict import EasyDict
 
-from ding.utils.default_helper import deep_merge_dicts
 from ding.envs.env.base_env import BaseEnvTimestep, BaseEnvInfo
 from ding.envs.common.env_element import EnvElementInfo
 from ding.torch_utils.data_helper import to_ndarray

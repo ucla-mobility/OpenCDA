@@ -5,12 +5,6 @@ with V2V lidar, RSU and onboard sensor capability
 """
 # Author: Xu Han 
 # License: TDG-Attribution-NonCommercial-NoDistrib
-import os
-import argparse
-import copy
-
-import carla
-import numpy as np
 import torch
 from functools import partial
 from easydict import EasyDict
@@ -22,15 +16,11 @@ from ding.worker import BaseLearner, SampleSerialCollector, AdvancedReplayBuffer
 from ding.utils import set_pkg_seed
 from ding.rl_utils import get_epsilon_greedy_fn
 
-import opencda.scenario_testing.utils.sim_api as sim_api
-from opencda.core.common.cav_world import CavWorld
-from opencda.scenario_testing.evaluations.evaluate_manager import EvaluationManager
-from opencda.scenario_testing.utils.yaml_utils import load_yaml, save_yaml
+from opencda.scenario_testing.utils.yaml_utils import load_yaml
 from opencda.core.ml_libs.rl.envs.simple_carla_env_scenario_manager import CarlaRLEnv
 from opencda.core.ml_libs.rl.utils.others.tcp_helper import parse_carla_tcp
 from opencda.core.ml_libs.rl.rl_models import DQNRLModel, TD3RLModel
 from opencda.core.ml_libs.rl.utils.others.ding_utils import compile_config
-from opencda.core.ml_libs.rl.utils.others.ding_utils import read_ding_config
 from opencda.core.ml_libs.rl.eval.single_carla_evaluator import SingleCarlaEvaluator
 from opencda.core.ml_libs.rl.eval.carla_benchmark_evaluator import CarlaBenchmarkEvaluator
 
@@ -113,6 +103,7 @@ def get_rl_cfg(opt, default_train_config):
 def rl_train(opt, config_yaml, seed=0):
     """
     Start the training loop for RL agent.
+
     Parameters
     ----------
     opt:dict
@@ -121,12 +112,13 @@ def rl_train(opt, config_yaml, seed=0):
         The configuration file for the current scenario.
     seed:int
         The current random seed.
-
     """
     # read configs 
     scenario_params = load_yaml(config_yaml)
+    # convert rl config to easydict type
     default_train_config = EasyDict(scenario_params['rl_config'])
     rl_cfg = get_rl_cfg(opt, default_train_config)
+
     policy_type = default_train_config.policy.type
     # regulate server
     tcp_list = parse_carla_tcp(rl_cfg.server)
