@@ -21,6 +21,9 @@ The key features of OpenCDA are:
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) for more details.
 
 ## What's New
+### July 2022
+* Powered by OpenCDA, our paper [V2X-ViT: Vehicle-to-Everything Cooperative
+Perception with Vision Transformer](https://arxiv.org/pdf/2203.10638.pdf) has been accepted by **ECCV2022**! Check the codebase [v2x-vit](https://github.com/DerrickXuNu/v2x-vit) if interested.
 ### March 2022
 * HD Map manager is online! It currently supports generating rasterization map that includes road topology, traffic light info, and dynamic objects around each cav in real-time. This can be
 used for RL planning, HD Map learning, scene understanding, etc.

@@ -1,0 +1,95 @@
+{
+    "vehicle.audi.a2": {
+        "class": "car"
+    },
+    "vehicle.audi.tt": {
+        "class": "car"
+    },
+    "vehicle.micro.microlino": {
+        "class": "car"
+    },
+    "vehicle.bmw.grandtourer": {
+        "class": "car"
+    },
+    "vehicle.mercedes.sprinter": {
+        "class": "van"
+    },
+    "vehicle.dodge.charger_police": {
+        "class": "car"
+    },
+    "vehicle.jeep.wrangler_rubicon": {
+        "class": "suv"
+    },
+    "vehicle.mini.cooper_s": {
+        "class": "car"
+    },
+    "vehicle.nissan.micra": {
+        "class": "car"
+    },
+    "vehicle.mercedes.coupe_2020": {
+        "class": "car"
+    },
+    "vehicle.dodge.charger_police_2020": {
+        "class": "car"
+    },
+    "vehicle.mini.cooper_s_2021": {
+        "class": "car"
+    },
+    "vehicle.bh.crossbike": {
+        "class": "bicycle"
+    },
+    "vehicle.kawasaki.ninja": {
+        "class": "motorcycle"
+    },
+    "vehicle.lincoln.mkz_2020": {
+        "class": "car"
+    },
+    "vehicle.lincoln.mkz_2017": {
+        "class": "car"
+    },
+    "vehicle.tesla.cybertruck": {
+        "class": "truck"
+    },
+    "vehicle.mercedes.coupe": {
+        "class": "car"
+    },
+    "vehicle.seat.leon": {
+        "class": "car"
+    },
+    "vehicle.nissan.patrol_2021": {
+        "class": "suv"
+    },
+    "vehicle.yamaha.yzf": {
+        "class": "motorcycle"
+    },
+    "vehicle.volkswagen.t2": {
+        "class": "bus"
+    },
+    "vehicle.citroen.c3": {
+        "class": "car"
+    },
+    "vehicle.diamondback.century": {
+        "class": "bicycle"
+    },
+    "vehicle.tesla.model3": {
+        "class": "car"
+    },
+    "vehicle.carlamotors.firetruck": {
+        "class": "truck"
+    },
+    "vehicle.audi.etron": {
+        "class": "suv"
+    },
+    "vehicle.dodge.charger_2020": {
+        "class": "car"
+    },
+    "vehicle.gazelle.omafiets": {
+        "class": "bicycle"
+    },
+    "vehicle.harley-davidson.low_rider": {
+        "class": "motorcycle"
+    },
+    "vehicle.toyota.prius": {
+        "class": "car"
+    }
+}

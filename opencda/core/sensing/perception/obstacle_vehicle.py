@@ -44,7 +44,6 @@ class BoundingBox(object):
     """
 
     def __init__(self, corners):
-
         center_x = np.mean(corners[:, 0])
         center_y = np.mean(corners[:, 1])
         center_z = np.mean(corners[:, 2])
@@ -181,6 +180,10 @@ class ObstacleVehicle(object):
         self.transform = vehicle.get_transform()
         self.bounding_box = vehicle.bounding_box
         self.carla_id = vehicle.id
+        self.type_id = vehicle.type_id
+        self.color = vehicle.attributes["color"] \
+            if hasattr(vehicle, "attributes") \
+               and "color" in vehicle.attributes else None
 
         self.set_velocity(vehicle.get_velocity())
         # the vehicle controlled by sumo has speed 0 in carla,
@@ -226,5 +229,3 @@ class ObstacleVehicle(object):
                                                 max_bound=max_boundary_sensor)
         aabb.color = (1, 0, 0)
         self.o3d_bbx = aabb
-
-
