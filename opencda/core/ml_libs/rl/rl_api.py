@@ -5,6 +5,8 @@ with V2V lidar, RSU and onboard sensor capability
 """
 # Author: Xu Han 
 # License: TDG-Attribution-NonCommercial-NoDistrib
+import sys
+
 import torch
 from functools import partial
 from easydict import EasyDict
@@ -12,17 +14,21 @@ from tensorboardX import SummaryWriter
 
 from ding.envs import SyncSubprocessEnvManager, BaseEnvManager
 from ding.policy import DQNPolicy, TD3Policy
-from ding.worker import BaseLearner, SampleSerialCollector, AdvancedReplayBuffer, NaiveReplayBuffer
+from ding.worker import BaseLearner, SampleSerialCollector, \
+    AdvancedReplayBuffer, NaiveReplayBuffer
 from ding.utils import set_pkg_seed
 from ding.rl_utils import get_epsilon_greedy_fn
 
 from opencda.scenario_testing.utils.yaml_utils import load_yaml
-from opencda.core.ml_libs.rl.envs.simple_carla_env_scenario_manager import CarlaRLEnv
+from opencda.core.ml_libs.rl.envs.simple_carla_env_scenario_manager import \
+    CarlaRLEnv
 from opencda.core.ml_libs.rl.utils.others.tcp_helper import parse_carla_tcp
 from opencda.core.ml_libs.rl.rl_models import DQNRLModel, TD3RLModel
 from opencda.core.ml_libs.rl.utils.others.ding_utils import compile_config
-from opencda.core.ml_libs.rl.eval.single_carla_evaluator import SingleCarlaEvaluator
-from opencda.core.ml_libs.rl.eval.carla_benchmark_evaluator import CarlaBenchmarkEvaluator
+from opencda.core.ml_libs.rl.eval.single_carla_evaluator import \
+    SingleCarlaEvaluator
+from opencda.core.ml_libs.rl.eval.carla_benchmark_evaluator import \
+    CarlaBenchmarkEvaluator
 
 
 def init_carla_env(env_cfg, host, port, tm_port=None):
@@ -74,7 +80,7 @@ def get_rl_cfg(default_rl_config):
     Get the structured configurations for DI-engine's environment manager.
     Parameters
     ----------
-    default_train_config:dict
+    default_rl_config: dict
         The Default configuration file.
 
     Returns
@@ -88,7 +94,7 @@ def get_rl_cfg(default_rl_config):
     opt_policy, _ = get_rl_policy(policy_name)
     # compile cfg
     cfg = compile_config(
-        cfg=default_train_config,
+        cfg=default_rl_config,
         env_manager=SyncSubprocessEnvManager,
         policy=opt_policy,
         learner=BaseLearner,
@@ -111,28 +117,31 @@ def rl_train(opt, config_yaml, seed=0):
     seed:int
         The current random seed.
     """
-    # read configs 
+    # -----------Step1: Read key configurations ------------#
     scenario_params = load_yaml(config_yaml)
     # convert rl config to easydict type
     default_train_config = EasyDict(scenario_params['rl_config'])
-    rl_cfg = get_rl_cfg(opt, default_train_config)
-
+    rl_cfg = get_rl_cfg(default_train_config)
     policy_type = default_train_config.policy.type
     # regulate server
     tcp_list = parse_carla_tcp(rl_cfg.server)
-    collector_env_num, evaluator_env_num = rl_cfg.env.collector_env_num, rl_cfg.env.evaluator_env_num
+    collector_env_num, evaluator_env_num = rl_cfg.env.collector_env_num, \
+                                           rl_cfg.env.evaluator_env_num
     assert len(tcp_list) >= collector_env_num + evaluator_env_num, \
         "Carla server not enough! Need {} servers but only found {}.".format(
             collector_env_num + evaluator_env_num, len(tcp_list)
         )
 
-    # init env wrapper
+    # -----------Step2: initial the rl/carla env ------------#
     if policy_type == 'dqn':
         wrapped_env = init_carla_env
+    else:
+        sys.exit('Currently only dqn is supported.')
 
     # init rl environment with complete config_yaml
     collector_env = BaseEnvManager(
-        env_fn=[partial(wrapped_env, scenario_params, *tcp_list[i]) for i in range(collector_env_num)],
+        env_fn=[partial(wrapped_env, scenario_params, *tcp_list[i])
+                for i in range(collector_env_num)],
         cfg=rl_cfg.env.manager.collect,
     )
 
@@ -146,21 +155,31 @@ def rl_train(opt, config_yaml, seed=0):
     policy = policy_cls(rl_cfg.policy, model=model)
 
     # Switch to SummaryWriter to log training process.
-    tb_logger = SummaryWriter('./opencda/scenario_testing/rl_log/{}/'.format(rl_cfg.exp_name))
+    tb_logger = \
+        SummaryWriter('./opencda/scenario_testing/'
+                      'rl_log/{}/'.format(rl_cfg.exp_name))
 
     # initiate learner and collector
-    learner = BaseLearner(rl_cfg.policy.learn.learner, policy.learn_mode, tb_logger, exp_name=rl_cfg.exp_name)
-    collector = SampleSerialCollector(rl_cfg.policy.collect.collector, collector_env, policy.collect_mode, tb_logger,
+    learner = BaseLearner(rl_cfg.policy.learn.learner,
+                          policy.learn_mode,
+                          tb_logger,
+                          exp_name=rl_cfg.exp_name)
+    collector = SampleSerialCollector(rl_cfg.policy.collect.collector,
+                                      collector_env,
+                                      policy.collect_mode,
+                                      tb_logger,
                                       exp_name=rl_cfg.exp_name)
 
     print('Init leaner and collector!')
     # initiate replay buffer
-    replay_buffer = NaiveReplayBuffer(rl_cfg.policy.other.replay_buffer, tb_logger, exp_name=rl_cfg.exp_name)
+    replay_buffer = NaiveReplayBuffer(rl_cfg.policy.other.replay_buffer,
+                                      tb_logger, exp_name=rl_cfg.exp_name)
 
     # initiate epsilon greedy
     if policy_type == 'dqn':
         eps_cfg = rl_cfg.policy.other.eps
-        epsilon_greedy = get_epsilon_greedy_fn(eps_cfg.start, eps_cfg.end, eps_cfg.decay, eps_cfg.type)
+        epsilon_greedy = get_epsilon_greedy_fn(eps_cfg.start, eps_cfg.end,
+                                               eps_cfg.decay, eps_cfg.type)
 
     learner.call_hook('before_run')
 
@@ -168,12 +187,15 @@ def rl_train(opt, config_yaml, seed=0):
     if policy_type != 'ppo':
         if policy_type == 'dqn':
             eps = epsilon_greedy(collector.envstep)
-            new_data = collector.collect(n_sample=10000, train_iter=learner.train_iter, policy_kwargs={'eps': eps})
+            new_data = collector.collect(n_sample=10000,
+                                         train_iter=learner.train_iter,
+                                         policy_kwargs={'eps': eps})
             # print('---Current step is: ---')
             # print(new_data)
             # print('-----------------------')
         else:
-            new_data = collector.collect(n_sample=10000, train_iter=learner.train_iter)
+            new_data = collector.collect(n_sample=10000,
+                                         train_iter=learner.train_iter)
 
     replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
 
@@ -219,7 +241,8 @@ def rl_eval(opt, config_yaml, seed=0):
 
     # init carla env for evaluation
     eval_env = BaseEnvManager(
-        env_fn=[partial(wrapped_env, scenario_params, *tcp_list[i]) for i in range(collector_env_num)],
+        env_fn=[partial(wrapped_env, scenario_params, *tcp_list[i]) for i in
+                range(collector_env_num)],
         cfg=rl_cfg.env.manager.collect,
     )
     eval_env.seed(seed)
@@ -238,7 +261,8 @@ def rl_eval(opt, config_yaml, seed=0):
 
     # init evaluator
     # todo: check evaluator and rewrite with opencda
-    evaluator = CarlaBenchmarkEvaluator(rl_cfg.policy.eval.evaluator, eval_env, policy.eval_mode)
+    evaluator = CarlaBenchmarkEvaluator(rl_cfg.policy.eval.evaluator, eval_env,
+                                        policy.eval_mode)
     success_rate = evaluator.eval()
     evaluator.close()
 
@@ -287,6 +311,7 @@ def rl_test(opt, config_yaml, seed=0):
 
     # init evaluator
     # todo: check evaluator and rewrite with opencda
-    evaluator = SingleCarlaEvaluator(cfg.policy.eval.evaluator, eval_env, policy.eval_mode)
+    evaluator = SingleCarlaEvaluator(cfg.policy.eval.evaluator, eval_env,
+                                     policy.eval_mode)
     success_rate = evaluator.eval()
     evaluator.close()
