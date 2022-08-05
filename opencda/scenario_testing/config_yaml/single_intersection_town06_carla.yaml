@@ -4,7 +4,16 @@ description: |-
   Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
            testing in high speed in the customized 2lanefree simple version.
 
-
+# define carla basic config
+basic_config:
+  Town: Town06 # None or Town01,Town02,Town03,Town04
+  xodr_path: None
+  log_name: single_intersection_town06_carla.log
+  script_name: single_intersection_town06_carla
+  type: single # single or platooning
+  spectator_config:
+    z: 60
+    pitch: 90
 # define carla simulation setting
 world:
   sync_mode: true

@@ -5,7 +5,15 @@ description: |-
            at the customized 2lanefree complete version. You need to inject the complete map package and open
            it in the UE4 Editor first.
 
-
+basic_config:
+  Town: None # None or Town01,Town02,Town03,Town04
+  xodr_path: ../assets/2lane_freeway_simplified/2lane_freeway_simplified.xodr
+  log_name: platoon_joining_2lanefreecomplete_carla.log
+  script_name: platoon_joining_2lanefreecomplete_carla
+  type: platooning # single or platooning
+  spectator_config:
+    z: 100
+    pitch: 90
 # define carla simulation setting
 world:
   sync_mode: true

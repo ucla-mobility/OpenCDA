@@ -10,6 +10,7 @@ basic_config:
   xodr_path: ../assets/2lane_freeway_simplified/2lane_freeway_simplified.xodr
   log_name: single_2lanefree_carla.log
   script_name: single_2lanefree_carla
+  type: single # single or platooning
   spectator_config:
     z: 60
     pitch: 90
