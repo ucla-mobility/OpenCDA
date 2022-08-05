@@ -34,7 +34,7 @@ def run_scenario(opt, config_yaml):
 
         if opt.record:
             scenario_manager.client. \
-                start_recorder("single_town06_carla.log", True)
+                start_recorder("platoon_joining_2lanefreecomplete_carla.log", True)
 
         # create platoon members
         platoon_list = scenario_manager.create_platoon_manager()

@@ -39,7 +39,7 @@ def run_scenario(opt, config_yaml):
         # create evaluation manager
         eval_manager = \
             EvaluationManager(scenario_manager.cav_world,
-                              script_name='single_2lanefree_carla',
+                              script_name='single_town06_carla',
                               current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
