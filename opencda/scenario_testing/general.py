@@ -62,6 +62,13 @@ def run_scenario(opt, config_yaml):
                 scenario_manager.create_platoon_manager(
                     map_helper=map_api.spawn_helper_2lanefree,
                     data_dump=False)
+
+            # create single cavs
+            single_cav_list = \
+                scenario_manager.create_vehicle_manager(['platooning'],
+                                                        map_api.
+                                                        spawn_helper_2lanefree)
+
             spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle
 
         # create background traffic in carla
@@ -118,8 +125,9 @@ def run_scenario(opt, config_yaml):
         if basic_config['type'] == 'platooning':
             for platoon in platoon_list:
                 platoon.destroy()
-        for v in single_cav_list:
-            v.destroy()
+        for cav in single_cav_list:
+            cav.destroy()
         for v in bg_veh_list:
             v.destroy()
+
 
