@@ -3,6 +3,16 @@ description: |-
   Author: Runsheng Xu <rxx3386@ucla.edu>
   Content: This is the scenario testing configuration file for platooning joining and cooperative merge
            at the customized 2lanefree simple version.
+# define carla basic config
+basic_config:
+  Town: None # None or Town01,Town02,Town03,Town04
+  xodr_path: ../assets/2lane_freeway_simplified/2lane_freeway_simplified.xodr
+  log_name: platoon_joining_2lanefree_carla.log
+  script_name: platoon_joining_2lanefree_carla
+  type: platooning # single or platooning
+  spectator_config:
+    z: 80
+    pitch: 90
 
 # define carla simulation setting
 world:
