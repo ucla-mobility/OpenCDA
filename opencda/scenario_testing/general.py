@@ -28,8 +28,10 @@ def run_scenario(opt, config_yaml):
             xodr_path = os.path.join(
                 current_path,
                 basic_config['xodr_path'])
+            map_helper = map_api.spawn_helper_2lanefree
         else:
             xodr_path = None
+            map_helper = None
 
         if basic_config['Town'] != 'None':
             town = basic_config['Town']
@@ -60,14 +62,13 @@ def run_scenario(opt, config_yaml):
             # create platoon members
             platoon_list = \
                 scenario_manager.create_platoon_manager(
-                    map_helper=map_api.spawn_helper_2lanefree,
+                    map_helper=map_helper,
                     data_dump=False)
 
             # create single cavs
             single_cav_list = \
                 scenario_manager.create_vehicle_manager(['platooning'],
-                                                        map_api.
-                                                        spawn_helper_2lanefree)
+                                                        map_helper=map_helper)
 
             spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle
 

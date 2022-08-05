@@ -3,7 +3,15 @@ description: |-
   Author: Runsheng Xu <rxx3386@ucla.edu>
   Content: This is the scenario testing configuration file for platooning joining and cooperative merge
            at the Town06 using  CARLA only.
-
+basic_config:
+  Town: Town06 # None or Town01,Town02,Town03,Town04
+  xodr_path: None
+  log_name: platoon_joining_town06_carla.log
+  script_name: platoon_joining_town06_carla
+  type: platooning # single or platooning
+  spectator_config:
+    z: 80
+    pitch: 90
 # define carla simulation setting
 world:
   sync_mode: true
