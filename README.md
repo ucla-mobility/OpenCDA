@@ -105,6 +105,7 @@ OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.e
 ### Team Members: 
  - Xu Han ([linkedin](https://linkedin.com/in/xu-han-12851a64), [github](https://github.com/xuhan417))
  - Hao Xiang ([linkedin](https://www.linkedin.com/in/hao-xiang-42bb5a1b2/), [github](https://github.com/XHwind))
- - Dr. Yi Guo ([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
+ - Zhaoliang Zheng([linkedin](https://www.linkedin.com/in/zhaoliang-zheng-905532171/)
+ - Zonglin Meng([linkedin](https://www.linkedin.com/in/zonglin-meng-a393b31ab/)
  - Dr. Xin Xia ([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
 
