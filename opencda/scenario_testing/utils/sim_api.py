@@ -390,7 +390,7 @@ class ScenarioManager:
                     spawn_transform = map_helper(self.carla_version,
                                                  *cav['spawn_special'])
 
-                cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+                cav_vehicle_bp.set_attribute('color', '255, 0, 255')
                 vehicle = self.world.spawn_actor(cav_vehicle_bp,
                                                  spawn_transform)
 

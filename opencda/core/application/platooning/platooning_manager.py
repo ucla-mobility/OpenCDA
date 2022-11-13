@@ -33,9 +33,9 @@ class PlatooningManager(object):
     pmid : int
         The  platooning manager ID.
     vehicle_manager_list : list
-        A list of all vehciel managers within the platoon.
+        A list of all vehicle managers within the platoon.
     destination : carla.location
-        The destiantion of the current plan.
+        The destination of the current plan.
     center_loc : carla.location
         The center location of the platoon.
     leader_target_speed : float
@@ -77,7 +77,7 @@ class PlatooningManager(object):
 
         # this variable is used to control leader speed
         self.origin_leader_target_speed = vehicle_manager.agent.max_speed - \
-            vehicle_manager.agent.speed_lim_dist
+                                          vehicle_manager.agent.speed_lim_dist
 
     def add_member(self, vehicle_manager, leader=False):
         """
@@ -131,11 +131,11 @@ class PlatooningManager(object):
 
         self.center_loc = carla.Location(x=(v1_ego_transform.location.x +
                                             v2_ego_transform.location.x) /
-                                         2, y=(v1_ego_transform.location.y +
-                                               v2_ego_transform.location.y) /
-                                         2, z=(v1_ego_transform.location.z +
-                                               v2_ego_transform.location.z) /
-                                         2)
+                                           2, y=(v1_ego_transform.location.y +
+                                                 v2_ego_transform.location.y) /
+                                                2, z=(v1_ego_transform.location.z +
+                                                      v2_ego_transform.location.z) /
+                                                     2)
 
     def update_member_order(self):
         """
@@ -252,6 +252,8 @@ class PlatooningManager(object):
         acceleration_list = []
         time_gap_list = []
         distance_gap_list = []
+        # dynamic leader list
+        dynamic_leader_list = []
 
         perform_txt = ''
 
@@ -267,6 +269,8 @@ class PlatooningManager(object):
             acceleration_list += debug_helper.acc_list
             time_gap_list += debug_helper.time_gap_list
             distance_gap_list += debug_helper.dist_gap_list
+            # dynamic_leader_list
+            dynamic_leader_list += debug_helper.dynamic_leader_list
 
             time_gap_list_tmp = \
                 np.array(debug_helper.time_gap_list)
@@ -290,7 +294,8 @@ class PlatooningManager(object):
         open_plt.draw_velocity_profile_single_plot(velocity_list)
 
         plt.subplot(412)
-        open_plt.draw_acceleration_profile_single_plot(acceleration_list)
+        # open_plt.draw_acceleration_profile_single_plot(acceleration_list)
+        open_plt.draw_acceleration_profile_single_plot(dynamic_leader_list)
 
         plt.subplot(413)
         open_plt.draw_time_gap_profile_singel_plot(time_gap_list)
@@ -302,11 +307,50 @@ class PlatooningManager(object):
         for i in range(1, len(velocity_list) + 1):
             label.append('Leading Vehicle, id: %d' %
                          int(i - 1) if i == 1 else 'Platoon member, id: %d' %
-                         int(i - 1))
+                                                   int(i - 1))
 
         figure.legend(label, loc='upper right')
 
         return figure, perform_txt
+
+    def save_platoon_data(self):
+        """
+        Save vehicle platooning data to a seperate CSV file.
+        Data saved: velocity, acceleration, time gap, distance gap.
+        Acceleration analysis and distance gap error are analyzed sepertatly.
+
+        Returns
+        -------
+        saved_data : list 
+            The vehicle platooning data ready to be saved to the disk.
+        """
+        # init list 
+        velocity_list = []
+        acceleration_list = []
+        time_gap_list = []
+        distance_gap_list = []
+        # dynamic leader list
+        dynamic_leader_list = []
+
+        # dumping data
+        for i in range(len(self.vehicle_manager_list)):
+            vm = self.vehicle_manager_list[i]
+            debug_helper = vm.agent.debug_helper
+
+            # we need to filter out the first 100 data points
+            # since the vehicles spawn at the beginning have
+            # no velocity and thus make the time gap close to infinite
+
+            velocity_list += debug_helper.speed_list
+            acceleration_list += debug_helper.acc_list
+            time_gap_list += debug_helper.time_gap_list
+            distance_gap_list += debug_helper.dist_gap_list
+            # dynamic_leader_list
+            dynamic_leader_list += debug_helper.dynamic_leader_list
+
+        return velocity_list, acceleration_list, \
+               time_gap_list, distance_gap_list, \
+               dynamic_leader_list
 
     def destroy(self):
         """

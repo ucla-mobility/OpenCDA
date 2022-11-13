@@ -17,6 +17,7 @@ from opencda.core.application.platooning.platoon_debug_helper import \
 from opencda.core.common.misc import \
     compute_distance, get_speed, cal_distance_angle
 from opencda.core.plan.behavior_agent import BehaviorAgent
+from opencda.core.application.platooning.platoon_APF import AllPredesessorFollowing
 
 
 class PlatooningBehaviorAgent(BehaviorAgent):
@@ -80,12 +81,21 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # communication manager
         self.v2x_manager = weakref.ref(v2x_manager)()
 
-        # used for gap keeping
+        # used for gap keeping (desired intra-platoon gap)
         self.inter_gap = platoon_yaml['inter_gap']
         # used when open a gap
         self.open_gap = platoon_yaml['open_gap']
         # this is used to control gap opening during cooperative joining
         self.current_gap = self.inter_gap
+
+        # load APF parameteres
+        self.vehicle_length = platoon_yaml['vehicle_length']
+        self.ss_theta = platoon_yaml['ss_theta']
+        self.minAllowHeadway = platoon_yaml['minAllowHeadway']
+        self.maxAllowHeadway = platoon_yaml['maxAllowHeadway']
+
+        # init APF manager
+        self.APF_manager = AllPredesessorFollowing()
 
         # used for merging vehicle
         self.destination_changed = False
@@ -97,6 +107,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         self.debug_helper = PlatoonDebugHelper(self.vehicle.id)
         self.time_gap = 100.0
         self.dist_gap = 100.0
+        # init dynamic leader
+        self.current_dynamic_leader_index = 100
 
     def run_step(
             self,
@@ -122,6 +134,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         # reset time gap and distance gap record at the beginning
         self.time_gap = 100.0
         self.dist_gap = 100.0
+        # init dynamic leader
+        self.current_dynamic_leader_index = 100
 
         status = self.v2x_manager.get_platoon_status()
         # case1: the vehicle is not cda enabled
@@ -200,7 +214,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
                 self.v2x_manager.add_platoon_blacklist(
                     rear_vehicle_manager.v2x_manager.
-                        get_platoon_manager()[0].pmid)
+                    get_platoon_manager()[0].pmid)
 
             if new_status == FSM.JOINING_FINISHED:
                 self.joining_finish_manager('rear')
@@ -213,6 +227,15 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         # case7: maintaining status
         if status == FSM.MAINTINING:
+            # update APF manager if maintaining platoon
+            host_pm, in_id = self.v2x_manager.get_platoon_manager()
+            if host_pm is not None:
+                self.APF_manager.update_platoon_info(host_pm.vehicle_manager_list,
+                                                     in_id ,
+                                                     vehicle_length=self.vehicle_length,
+                                                     ss_theta=self.ss_theta,
+                                                     minAllowHeadway=self.minAllowHeadway,
+                                                     maxAllowHeadway=self.maxAllowHeadway)
             return self.run_step_maintaining()
 
         # case8: Open Gap status
@@ -252,7 +275,8 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             ego_speed,
             self.ttc,
             time_gap=self.time_gap,
-            dist_gap=self.dist_gap)
+            dist_gap=self.dist_gap,
+            d_leader_index=self.current_dynamic_leader_index)
 
         if self.ignore_traffic_light:
             self.light_state = "Green"
@@ -263,6 +287,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
     def joining_finish_manager(self, insert_vehicle='front'):
         """
         Called when a joining is finish to update the platoon manager list.
+        If APF is enabled, the APF will be updated here as well.
 
         Parameters
         ----------
@@ -284,6 +309,16 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
         platoon_manger.update_member_order()
 
+        # start updating target platoon for APF
+        host_pm, in_id = self.v2x_manager.get_platoon_manager()
+        if host_pm is not None:
+            self.APF_manager.update_platoon_info(host_pm.vehicle_manager_list,
+                                                 in_id,
+                                                 vehicle_length=self.vehicle_length,
+                                                 ss_theta=self.ss_theta,
+                                                 minAllowHeadway=self.minAllowHeadway,
+                                                 maxAllowHeadway=self.maxAllowHeadway)
+
     def calculate_gap(self, distance):
         """
         Calculate the current vehicle and frontal vehicle's time/distance gap.
@@ -304,7 +339,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         self.time_gap = time_gap
         self.dist_gap = distance - veh_length
 
-    def platooning_following_manager(self, inter_gap):
+    def platooning_following_manager(self, inter_gap, is_open_gap=False):
         """
         Car following behavior in platooning with gap regulation.
 
@@ -313,11 +348,65 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         inter_gap : float
             The gap designed for platooning.
         """
+        '''
+        Note: Integrate APF algorithm here to help each CAV decide which dynamic leader to follow:
+            - 1. import APF algorithm (implemented in a separate script)
+            - 2. init APF manager class (in init function)
+                -a. use v2x.get_platoon_manager to get pm
+                -b. use pm.vehicle_manager_list to get vehicle manager list (note: this list is ordered)
+            - 3. call function to select dynamic leader and updated previous dynamic leader
+            - 4. adjust "desired gap" according to the dynamic leader's position
+        '''
+        # find d-leader vehicle manager
+        host_pm, in_id = self.v2x_manager.get_platoon_manager()
 
-        frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
-        frontal_front_vehicle_manger, _ = \
-            frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
+        # 1. choose leader
+        if is_open_gap or host_pm is None:
+            # a. follow frontal vehicle when creating gap
+            frontal_vehicle_manager, _ = self.v2x_manager.get_platoon_front_rear()
+            frontal_front_vehicle_manger, _ = \
+                frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
+            # b. update desired gap based on dynamic leader index
+            inter_gap_to_leader = inter_gap
 
+        else:
+            # a. use APF to locate dynamic leader when maintaining platoon
+            self.current_dynamic_leader_index = self.APF_manager.run_step()
+
+            vm_list = host_pm.vehicle_manager_list
+            frontal_vehicle_manager = vm_list[self.current_dynamic_leader_index]
+            frontal_front_vehicle_manger, _ = \
+                frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
+
+            # debug stream for verifying APF result
+            if in_id == 2:
+                d_leader_is_platoon_leader = frontal_front_vehicle_manger is None
+                if d_leader_is_platoon_leader:
+                    print('The current distance gap to front v is: %.2f' % self.dist_gap)
+                    print('Debug stream, the dynamic leader is: vehicle #0')
+                else:
+                    print('The current distance gap to front v is: %.2f' % self.dist_gap)
+                    print('Debug stream, the dynamic leader is: vehicle #%i.' % self.current_dynamic_leader_index)
+
+            # b. update desired gap based on dynamic leader index
+            '''
+            Note: 1. Current version assumes the veh_length and desired intra-platoon
+             gap are equal platoon-wise. 
+                  2. The "inter_gap" is the time gap which already considered vehicle length.
+                  Hence there is no need to account for vehicle length here during gap regulation.  
+    
+            If dynamic leader is downstream, the actual gap is calculated as:
+            platoon: |--v0---------v2---------v3---------v4---------v5---------v6--|
+                          inter_gap  inter_gap  inter_gap  inter_gap  inter_gap
+            
+            desired_gap_to_leader = (host_id - dynamic_leader_id)*inter_gap
+            '''
+            if self.current_dynamic_leader_index < in_id - 1:
+                inter_gap_to_leader = (in_id - self.current_dynamic_leader_index) * inter_gap
+            else:
+                inter_gap_to_leader = inter_gap
+
+        # 2. regulating gap
         if len(self._local_planner.get_trajectory()
                ) > self.get_local_planner().trajectory_update_freq - 2:
             return self._local_planner.run_step([], [], [], following=True)
@@ -368,20 +457,20 @@ class PlatooningBehaviorAgent(BehaviorAgent):
 
                 if i == 0:
                     pos_x = (frontal_trajectory[i][0].location.x +
-                             inter_gap / delta_t * ego_loc_x) / (
-                                    1 + inter_gap / delta_t)
+                             inter_gap_to_leader / delta_t * ego_loc_x) / (
+                                    1 + inter_gap_to_leader / delta_t)
                     pos_y = (frontal_trajectory[i][0].location.y +
-                             inter_gap / delta_t * ego_loc_y) / (
-                                    1 + inter_gap / delta_t)
+                             inter_gap_to_leader / delta_t * ego_loc_y) / (
+                                    1 + inter_gap_to_leader / delta_t)
                 else:
                     pos_x = (frontal_trajectory[i][0].location.x +
-                             inter_gap / delta_t *
+                             inter_gap_to_leader / delta_t *
                              ego_trajetory[i - 1][0].location.x) / \
-                            (1 + inter_gap / delta_t)
+                            (1 + inter_gap_to_leader / delta_t)
                     pos_y = (frontal_trajectory[i][0].location.y +
-                             inter_gap / delta_t *
+                             inter_gap_to_leader / delta_t *
                              ego_trajetory[i - 1][0].location.y) / \
-                            (1 + inter_gap / delta_t)
+                            (1 + inter_gap_to_leader / delta_t)
 
                 distance = np.sqrt((pos_x - ego_loc_x) **
                                    2 + (pos_y - ego_loc_y) ** 2)
@@ -471,6 +560,16 @@ class PlatooningBehaviorAgent(BehaviorAgent):
         frontal_vehicle_loc = \
             frontal_vehicle_manager.v2x_manager.get_ego_pos().location
         ego_vehicle_loc = self._ego_pos.location
+
+        # update APF manager
+        host_pm, in_id = self.v2x_manager.get_platoon_manager()
+        if host_pm is not None:
+            self.APF_manager.update_platoon_info(host_pm.vehicle_manager_list,
+                                                 in_id,
+                                                 vehicle_length=self.vehicle_length,
+                                                 ss_theta=self.ss_theta,
+                                                 minAllowHeadway=self.minAllowHeadway,
+                                                 maxAllowHeadway=self.maxAllowHeadway)
 
         # headway distance
         distance = compute_distance(ego_vehicle_loc, frontal_vehicle_loc)
@@ -678,7 +777,7 @@ class PlatooningBehaviorAgent(BehaviorAgent):
             self.current_gap += 0.01
         print('cuurent gap is %f' % self.current_gap)
         target_speed, target_loc = self.platooning_following_manager(
-            self.current_gap)
+            self.current_gap, is_open_gap=True)
 
         return target_speed, target_loc
 

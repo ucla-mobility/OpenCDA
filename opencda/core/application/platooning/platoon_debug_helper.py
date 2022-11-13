@@ -31,8 +31,9 @@ class PlatoonDebugHelper(PlanDebugHelper):
 
         self.time_gap_list = [[]]
         self.dist_gap_list = [[]]
+        self.dynamic_leader_list = [[]]
 
-    def update(self, ego_speed, ttc, time_gap=None, dist_gap=None):
+    def update(self, ego_speed, ttc, time_gap=None, dist_gap=None, d_leader_index=None):
         """
         Update the platoon related vehicle information.
 
@@ -54,6 +55,7 @@ class PlatoonDebugHelper(PlanDebugHelper):
         # at the very beginning, the vehicle speed is 0, which causes
         # an infinite time gap.  So we need to filter out the first
         # 100 data points.
-        if self.count > 100:
+        if self.count > 120:
             self.time_gap_list[0].append(time_gap)
             self.dist_gap_list[0].append(dist_gap)
+            self.dynamic_leader_list[0].append(d_leader_index)

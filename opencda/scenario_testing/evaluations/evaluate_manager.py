@@ -8,6 +8,8 @@ Evaluation manager.
 
 import os
 from datetime import datetime
+import numpy as np
+import pandas as pd
 from opencda.scenario_testing.evaluations.utils import lprint
 
 
@@ -134,3 +136,27 @@ class EvaluationManager(object):
 
             # save log txt
             lprint(log_file, perform_txt)
+
+            # save platoon data
+            velocity_list, acceleration_list, time_gap_list, distance_gap_list, dynamic_leader_list = pm.save_platoon_data()
+            # save to file
+            data_path = os.path.join(
+                self.eval_save_path,
+                '%s_platoon_performance_data_' %
+                pmid)
+
+            # save to csv files
+            pd_speed = pd.DataFrame(velocity_list)
+            pd_speed.T.to_csv(data_path + 'speed.csv', index=False)
+            pd_acc = pd.DataFrame(acceleration_list)
+            pd_acc.T.to_csv(data_path + 'acceleration.csv', index=False)
+            pd_t_gap = pd.DataFrame(time_gap_list)
+            pd_t_gap.T.to_csv(data_path + 'time_gap.csv', index=False)
+            pd_d_gap = pd.DataFrame(distance_gap_list)
+            pd_d_gap.T.to_csv(data_path + 'distance_gap.csv', index=False)
+            pd_d_leader = pd.DataFrame(dynamic_leader_list)
+            pd_d_leader.T.to_csv(data_path + 'dynamic_leader.csv', index=False)
+
+
+
+
