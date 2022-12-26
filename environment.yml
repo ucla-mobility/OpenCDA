@@ -19,4 +19,4 @@ dependencies:
     - scipy==1.6.3
     - seaborn
     - lxml
-    - shapely
+    - shapely==1.8.4
