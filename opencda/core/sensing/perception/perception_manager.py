@@ -87,7 +87,10 @@ class CameraSensor:
 
         pitch = 0
         carla_location = carla.Location(x=0, y=0, z=0)
+        x, y, z, yaw = relative_position
 
+        # this is for rsu. It utilizes global position instead of relative
+        # position to the vehicle
         if global_position is not None:
             carla_location = carla.Location(
                 x=global_position[0],
@@ -95,28 +98,9 @@ class CameraSensor:
                 z=global_position[2])
             pitch = -35
 
-        if relative_position == 'front':
-            carla_location = carla.Location(x=carla_location.x + 2.5,
-                                            y=carla_location.y,
-                                            z=carla_location.z + 1.0)
-            yaw = 0
-
-        elif relative_position == 'right':
-            carla_location = carla.Location(x=carla_location.x + 0.0,
-                                            y=carla_location.y + 0.3,
-                                            z=carla_location.z + 1.8)
-            yaw = 100
-
-        elif relative_position == 'left':
-            carla_location = carla.Location(x=carla_location.x + 0.0,
-                                            y=carla_location.y - 0.3,
-                                            z=carla_location.z + 1.8)
-            yaw = -100
-        else:
-            carla_location = carla.Location(x=carla_location.x - 2.0,
-                                            y=carla_location.y,
-                                            z=carla_location.z + 1.5)
-            yaw = 180
+        carla_location = carla.Location(x=carla_location.x + x,
+                                        y=carla_location.y + y,
+                                        z=carla_location.z + z)
 
         carla_rotation = carla.Rotation(roll=0, yaw=yaw, pitch=pitch)
         spawn_point = carla.Transform(carla_location, carla_rotation)
@@ -382,9 +366,9 @@ class PerceptionManager:
         self.id = infra_id if infra_id is not None else vehicle.id
 
         self.activate = config_yaml['activate']
-        self.camera_visualize = config_yaml['camera_visualize']
-        self.camera_num = min(config_yaml['camera_num'], 4)
-        self.lidar_visualize = config_yaml['lidar_visualize']
+        self.camera_visualize = config_yaml['camera']['visualize']
+        self.camera_num = config_yaml['camera']['num']
+        self.lidar_visualize = config_yaml['lidar']['visualize']
         self.global_position = config_yaml['global_position'] \
             if 'global_position' in config_yaml else None
 
@@ -406,7 +390,11 @@ class PerceptionManager:
         # camera visualization is needed
         if self.activate or self.camera_visualize:
             self.rgb_camera = []
-            mount_position = ['front', 'right', 'left', 'back']
+            mount_position = config_yaml['camera']['positions']
+            assert len(mount_position) == self.camera_num, \
+                "The camera number has to be the same as the length of the" \
+                "relative positions list"
+
             for i in range(self.camera_num):
                 self.rgb_camera.append(
                     CameraSensor(
