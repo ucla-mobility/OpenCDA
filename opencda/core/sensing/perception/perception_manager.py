@@ -532,7 +532,6 @@ class PerceptionManager:
             self.speed_retrieve(objects)
 
         if self.camera_visualize:
-            names = ['front', 'right', 'left', 'back']
             for (i, rgb_image) in enumerate(rgb_draw_images):
                 if i > self.camera_num - 1 or i > self.camera_visualize - 1:
                     break
@@ -540,8 +539,8 @@ class PerceptionManager:
                     yolo_detection, rgb_image, i)
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
                 cv2.imshow(
-                    '%s camera of actor %d, perception activated' %
-                    (names[i], self.id), rgb_image)
+                    '%s-th camera of actor %d, perception activated' %
+                    (str(i), self.id), rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:

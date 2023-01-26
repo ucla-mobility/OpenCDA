@@ -22,7 +22,6 @@ world:
     fog_falloff: 0 # Density of the fog (as in specific mass) from 0 to infinity. The bigger the value, the more dense and heavy it will be, and the fog will reach smaller heights
     wetness: 0
 
-
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing

@@ -49,8 +49,8 @@ rsu_base: &rsu_base
           - [0.0, 0.3, 1.8, 100]
           - [0.0, -0.3, 1.8, -100]
           - [-2.0, 0.0, 1.5, 180]
-      lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
         channels: 32
         range: 120
         points_per_second: 1000000
@@ -74,10 +74,17 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
-      lidar_visualize: true # whether to visualize lidar points using open3d
+      camera:
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions:
+          - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
         channels: 32
         range: 120
         points_per_second: 1000000
