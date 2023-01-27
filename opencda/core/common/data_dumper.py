@@ -100,13 +100,14 @@ class DataDumper(object):
         if self.count % 2 != 0:
             return
 
-        self.save_rgb_image()
-        self.save_lidar_points()
+        self.save_rgb_image(self.count)
+        # self.save_lidar_points()
         self.save_yaml_file(perception_manager,
                             localization_manager,
-                            behavior_agent)
+                            behavior_agent,
+                            self.count)
 
-    def save_rgb_image(self):
+    def save_rgb_image(self, count):
         """
         Save camera rgb images to disk.
         """
@@ -115,7 +116,7 @@ class DataDumper(object):
             frame = camera.frame
             image = camera.image
 
-            image_name = '%06d' % frame + '_' + 'camera%d' % i + '.png'
+            image_name = '%06d' % count + '_' + 'camera%d' % i + '.png'
 
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
@@ -149,7 +150,8 @@ class DataDumper(object):
     def save_yaml_file(self,
                        perception_manager,
                        localization_manager,
-                       behavior_agent):
+                       behavior_agent,
+                       count):
         """
         Save objects positions/spped, true ego position,
         predicted ego position, sensor transformations.
@@ -165,7 +167,7 @@ class DataDumper(object):
         behavior_agent : opencda object
             OpenCDA behavior agent.
         """
-        frame = self.lidar.frame
+        frame = count
 
         dump_yml = {}
         vehicle_dict = {}
