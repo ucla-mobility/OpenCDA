@@ -793,17 +793,16 @@ class PerceptionManager:
         vehicle_location = self.ego_pos.location
         vehicle_waypoint = self._map.get_waypoint(vehicle_location)
 
-        activate_light, light_trigger_location = self._get_active_light()
-        # todo: not implement afterwards
+        activate_tl, light_trigger_location = \
+            self._get_active_light(tl_list, vehicle_location, vehicle_waypoint)
+
         objects.update({'traffic_lights': []})
 
-        for tl in tl_list:
-            distance = self.dist(tl)
-            if distance < self.traffic_thresh:
-                traffic_light = TrafficLight(tl,
-                                             tl.get_location(),
-                                             tl.get_state())
-                objects['traffic_lights'].append(traffic_light)
+        if activate_tl is not None:
+            traffic_light = TrafficLight(activate_tl,
+                                         light_trigger_location,
+                                         activate_tl.get_state())
+            objects['traffic_lights'].append(traffic_light)
         return objects
 
     def _get_active_light(self, tl_list, vehicle_location, vehicle_waypoint):

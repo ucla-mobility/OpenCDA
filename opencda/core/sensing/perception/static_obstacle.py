@@ -74,6 +74,10 @@ class TrafficLight(object):
     ---------
     tl : carla.Actor
         The CARLA traffic actor
+
+    trigger_location : carla.Vector3D
+        The trigger location of te traffic light.
+
     pos : carla.Location
         The location of this traffic light.
 
@@ -82,9 +86,10 @@ class TrafficLight(object):
 
     """
 
-    def __init__(self, tl, pos, light_state):
-        self._location = pos
+    def __init__(self, tl, trigger_location, light_state):
+        self._location = trigger_location
         self.state = light_state
+        self.actor = tl
 
     def get_location(self):
         return self._location

@@ -390,7 +390,6 @@ class BehaviorAgent(object):
                     # indicate no need to stop
                     return 0
 
-
             if not waypoint.is_junction and (
                     self.light_id_to_ignore != light_id or light_id == -1):
                 return 1
