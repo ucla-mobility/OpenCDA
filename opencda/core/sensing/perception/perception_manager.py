@@ -363,6 +363,7 @@ class PerceptionManager:
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
+        self._map = self.carla_world.get_map()
         self.id = infra_id if infra_id is not None else vehicle.id
 
         self.activate = config_yaml['activate']
@@ -431,6 +432,9 @@ class PerceptionManager:
 
         # the dictionary contains all objects
         self.objects = {}
+        # traffic light detection related
+        self.traffic_thresh = config_yaml['traffic_light_thresh'] \
+            if 'traffic_light_thresh' in config_yaml else 50
 
     def dist(self, a):
         """
@@ -577,6 +581,7 @@ class PerceptionManager:
         world = self.carla_world
 
         vehicle_list = world.get_actors().filter("*vehicle*")
+        # todo: hard coded
         thresh = 50 if not self.data_dump else 120
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
@@ -785,15 +790,49 @@ class PerceptionManager:
         world = self.carla_world
         tl_list = world.get_actors().filter('traffic.traffic_light*')
 
+        vehicle_location = self.ego_pos.location
+        vehicle_waypoint = self._map.get_waypoint(vehicle_location)
+
+        activate_light, light_trigger_location = self._get_active_light()
+        # todo: not implement afterwards
         objects.update({'traffic_lights': []})
 
         for tl in tl_list:
             distance = self.dist(tl)
-            if distance < 50:
-                traffic_light = TrafficLight(tl.get_location(),
+            if distance < self.traffic_thresh:
+                traffic_light = TrafficLight(tl,
+                                             tl.get_location(),
                                              tl.get_state())
                 objects['traffic_lights'].append(traffic_light)
         return objects
+
+    def _get_active_light(self, tl_list, vehicle_location, vehicle_waypoint):
+        for tl in tl_list:
+            object_location = \
+                TrafficLight.get_trafficlight_trigger_location(tl)
+            object_waypoint = self._map.get_waypoint(object_location)
+
+            if object_waypoint.road_id != vehicle_waypoint.road_id:
+                continue
+
+            ve_dir = vehicle_waypoint.transform.get_forward_vector()
+            wp_dir = object_waypoint.transform.get_forward_vector()
+            dot_ve_wp = ve_dir.x * wp_dir.x +\
+                        ve_dir.y * wp_dir.y + \
+                        ve_dir.z * wp_dir.z
+
+            if dot_ve_wp < 0:
+                continue
+            while not object_waypoint.is_intersection:
+                next_waypoint = object_waypoint.next(0.5)[0]
+                if next_waypoint and not next_waypoint.is_intersection:
+                    object_waypoint = next_waypoint
+                else:
+                    break
+
+            return tl, object_waypoint.transform.location
+
+        return None, None
 
     def destroy(self):
         """
