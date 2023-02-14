@@ -32,7 +32,7 @@ class CollisionSensor(object):
     def __init__(self, vehicle, params):
         world = vehicle.get_world()
 
-        blueprint = world.get_blueprint_library().find('ensor.other.collision')
+        blueprint = world.get_blueprint_library().find('sensor.other.collision')
         self.sensor = world.spawn_actor(blueprint, carla.Transform(),
                                         attach_to=vehicle)
 
@@ -61,6 +61,9 @@ class CollisionSensor(object):
 
     def return_status(self):
         return {'collision': self.collided}
+
+    def tick(self, data_dict):
+        pass
 
     def destroy(self) -> None:
         """
@@ -126,6 +129,7 @@ class OffRoadDetector(object):
     params : dict
         The dictionary containing sensor configurations.
     """
+
     def __init__(self, params):
         self.off_road = False
 
@@ -139,106 +143,126 @@ class OffRoadDetector(object):
             The data dictionary provided by the upsteam modules.
         """
         # static bev map that indicate where is the road
-        static_map = data_dict['static_bev_map']
+        static_map = data_dict['static_bev']
+        if static_map is None:
+            return
         h, w = static_map.shape[0], static_map.shape[1]
         # the ego is always at the center of the bev map. If the pixel is
         # black, that means the vehicle is off road.
-        if np.mean(static_map[h//2, w//2]) == 255:
+        if np.mean(static_map[h // 2, w // 2]) == 255:
             self.off_road = True
         else:
             self.off_road = False
+
+    def return_status(self):
+        return {'offroad': self.off_road}
 
     def destroy(self):
         pass
 
 
-class TrafficLightHelper(object):
+class TrafficLightDector(object):
     """
     Interface of traffic light detector and recorder. It detects next traffic light state,
     calculates distance from hero vehicle to the end of this road, and if hero vehicle crosses
     this line when correlated light is red, it will record running a red light
     """
-    def __init__(self, params):
-        self._light_dis_thresh = params['light_dist_thresh']
+
+    def __init__(self, params, vehicle):
         self.ran_light = False
         self._map = None
+        self.veh_extent = vehicle.bounding_box.extent.x
+
+        self._light_dis_thresh = params['light_dist_thresh']
+        self._active_light = None
+        self._last_light = None
+
+        self.total_lights_ran = 0
+        self.total_lights = 0
+        self.ran_light = False
+        self.active_light_state = carla.TrafficLightState.Off
+        self.active_light_dis = 200
 
     def tick(self, data_dict):
+        self.ran_light = False
         # Get the active traffic lights and the ego vehicle's information
         active_lights = data_dict['objects']['traffic_lights']
         vehicle_transform = data_dict['ego_pos']
+        world = data_dict['world']
         self._map = data_dict['carla_map']
 
-        # If there are no active traffic lights, return
-        if not active_lights:
-            return
-
         # Get the location of the first active traffic light
-        active_light = active_lights[0]
-        light_trigger_location = active_light.get_location()
+        self._active_light = active_lights[0] if len(active_lights) > 0 else None
         vehicle_location = vehicle_transform.location
-        delta = vehicle_location - light_trigger_location
-        distance = np.sqrt(delta.x ** 2 + delta.y ** 2 + delta.z ** 2)
 
-        # Store the closest distance to an active traffic light
-        self.active_light_dis = min(200, distance)
+        if self._active_light is not None:
+            light_trigger_location = self._active_light.get_location()
+            self.active_light_state = self._active_light.get_state()
+            delta = vehicle_location - light_trigger_location
+            distance = np.sqrt(sum([delta.x ** 2, delta.y ** 2, delta.z ** 2]))
 
-        # If the closest distance is greater than the threshold, return
-        if self.active_light_dis >= self._light_dis_thresh:
-            return
+            self.active_light_dis = min(200, distance)
+            if self.active_light_dis < self._light_dis_thresh:
+                if self._last_light is None or self._active_light.actor.id != self._last_light.id:
+                    self.total_lights += 1
+                    self._last_light = self._active_light.actor
 
-        # If the state of the traffic light is not red, return
-        if active_light.get_state() != carla.TrafficLightState.Red:
-            return
+        else:
+            self.active_light_state = carla.TrafficLightState.Off
+            self.active_light_dis = 200
 
-        # Get the "tail" of the vehicle
-        veh_extent = 1.5
-        tail_close_pt = self._rotate_point(
-            carla.Vector3D(-0.8 * veh_extent, 0.0, vehicle_location.z),
-            vehicle_transform.rotation.yaw
-        ) + vehicle_location
-        tail_far_pt = self._rotate_point(
-            carla.Vector3D(-veh_extent - 1, 0.0, vehicle_location.z),
-            vehicle_transform.rotation.yaw
-        ) + vehicle_location
+        if self._last_light is not None:
+            if self._last_light.state != carla.TrafficLightState.Red:
+                return
 
-        # Get the trigger waypoints for the traffic light
-        trigger_waypoints = self._get_traffic_light_trigger_waypoints(
-            active_light)
+            veh_extent = self.veh_extent
 
-        # Iterate over the trigger waypoints
-        for wp in trigger_waypoints:
-            tail_wp = self._map.get_waypoint(tail_far_pt)
+            tail_close_pt = self._rotate_point(
+                carla.Vector3D(-0.8 * veh_extent, 0.0, vehicle_location.z),
+                vehicle_transform.rotation.yaw
+            )
+            tail_close_pt = vehicle_location + carla.Location(tail_close_pt)
 
-            # Check if the vehicle is on the same road and lane as the waypoint
-            ve_dir = vehicle_transform.get_forward_vector()
-            wp_dir = wp.transform.get_forward_vector()
-            dot_ve_wp = ve_dir.x * wp_dir.x + \
-                        ve_dir.y * wp_dir.y + \
-                        ve_dir.z * wp_dir.z
-            if (
-                    tail_wp.road_id == wp.road_id
-                    and tail_wp.lane_id == wp.lane_id
-                    and dot_ve_wp > 0
-            ):
-                # Calculate the left and right bounds of the lane
-                yaw_wp = wp.transform.rotation.yaw
-                lane_width = wp.lane_width
-                location_wp = wp.transform.location
+            tail_far_pt = self._rotate_point(
+                carla.Vector3D(-veh_extent - 1, 0.0, vehicle_location.z),
+                vehicle_transform.rotation.yaw
+            )
+            tail_far_pt = vehicle_location + carla.Location(tail_far_pt)
 
-                lft_lane_wp = self._rotate_point(
-                    carla.Vector3D(0.4 * lane_width, 0.0, location_wp.z),
-                    yaw_wp + 90)
-                lft_lane_wp = location_wp + carla.Location(lft_lane_wp)
-                rgt_lane_wp = self._rotate_point(
-                    carla.Vector3D(0.4 * lane_width, 0.0, location_wp.z),
-                    yaw_wp - 90)
-                rgt_lane_wp = location_wp + carla.Location(rgt_lane_wp)
+            trigger_waypoints = self._get_traffic_light_trigger_waypoints(
+                self._last_light)
 
-                # Check if the vehicle is crossing the stop line
-                if self._is_vehicle_crossing_line((tail_close_pt, tail_far_pt),
-                                                  (lft_lane_wp, rgt_lane_wp)):
-                    self.ran_light = True
+            for wp in trigger_waypoints:
+                tail_wp = self._map.get_waypoint(tail_far_pt)
+
+                # Calculate the dot product (Might be unscaled, as only its sign is important)
+                ve_dir = vehicle_transform.get_forward_vector()
+                wp_dir = wp.transform.get_forward_vector()
+                dot_ve_wp = ve_dir.x * wp_dir.x + ve_dir.y * wp_dir.y + ve_dir.z * wp_dir.z
+
+                # Check the lane until all the "tail" has passed
+                if tail_wp.road_id == wp.road_id and tail_wp.lane_id == wp.lane_id and dot_ve_wp > 0:
+                    # This light is red and is affecting our lane
+                    yaw_wp = wp.transform.rotation.yaw
+                    lane_width = wp.lane_width
+                    location_wp = wp.transform.location
+
+                    lft_lane_wp = self._rotate_point(
+                        carla.Vector3D(0.4 * lane_width, 0.0, location_wp.z),
+                        yaw_wp + 90)
+                    lft_lane_wp = location_wp + carla.Location(lft_lane_wp)
+                    rgt_lane_wp = self._rotate_point(
+                        carla.Vector3D(0.4 * lane_width, 0.0, location_wp.z),
+                        yaw_wp - 90)
+                    rgt_lane_wp = location_wp + carla.Location(rgt_lane_wp)
+
+                    # Is the vehicle traversing the stop line?
+                    if self._is_vehicle_crossing_line(
+                            (tail_close_pt, tail_far_pt),
+                            (lft_lane_wp, rgt_lane_wp)):
+                        self.ran_light = True
+                        self.total_lights_ran += 1
+                        self._last_light = None
 
     def _is_vehicle_crossing_line(self, seg1: List, seg2: List) -> bool:
         """
@@ -265,7 +289,7 @@ class TrafficLightHelper(object):
 
     def _get_traffic_light_trigger_waypoints(self,
                                              traffic_light: carla.Actor) -> \
-    List[carla.Waypoint]:
+            List[carla.Waypoint]:
         # Get the transform information for the traffic light
         base_transform = traffic_light.get_transform()
         base_rot = base_transform.rotation.yaw
@@ -307,3 +331,6 @@ class TrafficLightHelper(object):
             wps.append(wpx)
 
         return wps
+
+    def return_status(self):
+        return {'ran_light': self.ran_light}

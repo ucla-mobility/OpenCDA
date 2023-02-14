@@ -811,7 +811,6 @@ class BehaviorAgent(object):
         # Path generation based on the global route
         rx, ry, rk, ryaw = self._local_planner.generate_path()
 
-
         # check whether lane change is allowed
         self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled, rk)
 
