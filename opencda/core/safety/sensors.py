@@ -184,58 +184,77 @@ class TrafficLightDector(object):
         self.active_light_dis = 200
 
     def tick(self, data_dict):
+        # Reset the "ran light" flag
         self.ran_light = False
-        # Get the active traffic lights and the ego vehicle's information
+
+        # Extract the active traffic lights, vehicle transform, world, and map from data_dict
         active_lights = data_dict['objects']['traffic_lights']
         vehicle_transform = data_dict['ego_pos']
         world = data_dict['world']
         self._map = data_dict['carla_map']
 
         # Get the location of the first active traffic light
-        self._active_light = active_lights[0] if len(active_lights) > 0 else None
+        self._active_light = active_lights[0] if len(active_lights) > 0 \
+            else None
         vehicle_location = vehicle_transform.location
 
+        # If there is an active traffic light,
+        # compute the distance between the vehicle and the traffic light
         if self._active_light is not None:
             light_trigger_location = self._active_light.get_location()
             self.active_light_state = self._active_light.get_state()
             delta = vehicle_location - light_trigger_location
             distance = np.sqrt(sum([delta.x ** 2, delta.y ** 2, delta.z ** 2]))
 
+            # Set the active light distance to the minimum of the
+            # computed distance and a maximum threshold
             self.active_light_dis = min(200, distance)
+
+            # If the vehicle is close enough to the traffic light,
+            # and the traffic light has changed since the last tick,
+            # increment the total number of traffic lights seen and set the
+            # last light to the current light
             if self.active_light_dis < self._light_dis_thresh:
                 if self._last_light is None or self._active_light.actor.id != self._last_light.id:
                     self.total_lights += 1
                     self._last_light = self._active_light.actor
-
         else:
+            # If there is no active traffic light, set the active light state
+            # to "Off" and set the active light distance to a default value
             self.active_light_state = carla.TrafficLightState.Off
             self.active_light_dis = 200
 
+            # If there is a last light (i.e., a traffic light that was active
+            # in the previous tick), check if it is currently red
         if self._last_light is not None:
             if self._last_light.state != carla.TrafficLightState.Red:
                 return
 
+            # Compute the endpoints of a line segment representing the
+            # vehicle's position and direction
             veh_extent = self.veh_extent
-
             tail_close_pt = self._rotate_point(
                 carla.Vector3D(-0.8 * veh_extent, 0.0, vehicle_location.z),
                 vehicle_transform.rotation.yaw
             )
             tail_close_pt = vehicle_location + carla.Location(tail_close_pt)
-
             tail_far_pt = self._rotate_point(
                 carla.Vector3D(-veh_extent - 1, 0.0, vehicle_location.z),
                 vehicle_transform.rotation.yaw
             )
             tail_far_pt = vehicle_location + carla.Location(tail_far_pt)
 
+            # Get the trigger waypoints for the last traffic light
             trigger_waypoints = self._get_traffic_light_trigger_waypoints(
                 self._last_light)
 
+            # For each trigger waypoint,
+            # check if the vehicle has crossed the stop line
             for wp in trigger_waypoints:
                 tail_wp = self._map.get_waypoint(tail_far_pt)
 
-                # Calculate the dot product (Might be unscaled, as only its sign is important)
+                # Calculate the dot product (Might be unscaled,
+                # as only its sign is important)
                 ve_dir = vehicle_transform.get_forward_vector()
                 wp_dir = wp.transform.get_forward_vector()
                 dot_ve_wp = ve_dir.x * wp_dir.x + ve_dir.y * wp_dir.y + ve_dir.z * wp_dir.z
