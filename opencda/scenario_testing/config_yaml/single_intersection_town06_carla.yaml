@@ -69,8 +69,8 @@ vehicle_base: &vehicle_base
       history_size: 30
       col_thresh: 1
     stuck_dector:
-      len_thresh: 1000
-      speed_thresh: 0.2
+      len_thresh: 500
+      speed_thresh: 0.5
     offroad_dector: []
     traffic_light_detector:
       light_dist_thresh: 20
