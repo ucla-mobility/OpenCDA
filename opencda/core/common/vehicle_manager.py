@@ -17,6 +17,7 @@ from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
 from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
+from opencda.core.safety.safety_manager import SafetyManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
 from opencda.core.map.map_manager import MapManager
@@ -107,7 +108,9 @@ class VehicleManager(object):
         self.map_manager = MapManager(vehicle,
                                       carla_map,
                                       map_config)
-
+        # safety manager
+        self.safety_manager = SafetyManager(vehicle=vehicle,
+                                            params=config_yaml['safety_manager'])
         # behavior agent
         self.agent = None
         if 'platooning' in application:
@@ -180,6 +183,15 @@ class VehicleManager(object):
 
         # update the ego pose for map manager
         self.map_manager.update_information(ego_pos)
+
+        # this is required by safety manager
+        safety_input = {'ego_pos': ego_pos,
+                        'ego_speed': ego_spd,
+                        'objects': objects,
+                        'carla_map': self.carla_map,
+                        'world': self.vehicle.get_world(),
+                        'static_bev': self.map_manager.static_bev}
+        self.safety_manager.update_info(safety_input)
 
         # update ego position and speed to v2x manager,
         # and then v2x manager will search the nearby cavs

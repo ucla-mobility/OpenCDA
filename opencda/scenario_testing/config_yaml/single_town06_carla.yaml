@@ -22,16 +22,23 @@ world:
     fog_falloff: 0 # Density of the fog (as in specific mass) from 0 to infinity. The bigger the value, the more dense and heavy it will be, and the fog will reach smaller heights
     wetness: 0
 
-
 # First define the basic parameters of the vehicles
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: true # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
-      lidar_visualize: true # whether to visualize lidar points using open3d
+      camera:
+        visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions:
+          - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
+
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
         channels: 32
         range: 50
         points_per_second: 100000

@@ -27,10 +27,13 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: false # when not activated, objects positions will be retrieved from server directly
-      camera_visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
-      camera_num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
-      lidar_visualize: true # whether to visualize lidar points using open3d
+      camera:
+        visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions: []
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
         channels: 32
         range: 50
         points_per_second: 100000
@@ -60,8 +63,20 @@ vehicle_base: &vehicle_base
     lane_sample_resolution: 0.1
     visualize: true
     activate: true
+  safety_manager: &safety_manager
+    print_message: true
+    collision_sensor:
+      history_size: 30
+      col_thresh: 1
+    stuck_dector:
+      len_thresh: 500
+      speed_thresh: 0.5
+    offroad_dector: []
+    traffic_light_detector:
+      light_dist_thresh: 20
+
   behavior: &base_behavior
-    max_speed: 80 # maximum speed, km/h
+    max_speed: 50 # maximum speed, km/h
     tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
     speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
     speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
