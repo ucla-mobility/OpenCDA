@@ -36,7 +36,7 @@ class CavWorld(object):
         The machine learning manager class.
     """
 
-    def __init__(self, apply_ml=False, apply_coperception=False):
+    def __init__(self, apply_ml=False, apply_coperception=False, fusion_method='late'):
 
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
@@ -47,7 +47,7 @@ class CavWorld(object):
         if apply_ml and apply_coperception:
             ml_manager = getattr(importlib.import_module(
                 "opencda.customize.ml_libs.opencood_manager"), 'OpenCOODManager')
-            self.ml_manager = ml_manager()
+            self.ml_manager = ml_manager(fusion_method)
         elif apply_ml:
             # we import in this way so the user don't need to install ml
             # packages unless they require to
