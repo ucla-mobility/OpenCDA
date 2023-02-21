@@ -21,7 +21,7 @@ def run_scenario(opt, config_yaml):
         scenario_params = load_yaml(config_yaml)
 
         # create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        cav_world = CavWorld(apply_ml=opt.apply_ml, apply_coperception=True)
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,

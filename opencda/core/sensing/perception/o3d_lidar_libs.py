@@ -100,8 +100,8 @@ def o3d_visualizer_init(actor_id):
     """
     vis = o3d.visualization.Visualizer()
     vis.create_window(window_name=str(actor_id),
-                      width=960,
-                      height=640,
+                      width=480,
+                      height=320,
                       left=480,
                       top=270)
     vis.get_render_option().background_color = [0.05, 0.05, 0.05]
@@ -160,7 +160,7 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
             vis.remove_geometry(aabb)
 
 
-def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx, objects):
+def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx_tensor, objects):
     """
     Visualize the point cloud at runtime.
 
@@ -186,7 +186,7 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx, objects)
     if count == 2:
         vis.add_geometry(point_cloud)
 
-    oabbs_pred = bbx2oabb(pred_bbx, color=(1, 0, 0))
+    oabbs_pred = bbx2oabb(pred_bbx_tensor, color=(1, 0, 0))
     for ele in oabbs_pred:
         vis.add_geometry(ele)
 
@@ -212,6 +212,7 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx, objects)
             aabb = object_.o3d_bbx
             vis.remove_geometry(aabb)
 
+    # remove the prediction bbx drawing
     for ele in oabbs_pred:
         vis.remove_geometry(ele)
 

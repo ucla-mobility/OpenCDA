@@ -18,12 +18,14 @@ class CoperceptionLibs:
         assert len(matrix.shape) == 2
         return matrix.tolist()
 
+    @staticmethod
     def calculate_time_delay(self):
         """
         TODO: needs revision to reflect the delay
         """
         return 0
 
+    @staticmethod
     def load_vehicles(self, objects):
         data = {}
         if 'vehicles' in objects:
@@ -51,12 +53,13 @@ class CoperceptionLibs:
                                    veh_bbx.extent.y,
                                    veh_bbx.extent.z],
                         "speed": veh_speed
-                }})
+                    }})
 
         return {
             'vehicles': data
         }
 
+    @staticmethod
     def load_transformation_matrix(self, is_ego, data):
         """
         TODO: needs revision to reflect the cur/delay params
@@ -137,8 +140,6 @@ class CoperceptionLibs:
             lidar2camera = self.matrix2list(lidar2camera)
             camera_param.update({'extrinsic': lidar2camera})
             data.update({'camera%d' % i: camera_param})
-
-        print(f"CoperceptionLibs.load_camera_data: {data}.")
         return data
 
     def load_ego_data(self):
@@ -173,7 +174,6 @@ class CoperceptionLibs:
             ],
             'ego_speed': float(self.localizer.get_ego_spd())
         }
-        print(f"CoperceptionLibs.load_ego_data: {data}")
         return data
 
     def load_plan_trajectory(self):
