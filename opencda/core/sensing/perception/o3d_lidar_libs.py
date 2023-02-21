@@ -20,6 +20,8 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
     is_vehicle_cococlass, ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import StaticObstacle
 
+from opencood.visualization.vis_utils import bbx2oabb
+
 VIRIDIS = np.array(cm.get_cmap('plasma').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
 LABEL_COLORS = np.array([
@@ -98,8 +100,8 @@ def o3d_visualizer_init(actor_id):
     """
     vis = o3d.visualization.Visualizer()
     vis.create_window(window_name=str(actor_id),
-                      width=480,
-                      height=320,
+                      width=960,
+                      height=640,
                       left=480,
                       top=270)
     vis.get_render_option().background_color = [0.05, 0.05, 0.05]
@@ -156,6 +158,62 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
         for object_ in object_list:
             aabb = object_.o3d_bbx
             vis.remove_geometry(aabb)
+
+
+def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx, objects):
+    """
+    Visualize the point cloud at runtime.
+
+    Parameters
+    ----------
+    vis : o3d.Visualizer
+        Visualization interface.
+
+    count : int
+        Current step since simulation started.
+
+    point_cloud : o3d.PointCloud
+        Open3d point cloud.
+
+    objects : dict
+        The dictionary containing objects.
+
+    Returns
+    -------
+
+    """
+
+    if count == 2:
+        vis.add_geometry(point_cloud)
+
+    oabbs_pred = bbx2oabb(pred_bbx, color=(1, 0, 0))
+    for ele in oabbs_pred:
+        vis.add_geometry(ele)
+
+    vis.update_geometry(point_cloud)
+
+    for key, object_list in objects.items():
+        # we only draw vehicles for now
+        if key != 'vehicles':
+            continue
+        for object_ in object_list:
+            aabb = object_.o3d_bbx
+            vis.add_geometry(aabb)
+
+    vis.poll_events()
+    vis.update_renderer()
+    # # This can fix Open3D jittering issues:
+    time.sleep(0.001)
+
+    for key, object_list in objects.items():
+        if key != 'vehicles':
+            continue
+        for object_ in object_list:
+            aabb = object_.o3d_bbx
+            vis.remove_geometry(aabb)
+
+    for ele in oabbs_pred:
+        vis.remove_geometry(ele)
 
 
 def o3d_camera_lidar_fusion(objects,

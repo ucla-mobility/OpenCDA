@@ -99,10 +99,6 @@ class VehicleManager(object):
         # localization module
         self.localizer = LocalizationManager(
             vehicle, sensing_config['localization'], carla_map)
-        # perception module
-        self.perception_manager = PerceptionManager(
-            vehicle, sensing_config['perception'], cav_world,
-            data_dumping)
         # map manager
         self.map_manager = MapManager(vehicle,
                                       carla_map,
@@ -131,6 +127,17 @@ class VehicleManager(object):
                                           save_time=current_time)
         else:
             self.data_dumper = None
+
+        # perception module
+        # move it down here to pass in the behavior manager & localization manager
+        self.perception_manager = PerceptionManager(
+            v2x_manager=self.v2x_manager,
+            localization_manager=self.localizer,
+            behavior_agent=self.agent,
+            vehicle=vehicle,
+            config_yaml=sensing_config['perception'],
+            cav_world=cav_world,
+            data_dump=data_dumping)
 
         cav_world.update_vehicle_manager(self)
 

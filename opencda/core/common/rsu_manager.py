@@ -80,7 +80,10 @@ class RSUManager(object):
                                              sensing_config['localization'],
                                              self.carla_map)
         # perception module
-        self.perception_manager = PerceptionManager(vehicle=None,
+        self.perception_manager = PerceptionManager(v2x_manager=None,
+                                                    localization_manager=None,
+                                                    behavior_agent=None,
+                                                    vehicle=None,
                                                     config_yaml=sensing_config['perception'],
                                                     cav_world=cav_world,
                                                     carla_world=carla_world,
