@@ -19,14 +19,14 @@ class CoperceptionLibs:
         return matrix.tolist()
 
     @staticmethod
-    def calculate_time_delay(self):
+    def calculate_time_delay():
         """
         TODO: needs revision to reflect the delay
         """
         return 0
 
     @staticmethod
-    def load_vehicles(self, objects):
+    def load_vehicles(objects):
         data = {}
         if 'vehicles' in objects:
             vehicle_list = objects['vehicles']
@@ -60,7 +60,7 @@ class CoperceptionLibs:
         }
 
     @staticmethod
-    def load_transformation_matrix(self, is_ego, data):
+    def load_transformation_matrix(is_ego, data):
         """
         TODO: needs revision to reflect the cur/delay params
         """
