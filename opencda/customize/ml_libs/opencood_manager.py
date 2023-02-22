@@ -14,9 +14,9 @@ from opencood.data_utils.datasets.early_fusion_dataset import EarlyFusionDataset
 from opencood.data_utils.datasets.intermediate_fusion_dataset import IntermediateFusionDataset
 
 model_mapping = {
-    'early': 'opencood/logs/pointpillar_early_fusion.yaml',
+    'early': 'opencood/logs/pointpillar_early_fusion',
     'late': 'opencood/logs/pointpillar_late_fusion',
-    'intermediate': 'opencood/logs/pointpillar_intermediate_fusion.yaml',
+    'intermediate': 'opencood/logs/pointpillar_intermediate_fusion',
 }
 
 DATASET_DICT = {
@@ -27,7 +27,7 @@ DATASET_DICT = {
 
 
 class OpenCOODManager(object):
-    def __init__(self, fusion_method='late'):
+    def __init__(self, fusion_method):
         assert fusion_method in ['late', 'early', 'intermediate']
         self.fusion_method = fusion_method
         self.opt = argparse.Namespace(model_dir=model_mapping[fusion_method])

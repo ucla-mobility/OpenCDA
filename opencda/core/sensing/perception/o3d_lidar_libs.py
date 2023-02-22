@@ -186,9 +186,10 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx_tensor, o
     if count == 2:
         vis.add_geometry(point_cloud)
 
-    oabbs_pred = bbx2oabb(pred_bbx_tensor, color=(1, 0, 0))
-    for ele in oabbs_pred:
-        vis.add_geometry(ele)
+    if pred_bbx_tensor is not None:  # sometimes pred is None
+        oabbs_pred = bbx2oabb(pred_bbx_tensor, color=(1, 0, 0))
+        for ele in oabbs_pred:
+            vis.add_geometry(ele)
 
     vis.update_geometry(point_cloud)
 
@@ -212,9 +213,10 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx_tensor, o
             aabb = object_.o3d_bbx
             vis.remove_geometry(aabb)
 
-    # remove the prediction bbx drawing
-    for ele in oabbs_pred:
-        vis.remove_geometry(ele)
+    if pred_bbx_tensor is not None:  # sometimes pred is None
+        # remove the prediction bbx drawing
+        for ele in oabbs_pred:
+            vis.remove_geometry(ele)
 
 
 def o3d_camera_lidar_fusion(objects,

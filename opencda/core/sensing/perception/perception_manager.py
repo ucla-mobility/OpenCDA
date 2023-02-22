@@ -456,7 +456,9 @@ class PerceptionManager:
             lidar=self.lidar,
             rgb_camera=self.rgb_camera,
             localization_manager=self.localization_manager,
-            behavior_agent=self.behavior_agent
+            behavior_agent=self.behavior_agent,
+            carla_world=self.carla_world,
+            cav_world=self.cav_world
         )
 
     def dist(self, a):
@@ -512,8 +514,10 @@ class PerceptionManager:
 
     def coperception_mode(self, objects):
         """
-            Use OpenCOOD to detect objects
+        Use OpenCOOD to detect objects
         """
+        if self.lidar.data is None:
+            return objects
         data = OrderedDict()
         cav_id = str(self.id)
         data[cav_id] = OrderedDict()
@@ -526,7 +530,7 @@ class PerceptionManager:
         ego_data = self.coperception_libs.load_ego_data()
         plan_trajectory_data = self.coperception_libs.load_plan_trajectory()
         lidar_pose_data = self.coperception_libs.load_cur_lidar_pose()
-        vehicles = self.coperception_libs.load_vehicles(objects)
+        vehicles = self.coperception_libs.load_vehicles(cav_id, self.ego_pos)
         # update dic
         data[cav_id]['params'].update(plan_trajectory_data)
         data[cav_id]['params'].update(camera_data)
@@ -537,14 +541,12 @@ class PerceptionManager:
         transformation_matrix = self.coperception_libs.load_transformation_matrix(data[cav_id]['ego'],
                                                                                   data[cav_id]['params'])
         data[cav_id]['params'].update(transformation_matrix)
-
-        if self.lidar.data is None: return objects
-
         data[cav_id].update({'lidar_np': self.lidar.data})
 
+        # this doesn't exist on early/intermediate fusion dataset functions
+        # needs to manually added in the codebase
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data)
-        output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
-            [reformat_data_dict])  # should have batch size dim
+        output_dict = self.ml_manager.opencood_dataset.collate_batch_test([reformat_data_dict])  # should have batch size dim
         batch_data = self.ml_manager.to_device(output_dict)
         pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.inference(batch_data)
         # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data)
@@ -643,7 +645,6 @@ class PerceptionManager:
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
-
         return objects
 
     def deactivate_mode(self, objects):

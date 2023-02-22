@@ -121,13 +121,6 @@ class VehicleManager(object):
         # Control module
         self.controller = ControlManager(control_config)
 
-        if data_dumping:
-            self.data_dumper = DataDumper(self.perception_manager,
-                                          vehicle.id,
-                                          save_time=current_time)
-        else:
-            self.data_dumper = None
-
         # perception module
         # move it down here to pass in the behavior manager & localization manager
         self.perception_manager = PerceptionManager(
@@ -138,6 +131,13 @@ class VehicleManager(object):
             config_yaml=sensing_config['perception'],
             cav_world=cav_world,
             data_dump=data_dumping)
+
+        if data_dumping:
+            self.data_dumper = DataDumper(self.perception_manager,
+                                          vehicle.id,
+                                          save_time=current_time)
+        else:
+            self.data_dumper = None
 
         cav_world.update_vehicle_manager(self)
 

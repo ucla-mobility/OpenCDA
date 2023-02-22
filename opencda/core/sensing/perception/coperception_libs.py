@@ -1,16 +1,21 @@
+import weakref
 import numpy as np
 
 from opencda.core.common.misc import get_speed
+from opencda.core.sensing.perception.obstacle_vehicle import \
+    ObstacleVehicle
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencood.utils.transformation_utils import x1_to_x2
 
 
 class CoperceptionLibs:
-    def __init__(self, lidar, rgb_camera, localization_manager, behavior_agent):
+    def __init__(self, lidar, rgb_camera, localization_manager, behavior_agent, carla_world, cav_world):
         self.lidar = lidar
         self.rgb_camera = rgb_camera
         self.localizer = localization_manager
         self.agent = behavior_agent
+        self.carla_world = weakref.ref(carla_world)()
+        self.cav_world = weakref.ref(cav_world)()
         self.time_delay = self.calculate_time_delay()
 
     @staticmethod
@@ -26,38 +31,46 @@ class CoperceptionLibs:
         return 0
 
     @staticmethod
-    def load_vehicles(objects):
-        data = {}
-        if 'vehicles' in objects:
-            vehicle_list = objects['vehicles']
-            for v in vehicle_list:
-                veh_carla_id = v.carla_id
-                veh_pos = v.get_transform()
-                veh_bbx = v.bounding_box
-                veh_speed = get_speed(v)
-
-                data.update({
-                    veh_carla_id: {
-                        'bp_id': v.type_id,
-                        'color': v.color,
-                        "location": [veh_pos.location.x,
-                                     veh_pos.location.y,
-                                     veh_pos.location.z],
-                        "center": [veh_bbx.location.x,
-                                   veh_bbx.location.y,
-                                   veh_bbx.location.z],
-                        "angle": [veh_pos.rotation.roll,
-                                  veh_pos.rotation.yaw,
-                                  veh_pos.rotation.pitch],
-                        "extent": [veh_bbx.extent.x,
-                                   veh_bbx.extent.y,
-                                   veh_bbx.extent.z],
-                        "speed": veh_speed
-                    }})
-
+    def load_vehicle_bbx(object_vehicle):
+        veh_pos = object_vehicle.get_transform()
+        veh_bbx = object_vehicle.bounding_box
+        veh_speed = get_speed(object_vehicle)
         return {
-            'vehicles': data
+            "location": [veh_pos.location.x,
+                         veh_pos.location.y,
+                         veh_pos.location.z],
+            "center": [veh_bbx.location.x,
+                       veh_bbx.location.y,
+                       veh_bbx.location.z],
+            "angle": [veh_pos.rotation.roll,
+                      veh_pos.rotation.yaw,
+                      veh_pos.rotation.pitch],
+            "extent": [veh_bbx.extent.x,
+                       veh_bbx.extent.y,
+                       veh_bbx.extent.z],
+            "speed": veh_speed
         }
+
+    def load_vehicles(self, ego_id, ego_pos):
+        def dist_to_ego(actor):
+            return actor.get_location().distance(ego_pos.location)
+
+        world = self.carla_world
+        vehicle_list = world.get_actors().filter("*vehicle*")
+        vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < 50 and v.id != ego_id]
+        vehicle_dict = {}
+        if self.lidar:
+            for v in vehicle_list:
+                object_vehicle = ObstacleVehicle(None, None, v, self.lidar.sensor, self.cav_world.sumo2carla_ids)
+                vehicle_dict.update({object_vehicle.carla_id: self.load_vehicle_bbx(object_vehicle)})
+        else:
+            for v in vehicle_list:
+                object_vehicle = ObstacleVehicle(None, None, v, None, self.cav_world.sumo2carla_ids)
+                vehicle_dict.update({object_vehicle.carla_id: self.load_vehicle_bbx(object_vehicle)})
+        data = {
+            'vehicles': vehicle_dict
+        }
+        return data
 
     @staticmethod
     def load_transformation_matrix(is_ego, data):

@@ -23,7 +23,7 @@ def run_scenario(opt, config_yaml):
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml,
                              apply_coperception=True,
-                             fusion_method='late')
+                             fusion_method='early')
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
@@ -53,15 +53,6 @@ def run_scenario(opt, config_yaml):
                               current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
-
-        # save the data collection protocol to the folder
-        # current_path = os.path.dirname(os.path.realpath(__file__))
-        # save_yaml_name = os.path.join(current_path,
-        #                               '../../data_dumping',
-        #                               scenario_params['current_time'],
-        #                               'data_protocol.yaml')
-        # save_yaml(scenario_params, save_yaml_name)
-
         while True:
             scenario_manager.tick()
             transform = single_cav_list[0].vehicle.get_transform()
