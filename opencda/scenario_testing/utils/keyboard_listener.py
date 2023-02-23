@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+keyboard listener: a keyboard listenr to record typeing and can be used for pasue, resume and stop the program using multi-threading.
+"""
+# Author: Wei Shao <weishao@ucdavis.edu>
+# License: TDG-Attribution-NonCommercial-NoDistrib
+
 from pynput import keyboard
 
 
@@ -72,5 +79,6 @@ class KeyListener(object):
         """
         if key == keyboard.Key.esc:
             self.keys['esc'] = True
+
 
 
