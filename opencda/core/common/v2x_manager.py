@@ -70,6 +70,9 @@ class V2XManager(object):
         # ego position buffer. use deque so we can simulate lagging
         self.ego_pos = deque(maxlen=100)
         self.ego_spd = deque(maxlen=100)
+        # ego sensor buffer. Use deque so we can simulate lagging
+        self.ego_lidar = deque(maxlen=100)
+        self.ego_image = deque(maxlen=100)
         # used to exclude the cav self during searching
         self.vid = vid
 
@@ -89,12 +92,14 @@ class V2XManager(object):
         if 'lag' in config_yaml:
             self.lag = config_yaml['lag']
 
-    def update_info(self, ego_pos, ego_spd):
+    def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image):
         """
         Update all communication plugins with current localization info.
         """
         self.ego_pos.append(ego_pos)
         self.ego_spd.append(ego_spd)
+        self.ego_lidar.append(ego_lidar)
+        self.ego_image.append(ego_image)
         self.search()
 
         # the ego pos in platooning_plugin is used for self-localization,
@@ -148,6 +153,20 @@ class V2XManager(object):
 
         return processed_ego_speed
 
+    def get_ego_lidar(self):
+        if not self.ego_lidar:
+            return
+        lidar = self.ego_lidar[0] if len(self.ego_lidar) < self.lag else \
+            self.ego_lidar[-1 - int(abs(self.lag))]
+        return lidar
+
+    def get_ego_rgb_image(self):
+        if not self.ego_image:
+            return
+        image = self.ego_image[0] if len(self.ego_image) < self.lag else \
+            self.ego_image[-1 - int(abs(self.lag))]
+        return image
+
     def search(self):
         """
         Search the CAVs nearby.
@@ -156,7 +175,7 @@ class V2XManager(object):
 
         for vid, vm in vehicle_manager_dict.items():
             # avoid the Nonetype error at the first simulation step
-            if not vm.v2x_manager.get_ego_pos():
+            if not vm.v2x_manager.get_ego_pos() or not vm.v2x_manager.get_ego_lidar():
                 continue
             # avoid add itself as the cav nearby
             if vid == self.vid:
@@ -167,6 +186,8 @@ class V2XManager(object):
 
             if distance < self.communication_range:
                 self.cav_nearby.update({vid: vm})
+            else:
+                self.cav_nearby.pop(vid, None)
     """
     -----------------------------------------------------------
                  Below is platooning related 

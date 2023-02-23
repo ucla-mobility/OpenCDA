@@ -376,8 +376,8 @@ class PerceptionManager:
         Open3d point cloud visualizer.
     """
 
-    def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle, config_yaml, cav_world,
-                 data_dump=False, carla_world=None, infra_id=None):
+    def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
+                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None):
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
@@ -494,15 +494,13 @@ class PerceptionManager:
 
         """
         self.ego_pos = ego_pos
-
         objects = {
             'vehicles': [],
             'traffic_lights': []
         }
-
         if not self.activate:
+            self.search_nearby_cav()
             objects = self.deactivate_mode(objects)
-
         else:
             if self.cooperative:
                 objects = self.coperception_mode(objects)
@@ -546,7 +544,8 @@ class PerceptionManager:
         # this doesn't exist on early/intermediate fusion dataset functions
         # needs to manually added in the codebase
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data)
-        output_dict = self.ml_manager.opencood_dataset.collate_batch_test([reformat_data_dict])  # should have batch size dim
+        output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
+            [reformat_data_dict])  # should have batch size dim
         batch_data = self.ml_manager.to_device(output_dict)
         pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.inference(batch_data)
         # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data)
@@ -568,6 +567,13 @@ class PerceptionManager:
         self.objects = objects
 
         return objects
+
+    def search_nearby_cav(self):
+        if self.v2x_manager is not None:
+            print(f"nearby cav nearby {self.v2x_manager.cav_nearby}")
+            for _, vm in self.v2x_manager.cav_nearby.items():
+                lidar = vm.v2x_manager.get_ego_lidar()
+                print(f"lidar {lidar}")
 
     def activate_mode(self, objects):
         """
