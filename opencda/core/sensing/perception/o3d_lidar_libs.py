@@ -160,45 +160,25 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
             vis.remove_geometry(aabb)
 
 
-def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx_tensor, objects):
-    """
-    Visualize the point cloud at runtime.
-
-    Parameters
-    ----------
-    vis : o3d.Visualizer
-        Visualization interface.
-
-    count : int
-        Current step since simulation started.
-
-    point_cloud : o3d.PointCloud
-        Open3d point cloud.
-
-    objects : dict
-        The dictionary containing objects.
-
-    Returns
-    -------
-
-    """
-
+def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor, gt_box_tensor, objects):
     if count == 2:
         vis.add_geometry(point_cloud)
-
-    if pred_bbx_tensor is not None:  # sometimes pred is None
-        oabbs_pred = bbx2oabb(pred_bbx_tensor, color=(1, 0, 0))
-        for ele in oabbs_pred:
-            vis.add_geometry(ele)
+    if predict_bbx_tensor is not None:
+        oabbs_pred = bbx2oabb(predict_bbx_tensor, color=(1, 0, 0))
+        for p in oabbs_pred:
+            vis.add_geometry(p)
+    if gt_box_tensor is not None:
+        oabbs_gt = bbx2oabb(gt_box_tensor, color=(0, 1, 0))
+        for g in oabbs_gt:
+            vis.add_geometry(g)
 
     vis.update_geometry(point_cloud)
 
     for key, object_list in objects.items():
-        # we only draw vehicles for now
         if key != 'vehicles':
             continue
-        for object_ in object_list:
-            aabb = object_.o3d_bbx
+        for o in object_list:
+            aabb = o.o3d_bbx
             vis.add_geometry(aabb)
 
     vis.poll_events()
@@ -209,14 +189,17 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, pred_bbx_tensor, o
     for key, object_list in objects.items():
         if key != 'vehicles':
             continue
-        for object_ in object_list:
-            aabb = object_.o3d_bbx
+        for o in object_list:
+            aabb = o.o3d_bbx
             vis.remove_geometry(aabb)
 
-    if pred_bbx_tensor is not None:  # sometimes pred is None
+    if predict_bbx_tensor is not None:
         # remove the prediction bbx drawing
-        for ele in oabbs_pred:
-            vis.remove_geometry(ele)
+        for p in oabbs_pred:
+            vis.remove_geometry(p)
+    if gt_box_tensor is not None:
+        for g in oabbs_gt:
+            vis.remove_geometry(g)
 
 
 def o3d_camera_lidar_fusion(objects,

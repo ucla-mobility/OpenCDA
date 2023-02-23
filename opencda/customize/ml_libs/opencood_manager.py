@@ -6,9 +6,8 @@ import opencood.hypes_yaml.yaml_utils as yaml_utils
 from opencood.visualization import vis_utils
 from opencood.tools import train_utils, inference_utils
 from opencood.utils import eval_utils
+from opencood.utils.eval_utils import calculate_ap
 from opencood.data_utils.datasets import build_dataset
-from opencood.data_utils.pre_processor import build_preprocessor
-from opencood.data_utils.post_processor import build_postprocessor
 from opencood.data_utils.datasets.late_fusion_dataset import LateFusionDataset
 from opencood.data_utils.datasets.early_fusion_dataset import EarlyFusionDataset
 from opencood.data_utils.datasets.intermediate_fusion_dataset import IntermediateFusionDataset
@@ -16,7 +15,7 @@ from opencood.data_utils.datasets.intermediate_fusion_dataset import Intermediat
 model_mapping = {
     'early': 'opencood/logs/pointpillar_early_fusion',
     'late': 'opencood/logs/pointpillar_late_fusion',
-    'intermediate': 'opencood/logs/pointpillar_intermediate_fusion',
+    'intermediate': 'opencood/logs/pointpillar_attentive_fusion',
 }
 
 DATASET_DICT = {
@@ -86,8 +85,24 @@ class OpenCOODManager(object):
                                    gt_box_tensor,
                                    self.result_stat,
                                    0.7)
-
         return pred_box_tensor, pred_score, gt_box_tensor
+
+    def evaluate_average_precision(self):
+        for iou, iou_dict in self.result_stat.items():
+            if iou_dict['gt'] == 0:
+                print("skip this evaluation as the gt is divided by 0.")
+                return
+        ap_30, mrec_30, mpre_30 = calculate_ap(self.result_stat, 0.30)
+        ap_50, mrec_50, mpre_50 = calculate_ap(self.result_stat, 0.50)
+        ap_70, mrec_70, mpre_70 = calculate_ap(self.result_stat, 0.70)
+        print('The Average Precision at IOU 0.3 is %.2f, '
+              'The Average Precision at IOU 0.5 is %.2f, '
+              'The Average Precision at IOU 0.7 is %.2f' % (ap_30, ap_50, ap_70))
+        self.result_stat = {
+            0.3: {'tp': [], 'fp': [], 'gt': 0},
+            0.5: {'tp': [], 'fp': [], 'gt': 0},
+            0.7: {'tp': [], 'fp': [], 'gt': 0}
+        }
 
     def show_vis(self, pred_box_tensor, gt_box_tensor, batch_data):
         vis_save_path = os.path.join(self.opt.model_dir, 'vis')

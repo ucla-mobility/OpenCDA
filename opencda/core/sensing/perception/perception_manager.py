@@ -550,6 +550,7 @@ class PerceptionManager:
         batch_data = self.ml_manager.to_device(output_dict)
         pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.inference(batch_data)
         # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data)
+        self.ml_manager.evaluate_average_precision()
 
         if self.lidar_visualize:
             while self.lidar.data is None:
@@ -560,7 +561,7 @@ class PerceptionManager:
                 self.count,
                 self.lidar.o3d_pointcloud,
                 pred_box_tensor,
-                # gt_box_tensor,
+                gt_box_tensor,
                 objects)
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)
