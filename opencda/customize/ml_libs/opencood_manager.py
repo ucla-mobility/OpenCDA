@@ -111,10 +111,10 @@ class OpenCOODManager(object):
         vis_save_path = os.path.join(vis_save_path, '%05d.png' % self.vis_counter)
 
         vis_utils.visualize_single_sample_output_gt(pred_box_tensor,
-                                               gt_box_tensor,
-                                               batch_data['ego'][
-                                                   'origin_lidar'],
-                                               True,
-                                               vis_save_path,
-                                               mode='constant')
+                                                    gt_box_tensor,
+                                                    batch_data['ego'][
+                                                        'origin_lidar'],
+                                                    True,
+                                                    vis_save_path,
+                                                    mode='constant')
         self.vis_counter += 1
