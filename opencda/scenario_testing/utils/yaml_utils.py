@@ -47,6 +47,19 @@ def load_yaml(file):
     return param
 
 
+def add_current_time(params):
+    """
+    Add current time to the params dictionary.
+    """
+    # load current time for data dumping and evaluation
+    current_time = datetime.now()
+    current_time = current_time.strftime("%Y_%m_%d_%H_%M_%S")
+
+    params['current_time'] = current_time
+
+    return params
+
+
 def save_yaml(data, save_name):
     """
     Save the dictionary into a yaml file.

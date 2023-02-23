@@ -12,6 +12,8 @@ import random
 import sys
 import json
 from random import shuffle
+from omegaconf import OmegaConf
+from omegaconf.listconfig import ListConfig
 
 import carla
 import numpy as np
@@ -297,7 +299,8 @@ class ScenarioManager:
 
         for i, cav_config in enumerate(
                 self.scenario_params['scenario']['single_cav_list']):
-
+            cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
+                                         cav_config)
             # if the spawn position is a single scalar, we need to use map
             # helper to transfer to spawn transform
             if 'spawn_special' not in cav_config:
@@ -662,7 +665,8 @@ class ScenarioManager:
 
         bg_list = []
 
-        if isinstance(traffic_config['vehicle_list'], list):
+        if isinstance(traffic_config['vehicle_list'], list) or \
+                isinstance(traffic_config['vehicle_list'], ListConfig):
             bg_list = self.spawn_vehicles_by_list(tm,
                                                   traffic_config,
                                                   bg_list)
