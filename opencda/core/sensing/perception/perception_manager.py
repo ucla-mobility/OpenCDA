@@ -374,7 +374,7 @@ class PerceptionManager:
         Open3d point cloud visualizer.
     """
 
-    def __init__(self, vehicle, config_yaml, cav_world,
+    def __init__(self, v2x_manager, vehicle, config_yaml, cav_world,
                  data_dump=False, carla_world=None, infra_id=None):
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
@@ -387,6 +387,9 @@ class PerceptionManager:
         self.lidar_visualize = config_yaml['lidar_visualize']
         self.global_position = config_yaml['global_position'] \
             if 'global_position' in config_yaml else None
+        self.cooperative = config_yaml['cooperative'] \
+            if 'cooperative' in config_yaml else False
+        self.v2x_manager = v2x_manager
 
         self.cav_world = weakref.ref(cav_world)()
         ml_manager = cav_world.ml_manager
@@ -477,19 +480,26 @@ class PerceptionManager:
 
         """
         self.ego_pos = ego_pos
-
         objects = {'vehicles': [],
                    'traffic_lights': []}
 
         if not self.activate:
+            self.search_nearby_cav()
             objects = self.deactivate_mode(objects)
-
         else:
             objects = self.activate_mode(objects)
 
         self.count += 1
 
         return objects
+
+    def search_nearby_cav(self):
+        if self.v2x_manager is not None:
+            print(f"nearby cav nearby {self.v2x_manager.cav_nearby}")
+            for  _, vm in self.v2x_manager.cav_nearby.items():
+                lidar = vm.v2x_manager.get_ego_lidar()
+                print(f"lidar {lidar}")
+        pass
 
     def activate_mode(self, objects):
         """
