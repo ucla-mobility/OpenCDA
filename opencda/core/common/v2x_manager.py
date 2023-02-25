@@ -194,7 +194,10 @@ class V2XManager(object):
                 vm.v2x_manager.get_ego_pos().location)
 
             if distance < self.communication_range:
-                self.cav_nearby.update({vm.vehicle.id: vm.v2x_manager})
+                self.cav_nearby.update({vm.vehicle.id: {
+                    'vehicle_manager': vm,
+                    'v2x_manager': vm.v2x_manager
+                }})
             else:
                 self.cav_nearby.pop(vm.vehicle.id, None)
     """

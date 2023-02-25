@@ -85,6 +85,7 @@ class OpenCOODManager(object):
                                    gt_box_tensor,
                                    self.result_stat,
                                    0.7)
+
         return pred_box_tensor, pred_score, gt_box_tensor
 
     def evaluate_average_precision(self):
@@ -103,6 +104,14 @@ class OpenCOODManager(object):
             0.5: {'tp': [], 'fp': [], 'gt': 0},
             0.7: {'tp': [], 'fp': [], 'gt': 0}
         }
+
+    def evaluate_final_average_precision(self):
+        ap_30, mrec_30, mpre_30 = calculate_ap(self.result_stat, 0.30)
+        ap_50, mrec_50, mpre_50 = calculate_ap(self.result_stat, 0.50)
+        ap_70, mrec_70, mpre_70 = calculate_ap(self.result_stat, 0.70)
+        print('The Average Precision at IOU 0.3 is %.2f, '
+              'The Average Precision at IOU 0.5 is %.2f, '
+              'The Average Precision at IOU 0.7 is %.2f' % (ap_30, ap_50, ap_70))
 
     def show_vis(self, pred_box_tensor, gt_box_tensor, batch_data):
         vis_save_path = os.path.join(self.opt.model_dir, 'vis')

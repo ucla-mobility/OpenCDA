@@ -1,0 +1,18 @@
+name: opencood
+channels:
+  - defaults
+dependencies:
+  - pip==21.1.2
+  - python==3.7.11
+  - pip:
+    - matplotlib==3.4.2
+    - numpy
+    - open3d
+    - opencv-python==4.5.5.62
+    - cython
+    - pygame
+    - tensorboardX
+    - shapely==2.0.0
+    - einops
+    - cumm
+    - timm

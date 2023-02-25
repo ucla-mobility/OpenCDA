@@ -36,32 +36,24 @@ class CoperceptionLibs:
         veh_bbx = object_vehicle.bounding_box
         veh_speed = get_speed(object_vehicle)
         return {
-            "location": [veh_pos.location.x,
-                         veh_pos.location.y,
-                         veh_pos.location.z],
-            "center": [veh_bbx.location.x,
-                       veh_bbx.location.y,
-                       veh_bbx.location.z],
-            "angle": [veh_pos.rotation.roll,
-                      veh_pos.rotation.yaw,
-                      veh_pos.rotation.pitch],
-            "extent": [veh_bbx.extent.x,
-                       veh_bbx.extent.y,
-                       veh_bbx.extent.z],
+            "location": [veh_pos.location.x, veh_pos.location.y, veh_pos.location.z],
+            "center": [veh_bbx.location.x, veh_bbx.location.y, veh_bbx.location.z],
+            "angle": [veh_pos.rotation.roll, veh_pos.rotation.yaw, veh_pos.rotation.pitch],
+            "extent": [veh_bbx.extent.x, veh_bbx.extent.y, veh_bbx.extent.z],
             "speed": veh_speed
         }
 
-    def load_vehicles(self, ego_id, ego_pos):
+    def load_vehicles(self, ego_id, ego_pos, lidar):
         def dist_to_ego(actor):
             return actor.get_location().distance(ego_pos.location)
 
         world = self.carla_world
         vehicle_list = world.get_actors().filter("*vehicle*")
-        vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < 120 and v.id != ego_id]
+        vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < 50 and v.id != ego_id]
         vehicle_dict = {}
-        if self.lidar:
+        if lidar:
             for v in vehicle_list:
-                object_vehicle = ObstacleVehicle(None, None, v, self.lidar.sensor, self.cav_world.sumo2carla_ids)
+                object_vehicle = ObstacleVehicle(None, None, v, lidar.sensor, self.cav_world.sumo2carla_ids)
                 vehicle_dict.update({object_vehicle.carla_id: self.load_vehicle_bbx(object_vehicle)})
         else:
             for v in vehicle_list:
@@ -110,8 +102,9 @@ class CoperceptionLibs:
             'spatial_correction_matrix': spatial_correction_matrix
         }
 
-    def load_cur_lidar_pose(self):
-        lidar_transformation = self.lidar.sensor.get_transform()
+    @staticmethod
+    def load_cur_lidar_pose(lidar):
+        lidar_transformation = lidar.sensor.get_transform()
         return {
             'lidar_pose': [
                 lidar_transformation.location.x,
@@ -189,9 +182,9 @@ class CoperceptionLibs:
         }
         return data
 
-    def load_plan_trajectory(self):
+    def load_plan_trajectory(self, agent):
         data = {'RSU': True}
-        if self.agent is not None:
+        if agent is not None:
             trajectory_deque = \
                 self.agent.get_local_planner().get_trajectory()
             trajectory_list = []

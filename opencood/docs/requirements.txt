@@ -1,0 +1,7 @@
+matplotlib==3.4.2
+numpy
+open3d
+opencv-python
+cython
+tensorboardX
+shapely

@@ -1,0 +1,176 @@
+name: fpvrcnn_intermediate_fusion
+
+yaml_parser: "load_voxel_params"
+root_dir: "opv2v_data_dumping/train"
+validate_dir: "opv2v_data_dumping/validate"
+
+train_params:
+  batch_size: &batch_size 4
+  epoches: 20
+  eval_freq: 1
+  save_freq: 1
+
+fusion:
+  core_method: 'IntermediateFusionDatasetV2' # LateFusionDataset, EarlyFusionDataset, IntermediateFusionDataset IntermediateFusionDatasetV2 supported
+  args: []
+
+# preprocess-related
+preprocess:
+  # options: BasePreprocessor, VoxelPreprocessor, BevPreprocessor
+  core_method: 'SpVoxelPreprocessor'
+  args:
+    voxel_size: &voxel_size [0.1, 0.1, 0.1]
+    max_points_per_voxel: &T 5
+    max_voxel_train: 36000
+    max_voxel_test: 70000
+  # lidar range for each individual cav.
+  cav_lidar_range: &cav_lidar [-140.8, -41.6, -3, 140.8, 41.6, 1]
+  keep_original_lidar: true
+
+data_augment:
+  - NAME: random_world_flip
+    ALONG_AXIS_LIST: [ 'x' ]
+
+  - NAME: random_world_rotation
+    WORLD_ROT_ANGLE: [ -0.78539816, 0.78539816 ]
+
+  - NAME: random_world_scaling
+    WORLD_SCALE_RANGE: [ 0.95, 1.05 ]
+
+# anchor box related
+postprocess: &postprocess_params
+  core_method: 'FpvrcnnPostprocessor' # VoxelPostprocessor, BevPostprocessor, FpvrcnnPostprocessor supported
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    l: 3.9
+    w: 1.6
+    h: 1.56
+    r: [0, 90]
+    feature_stride: 8
+    num: &achor_num 2
+  target_args:
+    pos_threshold: 0.6
+    neg_threshold: 0.45
+    score_threshold: 0.5
+  order: 'hwl' # hwl or lwh
+  max_num: 100 # maximum number of objects in a single frame. use this number to make sure different frames has the same dimension in the same batch
+  nms_thresh: 0.15
+
+# model related
+model:
+  core_method: fpvrcnn # corresponding to FPVRCNN
+  args:
+    activate_stage2: False
+    N: *batch_size
+    T: *T
+    lidar_range: *cav_lidar
+    voxel_size: *voxel_size
+    anchor_num: *achor_num
+    mean_vfe:
+      num_point_features: 4
+    spconv:
+      num_features_in: 64
+      num_features_out: 64
+    map2bev:
+      feature_num: 128
+    ssfa:
+      feature_num: 128
+    head:
+      num_input: 128
+      num_pred: 14
+      num_cls: 2
+      num_iou: 2
+      use_dir: True
+      num_dir: 4
+    post_processer: *postprocess_params
+    vsa:
+      enlarge_selection_boxes: true
+      point_source: 'raw_points'
+      num_keypoints: 4096
+      num_out_features: &cpm_features 32
+      features_source: ['bev', 'x_conv1', 'x_conv2', 'x_conv3', 'x_conv4', 'raw_points']
+      sa_layer:
+        raw_points:
+          mlps: [[16, 16], [16, 16]]
+          pool_radius: [0.4, 0.8]
+          n_sample: [16, 16]
+        x_conv1:
+          downsample_factor: 1
+          mlps: [[16, 16], [16, 16]]
+          pool_radius: [0.4, 0.8]
+          n_sample: [16, 16]
+        x_conv2:
+          downsample_factor: 2
+          mlps: [[32, 32], [32, 32]]
+          pool_radius: [0.8, 1.2]
+          n_sample: [16, 32]
+        x_conv3:
+          downsample_factor: 4
+          mlps: [[64, 64], [64, 64]]
+          pool_radius: [1.2, 2.4]
+          n_sample: [16, 32]
+        x_conv4:
+          downsample_factor: 8
+          mlps: [[64, 64], [64, 64]]
+          pool_radius: [2.4, 4.8]
+          n_sample: [16, 32]
+    matcher: 'none' # may need to configure parameters for loc correction
+    roi_head:
+      num_cls: 1
+      in_channels: *cpm_features
+      n_fc_neurons: 256
+      dp_ratio: 0.3 # dropout ratio
+      roi_grid_pool:
+        grid_size: 6
+        mlps: [[64, 64], [64, 64]]
+        pool_radius: [0.8, 1.6]
+        n_sample: [16, 16]
+        pool_method: 'max_pool'
+
+loss:
+  core_method: fpvrcnn_loss
+  args:
+    stage1:
+      pos_cls_weight: 2.0
+      encode_rad_error_by_sin: true
+      cls:
+        type: 'SigmoidFocalLoss'
+        alpha: 0.25
+        gamma: 2.0
+        weight: 2.0
+      reg:
+        type: 'WeightedSmoothL1Loss'
+        sigma: 3.0
+        codewise: true
+        weight: 2.0
+      iou: &iou
+        type: 'WeightedSmoothL1Loss'
+        sigma: 3.0
+        codewise: true
+        weight: 1.0
+      dir:
+        type: 'WeightedSoftmaxClassificationLoss'
+        weight: 0.2
+    stage2:
+      cls:
+        type: 'WeightedSigmoidBinaryCELoss'
+        weight: 1.0
+      iou: *iou
+      reg:
+        type: 'WeightedSmoothL1Loss'
+        sigma: 3.0
+        reduction: 'mean'
+        code_weights: [20.0]
+        weight: 1.0
+
+optimizer:
+  core_method: Adam
+  lr: 0.002
+  args:
+    eps: 1e-10
+    weight_decay: 1e-4
+
+lr_scheduler:
+  core_method: multistep #step, multistep and Exponential support
+  gamma: 0.1
+  step_size: [10, 20]

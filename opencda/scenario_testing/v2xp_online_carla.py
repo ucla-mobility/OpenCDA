@@ -39,8 +39,11 @@ def run_scenario(opt, config_yaml):
         single_cav_list = \
             scenario_manager.create_vehicle_manager(application=['single', 'cooperative'],
                                                     data_dump=False)
-        rsu_list = \
-            scenario_manager.create_rsu_manager(data_dump=False)
+        # single_cav_list = \
+        #     scenario_manager.create_vehicle_manager(application=['single'],
+        #                                             data_dump=False)
+        # rsu_list = \
+        #     scenario_manager.create_rsu_manager(data_dump=False)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = \
@@ -69,12 +72,13 @@ def run_scenario(opt, config_yaml):
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
 
-            for rsu in rsu_list:
-                rsu.update_info()
-                rsu.run_step()
+            # for rsu in rsu_list:
+            #     rsu.update_info()
+            #     rsu.run_step()
 
     finally:
         eval_manager.evaluate()
+        cav_world.ml_manager.evaluate_final_average_precision()
 
         if opt.record:
             scenario_manager.client.stop_recorder()
@@ -83,7 +87,7 @@ def run_scenario(opt, config_yaml):
 
         for v in single_cav_list:
             v.destroy()
-        for r in rsu_list:
-            r.destroy()
+        # for r in rsu_list:
+        #     r.destroy()
         for v in bg_veh_list:
             v.destroy()

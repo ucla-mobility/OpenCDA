@@ -506,7 +506,6 @@ class PerceptionManager:
             'traffic_lights': []
         }
         if not self.activate:
-            self.search_nearby_cav()
             objects = self.deactivate_mode(objects)
         else:
             if self.cooperative:
@@ -524,21 +523,33 @@ class PerceptionManager:
         if self.lidar.data is None:
             return objects
 
-        enable_communicate = True
+        enable_communicate = False
         data = OrderedDict()
+
+        ego_data = self.co_manager.prepare_data(
+            cav_id=self.id,
+            camera=self.rgb_camera,
+            lidar=self.lidar,
+            pos=self.ego_pos,
+            agent=self.behavior_agent,
+            is_ego=True
+        )
+        data.update(ego_data)
+
         if enable_communicate:
             nearby_objects = self.co_manager.communicate()
-            for vid, nearby_cav_dict in nearby_objects.items():
-                nearby = self.co_manager.prepare_data(self.lidar, self.ego_pos, vid, nearby_cav_dict)
-                if nearby is None:
-                    return objects
-                data.update(nearby)
-        else:
-            ego_dict = {'is_ego': True, 'data': self.v2x_manager}
-            ego_data = self.co_manager.prepare_data(self.lidar, self.ego_pos, self.id, ego_dict)
-            if ego_data is None:
-                return objects
-            data.update(ego_data)
+            for vid, nearby_data_dict in nearby_objects.items():
+                nearby_vm = nearby_data_dict['vehicle_manager']
+                nearby_v2x_manager = nearby_data_dict['v2x_manager']
+                nearby_data = self.co_manager.prepare_data(
+                    cav_id=vid,
+                    camera=nearby_v2x_manager.get_ego_rgb_image(),
+                    lidar=nearby_v2x_manager.get_ego_lidar(),
+                    pos=nearby_v2x_manager.get_ego_pos(),
+                    agent=nearby_vm.agent,
+                    is_ego=False
+                )
+                data.update(nearby_data)
         # inference
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data)
         output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
@@ -546,7 +557,7 @@ class PerceptionManager:
         batch_data = self.ml_manager.to_device(output_dict)
         predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data)
         # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data)
-        self.ml_manager.evaluate_average_precision()
+        # self.ml_manager.evaluate_final_average_precision()
 
         # plot
         if self.lidar_visualize:

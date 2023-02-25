@@ -1,0 +1,61 @@
+root_dir: '/data/opv2v/train' # your original opv2v dataset
+output_dir: '/data/opv2v/train/additional' # the new folder to save the dumped new data
+map: # corresponding to bev map
+  activate: true # whether activate HDMap module
+  visualize: true # whether to visualize the BEV Map for each CAV
+
+  save_yml: false # whether to save the map meta data in yaml files
+  save_static: false # whether to dump road segmentation mask
+  save_lane: true # whether to dump lane segmentation mask
+  save_dynamic: false # whether to dump dynamic object BEV segmentaition mask
+  save_bev_vis: true # whether to dump the BEV visualization image that has all elements
+  save_bev_sem: true # whether to dump the BEV semantic mask that contains all elements
+
+  radius: 50 # the BEV Map range, e.g., 50 means a square around the ego whose side length is 100
+  raster_size: [256, 256] # the dumped BEV images resolution
+  lane_sample_resolution: 0.1 # the lane keypoint sampling resolution
+
+  static:
+    draw_lane: true # whether to draw lane on the BEV visualization image
+    draw_traffic_light: true # if set to true, the lanes that are influenced by traffic light will change color according to the light state, e.g., yellow, red, green
+    exclude_road: false # set this to false by default
+    exclude_intersection_lane: true # whether to draw the lane topology in the intersection
+    z_filter_value: 6 # the road that is higher or lower relative to ego's position than the threshold won't be drawed
+    other_objs: ['terrain', 'building', 'sidewalk'] # besides, lane and road, what other objects need to render on the BEV visualization image
+  dynamic:
+    exclude_self: true # if set to true, ego won't be drawed
+    exclude_off_road: true # eclude the objects that are off road
+    visibility: false # whether save visibility mask under ego coordinate. when set to true, semantic lidar has to be implemented
+    visibility_corp: false # whether save visibility mask that can be seen for all cavs. when set to true, semantic lidar has to be implemented
+
+sensor: # new attached sensor
+  sensor_list:
+    - name: 'semantic_lidar'
+      args: &base_semantic_lidar
+        upper_fov: 10
+        lower_fov: -30
+        channels: 32
+        rotation_frequency: 20
+        points_per_second: 250000
+        range: 50
+        relative_pose: front
+        thresh: 5 # mininum number of points hit to be regarded as visible
+    - name: 'semantic_lidar'
+      args:
+        <<: *base_semantic_lidar
+        relative_pose: left
+    - name: 'semantic_lidar'
+      args:
+        <<: *base_semantic_lidar
+        relative_pose: right
+    - name: 'semantic_lidar'
+      args:
+        <<: *base_semantic_lidar
+        relative_pose: back
+    - name: 'bev_semantic_camera'
+      args:
+        visualize: true
+        fov: 45
+        image_size_x: 512
+        image_size_y: 512
+        height: 115.88

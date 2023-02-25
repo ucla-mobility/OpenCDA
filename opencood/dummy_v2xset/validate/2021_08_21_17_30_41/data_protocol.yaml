@@ -1,0 +1,236 @@
+carla_traffic_manager:
+  auto_lane_change: true
+  global_distance: 1
+  global_speed_perc: -10
+  ignore_lights_percentage: 0
+  random: true
+  range:
+  - - -276
+    - -240
+    - -22
+    - 30
+    - 3.5
+    - 3.5
+    - 30
+  set_osm_mode: true
+  sync_mode: true
+  vehicle_list: null
+current_time: '2021_10_24_18_21_32'
+description: "Copyright 2021 <UCLA Mobility Lab>\nAuthor: Runsheng Xu <rxx3386@ucla.edu>\n\
+  Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control\n\
+  \         testing in high speed in the customized 2lanefree simple version."
+scenario:
+  rsu_list: []
+  single_cav_list:
+  - behavior:
+      collision_time_ahead: 1.5
+      emergency_param: 0.4
+      ignore_traffic_light: false
+      local_planner:
+        buffer_size: 12
+        debug: false
+        debug_trajectory: true
+        min_dist: 3
+        trajectory_dt: 0.2
+        trajectory_update_freq: 15
+        waypoint_update_freq: 9
+      max_speed: 24
+      overtake_allowed: false
+      overtake_counter_recover: 35
+      safety_time: 4
+      sample_resolution: 4.5
+      speed_decrease: 15
+      speed_lim_dist: 3
+      tailgate_speed: 34
+    controller: &id001
+      args:
+        dt: 0.05
+        dynamic: false
+        lat:
+          k_d: 0.02
+          k_i: 0.4
+          k_p: 0.75
+        lon:
+          k_d: 0.024
+          k_i: 0.032
+          k_p: 0.37
+        max_brake: 1.0
+        max_steering: 0.3
+        max_throttle: 1.0
+      type: pid_controller
+    destination:
+    - -275.62
+    - 50.2
+    - 0.3
+    - 0
+    - 90
+    - 0
+    sensing: &id002
+      localization:
+        activate: true
+        debug_helper:
+          show_animation: false
+          x_scale: 1.0
+          y_scale: 100.0
+        dt: 0.05
+        gnss:
+          heading_direction_stddev: 0.1
+          noise_alt_stddev: 0.005
+          noise_lat_stddev: 1.0e-06
+          noise_lon_stddev: 1.0e-06
+          speed_stddev: 0.2
+      perception:
+        activate: false
+        camera_num: 4
+        camera_visualize: 1
+        lidar:
+          channels: 64
+          dropoff_general_rate: 0.1
+          dropoff_intensity_limit: 0.7
+          dropoff_zero_intensity: 0.15
+          lower_fov: -25
+          noise_stddev: 0.02
+          points_per_second: 1300000
+          range: 120
+          rotation_frequency: 20
+          upper_fov: 2
+        lidar_visualize: true
+    spawn_position:
+    - -275.62
+    - -21.2
+    - 0.3
+    - 0
+    - 90
+    - 0
+    v2x:
+      communication_range: 45
+      enabled: true
+      lag: 0
+      loc_noise: 0.0
+      speed_noise: 0.0
+      yaw_noise: 0.0
+  - behavior:
+      collision_time_ahead: 1.5
+      emergency_param: 0.4
+      ignore_traffic_light: false
+      local_planner:
+        buffer_size: 12
+        debug: false
+        debug_trajectory: true
+        min_dist: 3
+        trajectory_dt: 0.2
+        trajectory_update_freq: 15
+        waypoint_update_freq: 9
+      max_speed: 24
+      overtake_allowed: false
+      overtake_counter_recover: 35
+      safety_time: 4
+      sample_resolution: 4.5
+      speed_decrease: 15
+      speed_lim_dist: 3
+      tailgate_speed: 34
+    controller: *id001
+    destination:
+    - -162.53
+    - -84.63
+    - 0.3
+    sensing: *id002
+    spawn_position:
+    - -265.64
+    - 25.59
+    - 0.35
+    - 0
+    - -90
+    - 0
+    v2x:
+      communication_range: 45
+      enabled: true
+      lag: 0
+      loc_noise: 0.0
+      speed_noise: 0.0
+      yaw_noise: 0.0
+  - behavior:
+      collision_time_ahead: 1.5
+      emergency_param: 0.4
+      ignore_traffic_light: false
+      local_planner:
+        buffer_size: 12
+        debug: false
+        debug_trajectory: true
+        min_dist: 3
+        trajectory_dt: 0.2
+        trajectory_update_freq: 15
+        waypoint_update_freq: 9
+      max_speed: 24
+      overtake_allowed: false
+      overtake_counter_recover: 35
+      safety_time: 4
+      sample_resolution: 4.5
+      speed_decrease: 15
+      speed_lim_dist: 3
+      tailgate_speed: 34
+    controller: *id001
+    destination:
+    - -162.53
+    - -84.63
+    - 0.3
+    sensing: *id002
+    spawn_position:
+    - -230.64
+    - -0.4591
+    - 1.0
+    - 0
+    - 180
+    - 0
+    v2x:
+      communication_range: 45
+      enabled: true
+      lag: 0
+      loc_noise: 0.0
+      speed_noise: 0.0
+      yaw_noise: 0.0
+vehicle_base:
+  behavior:
+    collision_time_ahead: 1.5
+    emergency_param: 0.4
+    ignore_traffic_light: false
+    local_planner:
+      buffer_size: 12
+      debug: false
+      debug_trajectory: false
+      min_dist: 3
+      trajectory_dt: 0.2
+      trajectory_update_freq: 15
+      waypoint_update_freq: 9
+    max_speed: 24
+    overtake_allowed: false
+    overtake_counter_recover: 35
+    safety_time: 4
+    sample_resolution: 4.5
+    speed_decrease: 15
+    speed_lim_dist: 3
+    tailgate_speed: 34
+  controller: *id001
+  sensing: *id002
+  v2x:
+    communication_range: 35
+    enabled: true
+    lag: 0
+    loc_noise: 0.0
+    speed_noise: 0.0
+    yaw_noise: 0.0
+world:
+  client_port: 2000
+  fixed_delta_seconds: 0.05
+  seed: 81
+  sync_mode: true
+  weather:
+    cloudiness: 0
+    fog_density: 0
+    fog_distance: 0
+    fog_falloff: 0
+    precipitation: 0
+    precipitation_deposits: 0
+    sun_altitude_angle: 15
+    wetness: 0
+    wind_intensity: 0

@@ -146,10 +146,6 @@ vehicle_base: &vehicle_base
     yaw_noise: 0.0
     speed_noise: 0.0
     lag: 0
-  cooperative:
-    options:
-      - lidar
-      # - camera uncomment camera if collecting the raw rgb camera image
 
 
 # define the background traffic control by carla
@@ -168,15 +164,15 @@ carla_traffic_manager:
   # Used only when vehicle_list is a number.
   #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
   range:
-    - [-11, 12, 100, 200, 3.5, 15, 10]
+    - [-11, 12, 100, 200, 3.5, 15, 25]
 
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
-  rsu_list:
-    - <<: *rsu_base
-      spawn_position: [12.00, 192.31, 3.0]
-      id: -1
+#  rsu_list:
+#    - <<: *rsu_base
+#      spawn_position: [12.00, 192.31, 3.0]
+#      id: -1
 
   single_cav_list:
     - <<: *vehicle_base
