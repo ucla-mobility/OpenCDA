@@ -123,9 +123,9 @@ class CoperceptionLibs:
             ]
         }
 
-    def load_camera_data(self):
+    def load_camera_data(self, lidar, rgb_camera):
         data = {}
-        for (i, camera) in enumerate(self.rgb_camera):
+        for (i, camera) in enumerate(rgb_camera):
             camera_param = {}
             camera_transformation = camera.sensor.get_transform()
             camera_param.update({'cords': [
@@ -144,7 +144,7 @@ class CoperceptionLibs:
 
             # dump extrinsic matrix lidar2camera
             lidar2world = \
-                st.x_to_world_transformation(self.lidar.sensor.get_transform())
+                st.x_to_world_transformation(lidar.sensor.get_transform())
             camera2world = \
                 st.x_to_world_transformation(camera.sensor.get_transform())
 

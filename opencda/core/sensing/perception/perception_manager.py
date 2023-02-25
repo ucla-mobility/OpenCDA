@@ -17,6 +17,7 @@ import open3d as o3d
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import \
     cal_distance_angle, get_speed, get_speed_sumo
+from opencda.core.sensing.perception.coperception_manager import CoperceptionManager
 from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import TrafficLight
@@ -461,6 +462,12 @@ class PerceptionManager:
             cav_world=self.cav_world
         )
 
+        self.co_manager = CoperceptionManager(
+            vid=self.id,
+            v2x_manager=self.v2x_manager,
+            coperception_libs=self.coperception_libs
+        )
+
     def dist(self, a):
         """
         A fast method to retrieve the obstacle distance the ego
@@ -516,41 +523,32 @@ class PerceptionManager:
         """
         if self.lidar.data is None:
             return objects
+
+        enable_communicate = True
         data = OrderedDict()
-        cav_id = str(self.id)
-        data[cav_id] = OrderedDict()
-        # TODO: subject to changes later on?
-        data[cav_id]['ego'] = True  # assume itself is ego
-        data[cav_id]['time_delay'] = self.coperception_libs.time_delay
-        # gather calculated data
-        data[cav_id]['params'] = {}
-        camera_data = self.coperception_libs.load_camera_data()
-        ego_data = self.coperception_libs.load_ego_data()
-        plan_trajectory_data = self.coperception_libs.load_plan_trajectory()
-        lidar_pose_data = self.coperception_libs.load_cur_lidar_pose()
-        vehicles = self.coperception_libs.load_vehicles(cav_id, self.ego_pos)
-        # update dic
-        data[cav_id]['params'].update(plan_trajectory_data)
-        data[cav_id]['params'].update(camera_data)
-        data[cav_id]['params'].update(ego_data)
-        data[cav_id]['params'].update(lidar_pose_data)
-        data[cav_id]['params'].update(vehicles)
-
-        transformation_matrix = self.coperception_libs.load_transformation_matrix(data[cav_id]['ego'],
-                                                                                  data[cav_id]['params'])
-        data[cav_id]['params'].update(transformation_matrix)
-        data[cav_id].update({'lidar_np': self.lidar.data})
-
-        # this doesn't exist on early/intermediate fusion dataset functions
-        # needs to manually added in the codebase
+        if enable_communicate:
+            nearby_objects = self.co_manager.communicate()
+            for vid, nearby_cav_dict in nearby_objects.items():
+                nearby = self.co_manager.prepare_data(self.lidar, self.ego_pos, vid, nearby_cav_dict)
+                if nearby is None:
+                    return objects
+                data.update(nearby)
+        else:
+            ego_dict = {'is_ego': True, 'data': self.v2x_manager}
+            ego_data = self.co_manager.prepare_data(self.lidar, self.ego_pos, self.id, ego_dict)
+            if ego_data is None:
+                return objects
+            data.update(ego_data)
+        # inference
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data)
         output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
             [reformat_data_dict])  # should have batch size dim
         batch_data = self.ml_manager.to_device(output_dict)
-        pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.inference(batch_data)
+        predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data)
         # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data)
         self.ml_manager.evaluate_average_precision()
 
+        # plot
         if self.lidar_visualize:
             while self.lidar.data is None:
                 continue
@@ -559,21 +557,13 @@ class PerceptionManager:
                 self.o3d_vis,
                 self.count,
                 self.lidar.o3d_pointcloud,
-                pred_box_tensor,
+                predict_box_tensor,
                 gt_box_tensor,
                 objects)
-        # add traffic light
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
 
         return objects
-
-    def search_nearby_cav(self):
-        if self.v2x_manager is not None:
-            print(f"nearby cav nearby {self.v2x_manager.cav_nearby}")
-            for _, vm in self.v2x_manager.cav_nearby.items():
-                lidar = vm.v2x_manager.get_ego_lidar()
-                print(f"lidar {lidar}")
 
     def activate_mode(self, objects):
         """

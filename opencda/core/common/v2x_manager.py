@@ -74,6 +74,7 @@ class V2XManager(object):
         self.ego_lidar = deque(maxlen=100)
         self.ego_image = deque(maxlen=100)
         # used to exclude the cav self during searching
+        self.ego_data = deque(maxlen=100)
         self.vid = vid
 
         # check if lag or noise needed to be added during communication
@@ -92,7 +93,7 @@ class V2XManager(object):
         if 'lag' in config_yaml:
             self.lag = config_yaml['lag']
 
-    def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image):
+    def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image, ego_data):
         """
         Update all communication plugins with current localization info.
         """
@@ -100,6 +101,7 @@ class V2XManager(object):
         self.ego_spd.append(ego_spd)
         self.ego_lidar.append(ego_lidar)
         self.ego_image.append(ego_image)
+        self.ego_data.append(ego_data)
         self.search()
 
         # the ego pos in platooning_plugin is used for self-localization,
@@ -167,6 +169,13 @@ class V2XManager(object):
             self.ego_image[-1 - int(abs(self.lag))]
         return image
 
+    def get_ego_data(self):
+        if not self.ego_data:
+            return
+        data = self.ego_data[0] if len(self.ego_data) < self.lag else \
+            self.ego_data[-1 - int(abs(self.lag))]
+        return data
+
     def search(self):
         """
         Search the CAVs nearby.
@@ -185,9 +194,9 @@ class V2XManager(object):
                 vm.v2x_manager.get_ego_pos().location)
 
             if distance < self.communication_range:
-                self.cav_nearby.update({vid: vm})
+                self.cav_nearby.update({vm.vehicle.id: vm.v2x_manager})
             else:
-                self.cav_nearby.pop(vid, None)
+                self.cav_nearby.pop(vm.vehicle.id, None)
     """
     -----------------------------------------------------------
                  Below is platooning related 
