@@ -36,7 +36,7 @@ class CavWorld(object):
         The machine learning manager class.
     """
 
-    def __init__(self, apply_ml=False, apply_coperception=False, fusion_method='late'):
+    def __init__(self, apply_ml=False, apply_coperception=False, fusion_method='early'):
 
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}

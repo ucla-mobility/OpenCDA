@@ -93,7 +93,7 @@ class V2XManager(object):
         if 'lag' in config_yaml:
             self.lag = config_yaml['lag']
 
-    def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image, ego_data):
+    def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image):
         """
         Update all communication plugins with current localization info.
         """
@@ -101,7 +101,6 @@ class V2XManager(object):
         self.ego_spd.append(ego_spd)
         self.ego_lidar.append(ego_lidar)
         self.ego_image.append(ego_image)
-        self.ego_data.append(ego_data)
         self.search()
 
         # the ego pos in platooning_plugin is used for self-localization,
@@ -169,13 +168,6 @@ class V2XManager(object):
             self.ego_image[-1 - int(abs(self.lag))]
         return image
 
-    def get_ego_data(self):
-        if not self.ego_data:
-            return
-        data = self.ego_data[0] if len(self.ego_data) < self.lag else \
-            self.ego_data[-1 - int(abs(self.lag))]
-        return data
-
     def search(self):
         """
         Search the CAVs nearby.
@@ -200,6 +192,7 @@ class V2XManager(object):
                 }})
             else:
                 self.cav_nearby.pop(vm.vehicle.id, None)
+
     """
     -----------------------------------------------------------
                  Below is platooning related 
@@ -310,7 +303,7 @@ class V2XManager(object):
             The ego vehicle's in team id.
         """
         return self.platooning_plugin.platooning_object, \
-               self.platooning_plugin.in_id
+            self.platooning_plugin.in_id
 
     def get_platoon_status(self):
         """
@@ -336,4 +329,4 @@ class V2XManager(object):
             Rear vehicle of the ego vehicle in the platoon.
         """
         return self.platooning_plugin.front_vehicle, \
-               self.platooning_plugin.rear_vechile
+            self.platooning_plugin.rear_vechile

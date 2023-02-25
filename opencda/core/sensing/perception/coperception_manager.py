@@ -14,14 +14,7 @@ class CoperceptionManager:
                 data.update({str(vid): vm})
         return data
 
-    def prepare_data(self,
-                     cav_id,
-                     camera,
-                     lidar,
-                     pos,
-                     agent,
-                     is_ego):
-
+    def prepare_data(self, cav_id, camera, lidar, pos, agent, is_ego):
         data = {cav_id: OrderedDict()}
         data[cav_id]['ego'] = is_ego
         data[cav_id]['time_delay'] = self.coperception_libs.time_delay

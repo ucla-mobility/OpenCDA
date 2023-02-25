@@ -88,23 +88,6 @@ class OpenCOODManager(object):
 
         return pred_box_tensor, pred_score, gt_box_tensor
 
-    def evaluate_average_precision(self):
-        for iou, iou_dict in self.result_stat.items():
-            if iou_dict['gt'] == 0:
-                print("skip this evaluation as the gt is divided by 0.")
-                return
-        ap_30, mrec_30, mpre_30 = calculate_ap(self.result_stat, 0.30)
-        ap_50, mrec_50, mpre_50 = calculate_ap(self.result_stat, 0.50)
-        ap_70, mrec_70, mpre_70 = calculate_ap(self.result_stat, 0.70)
-        print('The Average Precision at IOU 0.3 is %.2f, '
-              'The Average Precision at IOU 0.5 is %.2f, '
-              'The Average Precision at IOU 0.7 is %.2f' % (ap_30, ap_50, ap_70))
-        self.result_stat = {
-            0.3: {'tp': [], 'fp': [], 'gt': 0},
-            0.5: {'tp': [], 'fp': [], 'gt': 0},
-            0.7: {'tp': [], 'fp': [], 'gt': 0}
-        }
-
     def evaluate_final_average_precision(self):
         ap_30, mrec_30, mpre_30 = calculate_ap(self.result_stat, 0.30)
         ap_50, mrec_50, mpre_50 = calculate_ap(self.result_stat, 0.50)

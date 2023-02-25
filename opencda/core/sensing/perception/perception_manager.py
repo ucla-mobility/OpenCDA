@@ -523,7 +523,8 @@ class PerceptionManager:
         if self.lidar.data is None:
             return objects
 
-        enable_communicate = False
+        # TODO: need to pass in enable_comm flag thru yaml
+        enable_communicate = True
         data = OrderedDict()
 
         ego_data = self.co_manager.prepare_data(
