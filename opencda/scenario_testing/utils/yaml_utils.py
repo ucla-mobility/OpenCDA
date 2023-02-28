@@ -8,7 +8,7 @@ Used to load and write yaml files
 import re
 import yaml
 from datetime import datetime
-
+from omegaconf import OmegaConf
 
 def load_yaml(file):
     """
@@ -72,7 +72,10 @@ def save_yaml(data, save_name):
     save_name : string
         Full path of the output yaml file.
     """
-
-    with open(save_name, 'w') as outfile:
-        yaml.dump(data, outfile, default_flow_style=False)
+    if isinstance(data, dict):
+        with open(save_name, 'w') as outfile:
+            yaml.dump(data, outfile, default_flow_style=False)
+    else:
+        with open(save_name, "w") as f:
+            OmegaConf.save(data, f)
 

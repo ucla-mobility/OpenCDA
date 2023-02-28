@@ -299,7 +299,11 @@ class ScenarioManager:
 
         for i, cav_config in enumerate(
                 self.scenario_params['scenario']['single_cav_list']):
+            # in case the cav wants to join a platoon later
+            # it will be empty dictionary for single cav application
+            platoon_base = OmegaConf.create({'platoon': self.scenario_params.get('platoon_base',{})})
             cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
+                                         platoon_base,
                                          cav_config)
             # if the spawn position is a single scalar, we need to use map
             # helper to transfer to spawn transform
@@ -377,8 +381,15 @@ class ScenarioManager:
         # create platoons
         for i, platoon in enumerate(
                 self.scenario_params['scenario']['platoon_list']):
+            platoon = OmegaConf.merge(self.scenario_params['platoon_base'],
+                                      platoon)
             platoon_manager = PlatooningManager(platoon, self.cav_world)
             for j, cav in enumerate(platoon['members']):
+                platton_base = OmegaConf.create({'platoon': platoon})
+                cav = OmegaConf.merge(self.scenario_params['vehicle_base'],
+                                      platton_base,
+                                      cav
+                                      )
                 if 'spawn_special' not in cav:
                     spawn_transform = carla.Transform(
                         carla.Location(
@@ -439,6 +450,8 @@ class ScenarioManager:
         rsu_list = []
         for i, rsu_config in enumerate(
                 self.scenario_params['scenario']['rsu_list']):
+            rsu_config = OmegaConf.merge(self.scenario_params['rsu_base'],
+                                         rsu_config)
             rsu_manager = RSUManager(self.world, rsu_config,
                                      self.carla_map,
                                      self.cav_world,

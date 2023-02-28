@@ -21,6 +21,40 @@ world:
     wetness: 0
 
 
+# Define the basic parameters of the rsu
+rsu_base:
+  sensing:
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions:
+          - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 120
+        points_per_second: 1000000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 2
+        lower_fov: -25
+        dropoff_general_rate: 0.3
+        dropoff_intensity_limit: 0.7
+        dropoff_zero_intensity: 0.4
+        noise_stddev: 0.02
+    localization:
+      activate: true # when not activated, ego position will be retrieved from server directly
+      dt: ${world.fixed_delta_seconds} # used for kalman filter
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.05
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
+
 # Basic parameters of the vehicles
 vehicle_base:
   sensing: # include perception and localization
@@ -45,7 +79,7 @@ vehicle_base:
         noise_stddev: 0.0
 
     localization:
-      activate: true # when not activated, ego position will be retrieved from server directly
+      activate: false # when not activated, ego position will be retrieved from server directly
       dt: ${world.fixed_delta_seconds} # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.001
@@ -135,6 +169,16 @@ carla_traffic_manager:
   # Used only when vehicle_list is ~
   # x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
   range: []
+
+# define the platoon basic characteristics
+platoon_base:
+  max_capacity: 10
+  inter_gap: 0.6 # desired time gap
+  open_gap: 1.2 # open gap
+  warm_up_speed: 55 # required speed before cooperative merging
+  change_leader_speed: true # whether to assign leader multiple speed to follow
+  leader_speeds_profile: [ 85, 95 ] # different speed for leader to follow
+  stage_duration: 10 # how long should the leader keeps in the current velocity stage
 
 # define tne scenario in each specific scenario
 scenario:

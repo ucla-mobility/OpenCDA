@@ -15,12 +15,12 @@ import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.misc import get_speed
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
-from opencda.scenario_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.utils.yaml_utils import add_current_time
 
 
-def run_scenario(opt, config_yaml):
+def run_scenario(opt, scenario_params):
     try:
-        scenario_params = load_yaml(config_yaml)
+        scenario_params = add_current_time(scenario_params)
         current_path = os.path.dirname(os.path.realpath(__file__))
         xodr_path = os.path.join(
             current_path,
