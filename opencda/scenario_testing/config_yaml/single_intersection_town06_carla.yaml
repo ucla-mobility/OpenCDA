@@ -23,7 +23,7 @@ carla_traffic_manager:
   random: true # whether to random select vehicles' color and model
   vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
-  # x_min, x_max, y_min, y_max, x_step, y_step
+  # x_min, x_max, y_min, y_max, x_step, y_step, veh_num
   range:
     - [ 2, 10, 0, 200, 3.5, 25, 30]
 

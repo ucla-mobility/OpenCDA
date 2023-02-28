@@ -403,14 +403,16 @@ carla_traffic_manager:
     - spawn_position: [100, 100, 0.3, 0 , 20, 0]
     - spawn_position: [122, 666, 0.3, 0 , 0, 0]
 ```
-* Set the parameter `vehicle_list` under `carla_traffic_manager` as an integer. The CARLA server will then spawn
-the same number of vehicles. If `vehicle_list` is an  integer, an additional parameter `range` needs to be set to
-give the server the spawn area. In the example shown below, 5 vehicles will be randomly spawn in the restricted
-rectangle area  `0<x<100, 22<y<334`.
+* Set the parameter `vehicle_list` under `carla_traffic_manager` as `~`. The CARLA server will then spawn
+the vehicles randomly in a certain rectangle range given by the additional parameter `range`. 
 ```yaml
 carla_traffic_manager:
-    vehicle_list : 5
-    range: [0, 100, 22, 334]
+  vehicle_list: ~  # a number or a list
+  # Used only when vehicle_list is a number.
+  # x_min, x_max, y_min, y_max, x_step, y_step, veh_num
+  range:
+    - [ 2, 10, 0, 200, 3.5, 25, 30]
+
 ```
 Other important parameters:
 * `sync_mode` : bool type, it should be consistent with server's sync setting.
