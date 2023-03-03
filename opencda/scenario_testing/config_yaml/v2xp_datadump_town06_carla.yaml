@@ -7,7 +7,7 @@ description: |-
 # Comment out this chunk of code or set use_multi_class_bp to be False if you don't want to spawn multi-class actors
 blueprint:
   use_multi_class_bp: true
-  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0912.json" # Define the path for loading the blueprint metadata for defining the class of each blueprint
+  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0914.json" # Define the path for loading the blueprint metadata for defining the class of each blueprint
   # Define blueprint type sample probabilities
   bp_class_sample_prob:
     car: 0.5

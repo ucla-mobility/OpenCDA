@@ -1,0 +1,89 @@
+{
+    "vehicle.audi.a2": {
+        "class": "car"
+    },
+    "vehicle.audi.tt": {
+        "class": "car"
+    },
+    "vehicle.ford.ambulance": {
+        "class": "truck"
+    },
+    "vehicle.ford.crown": {
+        "class": "car"
+    },
+    "vehicle.mini.cooper_s_2021": {
+        "class": "car"
+    },
+    "vehicle.nissan.micra": {
+        "class": "car"
+    },
+    "vehicle.nissan.patrol": {
+        "class": "suv"
+    },
+    "vehicle.nissan.patrol_2021": {
+        "class": "suv"
+    },
+    "vehicle.tesla.cybertruck": {
+        "class": "truck"
+    },
+    "vehicle.volkswagen.t2": {
+        "class": "bus"
+    },
+    "vehicle.volkswagen.t2_2021": {
+        "class": "bus"
+    },
+    "vehicle.micro.microlino": {
+        "class": "car"
+    },
+    "vehicle.dodge.charger_police": {
+        "class": "car"
+    },
+    "vehicle.dodge.charger_police_2020": {
+        "class": "car"
+    },
+    "vehicle.dodge.charger_2020": {
+        "class": "car"
+    },
+    "vehicle.jeep.wrangler_rubicon": {
+        "class": "suv"
+    },
+    "vehicle.chevrolet.impala": {
+        "class": "car"
+    },
+    "vehicle.mini.cooper_s": {
+        "class": "car"
+    },
+    "vehicle.audi.etron": {
+        "class": "suv"
+    },
+    "vehicle.mercedes.coupe": {
+        "class": "car"
+    },
+    "vehicle.mercedes.coupe_2020": {
+        "class": "car"
+    },
+    "vehicle.bmw.grandtourer": {
+        "class": "car"
+    },
+    "vehicle.toyota.prius": {
+        "class": "car"
+    },
+    "vehicle.citroen.c3": {
+        "class": "car"
+    },
+    "vehicle.ford.mustang": {
+        "class": "car"
+    },
+    "vehicle.tesla.model3": {
+        "class": "car"
+    },
+    "vehicle.lincoln.mkz_2017": {
+        "class": "car"
+    },
+    "vehicle.lincoln.mkz_2020": {
+        "class": "car"
+    },
+    "vehicle.seat.leon": {
+        "class": "car"
+    }
+}
