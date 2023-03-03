@@ -47,7 +47,6 @@ carla_traffic_manager:
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
   global_speed_perc: -50
-  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
   vehicle_list:
     - spawn_position: [101.7194, 136.51, 0.3, 0, 0, 0]
       vehicle_speed_perc: -200

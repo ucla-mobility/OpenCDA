@@ -105,7 +105,7 @@ vehicle_base:
       history_size: 30
       col_thresh: 1
     stuck_dector:
-      len_thresh: 500
+      len_thresh: 1000
       speed_thresh: 0.5
     offroad_dector: [ ]
     traffic_light_detector: # whether the vehicle violate the traffic light
@@ -164,6 +164,11 @@ carla_traffic_manager:
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
+  ignore_signs_percentage: 0 # whether the cars will ignore stop signs
+  ignore_vehicles_percentage: 0 # whether the cars will ignore other cars and cause collisions
+  ignore_walkers_percentage: 0 # whether the cars will ingore walkers
+  random_left_lanechange_percentage: 0 # Adjust probability that in each timestep the actor will perform a left lane change, dependent on lane change availability.
+  random_right_lanechange_percentage: 0 # Adjust probability that in each timestep the actor will perform a right lane change, dependent on lane change availability.
   random: false # whether to random select vehicles' color and model
   vehicle_list: []  # define in each scenario. If set to ~, then the vehicles be spawned in a certain range
   # Used only when vehicle_list is ~

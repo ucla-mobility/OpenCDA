@@ -21,6 +21,7 @@ vehicle_base:
 # define the background traffic control by carla
 carla_traffic_manager:
   random: true # whether to random select vehicles' color and model
+  global_speed_perc: 0
   vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step, veh_num

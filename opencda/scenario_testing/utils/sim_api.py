@@ -626,10 +626,23 @@ class ScenarioManager:
             vehicle.set_autopilot(True, 8000)
             tm.auto_lane_change(vehicle, traffic_config['auto_lane_change'])
 
-            if 'ignore_lights_percentage' in traffic_config:
-                tm.ignore_lights_percentage(vehicle,
-                                            traffic_config[
+            # hazard behavior for traffic
+            tm.ignore_lights_percentage(vehicle, traffic_config[
                                                 'ignore_lights_percentage'])
+            tm.ignore_signs_percentage(vehicle, traffic_config[
+                                                'ignore_signs_percentage'])
+            tm.ignore_vehicles_percentage(vehicle, traffic_config[
+                                                'ignore_vehicles_percentage'])
+            tm.ignore_walkers_percentage(vehicle, traffic_config[
+                                                'ignore_walkers_percentage'])
+
+            # left/right lane change
+            if traffic_config['random_left_lanechange_percentage'] != 0:
+                tm.random_left_lanechange_percentage(vehicle,
+                                                     traffic_config['random_left_lanechange_percentage'])
+            if traffic_config['random_right_lanechange_percentage'] != 0:
+                tm.random_right_lanechange_percentage(vehicle,
+                                                     traffic_config['random_right_lanechange_percentage'])
 
             # each vehicle have slight different speed
             tm.vehicle_percentage_speed_difference(

@@ -31,7 +31,6 @@ vehicle_base:
 # define the background traffic control by carla
 carla_traffic_manager:
   random: true # whether to random select vehicles' color and model
-  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
   vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step
