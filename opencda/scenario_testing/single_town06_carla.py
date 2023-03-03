@@ -8,12 +8,12 @@ import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
-from opencda.scenario_testing.utils.yaml_utils import load_yaml
+from opencda.scenario_testing.utils.yaml_utils import add_current_time
 
 
-def run_scenario(opt, config_yaml):
+def run_scenario(opt, scenario_params):
     try:
-        scenario_params = load_yaml(config_yaml)
+        scenario_params = add_current_time(scenario_params)
 
         # create CAV world
         cav_world = CavWorld(opt.apply_ml)
