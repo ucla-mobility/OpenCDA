@@ -469,7 +469,7 @@ class LocalPlanner(object):
                 self._ego_pos.location, self._ego_pos.rotation.yaw)
 
             if angle > 90:
-                print('delete waypoint!')
+                # print('delete waypoint!')
                 del self._waypoint_buffer[j]
                 continue
 

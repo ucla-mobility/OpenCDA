@@ -1,16 +1,26 @@
 ## Yaml Rule
 
-To construct a scenario testing in OpenCDA, users have to first write a yml file to define the simulation parameters. To help reuse the parameters across different modules within the system, we adopt the `name anchor`. To know more details about the `named anchor` feature in yaml file, [read this blog](https://anil.io/blog/symfony/yaml/using-variables-in-yaml-files/). 
+To create a scenario test in OpenCDA, you need to start by writing a yml file to define the simulation parameters. This can be a bit tricky, so we've provided a helpful starting point in the form of a yaml file called default.yaml.
 
-Below we demonstrate an example in `platoon_2lanefree_carla` scenario. Our example yaml files for various scenes are stored in the path`opencda/scenario_testing/config_yaml`. 
+The default.yaml file provides default parameters for a scenario, which you can modify as needed to create your own scenario. Instead of starting from scratch, you can use this file as a template and only change the parts that are different from the default parameters.
 
+If you're not sure where to start, we've included example yaml files for various scenarios in the opencda/scenario_testing/config_yaml directory. You can use these as a guide or a starting point for your own scenario.
+
+Below show an concrete example:
 ```yaml
-# platoon_2lanefree_carla.yaml
-world:  # define the CARLA server setting
-  sync_mode: true # whether to use sync mode
-  client_port: 2000 # client port to connect to the server
-  fixed_delta_seconds: &delta 0.05 # fixed time step 
-  weather: # set weather parameters
+# default.yaml
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the template scenario testing configuration file that other scenarios could directly refer
+
+# define carla simulation setting
+world:
+  sync_mode: true
+  client_port: 2000
+  fixed_delta_seconds: 0.05
+  seed: 11 # seed for numpy and random
+  weather:
     sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
     cloudiness: 0 # 0 is the clean sky and 100 is the thickest cloud
     precipitation: 0 # rain, 100 is the heaviest rain
@@ -22,58 +32,277 @@ world:  # define the CARLA server setting
     wetness: 0
 
 
-vehicle_base: &vehicle_base # define cav default parameters
-  sensing: &base_sensing # define sensing parameters
-    perception: &base_perception # define perception related settings
-    localization: &base_localize # define localization related settings
-  map_manager: &base_map_manager # define HDMap manager
-  behavior: &base_behavior # define planning related parameters
-  controller: &base_controller # define controller
-    type: pid_controller # define the type of controller
-    args: ...  # define the detailed parmaters of the controller
-  v2x: &base_v2x # define v2x configuration
+# Define the basic parameters of the rsu
+rsu_base:
+  sensing:
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions:
+          - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 120
+        points_per_second: 1000000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 2
+        lower_fov: -25
+        dropoff_general_rate: 0.3
+        dropoff_intensity_limit: 0.7
+        dropoff_zero_intensity: 0.4
+        noise_stddev: 0.02
+    localization:
+      activate: true # when not activated, ego position will be retrieved from server directly
+      dt: ${world.fixed_delta_seconds} # used for kalman filter
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.05
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
 
-carla_traffic_manager: # define the background traffic controled by carla.TrafficManager
-  global_speed_perc: -100 # define the default speed of traffic flow
-  auto_lane_change: false # whether lane change is allowed in the traffic flow
-  ...: # some other parameters
-  random: true # whether the car models of traffic flow are random selected
-  vehicle_list: # define all human drive vehicles' position and individual speed
-    - spawn_position: [x,y,z,pitch,yaw,roll]
-      vehicle_speed_perc: -200 # this speed will overwrite the default traffic flow speed
-  # this is another we to define carla traffic flow by giving the number of
-  # spawn vehicles and the spawn range.
-  # vehicle_list : 10 
-  # range: [x1, y1, x2, y2]
-    
-platoon_base: &platoon_base # define the platoon default characteristics
+# Basic parameters of the vehicles
+vehicle_base:
+  sensing: # include perception and localization
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 1 # how many cameras are mounted on the vehicle.
+        positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+          - [2.5, 0, 1.0, 0]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 50
+        points_per_second: 100000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+
+    localization:
+      activate: false # when not activated, ego position will be retrieved from server directly
+      dt: ${world.fixed_delta_seconds} # used for kalman filter
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.001
+        noise_lat_stddev: 1.0e-6
+        noise_lon_stddev: 1.0e-6
+        heading_direction_stddev: 0.1 # degree
+        speed_stddev: 0.2
+      debug_helper:
+        show_animation: false # whether to show real-time trajectory plotting
+        x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
+        y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
+
+  map_manager:
+    pixels_per_meter: 2 # rasterization map resolution
+    raster_size: [224, 224] # the rasterize map size (pixel)
+    lane_sample_resolution: 0.1 # for every 0.1m, we draw a point of lane
+    visualize: true # whether to visualize the rasteraization map
+    activate: true # whether activate the map manager
+
+  safety_manager: # used to watch the safety status of the cav
+    print_message: true # whether to print the message if hazard happens
+    collision_sensor:
+      history_size: 30
+      col_thresh: 1
+    stuck_dector:
+      len_thresh: 500
+      speed_thresh: 0.5
+    offroad_dector: [ ]
+    traffic_light_detector: # whether the vehicle violate the traffic light
+      light_dist_thresh: 20
+
+  behavior:
+    max_speed: 111 # maximum speed, km/h
+    tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
+    speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
+    speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
+    safety_time: 4 # ttc safety thresholding for decreasing speed
+    emergency_param: 0.4 # used to identify whether a emergency stop needed
+    ignore_traffic_light: true # whether to ignore traffic light
+    overtake_allowed: true # whether overtake allowed, typically false for platoon leader
+    collision_time_ahead: 1.5 # used for collision checking
+    overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
+    sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
+    local_planner:  # trajectory planning related
+      buffer_size: 12 # waypoint buffer size
+      trajectory_update_freq: 15 # used to control trajectory points updating frequency
+      waypoint_update_freq: 9 # used to control waypoint updating frequency
+      min_dist: 3 # used to pop out the waypoints too close to current location
+      trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
+      debug: false # whether to draw future/history waypoints
+      debug_trajectory: false # whether to draw the trajectory points and path
+
+  controller:
+    type: pid_controller # this has to be exactly the same name as the controller py file
+    args:
+      lat:
+        k_p: 0.75
+        k_d: 0.02
+        k_i: 0.4
+      lon:
+        k_p: 0.37
+        k_d: 0.024
+        k_i: 0.032
+      dynamic: false # whether use dynamic pid setting
+      dt: ${world.fixed_delta_seconds} # this should be equal to your simulation time-step
+      max_brake: 1.0
+      max_throttle: 1.0
+      max_steering: 0.3
+  v2x:  # communication related
+    enabled: true
+    communication_range: 35
+
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  sync_mode: true # has to be same as the world setting
+  global_distance: 5 # the minimum distance in meters that vehicles have to keep with the rest
+  # Sets the difference the vehicle's intended speed and its current speed limit.
+  #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
+  # and 20 represents 24 km/h
+  global_speed_perc: -100
+  set_osm_mode: true # Enables or disables the OSM mode.
+  auto_lane_change: false
+  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
+  random: false # whether to random select vehicles' color and model
+  vehicle_list: []  # define in each scenario. If set to ~, then the vehicles be spawned in a certain range
+  # Used only when vehicle_list is ~
+  # x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
+  range: []
+
+# define the platoon basic characteristics
+platoon_base:
   max_capacity: 10
   inter_gap: 0.6 # desired time gap
-  open_gap: 1.5 # desired open gap during cut-in join
-  warm_up_speed: 55 # required minimum speed before cooperative merging
+  open_gap: 1.2 # open gap
+  warm_up_speed: 55 # required speed before cooperative merging
+  change_leader_speed: true # whether to assign leader multiple speed to follow
+  leader_speeds_profile: [ 85, 95 ] # different speed for leader to follow
+  stage_duration: 10 # how long should the leader keeps in the current velocity stage
 
-
-scenario: # define each cav's spawn position, driving task, and parameters
-  platoon_list: # define the platoons
-    - <<: *platoon_base # the first platoon will take the default platoon parameters
-      destination: [x, y, z] # platoon destination
-      members: # define the first platoon's members
-       - <<: *vehicle_base # the platoon leader(a cav) will take the default cav parameters
-        spawn_position: ...
-        behavior:
-          <<: *base_behavior
-          max_speed: 100 # overwrite the default target speed defined in &vehicle_base
-        platoon: *platoon_base # add a new category 'platoon' to the origin vehicle parameters
-        - <<: *vehicle_base # the second platoon mameber(a cav)
-          ...
-    single_cav_list: # define the cavs that are not in any platoon and aim to search and join one.
-       - <<: *vehicle_base
-         spawn_position: [x,y,z,pitch,yaw,roll]
-         destination: [x, y, z]
-         sensing: &base_sensing # point to default sensing setting
-           ...: ... # overwrite the default sensing parameters for this cav
-  
+# define tne scenario in each specific scenario
+scenario:
+  single_cav_list: []
+  platoon_list: []
 ```
+The above yaml file is the `default.yaml`. If the users wants to create a platoon joining scenario in highway,
+here is how we create `platoon_joining_2lanefree_carla.yaml`:
+
+```yaml
+# platoon_joining_2lanefree_carla.yaml
+vehicle_base:
+  sensing:
+    perception:
+      camera:
+        visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions: []
+      lidar:
+        visualize: false
+  map_manager:
+    visualize: false
+    activate: false
+  behavior:
+    max_speed: 95 # maximum speed, km/h
+    tailgate_speed: 105 # when a vehicles needs to be close to another vehicle asap
+    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
+    collision_time_ahead: 1.3 # used for collision checking
+    overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
+    local_planner:
+      trajectory_dt: 0.25 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
+
+# define the platoon basic characteristics
+platoon_base:
+  max_capacity: 10
+  inter_gap: 0.6 # desired time gap
+  open_gap: 1.5 # open gap
+  warm_up_speed: 55 # required speed before cooperative merging
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  global_distance: 4.0 # the minimum distance in meters that vehicles have to keep with the rest
+  # Sets the difference the vehicle's intended speed and its current speed limit.
+  #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
+  # and 20 represents 24 km/h
+  global_speed_perc: -300
+  vehicle_list:
+    - spawn_position: [-285, 8.3, 0.3, 0, 0, 0]
+    - spawn_position: [-310, 8.3, 0.3, 0, 0, 0]
+    - spawn_position: [-390, 8.3, 0.3, 0, 0, 0]
+    - spawn_position: [-320, 4.8, 0.3, 0, 0, 0]
+      vehicle_speed_perc: -200
+    - spawn_position: [-335, 4.8, 0.3, 0, 0, 0]
+    - spawn_position: [-360, 4.8, 0.3, 0, 0, 0]
+    - spawn_position: [-400, 4.8, 0.3, 0, 0, 0]
+    - spawn_position: [-410, 4.8, 0.3, 0, 0, 0]
+
+# define scenario. In this scenario, a 4-vehicle platoon already exists.
+scenario:
+  platoon_list:
+    - name: platoon1
+      destination: [1000.372955, 8.3, 0.3]
+      members: # the first one is regarded as leader by default
+        - name: cav1
+          spawn_position: [-350, 8.3, 0.3, 0, 0, 0] # x, y, z, roll, yaw, pitch
+          perception:
+            camera:
+              visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+              num: 1 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+              # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+              positions:
+                - [2.5, 0, 1.0, 0]
+            lidar:
+              visualize: true
+          behavior:
+            local_planner:
+              debug_trajectory: true
+              debug: false
+        - name: cav2
+          spawn_position: [-360, 8.3, 0.3, 0, 0, 0]
+        - name: cav3
+          spawn_position: [-370, 8.3, 0.3, 0, 0, 0]
+        - name: cav4
+          spawn_position: [-380, 8.3, 0.3, 0, 0, 0]
+  single_cav_list: # this is for merging vehicle or single cav without v2x
+    - name: single_cav
+      spawn_position: [-380, 4.8, 0.3, 0, 0, 0]
+      # when this is defined, the above parameter will be ignored, and a special map function will
+      # be used to define the spawn position based on the argument
+      spawn_special: [0.625]
+      destination: [300, 12.0, 0]
+      sensing:
+        perception:
+          camera:
+            visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+            num: 1 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+            # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+            positions:
+              - [2.5, 0, 1.0, 0]
+          lidar:
+            visualize: true
+      v2x:
+        communication_range: 35
+      behavior:
+        overtake_allowed: true
+        local_planner:
+          debug_trajectory: true
+          debug: false
+```
+As you can see, the `platoon_joining_2lanefree_carla.yaml` only contains the part that `default.yaml` does not have or has different
+parameters. 
+
 ### Detailed Explanation
 
 ---
@@ -174,14 +403,16 @@ carla_traffic_manager:
     - spawn_position: [100, 100, 0.3, 0 , 20, 0]
     - spawn_position: [122, 666, 0.3, 0 , 0, 0]
 ```
-* Set the parameter `vehicle_list` under `carla_traffic_manager` as an integer. The CARLA server will then spawn
-the same number of vehicles. If `vehicle_list` is an  integer, an additional parameter `range` needs to be set to
-give the server the spawn area. In the example shown below, 5 vehicles will be randomly spawn in the restricted
-rectangle area  `0<x<100, 22<y<334`.
+* Set the parameter `vehicle_list` under `carla_traffic_manager` as `~`. The CARLA server will then spawn
+the vehicles randomly in a certain rectangle range given by the additional parameter `range`. 
 ```yaml
 carla_traffic_manager:
-    vehicle_list : 5
-    range: [0, 100, 22, 334]
+  vehicle_list: ~  # a number or a list
+  # Used only when vehicle_list is a number.
+  # x_min, x_max, y_min, y_max, x_step, y_step, veh_num
+  range:
+    - [ 2, 10, 0, 200, 3.5, 25, 30]
+
 ```
 Other important parameters:
 * `sync_mode` : bool type, it should be consistent with server's sync setting.
