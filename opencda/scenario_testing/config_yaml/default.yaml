@@ -10,7 +10,7 @@ world:
   fixed_delta_seconds: 0.05
   seed: 11 # seed for numpy and random
   weather:
-    sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
+    sun_altitude_angle: 50 # 90 is the midday and -90 is the midnight
     cloudiness: 0 # 0 is the clean sky and 100 is the thickest cloud
     precipitation: 0 # rain, 100 is the heaviest rain
     precipitation_deposits: 0 # Determines the creation of puddles. Values range from 0 to 100, being 0 none at all and 100 a road completely capped with water.

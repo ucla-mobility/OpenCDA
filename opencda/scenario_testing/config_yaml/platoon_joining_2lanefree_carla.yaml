@@ -84,7 +84,7 @@ scenario:
       spawn_position: [-380, 4.8, 0.3, 0, 0, 0]
       # when this is defined, the above parameter will be ignored, and a special map function will
       # be used to define the spawn position based on the argument
-      spawn_special: [0.625]
+      spawn_special: [0.700]
       destination: [300, 12.0, 0]
       sensing:
         perception:

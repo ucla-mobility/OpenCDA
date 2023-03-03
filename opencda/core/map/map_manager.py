@@ -289,7 +289,11 @@ class MapManager(object):
             while nxt.road_id == waypoint.road_id \
                     and nxt.lane_id == waypoint.lane_id:
                 waypoints.append(nxt)
-                nxt = nxt.next(self.lane_sample_resolution)[0]
+                nxt = nxt.next(self.lane_sample_resolution)
+                if len(nxt) > 0:
+                    nxt = nxt[0]
+                else:
+                    break
 
             # waypoint is the centerline, we need to calculate left lane mark
             left_marking = [lateral_shift(w.transform, -w.lane_width * 0.5) for

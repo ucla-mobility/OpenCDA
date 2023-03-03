@@ -483,7 +483,7 @@ class ScenarioManager:
 
         # if not random select, we always choose lincoln.mkz with green color
         color = '0, 255, 0'
-        default_model = 'vehicle.lincoln.mkz_2017'
+        default_model = 'vehicle.lincoln.mkz_2020'
         ego_vehicle_bp = blueprint_library.find(default_model)
 
         for i, vehicle_config in enumerate(traffic_config['vehicle_list']):
@@ -557,7 +557,7 @@ class ScenarioManager:
 
         # if not random select, we always choose lincoln.mkz with green color
         color = '0, 255, 0'
-        default_model = 'vehicle.lincoln.mkz_2017'
+        default_model = 'vehicle.lincoln.mkz_2020'
         ego_vehicle_bp = blueprint_library.find(default_model)
 
         spawn_ranges = traffic_config['range']

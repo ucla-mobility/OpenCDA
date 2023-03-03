@@ -12,6 +12,9 @@ world:
 
 # First define the basic parameters of the vehicles
 vehicle_base:
+  behavior:
+    max_speed: 101 # maximum speed, km/h
+
   map_manager:
     visualize: false
     activate: false

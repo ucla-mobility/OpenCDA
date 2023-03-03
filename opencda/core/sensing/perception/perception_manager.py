@@ -613,14 +613,14 @@ class PerceptionManager:
         objects.update({'vehicles': vehicle_list})
 
         if self.camera_visualize:
-            while self.rgb_camera[0].image is None:
-                continue
 
             names = ['front', 'right', 'left', 'back']
 
             for (i, rgb_camera) in enumerate(self.rgb_camera):
                 if i > self.camera_num - 1 or i > self.camera_visualize - 1:
                     break
+                while rgb_camera.image is None:
+                    continue
                 # we only visualiz the frontal camera
                 rgb_image = np.array(rgb_camera.image)
                 # draw the ground truth bbx on the camera image
@@ -675,6 +675,9 @@ class PerceptionManager:
         semantic_idx = self.semantic_lidar.obj_idx
         semantic_tag = self.semantic_lidar.obj_tag
 
+        if semantic_tag is None or semantic_idx is None:
+            print('none')
+            return vehicle_list
         # label 10 is the vehicle
         vehicle_idx = semantic_idx[semantic_tag == 10]
         # each individual instance id

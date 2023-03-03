@@ -13,8 +13,7 @@ blueprint:
     car: 0.5
     truck: 0.1
     bus: 0.1
-    bicycle: 0.1
-    motorcycle: 0.1
+    suv: 0.2
 
 
 # Define the basic parameters of the vehicles
@@ -46,7 +45,7 @@ vehicle_base:
     visualize: false
     activate: false
   behavior:
-    max_speed: 30 # maximum speed, km/h
+    max_speed: 25 # maximum speed, km/h
     tailgate_speed: 34 # when a vehicles needs to be close to another vehicle asap
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
 
@@ -74,15 +73,6 @@ scenario:
     - name: cav1
       spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
       destination: [67.12, 150.2, 1.0]
-      v2x:
-        communication_range: 45
-      behavior:
-        local_planner:
-          debug_trajectory: false
-          debug: false
-    - name: cav2
-      spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
-      destination: [-2.43, 263, 0.3]
       v2x:
         communication_range: 45
       behavior:
