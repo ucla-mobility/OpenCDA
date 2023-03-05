@@ -60,7 +60,7 @@
 #
 # docker build --no-cache --rm --build-arg ARG -t opencda:develop .
 
-# USAGE:
+# Usage:
 #
 # Launch a container by running
 #
@@ -120,14 +120,14 @@ RUN if [ $ADDITIONAL_MAPS = true ] ; then \
 wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/AdditionalMaps_$CARLA_VERSION.tar.gz -nv \
 --show-progress --progress=bar:force:noscroll && \
 tar -zxvf AdditionalMaps_$CARLA_VERSION.tar.gz --directory carla && rm AdditionalMaps_$CARLA_VERSION.tar.gz ; \
-elif [ $ADDITIONAL_MAPS != false ] ; then echo "Invalid ADDITIONAL_MAPS argument" ; \
+elif [ $ADDITIONAL_MAPS != false ] ; then echo "Invalid ADDITIONAL_MAPS argument." ; \
 else echo "Additional CARLA maps will not be installed." ; fi
 
 # Install the perception components (PyTorch and YOLOv5).
 
 RUN if [ $PERCEPTION = true ] ; then \
 pip install torch torchvision torchaudio yolov5 ; \
-elif [ $PERCEPTION != false ] ; then echo "Invalid PERCEPTION argument" ; \
+elif [ $PERCEPTION != false ] ; then echo "Invalid PERCEPTION argument." ; \
 else echo "Perception components (PyTorch and YOLOv5) will not be installed." ; fi
 
 # Install SUMO.
@@ -135,7 +135,7 @@ else echo "Perception components (PyTorch and YOLOv5) will not be installed." ; 
 RUN if [ $SUMO = true ] ; then \
 add-apt-repository ppa:sumo/stable && apt-get update && apt-get install -y sumo sumo-tools sumo-doc \
 && pip install traci ; \
-elif [ $SUMO != false ] ; then echo "Invalid SUMO argument" ; \
+elif [ $SUMO != false ] ; then echo "Invalid SUMO argument." ; \
 else echo "SUMO will not be installed." ; fi
 
 # Install OpenCDA.
@@ -147,7 +147,7 @@ elif [ $OPENCDA_FULL_INSTALL = true ] ; then \
 git clone https://github.com/ucla-mobility/OpenCDA.git && pip install -r OpenCDA/requirements.txt \
 && chmod u+x OpenCDA/setup.sh && sed -i '/conda activate opencda/d' OpenCDA/setup.sh \
 && sed -i 's+${PWD}/+${PWD}/OpenCDA/+g' OpenCDA/setup.sh && ./OpenCDA/setup.sh ; \
-else echo "Invalid OPENCDA_FULL_INSTALL argument" ; fi
+else echo "Invalid OPENCDA_FULL_INSTALL argument." ; fi
 
 # Change the ownership of all files in the "home" directory.
 
