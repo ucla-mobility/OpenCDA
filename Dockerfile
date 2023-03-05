@@ -106,10 +106,7 @@ libsm6 libgl1-mesa-glx libomp5 pip unzip libjpeg8 libtiff5 software-properties-c
 
 # Install CARLA.
 
-RUN useradd -m $USER
-
-RUN mkdir carla && chown $USER:$USER /home/carla
-
+RUN mkdir carla
 RUN wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_$CARLA_VERSION.tar.gz -nv --show-progress \
 --progress=bar:force:noscroll
 RUN tar -zxvf CARLA_$CARLA_VERSION.tar.gz --directory carla && rm CARLA_$CARLA_VERSION.tar.gz
@@ -151,6 +148,7 @@ else echo "Invalid OPENCDA_FULL_INSTALL argument." ; fi
 
 # Change the ownership of all files in the "home" directory.
 
+RUN useradd -m $USER
 RUN chown -R $USER:$USER /home
 
 USER $USER
