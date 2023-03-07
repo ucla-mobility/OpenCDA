@@ -26,8 +26,6 @@ from opencda.core.map.map_drawing import \
 class MapManager(object):
     """
     This class is used to manage HD Map. We emulate the style of Lyft dataset.
-    todo: Currently mainly used for map rasterization.
-    todo: everything is groundtruth loaded from server directly.
 
     Parameters
     ----------
@@ -65,7 +63,6 @@ class MapManager(object):
 
     crosswalk_info : dict
         A dictionary that contains all crosswalk information.
-        todo: will be implemented in the next version.
 
     traffic_light_info : dict
         A dictionary that contains all traffic light information.
@@ -127,15 +124,9 @@ class MapManager(object):
         self.generate_lane_cross_info()
 
         # bev maps
-        self.dynamic_bev = 255 * np.zeros(
-            shape=(self.raster_size[1], self.raster_size[0], 3),
-            dtype=np.uint8)
-        self.static_bev = 255 * np.ones(
-            shape=(self.raster_size[1], self.raster_size[0], 3),
-            dtype=np.uint8)
-        self.vis_bev = 255 * np.ones(
-            shape=(self.raster_size[1], self.raster_size[0], 3),
-            dtype=np.uint8)
+        self.dynamic_bev = None
+        self.static_bev = None
+        self.vis_bev = None
 
     def update_information(self, ego_pose):
         """

@@ -1,0 +1,186 @@
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the template scenario testing configuration file that other scenarios could directly refer
+
+# define carla simulation setting
+world:
+  sync_mode: true
+  client_port: 2000
+  fixed_delta_seconds: 0.05
+  seed: 11 # seed for numpy and random
+  weather:
+    sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
+    cloudiness: 0 # 0 is the clean sky and 100 is the thickest cloud
+    precipitation: 0 # rain, 100 is the heaviest rain
+    precipitation_deposits: 0 # Determines the creation of puddles. Values range from 0 to 100, being 0 none at all and 100 a road completely capped with water.
+    wind_intensity: 0 # it will influence the rain
+    fog_density: 0 # fog thickness, 100 is the largest
+    fog_distance: 0  # Fog start distance. Values range from 0 to infinite.
+    fog_falloff: 0 # Density of the fog (as in specific mass) from 0 to infinity. The bigger the value, the more dense and heavy it will be, and the fog will reach smaller heights
+    wetness: 0
+
+
+# Define the basic parameters of the rsu
+rsu_base:
+  sensing:
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions:
+          - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 120
+        points_per_second: 1000000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 2
+        lower_fov: -25
+        dropoff_general_rate: 0.3
+        dropoff_intensity_limit: 0.7
+        dropoff_zero_intensity: 0.4
+        noise_stddev: 0.02
+    localization:
+      activate: true # when not activated, ego position will be retrieved from server directly
+      dt: ${world.fixed_delta_seconds} # used for kalman filter
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.05
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
+
+# Basic parameters of the vehicles
+vehicle_base:
+  sensing: # include perception and localization
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 1 # how many cameras are mounted on the vehicle.
+        positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+          - [2.5, 0, 1.0, 0]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 50
+        points_per_second: 100000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+
+    localization:
+      activate: false # when not activated, ego position will be retrieved from server directly
+      dt: ${world.fixed_delta_seconds} # used for kalman filter
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.001
+        noise_lat_stddev: 1.0e-6
+        noise_lon_stddev: 1.0e-6
+        heading_direction_stddev: 0.1 # degree
+        speed_stddev: 0.2
+      debug_helper:
+        show_animation: false # whether to show real-time trajectory plotting
+        x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
+        y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
+
+  map_manager:
+    pixels_per_meter: 2 # rasterization map resolution
+    raster_size: [224, 224] # the rasterize map size (pixel)
+    lane_sample_resolution: 0.1 # for every 0.1m, we draw a point of lane
+    visualize: true # whether to visualize the rasteraization map
+    activate: true # whether activate the map manager
+
+  safety_manager: # used to watch the safety status of the cav
+    print_message: true # whether to print the message if hazard happens
+    collision_sensor:
+      history_size: 30
+      col_thresh: 1
+    stuck_dector:
+      len_thresh: 500
+      speed_thresh: 0.5
+    offroad_dector: [ ]
+    traffic_light_detector: # whether the vehicle violate the traffic light
+      light_dist_thresh: 20
+
+  behavior:
+    max_speed: 111 # maximum speed, km/h
+    tailgate_speed: 121 # when a vehicles needs to be close to another vehicle asap
+    speed_lim_dist: 3 # max_speed - speed_lim_dist = target speed
+    speed_decrease: 15 # used in car following mode to decrease speed for distance keeping
+    safety_time: 4 # ttc safety thresholding for decreasing speed
+    emergency_param: 0.4 # used to identify whether a emergency stop needed
+    ignore_traffic_light: true # whether to ignore traffic light
+    overtake_allowed: true # whether overtake allowed, typically false for platoon leader
+    collision_time_ahead: 1.5 # used for collision checking
+    overtake_counter_recover: 35 # the vehicle can not do another overtake during next certain steps
+    sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
+    local_planner:  # trajectory planning related
+      buffer_size: 12 # waypoint buffer size
+      trajectory_update_freq: 15 # used to control trajectory points updating frequency
+      waypoint_update_freq: 9 # used to control waypoint updating frequency
+      min_dist: 3 # used to pop out the waypoints too close to current location
+      trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
+      debug: false # whether to draw future/history waypoints
+      debug_trajectory: false # whether to draw the trajectory points and path
+
+  controller:
+    type: pid_controller # this has to be exactly the same name as the controller py file
+    args:
+      lat:
+        k_p: 0.75
+        k_d: 0.02
+        k_i: 0.4
+      lon:
+        k_p: 0.37
+        k_d: 0.024
+        k_i: 0.032
+      dynamic: false # whether use dynamic pid setting
+      dt: ${world.fixed_delta_seconds} # this should be equal to your simulation time-step
+      max_brake: 1.0
+      max_throttle: 1.0
+      max_steering: 0.3
+  v2x:  # communication related
+    enabled: true
+    communication_range: 35
+
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  sync_mode: true # has to be same as the world setting
+  global_distance: 5 # the minimum distance in meters that vehicles have to keep with the rest
+  # Sets the difference the vehicle's intended speed and its current speed limit.
+  #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
+  # and 20 represents 24 km/h
+  global_speed_perc: -100
+  set_osm_mode: true # Enables or disables the OSM mode.
+  auto_lane_change: false
+  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
+  random: false # whether to random select vehicles' color and model
+  vehicle_list: []  # define in each scenario. If set to ~, then the vehicles be spawned in a certain range
+  # Used only when vehicle_list is ~
+  # x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
+  range: []
+
+# define the platoon basic characteristics
+platoon_base:
+  max_capacity: 10
+  inter_gap: 0.6 # desired time gap
+  open_gap: 1.2 # open gap
+  warm_up_speed: 55 # required speed before cooperative merging
+  change_leader_speed: true # whether to assign leader multiple speed to follow
+  leader_speeds_profile: [ 85, 95 ] # different speed for leader to follow
+  stage_duration: 10 # how long should the leader keeps in the current velocity stage
+
+# define tne scenario in each specific scenario
+scenario:
+  single_cav_list: []
+  platoon_list: []

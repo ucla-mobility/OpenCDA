@@ -87,7 +87,10 @@ class CameraSensor:
 
         pitch = 0
         carla_location = carla.Location(x=0, y=0, z=0)
+        x, y, z, yaw = relative_position
 
+        # this is for rsu. It utilizes global position instead of relative
+        # position to the vehicle
         if global_position is not None:
             carla_location = carla.Location(
                 x=global_position[0],
@@ -95,28 +98,9 @@ class CameraSensor:
                 z=global_position[2])
             pitch = -35
 
-        if relative_position == 'front':
-            carla_location = carla.Location(x=carla_location.x + 2.5,
-                                            y=carla_location.y,
-                                            z=carla_location.z + 1.0)
-            yaw = 0
-
-        elif relative_position == 'right':
-            carla_location = carla.Location(x=carla_location.x + 0.0,
-                                            y=carla_location.y + 0.3,
-                                            z=carla_location.z + 1.8)
-            yaw = 100
-
-        elif relative_position == 'left':
-            carla_location = carla.Location(x=carla_location.x + 0.0,
-                                            y=carla_location.y - 0.3,
-                                            z=carla_location.z + 1.8)
-            yaw = -100
-        else:
-            carla_location = carla.Location(x=carla_location.x - 2.0,
-                                            y=carla_location.y,
-                                            z=carla_location.z + 1.5)
-            yaw = 180
+        carla_location = carla.Location(x=carla_location.x + x,
+                                        y=carla_location.y + y,
+                                        z=carla_location.z + z)
 
         carla_rotation = carla.Rotation(roll=0, yaw=yaw, pitch=pitch)
         spawn_point = carla.Transform(carla_location, carla_rotation)
@@ -379,12 +363,13 @@ class PerceptionManager:
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
+        self._map = self.carla_world.get_map()
         self.id = infra_id if infra_id is not None else vehicle.id
 
         self.activate = config_yaml['activate']
-        self.camera_visualize = config_yaml['camera_visualize']
-        self.camera_num = min(config_yaml['camera_num'], 4)
-        self.lidar_visualize = config_yaml['lidar_visualize']
+        self.camera_visualize = config_yaml['camera']['visualize']
+        self.camera_num = config_yaml['camera']['num']
+        self.lidar_visualize = config_yaml['lidar']['visualize']
         self.global_position = config_yaml['global_position'] \
             if 'global_position' in config_yaml else None
 
@@ -406,7 +391,11 @@ class PerceptionManager:
         # camera visualization is needed
         if self.activate or self.camera_visualize:
             self.rgb_camera = []
-            mount_position = ['front', 'right', 'left', 'back']
+            mount_position = config_yaml['camera']['positions']
+            assert len(mount_position) == self.camera_num, \
+                "The camera number has to be the same as the length of the" \
+                "relative positions list"
+
             for i in range(self.camera_num):
                 self.rgb_camera.append(
                     CameraSensor(
@@ -443,6 +432,9 @@ class PerceptionManager:
 
         # the dictionary contains all objects
         self.objects = {}
+        # traffic light detection related
+        self.traffic_thresh = config_yaml['traffic_light_thresh'] \
+            if 'traffic_light_thresh' in config_yaml else 50
 
     def dist(self, a):
         """
@@ -544,7 +536,6 @@ class PerceptionManager:
             self.speed_retrieve(objects)
 
         if self.camera_visualize:
-            names = ['front', 'right', 'left', 'back']
             for (i, rgb_image) in enumerate(rgb_draw_images):
                 if i > self.camera_num - 1 or i > self.camera_visualize - 1:
                     break
@@ -552,8 +543,8 @@ class PerceptionManager:
                     yolo_detection, rgb_image, i)
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
                 cv2.imshow(
-                    '%s camera of actor %d, perception activated' %
-                    (names[i], self.id), rgb_image)
+                    '%s-th camera of actor %d, perception activated' %
+                    (str(i), self.id), rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
@@ -590,6 +581,7 @@ class PerceptionManager:
         world = self.carla_world
 
         vehicle_list = world.get_actors().filter("*vehicle*")
+        # todo: hard coded
         thresh = 50 if not self.data_dump else 120
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
@@ -798,15 +790,48 @@ class PerceptionManager:
         world = self.carla_world
         tl_list = world.get_actors().filter('traffic.traffic_light*')
 
+        vehicle_location = self.ego_pos.location
+        vehicle_waypoint = self._map.get_waypoint(vehicle_location)
+
+        activate_tl, light_trigger_location = \
+            self._get_active_light(tl_list, vehicle_location, vehicle_waypoint)
+
         objects.update({'traffic_lights': []})
 
-        for tl in tl_list:
-            distance = self.dist(tl)
-            if distance < 50:
-                traffic_light = TrafficLight(tl.get_location(),
-                                             tl.get_state())
-                objects['traffic_lights'].append(traffic_light)
+        if activate_tl is not None:
+            traffic_light = TrafficLight(activate_tl,
+                                         light_trigger_location,
+                                         activate_tl.get_state())
+            objects['traffic_lights'].append(traffic_light)
         return objects
+
+    def _get_active_light(self, tl_list, vehicle_location, vehicle_waypoint):
+        for tl in tl_list:
+            object_location = \
+                TrafficLight.get_trafficlight_trigger_location(tl)
+            object_waypoint = self._map.get_waypoint(object_location)
+
+            if object_waypoint.road_id != vehicle_waypoint.road_id:
+                continue
+
+            ve_dir = vehicle_waypoint.transform.get_forward_vector()
+            wp_dir = object_waypoint.transform.get_forward_vector()
+            dot_ve_wp = ve_dir.x * wp_dir.x +\
+                        ve_dir.y * wp_dir.y + \
+                        ve_dir.z * wp_dir.z
+
+            if dot_ve_wp < 0:
+                continue
+            while not object_waypoint.is_intersection:
+                next_waypoint = object_waypoint.next(0.5)[0]
+                if next_waypoint and not next_waypoint.is_intersection:
+                    object_waypoint = next_waypoint
+                else:
+                    break
+
+            return tl, object_waypoint.transform.location
+
+        return None, None
 
     def destroy(self):
         """
