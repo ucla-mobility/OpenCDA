@@ -142,6 +142,9 @@ class BehaviorAgent(object):
 
         # debug helper
         self.debug_helper = PlanDebugHelper(self.vehicle.id)
+        # print message in debug mode
+        self.debug = False if 'debug' not in \
+                              config_yaml else config_yaml['debug']
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -308,14 +311,15 @@ class BehaviorAgent(object):
         spawn_points : list
             List of possible destinations for the agent.
         """
-
-        print("Target almost reached, setting new destination...")
+        if self.debug:
+            print("Target almost reached, setting new destination...")
         random.shuffle(spawn_points)
         new_start = \
             self._local_planner.waypoints_queue[-1][0].transform.location
         destination = spawn_points[0].location if \
             spawn_points[0].location != new_start else spawn_points[1].location
-        print("New destination: " + str(destination))
+        if self.debug:
+            print("New destination: " + str(destination))
 
         self.set_destination(new_start, destination)
 
@@ -389,7 +393,6 @@ class BehaviorAgent(object):
                 else:
                     # indicate no need to stop
                     return 0
-
 
             if not waypoint.is_junction and (
                     self.light_id_to_ignore != light_id or light_id == -1):
@@ -728,13 +731,13 @@ class BehaviorAgent(object):
             reset_target = \
                 ego_vehicle_wp.next(max(self._ego_speed / 3.6 * 3,
                                         10.0))[0]
-
-        print(
-            'Vehicle id: %d :destination pushed forward because of '
-            'potential collision, reset destination :%f. %f, %f' %
-            (self.vehicle.id, reset_target.transform.location.x,
-             reset_target.transform.location.y,
-             reset_target.transform.location.z))
+        if self.debug:
+            print(
+                'Vehicle id: %d :destination pushed forward because of '
+                'potential collision, reset destination :%f. %f, %f' %
+                (self.vehicle.id, reset_target.transform.location.x,
+                 reset_target.transform.location.y,
+                 reset_target.transform.location.z))
         return reset_target
 
     def run_step(
@@ -791,7 +794,8 @@ class BehaviorAgent(object):
         # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \
                 and len(self.get_local_planner().get_waypoint_buffer()) <= 2:
-            print('Destination Reset!')
+            if self.debug:
+                print('Destination Reset!')
             # in case the vehicle is disabled overtaking function
             # at the beginning
             self.overtake_allowed = True and self.overtake_allowed_origin
@@ -811,7 +815,6 @@ class BehaviorAgent(object):
 
         # Path generation based on the global route
         rx, ry, rk, ryaw = self._local_planner.generate_path()
-
 
         # check whether lane change is allowed
         self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled, rk)

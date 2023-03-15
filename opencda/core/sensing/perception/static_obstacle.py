@@ -6,6 +6,7 @@ Static Obstacle base class
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 import sys
+import math
 
 import numpy as np
 import carla
@@ -71,6 +72,12 @@ class TrafficLight(object):
 
     Parameters
     ---------
+    tl : carla.Actor
+        The CARLA traffic actor
+
+    trigger_location : carla.Vector3D
+        The trigger location of te traffic light.
+
     pos : carla.Location
         The location of this traffic light.
 
@@ -79,12 +86,42 @@ class TrafficLight(object):
 
     """
 
-    def __init__(self, pos, light_state):
-        self._location = pos
+    def __init__(self, tl, trigger_location, light_state):
+        self._location = trigger_location
         self.state = light_state
+        self.actor = tl
 
     def get_location(self):
         return self._location
 
     def get_state(self):
         return self.state
+
+    @staticmethod
+    def get_trafficlight_trigger_location(traffic_light: carla.Actor) \
+            -> carla.Vector3D:  # pylint: disable=invalid-name
+        """
+        Calculates the yaw of the waypoint that represents the trigger
+        volume of the traffic light
+        """
+
+        def rotate_point(point, angle):
+            """
+            rotate a given point by a given angle
+            """
+            x_ = math.cos(math.radians(angle)) * point.x - math.sin(math.radians(angle)) * point.y
+            y_ = math.sin(math.radians(angle)) * point.x - math.cos(math.radians(angle)) * point.y
+
+            return carla.Vector3D(x_, y_, point.z)
+
+        base_transform = traffic_light.get_transform()
+        base_rot = base_transform.rotation.yaw
+        area_loc = base_transform.transform(traffic_light.trigger_volume.location)
+        area_ext = traffic_light.trigger_volume.extent
+
+        point = rotate_point(carla.Vector3D(0, 0, area_ext.z), base_rot)
+        point_location = area_loc + carla.Location(x=point.x, y=point.y)
+
+        return carla.Location(point_location.x,
+                              point_location.y,
+                              point_location.z)
