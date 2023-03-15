@@ -94,61 +94,57 @@ ENV CARLA_VERSION=$CARLA_VERSION
 ENV CARLA_HOME=/home/carla
 ENV SUMO_HOME=/usr/share/sumo
 
-# Install prerequisite packages.
+# Add new user and install prerequisite packages.
 
 WORKDIR /home
+
+RUN useradd -m ${USER}
 
 RUN set -xue && apt-key del 7fa2af80 \
 && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub \
 && apt-get update \
 && apt-get install -y build-essential cmake debhelper git wget xdg-user-dirs xserver-xorg libvulkan1 libsdl2-2.0-0 \
-libsm6 libgl1-mesa-glx libomp5 pip unzip libjpeg8 libtiff5 software-properties-common nano
+libsm6 libgl1-mesa-glx libomp5 pip unzip libjpeg8 libtiff5 software-properties-common nano fontconfig
 
-# Install CARLA.
+# Install CARLA and its additional maps.
 
 RUN mkdir carla
-RUN wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_$CARLA_VERSION.tar.gz -nv --show-progress \
---progress=bar:force:noscroll
-RUN tar -zxvf CARLA_$CARLA_VERSION.tar.gz --directory carla && rm CARLA_$CARLA_VERSION.tar.gz
 
-# Install CARLA's additional maps.
-
-RUN if [ $ADDITIONAL_MAPS = true ] ; then \
-wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/AdditionalMaps_$CARLA_VERSION.tar.gz -nv \
+RUN wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_${CARLA_VERSION}.tar.gz -nv --show-progress \
+--progress=bar:force:noscroll \
+&& tar -zxvf CARLA_${CARLA_VERSION}.tar.gz --directory carla && rm CARLA_${CARLA_VERSION}.tar.gz \
+&& if [ ${ADDITIONAL_MAPS} = true ] ; then \
+wget https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/AdditionalMaps_${CARLA_VERSION}.tar.gz -nv \
 --show-progress --progress=bar:force:noscroll && \
-tar -zxvf AdditionalMaps_$CARLA_VERSION.tar.gz --directory carla && rm AdditionalMaps_$CARLA_VERSION.tar.gz ; \
-elif [ $ADDITIONAL_MAPS != false ] ; then echo "Invalid ADDITIONAL_MAPS argument." ; \
-else echo "Additional CARLA maps will not be installed." ; fi
+tar -zxvf AdditionalMaps_${CARLA_VERSION}.tar.gz --directory carla && rm AdditionalMaps_${CARLA_VERSION}.tar.gz ; \
+elif [ ${ADDITIONAL_MAPS} != false ] ; then echo "Invalid ADDITIONAL_MAPS argument." ; \
+else echo "Additional CARLA maps will not be installed." ; fi && chown -R ${USER}:${USER} /home/carla
 
 # Install the perception components (PyTorch and YOLOv5).
 
-RUN if [ $PERCEPTION = true ] ; then \
+RUN if [ ${PERCEPTION} = true ] ; then \
 pip install torch torchvision torchaudio yolov5 ; \
-elif [ $PERCEPTION != false ] ; then echo "Invalid PERCEPTION argument." ; \
+elif [ ${PERCEPTION} != false ] ; then echo "Invalid PERCEPTION argument." ; \
 else echo "Perception components (PyTorch and YOLOv5) will not be installed." ; fi
 
 # Install SUMO.
 
-RUN if [ $SUMO = true ] ; then \
+RUN if [ ${SUMO} = true ] ; then \
 add-apt-repository ppa:sumo/stable && apt-get update && apt-get install -y sumo sumo-tools sumo-doc \
 && pip install traci ; \
-elif [ $SUMO != false ] ; then echo "Invalid SUMO argument." ; \
+elif [ ${SUMO} != false ] ; then echo "Invalid SUMO argument." ; \
 else echo "SUMO will not be installed." ; fi
 
 # Install OpenCDA.
 
-RUN if [ $OPENCDA_FULL_INSTALL = false ] ; then \
+RUN if [ ${OPENCDA_FULL_INSTALL} = false ] ; then \
 wget https://raw.githubusercontent.com/ucla-mobility/OpenCDA/main/requirements.txt \
 && pip install -r requirements.txt && rm requirements.txt ; \
-elif [ $OPENCDA_FULL_INSTALL = true ] ; then \
+elif [ ${OPENCDA_FULL_INSTALL} = true ] ; then \
 git clone https://github.com/ucla-mobility/OpenCDA.git && pip install -r OpenCDA/requirements.txt \
 && chmod u+x OpenCDA/setup.sh && sed -i '/conda activate opencda/d' OpenCDA/setup.sh \
-&& sed -i 's+${PWD}/+${PWD}/OpenCDA/+g' OpenCDA/setup.sh && ./OpenCDA/setup.sh ; \
+&& sed -i 's+${PWD}/+${PWD}/OpenCDA/+g' OpenCDA/setup.sh && ./OpenCDA/setup.sh \
+&& chown -R ${USER}:${USER} /home/OpenCDA ; \
 else echo "Invalid OPENCDA_FULL_INSTALL argument." ; fi
 
-# Change the ownership of all files in the "home" directory.
-
-RUN useradd -m $USER
-RUN chown -R $USER:$USER /home
-
-USER $USER
+USER ${USER}
