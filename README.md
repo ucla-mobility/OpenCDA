@@ -21,6 +21,15 @@ The key features of OpenCDA are:
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) for more details.
 
 ## What's New
+### March 2022
+* OpenCDA now supports Docker Installation! Many thanks to @GoodarzMehr!
+* OpenCDA has make the configuration system better! We provide a `default.yaml` as a template for all scenarios. Users now can
+only change the parts that are different from the default parameters, which makes the configuration file much cleaner.
+
+### Jan 2022
+* Our paper [The OpenCDA Open-source Ecosystem for Cooperative Driving Automation Research](https://ieeexplore.ieee.org/document/10045043)
+has been accepted by **IEEE Transactions on Intelligent Vehicles**. We extend the scope of the original OpenCDA simulation framework to a
+ecosystem, which contains a model zoo, a suite of driving simulators at various resolutions, large-scale real-world and simulated datasets, complete devel-opment toolkits for benchmark training/testing, and a scenario database/generator.
 ### July 2022
 * Powered by OpenCDA, our paper [V2X-ViT: Vehicle-to-Everything Cooperative
 Perception with Vision Transformer](https://arxiv.org/pdf/2203.10638.pdf) has been accepted by **ECCV2022**! Check the codebase [v2x-vit](https://github.com/DerrickXuNu/v2x-vit) if interested.
