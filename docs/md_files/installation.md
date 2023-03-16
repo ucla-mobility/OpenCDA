@@ -10,7 +10,7 @@
     * [__3. Install Pytorch and Yolov5 (Optional)__](#3-install-pytorch-and-yolov5optional)
     * [__4. Install Sumo (Optional)__](#4-install-sumooptional)
 
-
+* [__Docker Installation__](#docker-installation)
 
 
 ---
@@ -60,6 +60,7 @@ Windows OS is supported by CARLA, Ubuntu is the preferred OS as the OpenCDA was 
 Visit CARLA's tutorial [ADD a new map](https://carla.readthedocs.io/en/latest/tuto_A_add_map_overview/) for more information. </strong>
 
 ---
+
 ### 2. OpenCDA Installation
 First, download OpenCDA github to your local folder if you haven't done it yet.
 ```sh
@@ -95,6 +96,7 @@ python -c "import carla" # check whether carla is installed correctly.
 ```
 <strong>Note: If you are using Python other than 3.7 and CARLA < 0.9.11 then you have to change the setup.sh to your
 carla version's egg file or manually installed carla to your conda environment.</strong>
+
 
 ### 3. Install Pytorch and Yolov5 (Optional)
 This section is only needed for the users who want to test perception algorithms. By default, OpenCDA does not require
@@ -140,3 +142,40 @@ Finally, add the following path to your ~/.bashrc:
 ```yaml
 export SUMO_HOME=/usr/share/sumo
 ```
+---
+
+## Docker Installation
+OpenCDA provides docker image for users to run directly.
+
+### 1. Prerequisite
+First, make sure that you have installed `docker` in your ubuntu system. If you have nvidia gpu, it is recommended to
+install `nvidia-docker` as well.
+
+### 2. Dockerfile Modification
+Next, modify the Dockerfile based on your system. Some parameters you may want to pay attentions are:
+
+- `CARLA_VERSION`: Change to the version you want. Notice after(including) OpenCDA 0.1.4, only CARLA >= 0.9.14 will be supported.
+- `FROM nvidia/vulkan:1.3-470`: If you want the carla run with rendering in the docker, make sure the graphics driver is set to the same
+as your local computer. For instance, mine is `FROM nvidia/cuda-11.4.2.0-ase-ubuntu2004`
+- `OPENCDA_FULL_INSTALL`: If set true, it will run the `setup.sh` in OpenCDA automatically during building up the docker to install carla api into the python environment.
+if set to false, then you need to go to your docker container after building to manually run `setup.sh`
+
+### 3. Build up the docker
+```shell
+cd OpenCDA
+docker build -t opencda_container .
+```
+
+### 4. Run the docker
+The following command will allow you run Carla with rendering in your docker. If the rendering is the black,
+then you probably build up the wrong nvidia graphics driver.
+```shell
+xhost +local: 
+
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v $HOME/.Xauthority:/root/.Xauthority \
+  --name opencda_container opencda_docker /bin/bash
+```
+
