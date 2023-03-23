@@ -1,0 +1,41 @@
+description: |-
+  Author: Wei Shao <phdweishao@gmail.com>
+  Content: Test configurations for `openscenario_carla` that incorporates ScenarioRunner
+
+# Carla server settings
+
+world:
+  sync_mode: true
+  client_host: &host localhost
+  client_port: &port 2000
+
+# Scenario to test
+scenario:
+  host: *host
+  port: *port
+  timeout: 10
+  town: town01
+  # Use the configuration name from ScenarioRunner
+  scenario: FollowLeadingVehicle_1
+  debug: false
+  sync: false
+  repetitions: 1
+  agent: null
+  openscenario: null
+  route: null
+  configFile: ''
+  reloadWorld: false
+  waitForEgo: false
+  trafficManagerPort: '8000'
+  trafficManagerSeed: '0'
+  record: ''
+  additionalScenario: ''
+  agentConfig: ''
+  file: false
+  json: false
+  junit: false
+  list: false
+  penscenarioparams: null
+  output: false
+  outputDir: ''
+  randomize: false
