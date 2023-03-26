@@ -390,8 +390,12 @@ class PerceptionManager:
         self.lidar_visualize = config_yaml['lidar_visualize']
         self.global_position = config_yaml['global_position'] \
             if 'global_position' in config_yaml else None
-        self.cooperative = config_yaml['cooperative'] \
-            if 'cooperative' in config_yaml else False
+        self.coperception = config_yaml['coperception'] \
+            if 'coperception' in config_yaml else False
+        self.enable_communicate = config_yaml['enable_communicate'] \
+            if 'enable_communicate' in config_yaml else False
+        self.enable_show_gt = config_yaml['enable_show_gt'] \
+            if 'enable_show_gt' in config_yaml else False
         self.v2x_manager = v2x_manager
         self.localization_manager = localization_manager
         self.behavior_agent = behavior_agent
@@ -508,7 +512,7 @@ class PerceptionManager:
         if not self.activate:
             objects = self.deactivate_mode(objects)
         else:
-            if self.cooperative:
+            if self.coperception:
                 objects = self.coperception_mode(objects)
             else:
                 objects = self.activate_mode(objects)
@@ -520,11 +524,16 @@ class PerceptionManager:
         """
         Use OpenCOOD to detect objects
         """
+        self.cav_world.update_global_ego_id()
+        ego_id = self.cav_world.ego_id
+
+        if self.id != ego_id:
+            objects = self.deactivate_mode(objects)
+            return objects
+
         if self.lidar.data is None:
             return objects
 
-        # TODO: need to pass in enable_comm flag thru yaml
-        enable_communicate = True
         data = OrderedDict()
 
         ego_data = self.co_manager.prepare_data(
@@ -532,12 +541,17 @@ class PerceptionManager:
             camera=self.rgb_camera,
             lidar=self.lidar,
             pos=self.ego_pos,
+            localizer=self.localization_manager,
             agent=self.behavior_agent,
             is_ego=True
         )
+        ego_data = self.co_manager.calculate_transformation(
+            cav_id=self.id,
+            cav_data=ego_data,
+        )
         data.update(ego_data)
 
-        if enable_communicate:
+        if self.enable_communicate:
             nearby_objects = self.co_manager.communicate()
             for vid, nearby_data_dict in nearby_objects.items():
                 nearby_vm = nearby_data_dict['vehicle_manager']
@@ -547,20 +561,25 @@ class PerceptionManager:
                     camera=nearby_v2x_manager.get_ego_rgb_image(),
                     lidar=nearby_v2x_manager.get_ego_lidar(),
                     pos=nearby_v2x_manager.get_ego_pos(),
+                    localizer=nearby_vm.localizer,
                     agent=nearby_vm.agent,
                     is_ego=False
                 )
+                nearby_data = self.co_manager.calculate_transformation(
+                    cav_id=vid,
+                    cav_data=nearby_data,
+                )
                 data.update(nearby_data)
+
         # inference
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data)
         output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
             [reformat_data_dict])  # should have batch size dim
         batch_data = self.ml_manager.to_device(output_dict)
         predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data)
-        # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data)
-        # self.ml_manager.evaluate_final_average_precision()
+        # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data) show predict results frame by frame
 
-        # plot
+        # plot the opencood inference results
         if self.lidar_visualize:
             while self.lidar.data is None:
                 continue
@@ -571,6 +590,7 @@ class PerceptionManager:
                 self.lidar.o3d_pointcloud,
                 predict_box_tensor,
                 gt_box_tensor,
+                self.enable_show_gt,
                 objects)
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects

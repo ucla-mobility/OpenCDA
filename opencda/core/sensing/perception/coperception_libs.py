@@ -65,14 +65,14 @@ class CoperceptionLibs:
         return data
 
     @staticmethod
-    def load_transformation_matrix(is_ego, data):
+    def load_transformation_matrix(ego_data, cav_data):
         """
         TODO: needs revision to reflect the cur/delay params
         """
-        cur_params = data
-        delay_params = data
-        cur_ego_params = data
-        delay_ego_params = data
+        cur_params = cav_data
+        delay_params = cav_data
+        cur_ego_params = ego_data
+        delay_ego_params = ego_data
 
         delay_cav_lidar_pose = delay_params['lidar_pose']
         delay_ego_lidar_pose = delay_ego_params["lidar_pose"]
@@ -89,12 +89,8 @@ class CoperceptionLibs:
                                                     self.xyz_noise_std,
                                                     self.ryp_noise_std)
         """
-        if is_ego:
-            transformation_matrix = x1_to_x2(delay_cav_lidar_pose, cur_ego_lidar_pose)
-            spatial_correction_matrix = np.eye(4)
-        else:
-            transformation_matrix = x1_to_x2(delay_cav_lidar_pose, delay_ego_lidar_pose)
-            spatial_correction_matrix = x1_to_x2(delay_ego_lidar_pose, cur_ego_lidar_pose)
+        transformation_matrix = x1_to_x2(delay_cav_lidar_pose, delay_ego_lidar_pose)
+        spatial_correction_matrix = x1_to_x2(delay_ego_lidar_pose, cur_ego_lidar_pose)
         gt_transformation_matrix = x1_to_x2(cur_cav_lidar_pose, cur_ego_lidar_pose)
         return {
             'transformation_matrix': transformation_matrix,
@@ -148,17 +144,16 @@ class CoperceptionLibs:
             data.update({'camera%d' % i: camera_param})
         return data
 
-    def load_ego_data(self):
+    def load_ego_data(self, localizer):
         data = {
             'predicted_ego_pos': [],
             'true_ego_pos': [],
             'ego_speed': 0.0
         }
-        if not self.localizer:
+        if not localizer:
             return data
-
-        predicted_ego_pos = self.localizer.get_ego_pos()
-        true_ego_pos = self.localizer.vehicle.get_transform() \
+        predicted_ego_pos = localizer.get_ego_pos()
+        true_ego_pos = localizer.vehicle.get_transform() \
             if hasattr(self.localizer, 'vehicle') \
             else self.localizer.true_ego_pos
         data = {
@@ -178,7 +173,7 @@ class CoperceptionLibs:
                 true_ego_pos.rotation.yaw,
                 true_ego_pos.rotation.pitch
             ],
-            'ego_speed': float(self.localizer.get_ego_spd())
+            'ego_speed': float(localizer.get_ego_spd())
         }
         return data
 

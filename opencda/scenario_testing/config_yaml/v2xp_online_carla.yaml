@@ -40,20 +40,22 @@ rsu_base: &rsu_base
   sensing:
     perception:
       activate: true # when not activated, objects positions will be retrieved from server directly
-      cooperative: true
+      coperception: true
+      enable_communicate: true
+      enable_show_gt: false
       camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        channels: 32
+        channels: 64
         range: 120
-        points_per_second: 1000000
+        points_per_second: 1300000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 2
         lower_fov: -25
-        dropoff_general_rate: 0.3
+        dropoff_general_rate: 0.1
         dropoff_intensity_limit: 0.7
-        dropoff_zero_intensity: 0.4
+        dropoff_zero_intensity: 0.15
         noise_stddev: 0.02
     localization:
       activate: false # when not activated, ego position will be retrieved from server directly
@@ -68,12 +70,14 @@ vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
       activate: true # when not activated, objects positions will be retrieved from server directly
-      cooperative: true # cooperative perception
+      coperception: true # cooperative perception
+      enable_communicate: true
+      enable_show_gt: false
       camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        channels: 32
+        channels: 64
         range: 120
         points_per_second: 1000000
         rotation_frequency: 20 # the simulation is 20 fps
@@ -85,7 +89,7 @@ vehicle_base: &vehicle_base
         noise_stddev: 0.02
     localization: &base_localize
       activate: false # when not activated, ego position will be retrieved from server directly
-      cooperative: false # cooperative perception
+      coperception: false # cooperative perception
       dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
@@ -199,3 +203,14 @@ scenario:
           <<: *base_local_planner
           debug_trajectory: false
           debug: false
+
+# these are parameters supporting cooperative perception
+# models are pending to be added with all the models supported in the intermediate fusion
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'intermediate_v2xvit'

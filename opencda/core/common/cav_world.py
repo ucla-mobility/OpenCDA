@@ -36,18 +36,21 @@ class CavWorld(object):
         The machine learning manager class.
     """
 
-    def __init__(self, apply_ml=False, apply_coperception=False, fusion_method='early'):
+    def __init__(self, apply_ml=False,
+                 apply_coperception=False,
+                 coperception_params=None):
 
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
         self._rsu_manager_dict = {}
         self.ml_manager = None
+        self.ego_id = None
 
         if apply_ml and apply_coperception:
             ml_manager = getattr(importlib.import_module(
                 "opencda.customize.ml_libs.opencood_manager"), 'OpenCOODManager')
-            self.ml_manager = ml_manager(fusion_method)
+            self.ml_manager = ml_manager(coperception_params)
         elif apply_ml:
             # we import in this way so the user don't need to install ml
             # packages unless they require to
@@ -57,6 +60,12 @@ class CavWorld(object):
             self.ml_manager = ml_manager()
         # this is used only when co-simulation activated.
         self.sumo2carla_ids = {}
+
+    def update_global_ego_id(self):
+        """
+        Return the smallest id as the ego_id
+        """
+        self.ego_id = min(self.vehicle_id_set)
 
     def update_vehicle_manager(self, vehicle_manager):
         """

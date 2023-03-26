@@ -6,6 +6,7 @@ class CoperceptionManager:
         self.vid = vid
         self.v2x_manager = v2x_manager
         self.coperception_libs = coperception_libs
+        self.ego_data_dict = None
 
     def communicate(self):
         data = {}
@@ -14,13 +15,18 @@ class CoperceptionManager:
                 data.update({str(vid): vm})
         return data
 
-    def prepare_data(self, cav_id, camera, lidar, pos, agent, is_ego):
+    def calculate_transformation(self, cav_id, cav_data):
+        t_matrix = self.coperception_libs.load_transformation_matrix(self.ego_data_dict, cav_data[cav_id]['params'])
+        cav_data[cav_id]['params'].update(t_matrix)
+        return cav_data
+
+    def prepare_data(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, ego_params=None):
         data = {cav_id: OrderedDict()}
         data[cav_id]['ego'] = is_ego
         data[cav_id]['time_delay'] = self.coperception_libs.time_delay
         data[cav_id]['params'] = {}
         camera_data = self.coperception_libs.load_camera_data(lidar, camera)
-        ego_data = self.coperception_libs.load_ego_data()
+        ego_data = self.coperception_libs.load_ego_data(localizer)
         plan_trajectory_data = self.coperception_libs.load_plan_trajectory(agent)
         lidar_pose_data = self.coperception_libs.load_cur_lidar_pose(lidar)
         vehicles = self.coperception_libs.load_vehicles(cav_id, pos, lidar)
@@ -29,7 +35,8 @@ class CoperceptionManager:
         data[cav_id]['params'].update(ego_data)
         data[cav_id]['params'].update(lidar_pose_data)
         data[cav_id]['params'].update(vehicles)
-        t_matrix = self.coperception_libs.load_transformation_matrix(data[cav_id]['ego'], data[cav_id]['params'])
-        data[cav_id]['params'].update(t_matrix)
         data[cav_id].update({'lidar_np': lidar.data})
+        # get base_data_dict
+        if is_ego:
+            self.ego_data_dict = data[cav_id]['params']
         return data

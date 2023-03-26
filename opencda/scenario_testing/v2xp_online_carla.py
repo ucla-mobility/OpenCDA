@@ -23,7 +23,7 @@ def run_scenario(opt, config_yaml):
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml,
                              apply_coperception=True,
-                             fusion_method='early')
+                             coperception_params=scenario_params['coperception'])
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
