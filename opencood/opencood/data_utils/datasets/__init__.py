@@ -15,7 +15,7 @@ __all__ = {
 }
 
 # the final range for evaluation
-GT_RANGE = [-140, -40, -3, 140, 40, 1]
+GT_RANGE = [-100, -40, -3, 100, 40, 1]
 # The communication range for cavs
 COM_RANGE = 70
 

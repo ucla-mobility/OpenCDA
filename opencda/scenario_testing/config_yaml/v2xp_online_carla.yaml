@@ -32,8 +32,8 @@ blueprint:
     car: 0.5
     truck: 0.1
     bus: 0.1
-    bicycle: 0.1
-    motorcycle: 0.1
+#    bicycle: 0.1
+#    motorcycle: 0.1
 
 # Define the basic parameters of the rsu
 rsu_base: &rsu_base
@@ -145,7 +145,7 @@ vehicle_base: &vehicle_base
       max_steering: 0.3
   v2x: &base_v2x # communication related
     enabled: true
-    communication_range: 35
+    communication_range: 70
     loc_noise: 0.0
     yaw_noise: 0.0
     speed_noise: 0.0
@@ -184,7 +184,7 @@ scenario:
       destination: [67.12, 150.2, 1.0]
       v2x:
         <<: *base_v2x
-        communication_range: 45
+        communication_range: 70
       behavior:
         <<: *base_behavior
         local_planner:
@@ -196,7 +196,7 @@ scenario:
       destination: [-2.43, 263, 0.3]
       v2x:
         <<: *base_v2x
-        communication_range: 45
+        communication_range: 70
       behavior:
         <<: *base_behavior
         local_planner:
