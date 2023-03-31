@@ -695,12 +695,16 @@ class PerceptionManager:
         world = self.carla_world
 
         vehicle_list = world.get_actors().filter("*vehicle*")
-        thresh = 50 if not self.data_dump else 120
+        if self.coperception:
+            thresh = 120
+        else:
+            thresh = 50 if not self.data_dump else 120
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
                         v.id != self.id]
 
         # use semantic lidar to filter out vehicles out of the range
+        # TODO: self.coperception?
         if self.data_dump:
             vehicle_list = self.filter_vehicle_out_sensor(vehicle_list)
 

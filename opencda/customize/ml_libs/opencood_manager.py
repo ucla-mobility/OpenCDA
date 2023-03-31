@@ -25,7 +25,7 @@ class OpenCOODManager(object):
         models = coperception_params['models']
         assert fusion_method in models, f'Fusion method should be within one of the models supported, it is provided ' \
                                         f'with {fusion_method} '
-
+        self.counter = 0
         self.fusion_method = fusion_method
         self.opt = argparse.Namespace(model_dir=models[fusion_method])
         hypes = yaml_utils.load_yaml(None, self.opt)
@@ -43,7 +43,6 @@ class OpenCOODManager(object):
         self.result_stat = {0.3: {'tp': [], 'fp': [], 'gt': 0},
                             0.5: {'tp': [], 'fp': [], 'gt': 0},
                             0.7: {'tp': [], 'fp': [], 'gt': 0}}
-        self.vis_counter = 0
 
     def to_device(self, data):
         return train_utils.to_device(data, self.device)
@@ -68,22 +67,25 @@ class OpenCOODManager(object):
             raise NotImplementedError('Only early, late and intermediate'
                                       'fusion is supported.')
 
-        eval_utils.caluclate_tp_fp(pred_box_tensor,
-                                   pred_score,
-                                   gt_box_tensor,
-                                   self.result_stat,
-                                   0.3)
-        eval_utils.caluclate_tp_fp(pred_box_tensor,
-                                   pred_score,
-                                   gt_box_tensor,
-                                   self.result_stat,
-                                   0.5)
-        eval_utils.caluclate_tp_fp(pred_box_tensor,
-                                   pred_score,
-                                   gt_box_tensor,
-                                   self.result_stat,
-                                   0.7)
-
+        # skip the first 60 ticks for calculating the average precision
+        if self.counter > 60 and self.counter % 2 == 0:
+            print(f"Aggregating the current stats into final results: {self.counter}")
+            eval_utils.caluclate_tp_fp(pred_box_tensor,
+                                       pred_score,
+                                       gt_box_tensor,
+                                       self.result_stat,
+                                       0.3)
+            eval_utils.caluclate_tp_fp(pred_box_tensor,
+                                       pred_score,
+                                       gt_box_tensor,
+                                       self.result_stat,
+                                       0.5)
+            eval_utils.caluclate_tp_fp(pred_box_tensor,
+                                       pred_score,
+                                       gt_box_tensor,
+                                       self.result_stat,
+                                       0.7)
+        self.counter += 1
         return pred_box_tensor, pred_score, gt_box_tensor
 
     def evaluate_final_average_precision(self):
@@ -100,7 +102,7 @@ class OpenCOODManager(object):
         vis_save_path = os.path.join(self.opt.model_dir, 'vis')
         if not os.path.exists(vis_save_path):
             os.makedirs(vis_save_path)
-        vis_save_path = os.path.join(vis_save_path, '%05d.png' % self.vis_counter)
+        vis_save_path = os.path.join(vis_save_path, '%05d.png' % self.counter)
 
         vis_utils.visualize_single_sample_output_gt(pred_box_tensor,
                                                     gt_box_tensor,
@@ -109,4 +111,3 @@ class OpenCOODManager(object):
                                                     True,
                                                     vis_save_path,
                                                     mode='constant')
-        self.vis_counter += 1
