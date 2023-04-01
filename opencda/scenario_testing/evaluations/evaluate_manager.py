@@ -52,6 +52,9 @@ class EvaluationManager(object):
         """
         log_file = os.path.join(self.eval_save_path, 'log.txt')
 
+        self.planning_eval(log_file)
+        print('Planning Evaluation Done.')
+
         self.localization_eval(log_file)
         print('Localization Evaluation Done.')
 
@@ -60,6 +63,29 @@ class EvaluationManager(object):
 
         self.platooning_eval(log_file)
         print('Platooning Evaluation Done.')
+
+    def planning_eval(self, log_file):
+        """
+        Route planning related evaluation.
+
+        Args:
+            -log_file (File): The log file to write the data.
+        """
+        route_dist = 0
+        vm = self.cav_world.get_ego_vehicle_manager()
+        route = vm.agent.initial_global_route
+        for i in range(1, len(route)):
+            prev_waypoint = route[i - 1][0]
+            cur_waypoint = route[i][0]
+            route_dist += prev_waypoint.transform.location.distance(cur_waypoint.transform.location)
+            # print(f"Previous waypoint: {prev_waypoint[0]} -> Current waypoint: {cur_waypoint[0]}. Distance: {
+            # distance}")
+        print("***********Planning Evaluation Module***********")
+        print(f"Global planned route distance: {route_dist}")
+        print(f"Cav world ticks {self.cav_world.counter}")
+        print(f"Cav World time in seconds: {self.cav_world.counter / 20}")
+        print(f"Calculated success threshold (with 10kps): {route_dist / 10}")
+        print("Success or not: ", "Yes" if self.cav_world.counter / 20 < route_dist / 10 else "No")
 
     def kinematics_eval(self, log_file):
         """

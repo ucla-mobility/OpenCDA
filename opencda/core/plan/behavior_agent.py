@@ -146,6 +146,9 @@ class BehaviorAgent(object):
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
 
+        # for global planned route
+        self.initial_global_route = None
+
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information
@@ -291,6 +294,8 @@ class BehaviorAgent(object):
             self.end_waypoint = end_waypoint
 
         route_trace = self._trace_route(self.start_waypoint, end_waypoint)
+        if self.initial_global_route is None:
+            self.initial_global_route = route_trace
 
         self._local_planner.set_global_plan(route_trace, clean)
 
@@ -690,10 +695,10 @@ class BehaviorAgent(object):
         # * overtake hasn't happened : if previously we have been doing an overtake, then lane change should not be allowed.
         # * destination is not pushed : if we have been doing destination pushed, then lane change should not be allowed.
         lane_change_enabled_flag = collision_detector_enabled and \
-               self.get_local_planner().lane_id_change and \
-               self.get_local_planner().lane_lateral_change and \
-               self.overtake_counter <= 0 and \
-               not self.destination_push_flag
+                                   self.get_local_planner().lane_id_change and \
+                                   self.get_local_planner().lane_lateral_change and \
+                                   self.overtake_counter <= 0 and \
+                                   not self.destination_push_flag
         if lane_change_enabled_flag:
             lane_change_allowed = lane_change_allowed and self.lane_change_management()
             if not lane_change_allowed:
@@ -817,7 +822,8 @@ class BehaviorAgent(object):
         rx, ry, rk, ryaw = self._local_planner.generate_path()
 
         # check whether lane change is allowed
-        self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled, rk)
+        self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled,
+                                                                     rk)
 
         # 3. Collision check
         is_hazard = False
@@ -891,5 +897,3 @@ class BehaviorAgent(object):
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)
         return target_speed, target_loc
-
-
