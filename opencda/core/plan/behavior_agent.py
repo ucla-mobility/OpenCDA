@@ -294,8 +294,11 @@ class BehaviorAgent(object):
             self.end_waypoint = end_waypoint
 
         route_trace = self._trace_route(self.start_waypoint, end_waypoint)
+
+        # TODO: why is the last waypoint not showing in the trace_route return results
         if self.initial_global_route is None:
             self.initial_global_route = route_trace
+            # self.initial_global_route.append((end_waypoint, None))
 
         self._local_planner.set_global_plan(route_trace, clean)
 

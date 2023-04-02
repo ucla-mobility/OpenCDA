@@ -43,7 +43,7 @@ class CavWorld(object):
         self._platooning_dict = {}
         self._rsu_manager_dict = {}
         self.ml_manager = None
-        self.counter = 0
+        self.global_clock = 0
 
         if apply_ml:
             # we import in this way so the user don't need to install ml
@@ -154,4 +154,4 @@ class CavWorld(object):
         return None
 
     def tick(self):
-        self.counter += 1
+        self.global_clock += 1

@@ -75,6 +75,36 @@ class CollisionSensor(object):
             self.sensor.destroy()
 
 
+class IMUSensor(object):
+    def __init__(self, vehicle):
+        world = vehicle.get_world()
+        blueprint = world.get_blueprint_library().find('sensor.other.imu')
+        self.sensor = world.spawn_actor(blueprint, carla.Transform(), attach_to=vehicle)
+        weak_self = weakref.ref(self)
+        self.sensor.listen(lambda event: IMUSensor._on_detect(weak_self, event))
+        self.imu_data = deque()
+
+    @staticmethod
+    def _on_detect(weak_self, imu_data) -> None:
+        self = weak_self()
+        if not self:
+            return
+        linear_acceleration = imu_data.accelerometer
+        angular_velocity = imu_data.gyroscope
+        self.imu_data.append((linear_acceleration, angular_velocity))
+
+    def return_status(self):
+        return {'imu': False}
+
+    def tick(self, data_dict):
+        pass
+
+    def destroy(self) -> None:
+        if self.sensor.is_alive:
+            self.sensor.stop()
+            self.sensor.destroy()
+
+
 class StuckDetector(object):
     """
     Stuck detector used to detect vehicle stuck in simulator.
