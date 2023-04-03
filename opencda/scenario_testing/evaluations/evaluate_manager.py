@@ -173,6 +173,10 @@ class EvaluationManager(object):
         print("***********Planning Evaluation Module***********")
         print(f"Planned distance: {planned_dist}")
         print(f"Real distance: {real_dist}")
+        print(f"Cav world ticks elapsed: {self.cav_world.global_clock}")
+        print(f"Cav World time in seconds: {self.cav_world.global_clock * self.fixed_delta_seconds}")
+        print(f"Calculated success threshold (with 10km/h or 2.77m/s): {planned_dist / 2.77778}")
+        print("Success or not: ", "Yes" if self.cav_world.global_clock * self.fixed_delta_seconds < planned_dist / 2.77778 else "No")
         timestamps = list(map(lambda e: e[2], real_route))
         imu_data = vm.safety_manager.imu_sensor.imu_data
         safety_data = vm.safety_manager.status_queue
