@@ -38,13 +38,14 @@ class SafetyManager:
         for sensor in self.sensors:
             sensor.tick(data_dict)
             status_dict.update(sensor.return_status())
+        # store the status every tick
         self.status_queue.append((self.cav_world.global_clock, status_dict))
         # print hazard message
         if self.print_message:
             print_flag = False
             # only print message when it has hazard
             for key, val in status_dict.items():
-                if val == True:
+                if val:
                     print_flag = True
                     break
             if print_flag:

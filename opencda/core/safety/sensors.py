@@ -60,7 +60,10 @@ class CollisionSensor(object):
             self.collided_frame = event.frame
 
     def return_status(self):
-        return {'collision': self.collided}
+        if self.collided:
+            self.collided = False  # reset and return
+            return {'collision': True}
+        return {'collision': False}
 
     def tick(self, data_dict):
         pass

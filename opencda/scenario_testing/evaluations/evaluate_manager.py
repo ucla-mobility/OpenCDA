@@ -142,20 +142,21 @@ class EvaluationManager(object):
         plt.legend()
         plt.show(block=False)
 
-    def plot_routes(self, real_route_transforms, planned_route_transforms):
+    @staticmethod
+    def plot_routes(real_route_transforms, planned_route_transforms):
         fig, ax = plt.subplots()
         real_x_coords = [t.location.x for t in real_route_transforms]
         real_y_coords = [t.location.y for t in real_route_transforms]
         planned_x_coords = [t.location.x for t in planned_route_transforms]
         planned_y_coords = [t.location.y for t in planned_route_transforms]
-        ax.scatter(real_x_coords, real_y_coords, marker='o', s=10, label='Real Route Points')
-        ax.scatter(planned_x_coords, planned_y_coords, marker='x', color='r', s=50, label='Planned Route Points')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
+        ax.scatter(real_y_coords, real_x_coords, marker='o', s=10, label='Real Route Points')
+        ax.scatter(planned_y_coords, planned_x_coords, marker='x', color='r', s=50, label='Planned Route Points')
+        ax.set_xlabel('Y (meters)')
+        ax.set_ylabel('X (meters)')
         ax.set_title('Actual Route / Intial Planned Route')
         ax.legend()
         ax.grid()
-        # ax.set_aspect('equal', adjustable='box')
+        plt.gca().set_aspect("equal", adjustable="box")
         plt.show()
 
     def planning_eval(self, log_file):
