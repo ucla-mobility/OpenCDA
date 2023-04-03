@@ -82,6 +82,7 @@ class EvaluationManager(object):
             else:
                 route_dist += prev.location.distance(cur.location)
         return route_dist
+
     @staticmethod
     def plot_3d(timestamp, acc_x_axis, acc_y_axis, acc_z_axis, acc_magnitude,
                 gyro_x_axis, gyro_y_axis, gyro_z_axis, gyro_magnitude):
@@ -102,7 +103,7 @@ class EvaluationManager(object):
         ax3.set_xlabel('timestamp')
         ax3.set_ylabel('z')
         ax4.set_xlabel('timestamp')
-        ax4.set_ylabel('Accelerometer Magnitude')
+        ax4.set_ylabel('Accelerometer Signed Forward Magnitude')
         ax5.set_xlabel('timestamp')
         ax5.set_ylabel('x')
         ax6.set_xlabel('timestamp')
@@ -115,7 +116,8 @@ class EvaluationManager(object):
             axis.legend()
         fig.suptitle('Plots with Accelerometer and Gyroscope')
         plt.subplots_adjust(wspace=0.5)
-        plt.show()
+        plt.show(block=False)
+
     @staticmethod
     def plot_2d(x_axis, y_axis, x_label, y_label, legend_name, title_name):
         fig, ax = plt.subplots()
@@ -125,6 +127,36 @@ class EvaluationManager(object):
         ax.set_ylabel(y_label)
         ax.legend()
         plt.show(block=False)
+
+    @staticmethod
+    def plot_hazard_condition(timestamp, collide, off_road, stuck, over_light):
+        fig, ax = plt.subplots()
+        ax.plot(timestamp, collide, linestyle='None', marker='o', label='Collide')
+        ax.plot(timestamp, off_road, linestyle='None', marker='x', label='Off Road')
+        ax.plot(timestamp, stuck, linestyle='None', marker='*', label='Stuck')
+        ax.plot(timestamp, over_light, linestyle='None', marker='d', label='Ran over Traffic Light')
+        plt.ylim(-0.2, 1.5)
+        plt.xlabel("Time")
+        plt.ylabel("Event Occurrence")
+        plt.title("Time Series with Event Occurrence")
+        plt.legend()
+        plt.show(block=False)
+
+    def plot_routes(self, real_route_transforms, planned_route_transforms):
+        fig, ax = plt.subplots()
+        real_x_coords = [t.location.x for t in real_route_transforms]
+        real_y_coords = [t.location.y for t in real_route_transforms]
+        planned_x_coords = [t.location.x for t in planned_route_transforms]
+        planned_y_coords = [t.location.y for t in planned_route_transforms]
+        ax.scatter(real_x_coords, real_y_coords, marker='o', s=10, label='Real Route Points')
+        ax.scatter(planned_x_coords, planned_y_coords, marker='x', color='r', s=50, label='Planned Route Points')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_title('Actual Route / Intial Planned Route')
+        ax.legend()
+        ax.grid()
+        # ax.set_aspect('equal', adjustable='box')
+        plt.show()
 
     def planning_eval(self, log_file):
         """
@@ -143,6 +175,7 @@ class EvaluationManager(object):
         print(f"Real distance: {real_dist}")
         timestamps = list(map(lambda e: e[2], real_route))
         imu_data = vm.safety_manager.imu_sensor.imu_data
+        safety_data = vm.safety_manager.status_queue
         self.plot_2d(
             timestamps[self.skip_head:],
             list(map(lambda e: e[1], real_route))[self.skip_head:],
@@ -155,12 +188,23 @@ class EvaluationManager(object):
             timestamps[self.skip_head:],
             list(map(lambda e: e[0].x, imu_data))[self.skip_head:],
             list(map(lambda e: e[0].y, imu_data))[self.skip_head:],
-            list(map(lambda e: e[0].z, imu_data))[self.skip_head:],
-            list(map(lambda e: math.sqrt(e[0].x * e[0].x + e[0].y * e[0].y + e[0].z * e[0].z), imu_data))[self.skip_head:],
+            list(map(lambda e: e[0].z, imu_data))[self.skip_head:],  # z must subtracts gravity const.
+            list(map(lambda e: e[2], imu_data))[self.skip_head:], # signed magnitude
             list(map(lambda e: e[1].x, imu_data))[self.skip_head:],
             list(map(lambda e: e[1].y, imu_data))[self.skip_head:],
             list(map(lambda e: e[1].z, imu_data))[self.skip_head:],
             list(map(lambda e: math.sqrt(e[1].x * e[1].x + e[1].y * e[1].y + e[1].z * e[1].z), imu_data))[self.skip_head:],
+        )
+        self.plot_hazard_condition(
+            list(map(lambda e: e[0], safety_data))[self.skip_head:],
+            list(map(lambda e: int(e[1]['collision']), safety_data))[self.skip_head:],
+            list(map(lambda e: int(e[1]['offroad']), safety_data))[self.skip_head:],
+            list(map(lambda e: int(e[1]['stuck']), safety_data))[self.skip_head:],
+            list(map(lambda e: int(e[1]['ran_light']), safety_data))[self.skip_head:]
+        )
+        self.plot_routes(
+            list(map(lambda e: e[0], real_route))[self.skip_head:],
+            list(map(lambda e: e[0].transform, planned_route)),
         )
 
     def kinematics_eval(self, log_file):

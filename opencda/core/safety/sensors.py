@@ -83,6 +83,17 @@ class IMUSensor(object):
         weak_self = weakref.ref(self)
         self.sensor.listen(lambda event: IMUSensor._on_detect(weak_self, event))
         self.imu_data = deque()
+        self.vehicle = vehicle
+
+    def get_signed_forward_acceleration(self, acceleration, gravity=9.81):
+        acceleration.z -= gravity
+        forward_vector = self.vehicle.get_transform().get_forward_vector()
+        forward_vector = carla.Vector3D(forward_vector.x, forward_vector.y, 0)
+        forward_vector_norm = math.sqrt(forward_vector.x ** 2 + forward_vector.y ** 2)
+        forward_vector = carla.Vector3D(forward_vector.x / forward_vector_norm, forward_vector.y / forward_vector_norm,
+                                        0)
+        signed_forward_acceleration = acceleration.x * forward_vector.x + acceleration.y * forward_vector.y
+        return signed_forward_acceleration
 
     @staticmethod
     def _on_detect(weak_self, imu_data) -> None:
@@ -91,7 +102,8 @@ class IMUSensor(object):
             return
         linear_acceleration = imu_data.accelerometer
         angular_velocity = imu_data.gyroscope
-        self.imu_data.append((linear_acceleration, angular_velocity))
+        signed_forward_acceleration = self.get_signed_forward_acceleration(linear_acceleration)
+        self.imu_data.append((linear_acceleration, angular_velocity, signed_forward_acceleration))
 
     def return_status(self):
         return {'imu': False}
