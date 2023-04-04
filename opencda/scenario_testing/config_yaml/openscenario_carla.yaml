@@ -18,7 +18,7 @@ scenario_runner:
 
   configFile: './opencda/scenario_testing/scenarios/Overtake.xml'
   # Absolute path needed here
-  additionalScenario: '/home/ucdavis/opencda/scenario_testing/scenarios/overtake.py'
+  additionalScenario: '/home/ucdavis/OpenCDA/opencda/scenario_testing/scenarios/overtake.py'
 
   host: *host
   port: *port
