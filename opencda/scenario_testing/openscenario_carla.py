@@ -7,7 +7,6 @@ from opencda.core.common.cav_world import CavWorld
 
 import time
 from multiprocessing import Process
-import psutil
 
 import scenario_runner as sr
 
