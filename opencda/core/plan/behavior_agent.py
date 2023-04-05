@@ -146,6 +146,9 @@ class BehaviorAgent(object):
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
 
+        # add delay to stop vehcile closer to stop bar
+        self.red_light_brake_counter = 0
+
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information
@@ -397,8 +400,12 @@ class BehaviorAgent(object):
             if not waypoint.is_junction and (
                     self.light_id_to_ignore != light_id or light_id == -1):
                 return 1
-            elif waypoint.is_junction and light_id != -1:
-                self.light_id_to_ignore = light_id
+            # elif waypoint.is_junction and light_id != -1:
+            #     self.light_id_to_ignore = light_id
+            # note: stop the vehicle at intersection
+            elif waypoint.is_junction:
+                return 1
+
         if self.light_id_to_ignore != light_id:
             self.light_id_to_ignore = -1
         return 0
@@ -789,7 +796,11 @@ class BehaviorAgent(object):
 
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
-            return 0, None
+            self.red_light_brake_counter += 1
+            # delay brake by 1.8s to bring vehicle closer to the stop line
+            if self.red_light_brake_counter >= self._ego_speed*0.4:
+                return 0, None
+            # return 0, None
 
         # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \

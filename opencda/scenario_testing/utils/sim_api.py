@@ -47,7 +47,27 @@ def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
         The list of suitable blueprints for vehicles.
     """
 
-    if carla_version == '0.9.11':
+    if carla_version == '0.9.10':
+        print('version 0.9.10')
+        blueprints = [
+            blueprint_library.find('vehicle.audi.a2'),
+            blueprint_library.find('vehicle.audi.tt'),
+            blueprint_library.find('vehicle.dodge_charger.police'),
+            blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+            blueprint_library.find('vehicle.chevrolet.impala'),
+            blueprint_library.find('vehicle.audi.etron'),
+            blueprint_library.find('vehicle.mercedes-benz.coupe'),
+            blueprint_library.find('vehicle.bmw.grandtourer'),
+            blueprint_library.find('vehicle.toyota.prius'),
+            blueprint_library.find('vehicle.citroen.c3'),
+            blueprint_library.find('vehicle.mustang.mustang'),
+            blueprint_library.find('vehicle.tesla.model3'),
+            blueprint_library.find('vehicle.seat.leon'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.micra'),
+        ]
+
+    elif carla_version == '0.9.11':
         print('old version')
         blueprints = [
             blueprint_library.find('vehicle.audi.a2'),
@@ -290,9 +310,11 @@ class ScenarioManager:
         """
         print('Creating single CAVs.')
         # By default, we use lincoln as our cav model.
+        """
         default_model = 'vehicle.lincoln.mkz2017' \
             if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
-
+        """
+        default_model = 'vehicle.audi.a2'
         cav_vehicle_bp = \
             self.world.get_blueprint_library().find(default_model)
         single_cav_list = []
@@ -322,6 +344,7 @@ class ScenarioManager:
                                              *cav_config['spawn_special'])
 
             cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+            cav_vehicle_bp.set_attribute('role_name', 'UCLA-OPENCDA')
             vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
             # create vehicle manager for each cav
@@ -493,9 +516,13 @@ class ScenarioManager:
 
         # if not random select, we always choose lincoln.mkz with green color
         color = '0, 255, 0'
+        """
         default_model = 'vehicle.lincoln.mkz2017' \
             if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+        """
+        default_model = 'vehicle.audi.a2'
         ego_vehicle_bp = blueprint_library.find(default_model)
+        
 
         for i, vehicle_config in enumerate(traffic_config['vehicle_list']):
             spawn_transform = carla.Transform(
