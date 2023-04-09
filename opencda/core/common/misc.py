@@ -57,6 +57,13 @@ def draw_trajetory_points(world, waypoints, z=0.25,
             life_time=lt)
 
 
+def draw_points(world, points, z, color=carla.Color(255, 102, 0), lt=0.06, size=0.05):
+    for obstacle in points:
+        for point in obstacle:
+            x, y = point
+            world.debug.draw_point(carla.Location(x, y, z), size=size, color=color, life_time=lt)
+
+
 def draw_waypoints(world, waypoints, z=0.5):
     """
     Draw a list of waypoints at a certain height given in z.

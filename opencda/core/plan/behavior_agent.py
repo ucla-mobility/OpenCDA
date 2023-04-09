@@ -20,6 +20,7 @@ from opencda.core.plan.local_planner_behavior import LocalPlanner
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.plan.planer_debug_helper import PlanDebugHelper
+from opencda.core.sensing.prediction.physics_model import PredictionManager
 
 
 class BehaviorAgent(object):
@@ -145,6 +146,8 @@ class BehaviorAgent(object):
         # print message in debug mode
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
+        # prediction
+        self.prediction_manager = PredictionManager(int(4 / 0.05), int(3 / 0.05), 0.05)
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -168,6 +171,8 @@ class BehaviorAgent(object):
         self.break_distance = self._ego_speed / 3.6 * self.emergency_param
         # update the localization info to trajectory planner
         self.get_local_planner().update_information(ego_pos, ego_speed)
+        # prediction
+        self.prediction_manager.update_information(objects)
 
         self.objects = objects
         # current version only consider about vehicles
@@ -769,6 +774,7 @@ class BehaviorAgent(object):
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
+        predictions = self.prediction_manager.predict(self._ego_pos.location.z, self.vehicle.get_world())
         # ttc reset to 1000 at the beginning
         self.ttc = 1000
         # when overtake_counter > 0, another overtake/lane change is forbidden
