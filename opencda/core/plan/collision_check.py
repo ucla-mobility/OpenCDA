@@ -282,7 +282,10 @@ class CollisionChecker:
         distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
                              len(path_x)) \
             if not adjacent_check else len(path_x)
-
+        """
+        n^2 for-for loop for checking the prediction
+        for each ego, check for the prediction bbx with surrounding car's prediction
+        """
         for i in range(0, distance_check, 10):
             # calculating ego
             ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
