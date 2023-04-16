@@ -13,6 +13,7 @@ import importlib
 
 import numpy as np
 import carla
+import matplotlib.pyplot as plt
 
 
 def draw_trajetory_points(world, waypoints, z=0.25,
@@ -57,11 +58,24 @@ def draw_trajetory_points(world, waypoints, z=0.25,
             life_time=lt)
 
 
-def draw_points(world, points, z, color=carla.Color(255, 102, 0), lt=0.06, size=0.05):
-    for obstacle in points:
-        for point in obstacle:
-            x, y = point
-            world.debug.draw_point(carla.Location(x, y, z), size=size, color=color, life_time=lt)
+def draw_prediction_points(world, points, colors, z=0.5, lt=0.06, size=0.05):
+    for idx, point in enumerate(points):
+        # idx = idx % len(colors)
+        # color = carla.Color(r=int(colors[idx][0] * 255), g=int(colors[idx][1] * 255), b=int(colors[idx][2] * 255))
+        color = carla.Color(255, 103, 0)
+        x, y = point
+        world.debug.draw_point(carla.Location(x, y, z), size=size, color=color, life_time=lt)
+
+
+def create_color_map(num_colors):
+    """Create a gradient color map using matplotlib"""
+    cm = plt.get_cmap("magma")
+    colors = [cm(1. * i / num_colors) for i in range(num_colors)]
+    return colors
+
+
+def draw_prediction_bbx(world, x, y, color=carla.Color(255, 0, 0), z=2.0, lt=0.06, size=0.05):
+    world.debug.draw_point(carla.Location(x, y, z), size=size, color=color, life_time=lt)
 
 
 def draw_waypoints(world, waypoints, z=0.5):

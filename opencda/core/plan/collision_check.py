@@ -10,7 +10,7 @@ from scipy import spatial
 import carla
 import numpy as np
 
-from opencda.core.common.misc import cal_distance_angle, draw_trajetory_points
+from opencda.core.common.misc import cal_distance_angle, draw_trajetory_points, draw_prediction_bbx
 from opencda.core.plan.spline import Spline2D
 
 
@@ -28,8 +28,11 @@ class CollisionChecker:
         The offset between collision checking circle and the trajectory point.
     """
 
-    def __init__(self, time_ahead=1.2, circle_radius=1.0, circle_offsets=None):
-
+    def __init__(self, time_ahead=1.2,
+                 cav_world=None,
+                 circle_radius=1.0,
+                 circle_offsets=None):
+        self._cav_world = cav_world
         self.time_ahead = time_ahead
         self._circle_offsets = [-1.0,
                                 0,
@@ -144,14 +147,14 @@ class CollisionChecker:
             target_wpt_previous = target_wpt.previous(diff_s)
 
         target_wpt_previous = target_wpt_previous[0]
-        target_wpt_middle = target_wpt_previous.next(diff_s/2)[0]
+        target_wpt_middle = target_wpt_previous.next(diff_s / 2)[0]
 
         x, y = [target_wpt_next.transform.location.x,
                 target_wpt_middle.transform.location.x,
                 target_wpt_previous.transform.location.x], \
-               [target_wpt_next.transform.location.y,
-                target_wpt_middle.transform.location.y,
-                target_wpt_previous.transform.location.y]
+            [target_wpt_next.transform.location.y,
+             target_wpt_middle.transform.location.y,
+             target_wpt_previous.transform.location.y]
         ds = 0.1
 
         sp = Spline2D(x, y)
@@ -205,10 +208,12 @@ class CollisionChecker:
         collision_free = True
         # detect x second ahead. in case the speed is very slow,
         # there is some minimum threshold for the check distance
+        ### Look ahead how many points in the path list ###
         distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
                              len(path_x)) \
             if not adjacent_check else len(path_x)
 
+        ### Get the 3D location of the vehicle being checked ###
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
         obstacle_vehicle_yaw = \
             carla_map.get_waypoint(obstacle_vehicle_loc).transform.rotation.yaw
@@ -248,7 +253,6 @@ class CollisionChecker:
                            corrected_extent_x,
                            obstacle_vehicle_loc.y +
                            corrected_extent_y]])
-
             # compute whether the distance between the four corners of the
             # vehicle to the trajectory point
             collision_dists = spatial.distance.cdist(
@@ -260,4 +264,57 @@ class CollisionChecker:
             if not collision_free:
                 break
 
+        return collision_free
+
+    def collision_circle_check_enable_prediction(
+            self,
+            path_x,
+            path_y,
+            path_yaw,
+            obstacle_vehicle,
+            vehicle_predictions,
+            speed,
+            carla_map,
+            adjacent_check=False):
+        collision_free = True
+        dx = obstacle_vehicle.bounding_box.extent.x / 2
+        dy = obstacle_vehicle.bounding_box.extent.y / 2
+        distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
+                             len(path_x)) \
+            if not adjacent_check else len(path_x)
+
+        for i in range(0, distance_check, 10):
+            # calculating ego
+            ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
+            circle_locations = np.zeros((len(self._circle_offsets), 2))
+            circle_offsets = np.array(self._circle_offsets)
+            circle_locations[:, 0] = ptx + circle_offsets * cos(yaw)
+            circle_locations[:, 1] = pty + circle_offsets * sin(yaw)
+            draw_prediction_bbx(self._cav_world, ptx, pty, carla.Color(0, 255, 0))
+
+            # calculating surrounding vehicle
+            for j in range(0, len(vehicle_predictions), 10):
+                x, y = vehicle_predictions[j]
+                draw_prediction_bbx(self._cav_world, x, y)
+                obstacle_vehicle_bbx_array = \
+                    np.array([
+                        [x + dx, y],
+                        [x - dx, y],
+                        [x, y + dy],
+                        [x, y - dy],
+                        [x + dx, y + dy],
+                        [x + dx, y - dy],
+                        [x - dx, y + dy],
+                        [x - dx, y - dy]
+                    ])
+                for pt in obstacle_vehicle_bbx_array.tolist():
+                    draw_prediction_bbx(self._cav_world, pt[0], pt[1], carla.Color(0, 0, 255))
+                collision_dists = spatial.distance.cdist(
+                    obstacle_vehicle_bbx_array, circle_locations)
+
+                collision_dists = np.subtract(collision_dists, self._circle_radius)
+                collision_free = collision_free and not np.any(collision_dists < 0)
+
+                if not collision_free:
+                    break
         return collision_free
