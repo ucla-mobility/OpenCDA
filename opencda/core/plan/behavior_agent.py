@@ -13,7 +13,7 @@ import sys
 
 import numpy as np
 import carla
-from opencda.core.common.misc import draw_prediction_points, create_color_map
+from opencda.core.common.misc import draw_prediction_points
 
 from opencda.core.common.misc import get_speed, positive, cal_distance_angle
 from opencda.core.plan.collision_check import CollisionChecker
@@ -150,11 +150,16 @@ class BehaviorAgent(object):
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
         # prediction
-        self.prediction_manager = PredictionManager(50, 50, 0.05)
         self.enable_prediction = False
         if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner']:
-            self.enable_prediction = config_yaml['local_planner']['enable_prediction']
-        self.colors = create_color_map(8)
+            local_planner_config = config_yaml['local_planner']
+            dt = local_planner_config['dt']
+            self.enable_prediction = local_planner_config['enable_prediction']
+            self.prediction_manager = PredictionManager(
+                observed_length=int(local_planner_config['observation_seconds'] // dt),
+                predict_length=int(local_planner_config['observation_seconds'] // dt),
+                dt=dt
+            )
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -812,7 +817,7 @@ class BehaviorAgent(object):
         obstacle_vehicle_predictions = self.prediction_manager.predict()
         if self.enable_prediction:
             for v_id, predictions in obstacle_vehicle_predictions.items():
-                draw_prediction_points(self._cav_world, predictions['points'], self.colors)
+                draw_prediction_points(self._cav_world, predictions['points'])
 
         # ttc reset to 1000 at the beginning
         self.ttc = 1000

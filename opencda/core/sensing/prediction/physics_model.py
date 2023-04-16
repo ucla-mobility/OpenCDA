@@ -57,11 +57,11 @@ class TrajectoryData:
 
 def get_kinematics(trajectory_data, observed_length):
     observed_traj = list(trajectory_data.observed_traj)[-observed_length:]
-    v = list(trajectory_data.observed_velocity)[-1]
+    velocity = list(trajectory_data.observed_velocity)[-1]
     yaw = trajectory_data.observed_yaw[-1]
     yaw_rate = trajectory_data.yaw_rate
-    a = trajectory_data.a
-    return observed_traj, v, a, yaw, yaw_rate
+    acc = trajectory_data.a
+    return observed_traj, velocity, acc, yaw, yaw_rate
 
 
 class PredictionManager:
