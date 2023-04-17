@@ -137,7 +137,7 @@ class ConstantVelocityHeading(Baseline):
         y = observed_traj[-1][1]
         # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
         vx, vy = v
-        pred_traj = constant_velocity_heading(x, y, vx, vy, self.predict_length, self.dt)
+        pred_traj = constant_velocity_heading(x, y, vx, vy, yaw, self.predict_length, self.dt)
         return pred_traj
 
 
@@ -195,7 +195,7 @@ class PhysicsOracle(Baseline):
         return oracle
 
 
-def constant_velocity_heading(x, y, vx, vy, predict_length, dt):
+def constant_velocity_heading(x, y, vx, vy, yaw, predict_length, dt):
     """
     Predict trajectories based on constant velocity.
     Parameters
@@ -212,6 +212,9 @@ def constant_velocity_heading(x, y, vx, vy, predict_length, dt):
     vy : float
         Vehicle's current y-axis velocity.
 
+    yaw : float
+        Vehicle's current yaw angle
+
     predict_length : int
         Predicted trajectory length.
 
@@ -227,7 +230,7 @@ def constant_velocity_heading(x, y, vx, vy, predict_length, dt):
     preds = []
     for i in range(1, predict_length + 1):
         t = i * dt
-        preds.append((x + vx * t, y + vy * t))
+        preds.append((x + vx * t, y + vy * t, yaw))
     return np.array(preds)
 
 

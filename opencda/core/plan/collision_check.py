@@ -274,18 +274,11 @@ class CollisionChecker:
             obstacle_vehicle,
             vehicle_predictions,
             speed,
-            carla_map,
             adjacent_check=False):
         collision_free = True
-        dx = obstacle_vehicle.bounding_box.extent.x / 2
-        dy = obstacle_vehicle.bounding_box.extent.y / 2
         distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
                              len(path_x)) \
             if not adjacent_check else len(path_x)
-        """
-        n^2 for-for loop for checking the prediction
-        for each ego, check for the prediction bbx with surrounding car's prediction
-        """
         for i in range(0, distance_check, 10):
             # calculating ego
             ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
@@ -297,18 +290,19 @@ class CollisionChecker:
 
             # calculating surrounding vehicle
             for j in range(0, len(vehicle_predictions), 10):
-                x, y = vehicle_predictions[j]
+                x, y, obstacle_vehicle_yaw = vehicle_predictions[j]
                 draw_prediction_bbx(self._cav_world, x, y)
+                dx = obstacle_vehicle.bounding_box.extent.x * \
+                                 math.cos(math.radians(obstacle_vehicle_yaw))
+                dy = obstacle_vehicle.bounding_box.extent.y * \
+                                 math.cos(math.radians(obstacle_vehicle_yaw))
                 obstacle_vehicle_bbx_array = \
                     np.array([
-                        [x + dx, y],
-                        [x - dx, y],
-                        [x, y + dy],
-                        [x, y - dy],
-                        [x + dx, y + dy],
-                        [x + dx, y - dy],
+                        [x - dx, y - dy],
                         [x - dx, y + dy],
-                        [x - dx, y - dy]
+                        [x, y],
+                        [x + dx, y - dy],
+                        [x + dx, y + dy]
                     ])
                 for pt in obstacle_vehicle_bbx_array.tolist():
                     draw_prediction_bbx(self._cav_world, pt[0], pt[1], carla.Color(0, 0, 255))
