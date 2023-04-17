@@ -287,6 +287,7 @@ class CollisionChecker:
             circle_locations[:, 0] = ptx + circle_offsets * cos(yaw)
             circle_locations[:, 1] = pty + circle_offsets * sin(yaw)
             draw_prediction_bbx(self._cav_world, ptx, pty, carla.Color(0, 255, 0))
+            print(f"ego yaw: {yaw}")
 
             # calculating surrounding vehicle
             for j in range(0, len(vehicle_predictions), 10):
@@ -304,6 +305,7 @@ class CollisionChecker:
                         [x + dx, y - dy],
                         [x + dx, y + dy]
                     ])
+                print(f"    nearby yaw: {obstacle_vehicle.transform.rotation.yaw}")
                 for pt in obstacle_vehicle_bbx_array.tolist():
                     draw_prediction_bbx(self._cav_world, pt[0], pt[1], carla.Color(0, 0, 255))
                 collision_dists = spatial.distance.cdist(
