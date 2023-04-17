@@ -151,7 +151,6 @@ class BehaviorAgent(object):
                               config_yaml else config_yaml['debug']
         # prediction
         self.enable_prediction = False
-        print("config yaml:", config_yaml)
         if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner']:
             local_planner_config = config_yaml['local_planner']
             dt = local_planner_config['dt']
