@@ -54,10 +54,11 @@ def run_scenario(opt, config_yaml):
             traffic_manager, bg_veh_list = \
             scenario_manager.create_traffic_carla()
 
-        eval_manager = \
-            EvaluationManager(scenario_manager.cav_world,
-                              script_name='platoon_joining_suntrax_front',
-                              current_time=scenario_params['current_time'])
+        # temporarily stop eval
+        # eval_manager = \
+        #     EvaluationManager(scenario_manager.cav_world,
+        #                       script_name='platoon_joining_suntrax_front',
+        #                       current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
         spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle
@@ -65,22 +66,46 @@ def run_scenario(opt, config_yaml):
         # run steps
         # headlight blink timer to indicate platooning status
         blink_timer = 0
+
+        # visulize spawn points 
+        all_spawn_points = scenario_manager.world.get_map().get_spawn_points()
+
+        for i, spawn_point in enumerate(all_spawn_points):
+            curr_loc = spawn_point.location + carla.Location(z=1.25)
+            scenario_manager.world.debug.draw_string(curr_loc, str(i), False, carla.Color(255, 255, 0), 9999999)
+            if i==4:
+                print('Spawn number 4: ' + str(spawn_point))
+            if i==5:
+                print('Spawn number 5: ' + str(spawn_point))
+            if i==6:
+                print('Spawn number 6: ' + str(spawn_point))
         while True:
+
+            # visulize spawn points 
+            all_spawn_points = scenario_manager.world.get_map().get_spawn_points()
+
+
             scenario_manager.tick()
-            transform = spectator_vehicle.get_transform()
-            spectator.set_transform(
-                carla.Transform(
-                    transform.location +
-                    carla.Location(
-                        z=80),
-                    carla.Rotation(
-                        pitch=-
-                        90)))
+            # transform = spectator_vehicle.get_transform()
+            # spectator.set_transform(
+            #     carla.Transform(
+            #         transform.location +
+            #         carla.Location(
+            #             z=80),
+            #         carla.Rotation(
+            #             pitch=-
+            #             90)))
             for platoon in platoon_list:
                 platoon.update_information()
                 platoon.run_step()
                 # flash headlight briefly to indicate joining the platoon
                 for cav in platoon.vehicle_manager_list:
+
+                    # force stop to check ROS
+                    e_stop = carla.VehicleControl()
+                    e_stop.brake = 1.0
+                    cav.vehicle.apply_control(e_stop)
+
                     # check light state
                     light_state = cav.vehicle.get_light_state()
                     if light_state != carla.VehicleLightState.NONE:
@@ -106,11 +131,14 @@ def run_scenario(opt, config_yaml):
                     single_cav_list.pop(i)
                 else:
                     single_cav.update_info()
-                    control = single_cav.run_step()
-                    single_cav.vehicle.apply_control(control)
+                    # force stop to check ROS
+                    # control = single_cav.run_step()
+                    e_stop = carla.VehicleControl()
+                    e_stop.brake = 1.0
+                    single_cav.vehicle.apply_control(e_stop)
 
     finally:
-        eval_manager.evaluate()
+        # eval_manager.evaluate()
 
         if opt.record:
             scenario_manager.client.stop_recorder()

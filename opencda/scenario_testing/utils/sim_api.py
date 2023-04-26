@@ -25,7 +25,7 @@ from opencda.scenario_testing.utils.customized_map_api import \
     load_customized_world, bcolors
 
 
-def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
+def car_blueprint_filter(blueprint_library, carla_version='0.9.12'):
     """
     Exclude the uncommon vehicles from the default CARLA blueprint library
     (i.e., isetta, carlacola, cybertruck, t2).
