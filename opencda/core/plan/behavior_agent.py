@@ -151,6 +151,7 @@ class BehaviorAgent(object):
                               config_yaml else config_yaml['debug']
         # prediction
         self.enable_prediction = False
+        print("config yaml:", config_yaml)
         if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner']:
             local_planner_config = config_yaml['local_planner']
             dt = local_planner_config['dt']
@@ -458,20 +459,33 @@ class BehaviorAgent(object):
         if self.enable_prediction:
             for v_id, predictions in obstacle_vehicle_predictions.items():
                 vehicle = predictions['vehicle']
-                collision_free = self._collision_check.collision_circle_check_enable_prediction(
+                # not collide with prediction points
+                collision_free_prediction = self._collision_check.collision_circle_check_enable_prediction(
                     rx, ry, ryaw,
                     predictions['vehicle'],
                     predictions['points'],
                     self._ego_speed / 3.6,
                     False
                 )
-                if not collision_free:
+
+                # not collide with original check
+                collision_free = self._collision_check.collision_circle_check(
+                    rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
+                    adjacent_check=adjacent_check)
+
+                # either collide with original check or the prediction
+                if not collision_free or not collision_free_prediction:
                     vehicle_state = True
+
+                    # the vehicle length is typical 3 meters,
+                    # so we need to consider that when calculating the distance
                     distance = positive(dist(vehicle) - 3)
+
+                    # updating the minimal distance and the closet vehicle
                     if distance < min_distance:
                         min_distance = distance
                         target_vehicle = vehicle
-            return vehicle_state, target_vehicle, min_distance
+
         else:
             for vehicle in self.obstacle_vehicles:
                 collision_free = self._collision_check.collision_circle_check(
@@ -487,6 +501,23 @@ class BehaviorAgent(object):
                     if distance < min_distance:
                         min_distance = distance
                         target_vehicle = vehicle
+
+            return vehicle_state, target_vehicle, min_distance
+
+        for vehicle in self.obstacle_vehicles:
+            collision_free = self._collision_check.collision_circle_check(
+                rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
+                adjacent_check=adjacent_check)
+            if not collision_free:
+                vehicle_state = True
+
+                # the vehicle length is typical 3 meters,
+                # so we need to consider that when calculating the distance
+                distance = positive(dist(vehicle) - 3)
+
+                if distance < min_distance:
+                    min_distance = distance
+                    target_vehicle = vehicle
 
         return vehicle_state, target_vehicle, min_distance
 

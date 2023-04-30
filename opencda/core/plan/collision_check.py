@@ -10,7 +10,7 @@ from scipy import spatial
 import carla
 import numpy as np
 
-from opencda.core.common.misc import cal_distance_angle, draw_trajetory_points, draw_prediction_bbx
+from opencda.core.common.misc import cal_distance_angle, draw_prediction_bbx
 from opencda.core.plan.spline import Spline2D
 
 
@@ -191,7 +191,6 @@ class CollisionChecker:
         """
         Use circled collision check to see whether potential hazard on
         the forwarding path.
-
         Args:
             -adjacent_check (boolean): Indicator of whether do adjacent check.
              Note: always give full path for adjacent lane check.
@@ -287,27 +286,28 @@ class CollisionChecker:
             circle_locations[:, 0] = ptx + circle_offsets * cos(yaw)
             circle_locations[:, 1] = pty + circle_offsets * sin(yaw)
             draw_prediction_bbx(self._cav_world, ptx, pty, carla.Color(0, 255, 0))
-            print(f"ego yaw: {yaw}")
 
             # calculating surrounding vehicle
-            for j in range(0, len(vehicle_predictions), 10):
-                x, y, obstacle_vehicle_yaw = vehicle_predictions[j]
+            if i < len(vehicle_predictions):
+                x, y, obstacle_vehicle_yaw = vehicle_predictions[i]
                 draw_prediction_bbx(self._cav_world, x, y)
-                dx = obstacle_vehicle.bounding_box.extent.x * \
-                                 math.cos(math.radians(obstacle_vehicle_yaw))
-                dy = obstacle_vehicle.bounding_box.extent.y * \
-                                 math.cos(math.radians(obstacle_vehicle_yaw))
-                obstacle_vehicle_bbx_array = \
-                    np.array([
-                        [x - dx, y - dy],
-                        [x - dx, y + dy],
-                        [x, y],
-                        [x + dx, y - dy],
-                        [x + dx, y + dy]
-                    ])
-                print(f"    nearby yaw: {obstacle_vehicle.transform.rotation.yaw}")
+                dx, dy = obstacle_vehicle.bounding_box.extent.x, obstacle_vehicle.bounding_box.extent.y
+                vehicle_extent = np.array([dx, dy])
+                corner_points = np.array([
+                    [-dx, -dy],
+                    [dx, -dy],
+                    [-dx, dy],
+                    [dx, dy]
+                ])
+                rotation_matrix = np.array([
+                    [np.cos(obstacle_vehicle_yaw), -np.sin(obstacle_vehicle_yaw)],
+                    [np.sin(obstacle_vehicle_yaw), np.cos(obstacle_vehicle_yaw)]
+                ])
+                rotated_points = corner_points @ rotation_matrix.T
+                obstacle_vehicle_bbx_array = rotated_points + np.array([x, y])
                 for pt in obstacle_vehicle_bbx_array.tolist():
                     draw_prediction_bbx(self._cav_world, pt[0], pt[1], carla.Color(0, 0, 255))
+
                 collision_dists = spatial.distance.cdist(
                     obstacle_vehicle_bbx_array, circle_locations)
 
