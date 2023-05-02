@@ -118,5 +118,6 @@ OpenCDA is mainly supported by the [UCLA Mobility Lab](https://mobility-lab.seas
  - Zonglin Meng([linkedin](https://www.linkedin.com/in/zonglin-meng-a393b31ab/)
  - Dr. Xin Xia ([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
 
-### Major Contributor Acknowledgements
-We would also like to acknowledge the great contributions from UC Davis Professor [Junshan Zhang's](https://faculty.engineering.ucdavis.edu/jzhang/) group,  particularly to Dr. Shao Wei, who played a crucial role in this collaboration. Their expertise enabled the seamless integration of openScenario with OpenCDA. Additionally, we extend our gratitude to @GoodarzMehr for his outstanding contribution in creating the OpenCDA Dockerfile.
+### External Contributor Acknowledgements
+- We would  like to acknowledge the great contributions from UC Davis Professor [Junshan Zhang's](https://faculty.engineering.ucdavis.edu/jzhang/) group,  particularly to Dr. [Shao Wei](https://scholar.google.com.au/citations?user=zbqNhWwAAAAJ&hl=en), who played a crucial role in this collaboration. Their expertise enabled the seamless integration of openScenario with OpenCDA.
+- We would like to thank @GoodarzMehr for his outstanding contribution in creating the OpenCDA Dockerfile.
