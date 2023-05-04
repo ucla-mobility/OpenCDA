@@ -151,15 +151,19 @@ class BehaviorAgent(object):
                               config_yaml else config_yaml['debug']
         # prediction
         self.enable_prediction = False
-        print("config yaml:", config_yaml)
+        self.prediction_scan_window = 0
         if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner']:
+            print("Prediction is enabled")
+            print(f"Prediction model used: {config_yaml['local_planner']['prediction_model']}")
             local_planner_config = config_yaml['local_planner']
             dt = local_planner_config['dt']
             self.enable_prediction = local_planner_config['enable_prediction']
+            self.prediction_scan_window = config_yaml['local_planner']['prediction_scan_window'] # override zero
             self.prediction_manager = PredictionManager(
                 observed_length=int(local_planner_config['observation_seconds'] // dt),
                 predict_length=int(local_planner_config['observation_seconds'] // dt),
-                dt=dt
+                dt=dt,
+                model=config_yaml['local_planner']['prediction_model']
             )
 
     def update_information(self, ego_pos, ego_speed, objects):
@@ -465,6 +469,7 @@ class BehaviorAgent(object):
                     predictions['vehicle'],
                     predictions['points'],
                     self._ego_speed / 3.6,
+                    self.prediction_scan_window,
                     False
                 )
 
