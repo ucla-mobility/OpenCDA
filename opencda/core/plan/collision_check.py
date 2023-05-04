@@ -273,11 +273,13 @@ class CollisionChecker:
             obstacle_vehicle,
             vehicle_predictions,
             speed,
+            prediction_scan_window,
             adjacent_check=False):
         collision_free = True
         distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
                              len(path_x)) \
             if not adjacent_check else len(path_x)
+
         for i in range(0, distance_check, 10):
             # calculating ego
             ptx, pty, yaw = path_x[i], path_y[i], path_yaw[i]
@@ -287,33 +289,38 @@ class CollisionChecker:
             circle_locations[:, 1] = pty + circle_offsets * sin(yaw)
             draw_prediction_bbx(self._cav_world, ptx, pty, carla.Color(0, 255, 0))
 
+            # if enable the scan window, examine through
+            # [vehicle_predictions[i - window], vehicle_predictions[i + window]]
             # calculating surrounding vehicle
-            if i < len(vehicle_predictions):
-                x, y, obstacle_vehicle_yaw = vehicle_predictions[i]
-                draw_prediction_bbx(self._cav_world, x, y)
-                dx, dy = obstacle_vehicle.bounding_box.extent.x, obstacle_vehicle.bounding_box.extent.y
-                vehicle_extent = np.array([dx, dy])
-                corner_points = np.array([
-                    [-dx, -dy],
-                    [dx, -dy],
-                    [-dx, dy],
-                    [dx, dy]
-                ])
-                rotation_matrix = np.array([
-                    [np.cos(obstacle_vehicle_yaw), -np.sin(obstacle_vehicle_yaw)],
-                    [np.sin(obstacle_vehicle_yaw), np.cos(obstacle_vehicle_yaw)]
-                ])
-                rotated_points = corner_points @ rotation_matrix.T
-                obstacle_vehicle_bbx_array = rotated_points + np.array([x, y])
-                for pt in obstacle_vehicle_bbx_array.tolist():
-                    draw_prediction_bbx(self._cav_world, pt[0], pt[1], carla.Color(0, 0, 255))
+            scan_range = [i - prediction_scan_window, i + prediction_scan_window]
+            for idx in scan_range:
+                if 0 <= idx < len(vehicle_predictions):
+                    x, y, obstacle_vehicle_yaw = vehicle_predictions[idx]
+                    # obstacle_vehicle_yaw = math.radians(obstacle_vehicle_yaw)
+                    draw_prediction_bbx(self._cav_world, x, y)
+                    dx, dy = obstacle_vehicle.bounding_box.extent.x, obstacle_vehicle.bounding_box.extent.y
+                    vehicle_extent = np.array([dx, dy])
+                    corner_points = np.array([
+                        [-dx, -dy],
+                        [dx, -dy],
+                        [-dx, dy],
+                        [dx, dy]
+                    ])
+                    rotation_matrix = np.array([
+                        [np.cos(obstacle_vehicle_yaw), -np.sin(obstacle_vehicle_yaw)],
+                        [np.sin(obstacle_vehicle_yaw), np.cos(obstacle_vehicle_yaw)]
+                    ])
+                    rotated_points = corner_points @ rotation_matrix.T
+                    obstacle_vehicle_bbx_array = rotated_points + np.array([x, y])
+                    for pt in obstacle_vehicle_bbx_array.tolist():
+                        draw_prediction_bbx(self._cav_world, pt[0], pt[1], carla.Color(0, 0, 255), z=3.0)
 
-                collision_dists = spatial.distance.cdist(
-                    obstacle_vehicle_bbx_array, circle_locations)
+                    collision_dists = spatial.distance.cdist(
+                        obstacle_vehicle_bbx_array, circle_locations)
 
-                collision_dists = np.subtract(collision_dists, self._circle_radius)
-                collision_free = collision_free and not np.any(collision_dists < 0)
+                    collision_dists = np.subtract(collision_dists, self._circle_radius)
+                    collision_free = collision_free and not np.any(collision_dists < 0)
 
-                if not collision_free:
-                    break
+                    if not collision_free:
+                        break
         return collision_free

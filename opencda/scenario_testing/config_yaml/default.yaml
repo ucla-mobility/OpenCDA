@@ -125,8 +125,11 @@ vehicle_base:
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
     local_planner:  # trajectory planning related
       dt: ${world.fixed_delta_seconds} # used for prediction
+      enable_prediction: false
       observation_seconds: 2
       prediction_seconds: 2
+      prediction_scan_window: 0
+      prediction_model: "PhysicsOracle" # "ConstantVelocityHeading", "ConstantAccelerationHeading", "ConstantSpeedYawRate", "ConstantMagnitudeAccelAndYawRate", "PhysicsOracle"
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
       waypoint_update_freq: 9 # used to control waypoint updating frequency

@@ -2,7 +2,7 @@
 """
 Physics-based trajectory prediction model
 """
-
+import math
 import numpy as np
 from collections import deque
 
@@ -38,14 +38,16 @@ class TrajectoryData:
         self.observed_velocity = deque(maxlen=l)
         self.observed_yaw = deque(maxlen=l)
         self.yaw_rate = 0
-        self.a = [0, 0]
+        self.acc = [0, 0]
 
-    def add(self, pose, v, time_diff):
-        current_yaw = np.arctan2(v[1], v[0])
+    def add(self, pose, v, time_diff, current_yaw):
+        # use current yaw from system to avoid getting 0.0
+        # yaw when velocity is very slow.
+        # current_yaw = np.arctan2(v[1], v[0])
         if len(self.observed_velocity):
             # update acceleration
             past_v = self.observed_velocity[-1]
-            self.a = [(v[i] - past_v[i]) / time_diff for i in range(2)]
+            self.acc = [(v[i] - past_v[i]) / time_diff for i in range(2)]
             # update yaw rate
             past_yaw = self.observed_yaw[-1]
             self.yaw_rate = angle_diff(current_yaw, past_yaw) / time_diff
@@ -60,7 +62,7 @@ def get_kinematics(trajectory_data, observed_length):
     velocity = list(trajectory_data.observed_velocity)[-1]
     yaw = trajectory_data.observed_yaw[-1]
     yaw_rate = trajectory_data.yaw_rate
-    acc = trajectory_data.a
+    acc = trajectory_data.acc
     return observed_traj, velocity, acc, yaw, yaw_rate
 
 
@@ -89,7 +91,8 @@ class PredictionManager:
             location = vehicle.get_location()
             x, y = location.x, location.y
             v = vehicle.get_velocity()
-            self.vehicle_trajectory_data[vehicle.get_carla_id()].add([x, y], [v.x, v.y], self.dt)
+            yaw = math.radians(vehicle.get_transform().rotation.yaw)
+            self.vehicle_trajectory_data[vehicle.get_carla_id()].add([x, y], [v.x, v.y], self.dt, yaw)
 
     def predict(self):
         predictions = {}
@@ -132,55 +135,55 @@ class Baseline:
 
 class ConstantVelocityHeading(Baseline):
     def __call__(self, kinematics_data):
-        observed_traj, v, a, yaw, yaw_rate = kinematics_data
+        observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
         # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
-        vx, vy = v
+        vx, vy = velocity
         pred_traj = constant_velocity_heading(x, y, vx, vy, yaw, self.predict_length, self.dt)
         return pred_traj
 
 
 class ConstantAccelerationHeading(Baseline):
     def __call__(self, kinematics_data):
-        observed_traj, v, a, yaw, yaw_rate = kinematics_data
+        observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
         # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
-        vx, vy = v
-        ax, ay = a
-        pred_traj = constant_acceleration_and_heading(x, y, vx, vy, ax, ay, self.predict_length, self.dt)
+        vx, vy = velocity
+        ax, ay = acc
+        pred_traj = constant_acceleration_and_heading(x, y, vx, vy, yaw, ax, ay, self.predict_length, self.dt)
         return pred_traj
 
 
 class ConstantSpeedYawRate(Baseline):
     def __call__(self, kinematics_data):
-        observed_traj, v, a, yaw, yaw_rate = kinematics_data
+        observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
         # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
-        vx, vy = v
+        vx, vy = velocity
         pred_traj = constant_speed_and_yaw_rate(x, y, vx, vy, yaw, yaw_rate, self.predict_length, self.dt)
         return pred_traj
 
 
 class ConstantMagnitudeAccelAndYawRate(Baseline):
     def __call__(self, kinematics_data):
-        observed_traj, v, a, yaw, yaw_rate = kinematics_data
+        observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
         # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
-        vx, vy = v
-        ax, ay = a
-        pred_traj = constant_magnitude_accel_and_yaw_rate(x, y, vx, vy, ax, ay, yaw, yaw_rate, self.predict_length,
-                                                          self.dt)
+        vx, vy = velocity
+        ax, ay = acc
+        pred_traj = constant_magnitude_accel_and_yaw_rate(x, y, vx, vy, ax, ay,
+                                                          yaw, yaw_rate, self.predict_length, self.dt)
         return pred_traj
 
 
 class PhysicsOracle(Baseline):
     def __call__(self, kinematics_data, ground_truth):
-        assert len(ground_truth.shape) == 2 and ground_truth.shape[0] == self.predict_length and ground_truth.shape[
-            1] == 2
+        assert len(ground_truth.shape) == 2 and ground_truth.shape[0] == self.predict_length \
+               and ground_truth.shape[1] == 2
         models = [
             ConstantVelocityHeading,
             ConstantAccelerationHeading,
@@ -234,12 +237,12 @@ def constant_velocity_heading(x, y, vx, vy, yaw, predict_length, dt):
     return np.array(preds)
 
 
-def constant_acceleration_and_heading(x, y, vx, vy, ax, ay, predict_length, dt):
+def constant_acceleration_and_heading(x, y, vx, vy, yaw, ax, ay, predict_length, dt):
     preds = []
     for i in range(1, predict_length + 1):
         t = i * dt
         half_time_squared = 1 / 2 * t * t
-        preds.append((x + vx * t + half_time_squared * ax, y + vy * t + half_time_squared * ay))
+        preds.append((x + vx * t + half_time_squared * ax, y + vy * t + half_time_squared * ay, yaw))
     return np.array(preds)
 
 
@@ -250,8 +253,8 @@ def constant_speed_and_yaw_rate(x, y, vx, vy, yaw, yaw_rate, predict_length, dt)
     for i in range(1, predict_length + 1):
         x += distance_step * np.cos(yaw)
         y += distance_step * np.sin(yaw)
-        preds.append((x, y))
         yaw += yaw_step
+        preds.append((x, y, yaw))
     return np.array(preds)
 
 
@@ -265,7 +268,7 @@ def constant_magnitude_accel_and_yaw_rate(x, y, vx, vy, ax, ay, yaw, yaw_rate, p
         distance_step = dt * v_value
         x += distance_step * np.cos(yaw)
         y += distance_step * np.sin(yaw)
-        preds.append((x, y))
         v_value += speed_step
         yaw += yaw_step
+        preds.append((x, y, yaw))
     return np.array(preds)
