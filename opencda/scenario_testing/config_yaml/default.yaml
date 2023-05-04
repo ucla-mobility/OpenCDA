@@ -125,7 +125,7 @@ vehicle_base:
     sample_resolution: 4.5 # the unit distance between two adjacent waypoints in meter
     local_planner:  # trajectory planning related
       dt: ${world.fixed_delta_seconds} # used for prediction
-      enable_prediction: true # default is not enabling the prediction
+      enable_prediction: false # default is not enabling the prediction
       observation_seconds: 2 # 2 / 0.05 = 40 for the observation length
       prediction_seconds: 2 # 2 / 0.05 = 40 for the prediction length
       prediction_scan_window: 0 # this decides a range of the window to look at for the
