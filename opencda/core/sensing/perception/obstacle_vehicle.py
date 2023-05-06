@@ -66,7 +66,7 @@ class ObstacleVehicle(object):
     corners : nd.nparray
         Eight corners of the bounding box. shape:(8, 3).
 
-    o3d_bbx : pen3d.AlignedBoundingBox
+    o3d_bbx : open3d.AlignedBoundingBox
         The bounding box object in Open3d. This is mainly used for
         visualization
 

@@ -20,6 +20,7 @@ vehicle_base:
 
     localization:
       activate: true # when not activated, ego position will be retrieved from server directly
+      delta: 0.01
       debug_helper:
         show_animation: true # whether to show real-time trajectory plotting
 

@@ -182,7 +182,7 @@ class LidarSensor:
 
         # spawn sensor
         if global_position is None:
-            spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.9))
+            spawn_point = carla.Transform(carla.Location(x=-0.5, z=2.5))
         else:
             spawn_point = carla.Transform(carla.Location(x=global_position[0],
                                                          y=global_position[1],

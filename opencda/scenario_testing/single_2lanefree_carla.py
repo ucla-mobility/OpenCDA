@@ -35,6 +35,11 @@ def run_scenario(opt, scenario_params):
                                                    opt.version,
                                                    xodr_path=xodr_path,
                                                    cav_world=cav_world)
+        # create evaluation manager
+        eval_manager = \
+            EvaluationManager(scenario_manager.cav_world,
+                              script_name='single_2lanefree_carla',
+                              current_time=scenario_params['current_time'])
 
         if opt.record:
             scenario_manager.client. \
@@ -48,12 +53,6 @@ def run_scenario(opt, scenario_params):
         # create background traffic in carla
         traffic_manager, bg_veh_list = \
             scenario_manager.create_traffic_carla()
-
-        # create evaluation manager
-        eval_manager = \
-            EvaluationManager(scenario_manager.cav_world,
-                              script_name='single_2lanefree_carla',
-                              current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
         # run steps

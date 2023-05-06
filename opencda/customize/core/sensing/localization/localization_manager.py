@@ -7,8 +7,8 @@ Customized Localization Module.
 
 from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
-from opencda.customize.core.sensing.localization.extented_kalman_filter \
-    import ExtentedKalmanFilter
+from opencda.customize.core.sensing.localization.robust_kalman_filter \
+    import RobustKalmanFilter
 
 
 class CustomizedLocalizationManager(LocalizationManager):
@@ -35,4 +35,4 @@ class CustomizedLocalizationManager(LocalizationManager):
             vehicle,
             config_yaml,
             carla_map)
-        self.kf = ExtentedKalmanFilter(self.dt)
+        self.kf = RobustKalmanFilter(self.dt, config_yaml['delta'])
