@@ -102,7 +102,7 @@ The arxiv link to the paper:  https://arxiv.org/abs/2107.06260
 Also, under this LICENSE, OpenCDA is for non-commercial research only. Researchers can modify the source code for their own research only. Contracted work that generates corporate revenues and other general commercial use are prohibited under this LICENSE. See the LICENSE file for details and possible opportunities for commercial use.
 
 ## Contributors
-OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/). <br>
+OpenCDA is mainly supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/). <br>
 
 ### Lab Principal Investigator:
 - Dr. Jiaqi Ma ([linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/),
@@ -118,3 +118,6 @@ OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.e
  - Zonglin Meng([linkedin](https://www.linkedin.com/in/zonglin-meng-a393b31ab/)
  - Dr. Xin Xia ([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
 
+### External Contributor Acknowledgements
+- We would  like to acknowledge the great contributions from UC Davis Professor [Junshan Zhang's](https://faculty.engineering.ucdavis.edu/jzhang/) group,  particularly to Dr. [Wei Shao](https://scholar.google.com.au/citations?user=zbqNhWwAAAAJ&hl=en), who played a crucial role in this collaboration. Their expertise enabled the seamless integration of openScenario with OpenCDA.
+- We would like to thank @GoodarzMehr for his outstanding contribution in creating the OpenCDA Dockerfile.
