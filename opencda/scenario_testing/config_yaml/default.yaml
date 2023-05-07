@@ -144,7 +144,7 @@ vehicle_base:
         k_p: 0.37
         k_d: 0.024
         k_i: 0.032
-      dynamic: false # whether use dynamic pid setting
+      dynamic: true # whether use dynamic pid setting
       dt: ${world.fixed_delta_seconds} # this should be equal to your simulation time-step
       max_brake: 1.0
       max_throttle: 1.0

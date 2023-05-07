@@ -85,6 +85,10 @@ def compute_3d_bounding_boxes(cluster_labels, point_cloud):
     for label in unique_labels:
         cluster_points = np.asarray(point_cloud.points)[cluster_labels == label]
 
+        # Skip if there's only one point in the cluster
+        if len(cluster_points) <= 1:
+            continue
+
         # Estimate the yaw angle using PCA
         pca = PCA(n_components=2)
         xy_points = cluster_points[:, :2]
@@ -129,7 +133,7 @@ def compute_3d_bounding_boxes(cluster_labels, point_cloud):
 
 
 def detect_by_clustering(point_cloud: np.ndarray,
-                         min_cluster_size: int = 5,
+                         min_cluster_size: int = 10,
                          threshold: float = 0.3,
                          ransac_n: int = 10,
                          num_iterations: int = 200,
