@@ -82,8 +82,8 @@ class Controller:
         Compute kp, kd, ki based on current speed.
         """
         # Baseline PID gains
-        kp_lon_base, kd_lon_base, ki_lon_base = 0.37, 0.024, 0.032
-        kp_lat_base, kd_lat_base, ki_lat_base = 0.75, 0.02, 0.4
+        kp_lon_base, kd_lon_base, ki_lon_base = 0.1, 0.1, 0.1
+        kp_lat_base, kd_lat_base, ki_lat_base = 0.1, 0.1, 0.1
 
         # TODO: Convert current speed (in m/s) to km/h
         # Hint: 1 m/s is equal to 3.6 km/h
