@@ -10,6 +10,7 @@ import argparse
 import importlib
 import os
 import sys
+import warnings
 from omegaconf import OmegaConf
 
 from opencda.version import __version__
@@ -39,6 +40,8 @@ def arg_parse():
 
 
 def main():
+    # turnoff the warnings
+    warnings.filterwarnings("ignore")
     # parse the arguments
     opt = arg_parse()
     # print the version of OpenCDA

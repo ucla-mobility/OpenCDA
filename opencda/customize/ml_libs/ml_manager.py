@@ -10,7 +10,6 @@ here we have this class to enable different CAVs share the same model to
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import cv2
-import torch
 import numpy as np
 
 
@@ -25,8 +24,8 @@ class MLManager(object):
     """
 
     def __init__(self):
-
-        self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
+        # we won't use this in the homework
+        self.object_detector = None
 
     def draw_2d_box(self, result, rgb_image, index):
         """

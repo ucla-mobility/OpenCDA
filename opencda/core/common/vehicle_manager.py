@@ -13,10 +13,10 @@ from opencda.core.application.platooning.platoon_behavior_agent\
     import PlatooningBehaviorAgent
 from opencda.core.common.v2x_manager \
     import V2XManager
-from opencda.core.sensing.localization.localization_manager \
-    import LocalizationManager
-from opencda.core.sensing.perception.perception_manager \
-    import PerceptionManager
+from opencda.customize.core.sensing.localization.localization_manager \
+    import CustomizedLocalizationManager
+from opencda.customize.core.sensing.perception.perception_manager \
+    import CustomizedPerceptionManager as PerceptionManager
 from opencda.core.safety.safety_manager import SafetyManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
@@ -98,7 +98,7 @@ class VehicleManager(object):
         # v2x module
         self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
         # localization module
-        self.localizer = LocalizationManager(
+        self.localizer = CustomizedLocalizationManager(
             vehicle, sensing_config['localization'], carla_map)
         # perception module
         self.perception_manager = PerceptionManager(

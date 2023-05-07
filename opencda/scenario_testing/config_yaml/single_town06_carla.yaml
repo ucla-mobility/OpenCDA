@@ -9,17 +9,14 @@ vehicle_base:
     perception:
       activate: true # when not activated, objects positions will be retrieved from server directly
       camera:
-        visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
-        num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        visualize: 0 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
         # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
-        positions:
-          - [2.5, 0, 1.0, 0]
-          - [0.0, 0.3, 1.8, 100]
-          - [0.0, -0.3, 1.8, -100]
-          - [-2.0, 0.0, 1.5, 180]
+        positions: []
 
     localization:
       activate: true # when not activated, ego position will be retrieved from server directly
+      delta: 0.01
       debug_helper:
         show_animation: true # whether to show real-time trajectory plotting
 
