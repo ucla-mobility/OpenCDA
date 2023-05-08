@@ -126,8 +126,8 @@ vehicle_base:
     local_planner:  # trajectory planning related
       dt: ${world.fixed_delta_seconds} # used for prediction
       enable_prediction: false # default is not enabling the prediction
-      observation_seconds: 2 # 2 / 0.05 = 40 for the observation length
-      prediction_seconds: 2 # 2 / 0.05 = 40 for the prediction length
+      observation_seconds: 4 # 2 / 0.05 = 40 for the observation length
+      prediction_seconds: 3 # 2 / 0.05 = 40 for the prediction length
       prediction_scan_window: 0 # this decides a range of the window to look at for the
       prediction_model: "ConstantVelocityHeading" # "ConstantVelocityHeading", "ConstantAccelerationHeading", "ConstantSpeedYawRate", "ConstantMagnitudeAccelAndYawRate", "PhysicsOracle"
       buffer_size: 12 # waypoint buffer size
