@@ -472,14 +472,11 @@ class BehaviorAgent(object):
                     self.prediction_scan_window,
                     adjacent_check=adjacent_check
                 )
-                print(f"collision_free_prediction: {collision_free_prediction}")
 
                 # not collide with original check
                 collision_free = self._collision_check.collision_circle_check(
                     rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
                     adjacent_check=adjacent_check)
-
-                print(f"collision_free: {collision_free}")
 
                 # either collide with original check or the prediction
                 if not collision_free or not collision_free_prediction:
