@@ -348,6 +348,50 @@ class ScenarioManager:
 
         return single_cav_list
 
+    def create_vehicle_manager_from_scenario_runner(self, vehicle):
+        """
+        Create a single CAV with a loaded ego vehicle from SR.
+        Different from the create_vehicle_manager API creating Carla vehicle from scratch,
+        SR creates on its own only supports 'single' vehicle.
+
+        Parameters
+        ----------
+        vehicle:
+            The Carla ego vehicle created by ScenarioRunner.
+
+        Returns
+        -------
+        single_cav_list : list
+            A list contains the singla CAV derived from the ego vehicle.
+        """
+        single_cav_params = self.scenario_params['scenario']['single_cav_list']
+        if len(single_cav_params) != 1:
+            raise ValueError('Only support one ego vehicle for ScenarioRunner')
+
+        cav_config = single_cav_params[0]
+        platoon_base = OmegaConf.create(
+            {'platoon': self.scenario_params.get('platoon_base', {})})
+        cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
+                                     platoon_base,
+                                     cav_config)
+        vehicle_manager = VehicleManager(
+            vehicle, cav_config, ['single'], self.carla_map, self.cav_world)
+
+        self.world.tick()
+
+        vehicle_manager.v2x_manager.set_platoon(None)
+
+        destination = carla.Location(x=cav_config['destination'][0],
+                                     y=cav_config['destination'][1],
+                                     z=cav_config['destination'][2])
+        vehicle_manager.update_info()
+        vehicle_manager.set_destination(
+            vehicle_manager.vehicle.get_location(),
+            destination,
+            clean=True)
+
+        return [vehicle_manager]
+
     def create_platoon_manager(self, map_helper=None, data_dump=False):
         """
         Create a list of platoons.
@@ -607,11 +651,11 @@ class ScenarioManager:
             spawn_transform = carla.Transform(carla.Location(x=coordinates[0],
                                                              y=coordinates[1],
                                                              z=coordinates[
-                                                                   2] + 0.3),
-                                              carla.Rotation(
-                                                  roll=coordinates[3],
-                                                  yaw=coordinates[4],
-                                                  pitch=coordinates[5]))
+                2] + 0.3),
+                carla.Rotation(
+                roll=coordinates[3],
+                yaw=coordinates[4],
+                pitch=coordinates[5]))
             if not traffic_config['random']:
                 ego_vehicle_bp.set_attribute('color', color)
 
