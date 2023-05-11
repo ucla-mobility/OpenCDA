@@ -1,0 +1,120 @@
+name: ciassd_early_fusion
+
+yaml_parser: "load_voxel_params"
+root_dir: "/media/hdd/yuan/koko/data/OPV2V/train" # "/media/hdd/yuan/data/OPV2V/train"
+validate_dir: "/media/hdd/yuan/koko/data/OPV2V/validate"
+
+train_params:
+  batch_size: &batch_size 6
+  epoches: 100
+  eval_freq: 2
+  save_freq: 2
+
+fusion:
+  core_method: 'EarlyFusionDataset' # LateFusionDataset, EarlyFusionDataset, IntermediateFusionDataset supported
+  args: []
+
+# preprocess-related
+preprocess:
+  # options: BasePreprocessor, VoxelPreprocessor, BevPreprocessor
+  core_method: 'SpVoxelPreprocessor'
+  args:
+    voxel_size: &voxel_size [0.1, 0.1, 0.1]
+    max_points_per_voxel: &T 5
+    max_voxel_train: 36000
+    max_voxel_test: 70000
+  # lidar range for each individual cav.
+  cav_lidar_range: &cav_lidar [-140.8, -40, -3, 140.8, 40, 1]
+
+data_augment:
+  - NAME: random_world_flip
+    ALONG_AXIS_LIST: [ 'x' ]
+
+  - NAME: random_world_rotation
+    WORLD_ROT_ANGLE: [ -0.78539816, 0.78539816 ]
+
+  - NAME: random_world_scaling
+    WORLD_SCALE_RANGE: [ 0.95, 1.05 ]
+
+# anchor box related
+postprocess:
+  core_method: 'CiassdPostprocessor' # VoxelPostprocessor, BevPostprocessor supported
+  predict_iou: true
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    l: 3.9
+    w: 1.6
+    h: 1.56
+    r: [0, 90]
+    num: &achor_num 2
+    feature_stride: 8
+  target_args:
+    pos_threshold: 0.6
+    neg_threshold: 0.45
+    score_threshold: 0.3
+  order: 'hwl' # hwl or lwh
+  max_num: 100 # maximum number of objects in a single frame. use this number to make sure different frames has the same dimension in the same batch
+  nms_thresh: 0.2
+
+# model related
+model:
+  core_method: ciassd # corresponding to VoxelNet
+  args:
+    N: *batch_size
+    T: *T
+    lidar_range: *cav_lidar
+    voxel_size: *voxel_size
+    anchor_num: *achor_num
+    mean_vfe:
+      num_point_features: 4
+    spconv:
+      num_features_in: 64
+      num_features_out: 64
+    map2bev:
+      feature_num: 128
+    ssfa:
+      feature_num: 128
+    head:
+      num_input: 128
+      num_pred: 14
+      num_cls: 2
+      num_iou: 2
+      use_dir: True
+      num_dir: 4
+
+loss:
+  core_method: ciassd_loss
+  args:
+    pos_cls_weight: 50.0
+    encode_rad_error_by_sin: true
+    cls:
+      type: 'SigmoidFocalLoss'
+      alpha: 0.25
+      gamma: 2.0
+      weight: 2.0
+    reg:
+      type: 'WeightedSmoothL1Loss'
+      sigma: 3.0
+      codewise: true
+      weight: 2.0
+    iou:
+      type: 'WeightedSmoothL1Loss'
+      sigma: 3.0
+      codewise: true
+      weight: 1.0
+    dir:
+      type: 'WeightedSoftmaxClassificationLoss'
+      weight: 0.2
+
+
+optimizer:
+  core_method: Adam
+  lr: 0.002
+  args:
+    eps: 1e-10
+    weight_decay: 1e-4
+
+lr_scheduler:
+  core_method: multistep #step, multistep and Exponential support
+  gamma: 0.1
+  step_size: [15, 30]

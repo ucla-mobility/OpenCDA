@@ -8,7 +8,6 @@ Perception module base.
 
 import weakref
 import sys
-import time
 
 import carla
 import cv2
@@ -18,12 +17,16 @@ import open3d as o3d
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import \
     cal_distance_angle, get_speed, get_speed_sumo
+from opencda.core.sensing.perception.coperception_manager import CoperceptionManager
 from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import TrafficLight
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
-    o3d_camera_lidar_fusion
+    o3d_camera_lidar_fusion, o3d_visualizer_show_coperception
+
+from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
+from collections import OrderedDict
 
 
 class CameraSensor:
@@ -358,8 +361,8 @@ class PerceptionManager:
         Open3d point cloud visualizer.
     """
 
-    def __init__(self, vehicle, config_yaml, cav_world,
-                 data_dump=False, carla_world=None, infra_id=None):
+    def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
+                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None):
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
@@ -372,6 +375,15 @@ class PerceptionManager:
         self.lidar_visualize = config_yaml['lidar']['visualize']
         self.global_position = config_yaml['global_position'] \
             if 'global_position' in config_yaml else None
+        self.coperception = config_yaml['coperception'] \
+            if 'coperception' in config_yaml else False
+        self.enable_communicate = config_yaml['enable_communicate'] \
+            if 'enable_communicate' in config_yaml else False
+        self.enable_show_gt = config_yaml['enable_show_gt'] \
+            if 'enable_show_gt' in config_yaml else False
+        self.v2x_manager = v2x_manager
+        self.localization_manager = localization_manager
+        self.behavior_agent = behavior_agent
 
         self.cav_world = weakref.ref(cav_world)()
         ml_manager = cav_world.ml_manager
@@ -436,6 +448,22 @@ class PerceptionManager:
         self.traffic_thresh = config_yaml['traffic_light_thresh'] \
             if 'traffic_light_thresh' in config_yaml else 50
 
+        # coperception libs
+        self.coperception_libs = CoperceptionLibs(
+            lidar=self.lidar,
+            rgb_camera=self.rgb_camera,
+            localization_manager=self.localization_manager,
+            behavior_agent=self.behavior_agent,
+            carla_world=self.carla_world,
+            cav_world=self.cav_world
+        )
+
+        self.co_manager = CoperceptionManager(
+            vid=self.id,
+            v2x_manager=self.v2x_manager,
+            coperception_libs=self.coperception_libs
+        )
+
     def dist(self, a):
         """
         A fast method to retrieve the obstacle distance the ego
@@ -469,17 +497,95 @@ class PerceptionManager:
 
         """
         self.ego_pos = ego_pos
-
-        objects = {'vehicles': [],
-                   'traffic_lights': []}
-
+        objects = {
+            'vehicles': [],
+            'traffic_lights': []
+        }
         if not self.activate:
             objects = self.deactivate_mode(objects)
-
         else:
-            objects = self.activate_mode(objects)
-
+            if self.coperception:
+                objects = self.coperception_mode(objects)
+            else:
+                objects = self.activate_mode(objects)
         self.count += 1
+
+        return objects
+
+    def coperception_mode(self, objects):
+        """
+        Use OpenCOOD to detect objects
+        """
+        self.cav_world.update_global_ego_id()
+        ego_id = self.cav_world.ego_id
+
+        if self.id != ego_id:
+            objects = self.deactivate_mode(objects)
+            return objects
+
+        if self.lidar.data is None:
+            return objects
+
+        data = OrderedDict()
+
+        ego_data = self.co_manager.prepare_data(
+            cav_id=self.id,
+            camera=self.rgb_camera,
+            lidar=self.lidar,
+            pos=self.ego_pos,
+            localizer=self.localization_manager,
+            agent=self.behavior_agent,
+            is_ego=True
+        )
+        ego_data = self.co_manager.calculate_transformation(
+            cav_id=self.id,
+            cav_data=ego_data,
+        )
+        data.update(ego_data)
+
+        if self.enable_communicate:
+            nearby_objects = self.co_manager.communicate()
+            for vid, nearby_data_dict in nearby_objects.items():
+                nearby_vm = nearby_data_dict['vehicle_manager']
+                nearby_v2x_manager = nearby_data_dict['v2x_manager']
+                nearby_data = self.co_manager.prepare_data(
+                    cav_id=vid,
+                    camera=nearby_v2x_manager.get_ego_rgb_image(),
+                    lidar=nearby_v2x_manager.get_ego_lidar(),
+                    pos=nearby_v2x_manager.get_ego_pos(),
+                    localizer=nearby_vm.localizer,
+                    agent=nearby_vm.agent,
+                    is_ego=False
+                )
+                nearby_data = self.co_manager.calculate_transformation(
+                    cav_id=vid,
+                    cav_data=nearby_data,
+                )
+                data.update(nearby_data)
+
+        # inference
+        reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data)
+        output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
+            [reformat_data_dict])  # should have batch size dim
+        batch_data = self.ml_manager.to_device(output_dict)
+        predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data)
+        # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data) show predict results frame by frame
+
+        # plot the opencood inference results
+        if self.lidar_visualize:
+            while self.lidar.data is None:
+                continue
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            o3d_visualizer_show_coperception(
+                self.o3d_vis,
+                self.count,
+                self.lidar.o3d_pointcloud,
+                predict_box_tensor,
+                gt_box_tensor,
+                self.enable_show_gt,
+                objects)
+        objects = self.retrieve_traffic_lights(objects)
+        self.objects = objects
 
         return objects
 
@@ -559,7 +665,6 @@ class PerceptionManager:
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
-
         return objects
 
     def deactivate_mode(self, objects):
@@ -581,13 +686,16 @@ class PerceptionManager:
         world = self.carla_world
 
         vehicle_list = world.get_actors().filter("*vehicle*")
-        # todo: hard coded
-        thresh = 50 if not self.data_dump else 120
+        if self.coperception:
+            thresh = 120
+        else:
+            thresh = 50 if not self.data_dump else 120
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
                         v.id != self.id]
 
         # use semantic lidar to filter out vehicles out of the range
+        # TODO: self.coperception?
         if self.data_dump:
             vehicle_list = self.filter_vehicle_out_sensor(vehicle_list)
 

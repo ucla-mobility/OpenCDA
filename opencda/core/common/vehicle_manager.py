@@ -100,10 +100,6 @@ class VehicleManager(object):
         # localization module
         self.localizer = LocalizationManager(
             vehicle, sensing_config['localization'], carla_map)
-        # perception module
-        self.perception_manager = PerceptionManager(
-            vehicle, sensing_config['perception'], cav_world,
-            data_dumping)
         # map manager
         self.map_manager = MapManager(vehicle,
                                       carla_map,
@@ -127,6 +123,17 @@ class VehicleManager(object):
 
         # Control module
         self.controller = ControlManager(control_config)
+
+        # perception module
+        # move it down here to pass in the behavior manager & localization manager
+        self.perception_manager = PerceptionManager(
+            v2x_manager=self.v2x_manager,
+            localization_manager=self.localizer,
+            behavior_agent=self.agent,
+            vehicle=vehicle,
+            config_yaml=sensing_config['perception'],
+            cav_world=cav_world,
+            data_dump=data_dumping)
 
         if data_dumping:
             self.data_dumper = DataDumper(self.perception_manager,
@@ -177,6 +184,8 @@ class VehicleManager(object):
 
         ego_pos = self.localizer.get_ego_pos()
         ego_spd = self.localizer.get_ego_spd()
+        ego_lidar = self.perception_manager.lidar
+        ego_image = self.perception_manager.rgb_camera
 
         # object detection
         objects = self.perception_manager.detect(ego_pos)
@@ -195,7 +204,7 @@ class VehicleManager(object):
 
         # update ego position and speed to v2x manager,
         # and then v2x manager will search the nearby cavs
-        self.v2x_manager.update_info(ego_pos, ego_spd)
+        self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image)
 
         self.agent.update_information(ego_pos, ego_spd, objects)
         # pass position and speed info to controller

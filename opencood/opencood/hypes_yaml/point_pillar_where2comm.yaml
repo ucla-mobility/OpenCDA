@@ -1,0 +1,132 @@
+name: point_pillar_where2comm
+root_dir: '/data/opv2x/train'
+validate_dir: '/data/opv2x/validate'
+
+
+wild_setting:
+  seed: 20
+  async: False
+  async_mode: 'sim'
+  async_overhead: 100
+  loc_err: False
+  xyz_std: 0.2
+  ryp_std: 0.2
+  data_size: 1.06  # Mb
+  transmission_speed: 27  # Mbps
+  backbone_delay: 10  # ms
+
+yaml_parser: 'load_point_pillar_params'
+train_params:
+  batch_size: &batch_size 1
+  epoches: &epoches 50
+  eval_freq: 1
+  save_freq: 1
+  max_cav: &max_cav 5
+
+fusion:
+  core_method: 'IntermediateFusionDataset'  # LateFusionDataset, EarlyFusionDataset, IntermediateFusionDataset supported
+  args: [ ]
+
+# Preprocess-related
+preprocess:
+  # Options: BasePreprocessor, VoxelPreprocessor, BevPreprocessor
+  core_method: 'SpVoxelPreprocessor'
+  args:
+    voxel_size: &voxel_size [ 0.4, 0.4, 4 ]
+    max_points_per_voxel: 32
+    max_voxel_train: 32000
+    max_voxel_test: 70000
+  # LiDAR range for each individual CAV
+  cav_lidar_range: &cav_lidar [ -140.8, -38.4, -3, 140.8, 38.4, 1 ]
+
+data_augment:
+  - NAME: random_world_flip
+    ALONG_AXIS_LIST: [ 'x' ]
+  - NAME: random_world_rotation
+    WORLD_ROT_ANGLE: [ -0.78539816, 0.78539816 ]
+  - NAME: random_world_scaling
+    WORLD_SCALE_RANGE: [ 0.95, 1.05 ]
+
+# Anchor box related
+postprocess:
+  core_method: 'VoxelPostprocessor'  # VoxelPostprocessor, BevPostprocessor supported
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    l: 3.9
+    w: 1.6
+    h: 1.56
+    r: [ 0, 90 ]
+    num: &achor_num 2
+    feature_stride: 4
+  target_args:
+    pos_threshold: 0.6
+    neg_threshold: 0.45
+    score_threshold: 0.2
+  order: 'hwl'  # hwl or lwh
+  max_num: 100  # Maximum number of objects in a single frame. Use this number to make sure different frames has the same dimension in the same batch
+  nms_thresh: 0.15
+
+# Model related
+model:
+  core_method: point_pillar_where2comm
+  args:
+    voxel_size: *voxel_size
+    lidar_range: *cav_lidar
+    anchor_number: *achor_num
+    head_dim: 256
+    max_cav: *max_cav
+    compression: 0  # Compression rate
+    backbone_fix: False
+    pillar_vfe:
+      use_norm: True
+      with_distance: False
+      use_absolute_xyz: True
+      num_filters: [ 64 ]
+    point_pillar_scatter:
+      num_features: 64
+    base_bev_backbone:
+      layer_nums: &layer_nums [ 3, 5, 8 ]
+      layer_strides: [ 2, 2, 2 ]
+      num_filters: &num_filters [ 64, 128, 256 ]
+      upsample_strides: [ 1, 2, 4 ]
+      num_upsample_filter: [ 128, 128, 128 ]
+    shrink_header:
+      kernal_size: [ 3 ]
+      stride: [ 2 ]
+      padding: [ 1 ]
+      dim: [ 256 ]
+      input_dim: 384  # 128 * 3
+    where2comm_fusion:
+      fully: False
+      voxel_size: *voxel_size
+      downsample_rate: 4
+      in_channels: 256
+      multi_scale: True
+      layer_nums: *layer_nums
+      num_filters: *num_filters
+      communication:
+        round: 1
+        threshold: 0.01
+        gaussian_smooth:
+          k_size: 5
+          c_sigma: 1.0
+
+loss:
+  core_method: point_pillar_loss
+  args:
+    cls_weight: 1.0
+    reg: 2.0
+
+optimizer:
+  core_method: Adam
+  lr: 2e-4
+  args:
+    eps: 1e-10
+    weight_decay: 1e-2
+
+lr_scheduler:
+  core_method: cosineannealwarm # step, multistep, exponential and cosineannealwarm support
+  epoches: *epoches
+  warmup_lr: 2e-5
+  warmup_epoches: 10
+  lr_min: 5e-6

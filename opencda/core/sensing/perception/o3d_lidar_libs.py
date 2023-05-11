@@ -20,6 +20,8 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
     is_vehicle_cococlass, ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import StaticObstacle
 
+from opencood.visualization.vis_utils import bbx2oabb
+
 VIRIDIS = np.array(cm.get_cmap('plasma').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
 LABEL_COLORS = np.array([
@@ -156,6 +158,51 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
         for object_ in object_list:
             aabb = object_.o3d_bbx
             vis.remove_geometry(aabb)
+
+
+def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor, gt_box_tensor, show_gt, objects):
+    if count == 2:
+        vis.add_geometry(point_cloud)
+    if predict_bbx_tensor is not None:
+        oabbs_pred = bbx2oabb(predict_bbx_tensor, color=(1, 0, 0))
+        for p in oabbs_pred:
+            vis.add_geometry(p)
+    if show_gt:
+        if gt_box_tensor is not None:
+            oabbs_gt = bbx2oabb(gt_box_tensor, color=(0, 1, 0))
+            for g in oabbs_gt:
+                vis.add_geometry(g)
+
+    vis.update_geometry(point_cloud)
+
+    for key, object_list in objects.items():
+        if key != 'vehicles':
+            continue
+        for o in object_list:
+            aabb = o.o3d_bbx
+            vis.add_geometry(aabb)
+
+    vis.poll_events()
+    vis.update_renderer()
+    # # This can fix Open3D jittering issues:
+    time.sleep(0.001)
+
+    for key, object_list in objects.items():
+        if key != 'vehicles':
+            continue
+        for o in object_list:
+            aabb = o.o3d_bbx
+            vis.remove_geometry(aabb)
+
+    if predict_bbx_tensor is not None:
+        # remove the prediction bbx drawing
+        for p in oabbs_pred:
+            vis.remove_geometry(p)
+
+    if show_gt:
+        if gt_box_tensor is not None:
+            for g in oabbs_gt:
+                vis.remove_geometry(g)
 
 
 def o3d_camera_lidar_fusion(objects,
