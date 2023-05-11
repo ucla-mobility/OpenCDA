@@ -1,0 +1,92 @@
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for v2x perception data dumping
+# Define settings for multi-class blueprint spawning
+# Comment out this chunk of code or set use_multi_class_bp to be False if you don't want to spawn multi-class actors
+blueprint:
+  use_multi_class_bp: true
+  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0912.json" # Define the path for loading the blueprint metadata for defining the class of each blueprint
+  # Define blueprint type sample probabilities
+  bp_class_sample_prob:
+    car: 0.5
+    truck: 0.1
+    bus: 0.1
+    bicycle: 0.1
+    motorcycle: 0.1
+
+
+# Define the basic parameters of the vehicles
+vehicle_base:
+  sensing:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions:
+          - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 120
+        points_per_second: 1000000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 2
+        lower_fov: -25
+        dropoff_general_rate: 0.3
+        dropoff_intensity_limit: 0.7
+        dropoff_zero_intensity: 0.4
+        noise_stddev: 0.02
+  map_manager:
+    visualize: false
+    activate: false
+  behavior:
+    max_speed: 30 # maximum speed, km/h
+    tailgate_speed: 34 # when a vehicles needs to be close to another vehicle asap
+    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
+
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  global_speed_perc: -10
+  auto_lane_change: true
+  random: true # whether to random select vehicles' color and model
+  ignore_lights_percentage: 100 # whether set the traffic ignore traffic lights
+  vehicle_list: ~  # a number or a list
+  # Used only when vehicle_list is a number.
+  #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
+  range:
+    - [-11, 12, 100, 200, 3.5, 15, 25]
+
+# define scenario. In this scenario, a 4-vehicle platoon already exists.
+scenario:
+  rsu_list:
+    - name: rsu1
+      spawn_position: [12.00, 192.31, 3.0]
+      id: -1
+
+  single_cav_list:
+    - name: cav1
+      spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
+      destination: [67.12, 150.2, 1.0]
+      v2x:
+        communication_range: 45
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    - name: cav2
+      spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
+      destination: [-2.43, 263, 0.3]
+      v2x:
+        communication_range: 45
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+          enable_prediction: true
+          prediction_model: 'ConstantVelocityHeading'
