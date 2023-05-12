@@ -5,7 +5,6 @@ customized 2-lane freeway simplified map sorely with carla
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
-import os
 
 import carla
 
@@ -13,12 +12,12 @@ import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
-from opencda.scenario_testing.utils.yaml_utils import load_yaml, save_yaml
+from opencda.scenario_testing.utils.yaml_utils import add_current_time, save_yaml
 
 
-def run_scenario(opt, config_yaml):
+def run_scenario(opt, scenario_params):
     try:
-        scenario_params = load_yaml(config_yaml)
+        scenario_params = add_current_time(scenario_params)
 
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml,
@@ -39,9 +38,6 @@ def run_scenario(opt, config_yaml):
         single_cav_list = \
             scenario_manager.create_vehicle_manager(application=['single', 'cooperative'],
                                                     data_dump=False)
-        # single_cav_list = \
-        #     scenario_manager.create_vehicle_manager(application=['single'],
-        #                                             data_dump=False)
         # rsu_list = \
         #     scenario_manager.create_rsu_manager(data_dump=False)
 
@@ -71,7 +67,6 @@ def run_scenario(opt, config_yaml):
                 single_cav.update_info()
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
-
             # for rsu in rsu_list:
             #     rsu.update_info()
             #     rsu.run_step()
