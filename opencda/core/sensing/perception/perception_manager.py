@@ -23,7 +23,7 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
 from opencda.core.sensing.perception.static_obstacle import TrafficLight
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
-    o3d_camera_lidar_fusion, o3d_visualizer_show_coperception
+    o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
 
 from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
 from collections import OrderedDict
@@ -363,6 +363,8 @@ class PerceptionManager:
 
     def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
                  config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None):
+
+        print(f"[Config Yaml]: {config_yaml}")
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
@@ -501,6 +503,7 @@ class PerceptionManager:
             'vehicles': [],
             'traffic_lights': []
         }
+
         if not self.activate:
             objects = self.deactivate_mode(objects)
         else:
@@ -570,23 +573,22 @@ class PerceptionManager:
         batch_data = self.ml_manager.to_device(output_dict)
         predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data)
         # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data) show predict results frame by frame
+        objects = o3d_predict_bbox_to_object(objects, predict_box_tensor, self.lidar.sensor)
+        # retrieve speed from server
+        self.speed_retrieve(objects)
 
         # plot the opencood inference results
         if self.lidar_visualize:
             while self.lidar.data is None:
                 continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show_coperception(
+            o3d_visualizer_show(
                 self.o3d_vis,
                 self.count,
                 self.lidar.o3d_pointcloud,
-                predict_box_tensor,
-                gt_box_tensor,
-                self.enable_show_gt,
                 objects)
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
-
         return objects
 
     def activate_mode(self, objects):

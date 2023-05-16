@@ -20,7 +20,7 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
     is_vehicle_cococlass, ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import StaticObstacle
 
-from opencood.visualization.vis_utils import bbx2oabb
+from opencood.visualization.vis_utils import bbx2oabb, bbx2aabb
 
 VIRIDIS = np.array(cm.get_cmap('plasma').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
@@ -314,3 +314,90 @@ def o3d_camera_lidar_fusion(objects,
                 objects['static'] = [static_obstacle]
 
     return objects
+
+
+def array_to_aabb(bb_corner):
+    min_corner = np.min(bb_corner, axis=0)
+    max_corner = np.max(bb_corner, axis=0)
+
+    aabb = o3d.geometry.AxisAlignedBoundingBox(min_bound=min_corner,
+                                               max_bound=max_corner)
+    return aabb
+
+def array_to_aabb_list(bounding_boxes_array, debug=False, point_cloud=None):
+    aabb_list = []
+
+    for bb_corners in bounding_boxes_array:
+        # when we really run the simulation, the y axis needs to be flipped
+        # for visualization purpose
+        if not debug:
+            tmp = bb_corners.copy()
+            tmp[:, 0] = -tmp[:, 0]
+            aabb = array_to_aabb(tmp)
+        else:
+            aabb = array_to_aabb(bb_corners)
+        aabb_list.append(aabb)
+
+    # if debug:
+    #     visualize_bbx_o3d(aabb_list, point_cloud)
+    return aabb_list
+
+
+def is_ego_bbox(bbox):
+    # filter out the points that are -3 < x < 3 and -1.5 < y < 1.5
+    mask = np.logical_and(np.logical_and(bbox[:, 0] > -2.5, bbox[:, 0] < 2.5),
+                          np.logical_and(bbox[:, 1] > -1.5, bbox[:, 1] < 1.5))
+    return mask.any()
+
+
+def o3d_predict_bbox_to_object(objects, predict_box_tensor, lidar_sensor):
+    """
+    Prepare objects to be returned by using predicted bbox tensor.
+
+    predict_box_tensor: opencood predicted results. N, 8, 3 in the ego coordniate.
+    """
+    if predict_box_tensor is None:
+        return objects
+
+    # if predict_box_tensor.is_cuda:
+    #     predict_box_tensor = predict_box_tensor.cpu().detach().numpy()
+    # else:
+    #     predict_box_tensor = predict_box_tensor.detach().numpy()
+
+    # project ego coord to world coord
+    # corners = st.sensor_to_world(predict_box_tensor, lidar_sensor.get_transform())
+
+    # aabb_pred = bbx2aabb(predict_box_tensor, order='hwl')
+    # aabb_list = array_to_aabb_list(predict_box_tensor)
+    oabb_List = bbx2oabb(predict_box_tensor, color=(1, 0, 0))
+
+    if predict_box_tensor.is_cuda:
+        predict_box_tensor = predict_box_tensor.cpu().detach().numpy()
+    else:
+        predict_box_tensor = predict_box_tensor.detach().numpy()
+
+    for i in range(len(oabb_List)):
+        corner, bbox_aabb = predict_box_tensor[i], oabb_List[i]
+
+        # remove ego bbox
+        if is_ego_bbox(corner): continue
+
+        # project ego coord to world coord
+        # covert back to unreal coordinate
+        # corner[:, :1] = -corner[:, :1]
+        corner = corner.transpose()
+        # extend (3, 8) to (4, 8) for homogenous transformation
+        corner = np.r_[corner, [np.ones(corner.shape[1])]]
+        # project to world reference
+        corner = st.sensor_to_world(corner, lidar_sensor.get_transform())
+        corner = corner.transpose()[:, :3]
+
+        obstacle_vehicle = ObstacleVehicle(corner, bbox_aabb)
+        if 'vehicles' in objects:
+            objects['vehicles'].append(obstacle_vehicle)
+        else:
+            objects['vehicles'] = [obstacle_vehicle]
+
+    return objects
+
+
