@@ -1,27 +1,53 @@
 description: |-
-  Author: Wei Shao <phdweishao@gmail.com>
-  Content: Test configurations for `openscenario_carla` that incorporates ScenarioRunner
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for single vehicle testing in town06 with perception/localization activated
 
-# Carla server settings
+vehicle_base:
+  sensing:
+    perception:
+      activate: true
+      coperception: true
+      enable_communicate: true
+      enable_show_gt: true
+      camera:
+        visualize: 4
+        num: 4
+        positions:
+          - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
+    localization:
+      activate: false
+      debug_helper:
+        show_animation: false
 
-world:
-  sync_mode: true
-  client_host: &host localhost
-  client_port: &port 2000
+  behavior:
+    ignore_traffic_light: false # whether to ignore traffic light
+    collision_time_ahead: 2.0 # used for collision checking
 
-# Parameters needed for ScenarioRunner
+# define scenario. In this scenario, only a single CAV will be spawned
+scenario:
+  single_cav_list:
+    - name: cav1
+      destination: [300, -17.2, 0.5]
+      v2x:
+        communication_range: 45
+      behavior:
+        local_planner:
+          trajectory_dt: 0.05
+          debug_trajectory: true
+          debug: true
+
 scenario_runner:
   town: town06
   scenario: Overtake_1
-  # Number of actors to load in, including ego and other actors
   num_actors: 5
-
   configFile: './opencda/scenario_testing/scenarios/Overtake.xml'
-  # Absolute path needed here
-  additionalScenario: '/home/ucdavis/OpenCDA/opencda/scenario_testing/scenarios/overtake.py'
-
-  host: *host
-  port: *port
+  additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/overtake.py'
+  host: localhost
+  port: 2000
   timeout: 10
   debug: false
   sync: false
@@ -44,14 +70,13 @@ scenario_runner:
   outputDir: ''
   randomize: false
 
-# Define OpenCDA scenario
-scenario:
-  single_cav_list:
-    - name: cav1
-      destination: [300, -17.2, 0.5]
-      v2x:
-        enabled: false
-      behavior:
-        local_planner:
-          debug_trajectory: false
-          debug: false
+# these are parameters supporting cooperative perception
+# models are pending to be added with all the models supported in the intermediate fusion
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'early'

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # License: TDG-Attribution-NonCommercial-NoDistrib
+import json
 
 import carla
 import opencda.scenario_testing.utils.sim_api as sim_api
@@ -7,9 +8,11 @@ from opencda.core.common.cav_world import CavWorld
 
 import time
 from multiprocessing import Process
-
+# scenario runner
 import scenario_runner as sr
 
+# add current time
+from opencda.scenario_testing.utils.yaml_utils import add_current_time
 
 def exec_scenario_runner(scenario_params):
     """
@@ -31,17 +34,20 @@ def run_scenario(opt, scenario_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
-
+    scenario_params = add_current_time(scenario_params)
+    print(f"scenario params: {scenario_params}")
     try:
         # Create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        cav_world = CavWorld(apply_ml=opt.apply_ml,
+                             apply_coperception=True,
+                             coperception_params=scenario_params['coperception']
+                             )
         # Create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
                                                    town=scenario_params.scenario_runner.town,
                                                    cav_world=cav_world)
-
         # Create a background process to init and execute scenario runner
         sr_process = Process(target=exec_scenario_runner,
                              args=(scenario_params, ))
@@ -64,7 +70,7 @@ def run_scenario(opt, scenario_params):
         print(f'Found all {num_actors} actors')
 
         single_cav_list = scenario_manager.create_vehicle_manager_from_scenario_runner(
-            vehicle=ego_vehicle,
+            ego_vehicle
         )
 
         spectator = ego_vehicle.get_world().get_spectator()
