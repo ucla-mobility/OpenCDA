@@ -375,7 +375,7 @@ class ScenarioManager:
                                      platoon_base,
                                      cav_config)
         vehicle_manager = VehicleManager(
-            vehicle, cav_config, ['single'], self.carla_map, self.cav_world)
+            vehicle, cav_config, ['single', 'cooperative'], self.carla_map, self.cav_world)
 
         self.world.tick()
 
