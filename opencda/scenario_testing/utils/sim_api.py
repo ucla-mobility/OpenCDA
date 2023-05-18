@@ -341,6 +341,66 @@ class ScenarioManager:
 
         return single_cav_list
 
+    def create_ros_vehicle_manager(self, application,
+                                         map_helper=None,
+                                         data_dump=False):
+        """
+        Create a list of single CAVs.
+
+        Parameters
+        ----------
+        application : list
+            The application purpose, a list, eg. ['single'], ['platoon'].
+
+        map_helper : function
+            A function to help spawn vehicle on a specific position in
+            a specific map.
+
+        data_dump : bool
+            Whether to dump sensor data.
+
+        Returns
+        -------
+        single_cav_list : list
+            A list contains all single CAVs' vehicle manager.
+        """
+        print('Connecting to ROS bridge spawned single CAVs...')
+        # connecting to CAV in simulation with the given role name
+        single_cav_list = []
+
+        for i, cav_config in enumerate(
+                self.scenario_params['scenario']['single_cav_list']):
+
+            target_role_name = cav_config['vehicle_name']
+            # find single ADS vehicle
+            for actor in self.world.get_actors():
+                if 'vehicle' in actor.type_id and actor.attributes.get('role_name') == target_role_name:
+                    vehicle = actor
+
+            # create vehicle manager for each cav
+            vehicle_manager = VehicleManager(
+                vehicle, cav_config, application,
+                self.carla_map, self.cav_world,
+                current_time=self.scenario_params['current_time'],
+                data_dumping=data_dump)
+
+            # self.world.tick() --> let ROS_bridge tick
+
+            vehicle_manager.v2x_manager.set_platoon(None)
+
+            destination = carla.Location(x=cav_config['destination'][0],
+                                         y=cav_config['destination'][1],
+                                         z=cav_config['destination'][2])
+            vehicle_manager.update_info()
+            vehicle_manager.set_destination(
+                vehicle_manager.vehicle.get_location(),
+                destination,
+                clean=True)
+
+            single_cav_list.append(vehicle_manager)
+
+        return single_cav_list
+
     def create_platoon_manager(self, map_helper=None, data_dump=False):
         """
         Create a list of platoons.
@@ -400,6 +460,79 @@ class ScenarioManager:
                     self.carla_map, self.cav_world,
                     current_time=self.scenario_params['current_time'],
                     data_dumping=data_dump)
+
+                # add the vehicle manager to platoon
+                if j == 0:
+                    platoon_manager.set_lead(vehicle_manager)
+                else:
+                    platoon_manager.add_member(vehicle_manager, leader=False)
+
+            self.world.tick()
+            destination = carla.Location(x=platoon['destination'][0],
+                                         y=platoon['destination'][1],
+                                         z=platoon['destination'][2])
+
+            platoon_manager.set_destination(destination)
+            platoon_manager.update_member_order()
+            platoon_list.append(platoon_manager)
+
+        return platoon_list
+
+    
+    def create_ros_platoon_manager(self, map_helper=None, data_dump=False):
+        """
+        Create a list of platoons.
+
+        Parameters
+        ----------
+        map_helper : function
+            A function to help spawn vehicle on a specific position in a
+            specific map.
+
+        data_dump : bool
+            Whether to dump sensor data.
+
+        Returns
+        -------
+        single_cav_list : list
+            A list contains all single CAVs' vehicle manager.
+        """
+        print('Creating platoons from vehicle spawned by ROS2 ... ')
+        platoon_list = []
+        self.cav_world = CavWorld(self.apply_ml)
+        actor_list = self.world.get_actors()
+        
+        # populate mainline list
+        mainline_vehicle_list = []
+        for actor in self.world.get_actors():
+            if actor.attributes.get('role_name') == 'mainline_ADS_vehicle_1':
+                # mainline_vehicle_list.insert(0, actor)
+                mainline_vehicle_list.append(actor)
+                print('add first mainline vehicle ...')
+        for actor in self.world.get_actors():
+            if actor.attributes.get('role_name') == 'mainline_ADS_vehicle_2':
+                # mainline_vehicle_list.insert(1, actor)
+                mainline_vehicle_list.append(actor)
+                print('add second mainline vehicle ...')
+
+        # create platoons
+        for i, platoon in enumerate(
+                self.scenario_params['scenario']['platoon_list']):
+            platoon_manager = PlatooningManager(platoon, self.cav_world)
+            
+            for j, cav in enumerate(platoon['members']):
+                # check mainline CAV role name
+                if cav['vehicle_name'] == \
+                   mainline_vehicle_list[j].attributes.get('role_name'):
+
+                   vehicle = mainline_vehicle_list[j]
+    
+                   # create vehicle manager for each cav
+                   vehicle_manager = VehicleManager(
+                        vehicle, cav, ['platooning'],
+                        self.carla_map, self.cav_world,
+                        current_time=self.scenario_params['current_time'],
+                        data_dumping=data_dump)
 
                 # add the vehicle manager to platoon
                 if j == 0:

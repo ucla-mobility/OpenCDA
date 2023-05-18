@@ -379,14 +379,14 @@ class PlatooningBehaviorAgent(BehaviorAgent):
                 frontal_vehicle_manager.v2x_manager.get_platoon_front_rear()
 
             # debug stream for verifying APF result
-            if in_id == 2:
-                d_leader_is_platoon_leader = frontal_front_vehicle_manger is None
-                if d_leader_is_platoon_leader:
-                    print('The current distance gap to front v is: %.2f' % self.dist_gap)
-                    print('Debug stream, the dynamic leader is: vehicle #0')
-                else:
-                    print('The current distance gap to front v is: %.2f' % self.dist_gap)
-                    print('Debug stream, the dynamic leader is: vehicle #%i.' % self.current_dynamic_leader_index)
+            # if in_id == 2:
+                # d_leader_is_platoon_leader = frontal_front_vehicle_manger is None
+                # if d_leader_is_platoon_leader:
+                    # print('The current distance gap to front v is: %.2f' % self.dist_gap)
+                    # print('Debug stream, the dynamic leader is: vehicle #0')
+                # else:
+                    # print('The current distance gap to front v is: %.2f' % self.dist_gap)
+                    # print('Debug stream, the dynamic leader is: vehicle #%i.' % self.current_dynamic_leader_index)
 
             # b. update desired gap based on dynamic leader index
             '''

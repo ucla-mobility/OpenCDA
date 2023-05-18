@@ -5,6 +5,7 @@ Functions to transfer coordinates under different coordinate system
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 import numpy as np
+import math
 
 
 def geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0):
@@ -59,3 +60,9 @@ def geo_to_transform(lat, lon, alt, lat_0, lon_0, alt_0):
     z = alt - alt_0
 
     return x, y, z
+
+def IMU_to_speed(self, x, y, z):
+    '''
+    Calculate speed based on x,y,z speed
+    '''
+    return math.sqrt(x**2 + y**2 + z**2)

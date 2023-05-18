@@ -16,7 +16,7 @@ from opencda.version import __version__
 
 def arg_parse():
     parser = argparse.ArgumentParser(description="OpenCDA scenario runner.")
-    parser.add_argument('-t', "--test_scenario", required=True, type=str,
+    parser.add_argument('-t', "--test_scenario", required=True, type=str, default='suntrax_ros2',
                         help='Define the name of the scenario you want to test. The given name must'
                              'match one of the testing scripts(e.g. single_2lanefree_carla) in '
                              'opencda/scenario_testing/ folder'

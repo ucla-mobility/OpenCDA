@@ -13,7 +13,7 @@ import time
 import carla
 import cv2
 import numpy as np
-import open3d as o3d
+# import open3d as o3d
 
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import \
@@ -21,9 +21,9 @@ from opencda.core.common.misc import \
 from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import TrafficLight
-from opencda.core.sensing.perception.o3d_lidar_libs import \
-    o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
-    o3d_camera_lidar_fusion
+# from opencda.core.sensing.perception.o3d_lidar_libs import \
+    # o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
+    # o3d_camera_lidar_fusion
 
 
 class CameraSensor:

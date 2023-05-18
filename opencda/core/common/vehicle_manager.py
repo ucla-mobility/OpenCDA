@@ -189,6 +189,39 @@ class VehicleManager(object):
         # pass position and speed info to controller
         self.controller.update_info(ego_pos, ego_spd)
 
+    def update_ros_info(self, ros_location, ros_speed, use_ros_data=False):
+        """
+        Call perception and localization module to
+        retrieve surrounding info an ego position.
+        """
+        # localization
+        self.localizer.localize()
+        
+        ego_pos = self.localizer.get_ego_pos()
+        ego_spd = self.localizer.get_ego_spd()
+
+        # update with ROS information 
+        if use_ros_data:
+            # update vehicle info with ROS2 data
+            ego_pos.location.x = ros_location.x
+            ego_pos.location.y = ros_location.y
+            ego_pos.location.z = ros_location.z
+            ego_spd = ros_speed
+
+        # object detection
+        objects = self.perception_manager.detect(ego_pos)
+
+        # update the ego pose for map manager
+        self.map_manager.update_information(ego_pos)
+
+        # update ego position and speed to v2x manager,
+        # and then v2x manager will search the nearby cavs
+        self.v2x_manager.update_info(ego_pos, ego_spd)
+
+        self.agent.update_information(ego_pos, ego_spd, objects)
+        # pass position and speed info to controller
+        self.controller.update_info(ego_pos, ego_spd)
+
     def run_step(self, target_speed=None):
         """
         Execute one step of navigation.

@@ -9,7 +9,7 @@ Dumping sensor data.
 import os
 
 import cv2
-import open3d as o3d
+# import open3d as o3d
 import numpy as np
 
 from opencda.core.common.misc import get_speed

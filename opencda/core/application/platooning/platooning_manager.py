@@ -234,6 +234,24 @@ class PlatooningManager(object):
 
         return control_list
 
+    def run_ros_step(self):
+        """
+        Run one control step for each vehicles. Without actually applying the
+        control commands. The commands will be published in ROS.
+
+        Returns
+        -------
+        control_list : list
+            The control command list for all vehicles.
+        """
+        control_list = []
+        for i in range(len(self.vehicle_manager_list)):
+            control = self.vehicle_manager_list[i].run_step(
+                self.leader_target_speed)
+            control_list.append(control)
+
+        return control_list
+
     def evaluate(self):
         """
         Used to save all members' statistics.
