@@ -121,12 +121,12 @@ class DataDumper(object):
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
 
-    def save_lidar_points(self):
+    def save_lidar_points(self, count):
         """
         Save 3D lidar points to disk.
         """
         point_cloud = self.lidar.data
-        frame = self.lidar.frame
+        frame = count
 
         point_xyz = point_cloud[:, :-1]
         point_intensity = point_cloud[:, -1]
