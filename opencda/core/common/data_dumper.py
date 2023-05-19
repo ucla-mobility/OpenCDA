@@ -101,7 +101,7 @@ class DataDumper(object):
             return
 
         self.save_rgb_image(self.count)
-        # self.save_lidar_points()
+        self.save_lidar_points(self.count)
         self.save_yaml_file(perception_manager,
                             localization_manager,
                             behavior_agent,
