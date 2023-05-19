@@ -12,7 +12,7 @@ import os
 import sys
 
 from opencda.version import __version__
-
+os.system('source /home/xuhan/carla-ros-bridge/install/setup.bash')  
 
 def arg_parse():
     parser = argparse.ArgumentParser(description="OpenCDA scenario runner.")

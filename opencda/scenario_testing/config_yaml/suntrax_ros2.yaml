@@ -8,7 +8,7 @@ description: |-
 world:
   sync_mode: true
   client_port: 2000
-  fixed_delta_seconds: &delta 0.007
+  fixed_delta_seconds: &delta 0.005 # &delta 0.007
   seed: 25
   weather:
     sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
@@ -43,7 +43,7 @@ vehicle_base: &vehicle_base
         noise_stddev: 0.0
     localization: &base_localize
       activate: true # when not activated, ego position will be retrieved from server directly
-      dt: 0.02 # 0.015 #*delta # used for kalman filter
+      dt: *delta #0.02 # 0.015 # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
         noise_lat_stddev: 2e-6
@@ -93,7 +93,7 @@ vehicle_base: &vehicle_base
         k_d: 0.024
         k_i: 0.032
       dynamic: false # whether use dynamic pid setting
-      dt: 0.02 # 0.015 # *delta # this should be equal to your simulation time-step
+      dt: *delta #0.02 # 0.015 # *delta # this should be equal to your simulation time-step
       max_brake: 1.0
       max_throttle: 1.0
       max_steering: 0.3

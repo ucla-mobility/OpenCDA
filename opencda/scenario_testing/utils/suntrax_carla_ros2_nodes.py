@@ -8,6 +8,7 @@ ROS2 node to subscribe ADS vehicle data.
 import uuid
 import carla
 import rclpy
+import math
 
 from rclpy.node import Node
 
@@ -23,11 +24,12 @@ from carla_msgs.msg import CarlaEgoVehicleControl, CarlaEgoVehicleStatus, \
 # vehicle sensor subscriber
 class VehicleInfoSubscriber(Node):
     def __init__(self, vehicle_role_name: str):
-        super().__init__('vehicle_info_subscriber_' + vehicle_role_name)
+        super(VehicleInfoSubscriber, self).__init__('vehicle_info_subscriber_' + vehicle_role_name)
         
         self.gnss_data = NavSatFix()
         self.imu_data = Imu()
-        self.speed_data = Float32()
+        self.speed_data = None
+        self.current_speed = None
 
         self.gnss_subscription = self.create_subscription(
             NavSatFix,
@@ -47,6 +49,12 @@ class VehicleInfoSubscriber(Node):
             self.speedo_callback,
             200
         )
+        self.odometry__subscription = self.create_subscription(
+            Odometry,
+            f'/carla/{vehicle_role_name}/odometry',
+            self.odometry_cb,
+            200
+        )
 
     def gnss_callback(self, msg: NavSatFix):
         self.gnss_data = msg
@@ -55,7 +63,13 @@ class VehicleInfoSubscriber(Node):
         self.imu_data = msg
 
     def speedo_callback(self, msg: Float32):
-        self.speed_data = msg
+        self.speed_data = msg.data
+
+    def odometry_cb(self, odometry_msg):
+        self._current_pose = odometry_msg.pose.pose
+        self.current_speed = math.sqrt(odometry_msg.twist.twist.linear.x ** 2 +
+                                            odometry_msg.twist.twist.linear.y ** 2 +
+                                            odometry_msg.twist.twist.linear.z ** 2) * 3.6
 
     def get_gnss_data(self):
         return self.gnss_data
@@ -64,7 +78,7 @@ class VehicleInfoSubscriber(Node):
         return self.imu_data
 
     def get_speed_data(self):
-        return self.speed_data
+        return self.current_speed
 
 # carla world subscriber
 class CarlaDataSubscriber(Node):

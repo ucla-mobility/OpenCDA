@@ -46,6 +46,21 @@ def run_scenario(opt, config_yaml):
                                                    opt.version,
                                                    cav_world=cav_world)
 
+        # init ROS2
+        rclpy.init()
+        carla_data_subscriber = CarlaDataSubscriber()
+        single_cav_subscriber = VehicleInfoSubscriber(single_cav_role_name)
+        main_cav1_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_1')
+        main_cav2_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_2')
+
+        single_cav_command_pubisher = ROS2ControlPublisher(single_cav_role_name)
+        main_cav1_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_1')
+        main_cav2_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_2')
+
+        print("ROS init done, Press Enter to continue...")
+        input()
+        print("Continuing...")
+
         if opt.record:
             scenario_manager.client. \
                 start_recorder("suntrax_ros2.log", True)
@@ -72,19 +87,6 @@ def run_scenario(opt, config_yaml):
         single_cav_role_name = single_cav_config['vehicle_name']
         print('single cav role name is: ' + str(single_cav_role_name))
 
-        # init subscriber nodes
-        rclpy.init()
-        carla_data_subscriber = CarlaDataSubscriber()
-
-        single_cav_subscriber = VehicleInfoSubscriber(single_cav_role_name)
-        main_cav1_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_1')
-        main_cav2_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_2')
-
-        single_cav_command_pubisher = ROS2ControlPublisher(single_cav_role_name)
-        main_cav1_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_1')
-        main_cav2_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_2')
-
-
         spectator = scenario_manager.world.get_spectator()
         spectator_vehicle = single_cav_list[0].vehicle
 
@@ -107,9 +109,9 @@ def run_scenario(opt, config_yaml):
                             90)))
 
                 # spin ROS2 nodes
-                rclpy.spin_once(carla_data_subscriber, timeout_sec=0.05/4)
-                rclpy.spin_once(single_cav_subscriber, timeout_sec=0.05/4)
-                rclpy.spin_once(single_cav_command_pubisher, timeout_sec=0.05/4)
+                rclpy.spin_once(carla_data_subscriber, timeout_sec=0.005)
+                rclpy.spin_once(single_cav_subscriber, timeout_sec=0.005)
+                rclpy.spin_once(single_cav_command_pubisher, timeout_sec=0.005)
                 
                 # get GNSS 
                 single_cav_gnss = single_cav_subscriber.get_gnss_data()
@@ -188,6 +190,9 @@ def run_scenario(opt, config_yaml):
                         single_cav_list.pop(i)
                     else:
                         single_cav.update_info()
+                        # single_cav.update_ros_info(single_cav_location, 
+                        #                             single_cav_speed, 
+                        #                             use_ros_data=True)
                         control = single_cav.run_step()
                         single_cav_command_pubisher.publish_control_command(control)
 
