@@ -162,6 +162,17 @@ class ObstacleVehicle(object):
         """
         self.velocity = velocity
 
+
+    def set_transform(self, transform):
+        """
+        Set the Transform of the vehicle for yaw retrivel
+
+        Parameters
+        ----------
+        transform : carla.Transform
+        """
+        self.transform = transform
+
     def set_vehicle(self, vehicle, lidar, sumo2carla_ids):
         """
         Assign the attributes from carla.Vehicle to ObstacleVehicle.

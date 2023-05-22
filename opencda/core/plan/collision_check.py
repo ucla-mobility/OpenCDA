@@ -287,7 +287,7 @@ class CollisionChecker:
         # 2. the distance traveled is speed * time
         # 3. find the corresponding index in the original array
         # check every 1 sec -> 1 / 0.05 = 20. every 20 points for the prediction points
-        interval = int(0.5 / dt)
+        interval = int(0.10 / dt)
 
         # align on the time axis
         for time in range(0, time_check, interval):
@@ -305,7 +305,8 @@ class CollisionChecker:
             # if enable the scan window, examine through
             # [vehicle_predictions[i - window], vehicle_predictions[i + window]]
             # calculating surrounding vehicle
-            scan_range = [time - prediction_scan_window, time + prediction_scan_window]
+            scan_range = [max(0, time - prediction_scan_window),
+                          min(len(vehicle_predictions), time + prediction_scan_window)]
             for idx in scan_range:
                 x, y, obstacle_vehicle_yaw = vehicle_predictions[idx]
                 # obstacle_vehicle_yaw = math.radians(obstacle_vehicle_yaw)

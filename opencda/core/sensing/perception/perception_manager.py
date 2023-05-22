@@ -576,6 +576,7 @@ class PerceptionManager:
         objects = o3d_predict_bbox_to_object(objects, predict_box_tensor, self.lidar.sensor)
         # retrieve speed from server
         self.speed_retrieve(objects)
+        self.transform_retrieve(objects)
 
         # plot the opencood inference results
         if self.lidar_visualize:
@@ -642,6 +643,7 @@ class PerceptionManager:
             # calculate the speed. current we retrieve from the server
             # directly.
             self.speed_retrieve(objects)
+            self.transform_retrieve(objects)
 
         if self.camera_visualize:
             for (i, rgb_image) in enumerate(rgb_draw_images):
@@ -880,6 +882,40 @@ class PerceptionManager:
                             speed_vector = carla.Vector3D(sumo_speed, 0, 0)
                             obstacle_vehicle.set_velocity(speed_vector)
 
+                    obstacle_vehicle.set_carla_id(v.id)
+
+
+    def transform_retrieve(self, objects):
+        """
+        We don't implement any obstacle yaw calculation algorithm.
+        The speed will be retrieved from the server directly.
+
+        Parameters
+        ----------
+        objects : dict
+            The dictionary contains the objects.
+        """
+        if 'vehicles' not in objects:
+            return
+
+        world = self.carla_world
+        vehicle_list = world.get_actors().filter("*vehicle*")
+        vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
+                        v.id != self.id]
+
+        # todo: consider the minimum distance to be safer in next version
+        for v in vehicle_list:
+            loc = v.get_location()
+            for obstacle_vehicle in objects['vehicles']:
+                # if speed > 0, it represents that the vehicle
+                # has been already matched.
+                if obstacle_vehicle.get_transform() is not None:
+                    continue
+                obstacle_loc = obstacle_vehicle.get_location()
+                if abs(loc.x - obstacle_loc.x) <= 3.0 and \
+                        abs(loc.y - obstacle_loc.y) <= 3.0:
+                    obstacle_vehicle.set_transform(v.get_transform())
+                    # the case where the obstacle vehicle is controled by
                     obstacle_vehicle.set_carla_id(v.id)
 
     def retrieve_traffic_lights(self, objects):

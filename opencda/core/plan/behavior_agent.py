@@ -152,13 +152,13 @@ class BehaviorAgent(object):
         # prediction
         self.enable_prediction = False
         self.prediction_scan_window = 0
-        if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner']:
-            print("Prediction is enabled")
-            print(f"Prediction model used: {config_yaml['local_planner']['prediction_model']}")
+        if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner'] \
+                and config_yaml['local_planner']['enable_prediction']:
+            print(f"Prediction is enabled with model used: {config_yaml['local_planner']['prediction_model']}")
             local_planner_config = config_yaml['local_planner']
             dt = local_planner_config['dt']
-            self.enable_prediction = local_planner_config['enable_prediction']
-            self.prediction_scan_window = config_yaml['local_planner']['prediction_scan_window'] # override zero
+            self.enable_prediction = True
+            self.prediction_scan_window = config_yaml['local_planner']['prediction_scan_window']  # override zero
             self.prediction_manager = PredictionManager(
                 observed_length=int(local_planner_config['observation_seconds'] // dt),
                 predict_length=int(local_planner_config['observation_seconds'] // dt),
@@ -189,7 +189,8 @@ class BehaviorAgent(object):
         # update the localization info to trajectory planner
         self.get_local_planner().update_information(ego_pos, ego_speed)
         # prediction
-        self.prediction_manager.update_information(objects)
+        if self.enable_prediction:
+            self.prediction_manager.update_information(objects)
 
         self.objects = objects
         # current version only consider about vehicles
@@ -425,10 +426,56 @@ class BehaviorAgent(object):
             self.light_id_to_ignore = -1
         return 0
 
-    def collision_manager(self, rx, ry, ryaw,
-                          waypoint,
-                          adjacent_check=False,
-                          obstacle_vehicle_predictions={}):
+    def collision_manager(self, rx, ry, ryaw, waypoint, adjacent_check=False):
+        """
+        This module is in charge of warning in case of a collision.
+
+        Parameters
+        ----------
+        rx : float
+            x coordinates of plan path.
+
+        ry : float
+            y coordinates of plan path.
+
+        ryaw : float
+            yaw angle.
+
+        waypoint : carla.waypoint
+            current waypoint of the agent.
+
+        adjacent_check : boolean
+            Whether it is a check for adjacent lane.
+        """
+
+        def dist(v):
+            return v.get_location().distance(waypoint.transform.location)
+
+        vehicle_state = False
+        min_distance = 100000
+        target_vehicle = None
+
+        for vehicle in self.obstacle_vehicles:
+            collision_free = self._collision_check.collision_circle_check(
+                rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
+                adjacent_check=adjacent_check)
+            if not collision_free:
+                vehicle_state = True
+
+                # the vehicle length is typical 3 meters,
+                # so we need to consider that when calculating the distance
+                distance = positive(dist(vehicle) - 3)
+
+                if distance < min_distance:
+                    min_distance = distance
+                    target_vehicle = vehicle
+
+        return vehicle_state, target_vehicle, min_distance
+
+    def collision_manager_prediction(self, rx, ry, ryaw,
+                                     waypoint,
+                                     adjacent_check=False,
+                                     obstacle_vehicle_predictions=None):
         """
         This module is in charge of warning in case of a collision.
 
@@ -453,6 +500,9 @@ class BehaviorAgent(object):
             dict of vehicle and its predicted future paths
         """
 
+        if obstacle_vehicle_predictions is None:
+            obstacle_vehicle_predictions = {}
+
         def dist(v):
             return v.get_location().distance(waypoint.transform.location)
 
@@ -460,55 +510,26 @@ class BehaviorAgent(object):
         min_distance = 100000
         target_vehicle = None
 
-        if self.enable_prediction:
-            for v_id, predictions in obstacle_vehicle_predictions.items():
-                vehicle = predictions['vehicle']
-                # not collide with prediction points
-                collision_free_prediction = self._collision_check.collision_circle_check_enable_prediction(
-                    rx, ry, ryaw,
-                    predictions['vehicle'],
-                    predictions['points'],
-                    self._ego_speed / 3.6,
-                    self.prediction_scan_window,
-                    adjacent_check=adjacent_check
-                )
+        for v_id, predictions in obstacle_vehicle_predictions.items():
+            vehicle = predictions['vehicle']
+            # not collide with prediction points
+            collision_free_prediction = self._collision_check.collision_circle_check_enable_prediction(
+                rx, ry, ryaw,
+                predictions['vehicle'],
+                predictions['points'],
+                self._ego_speed / 3.6,
+                self.prediction_scan_window,
+                adjacent_check=adjacent_check
+            )
 
-                # not collide with original check
-                collision_free = self._collision_check.collision_circle_check(
-                    rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
-                    adjacent_check=adjacent_check)
+            if not collision_free_prediction:
+                vehicle_state = True
+                distance = positive(dist(vehicle) - 3)
+                if distance < min_distance:
+                    min_distance = distance
+                    target_vehicle = vehicle
 
-                # either collide with original check or the prediction
-                if not collision_free or not collision_free_prediction:
-                    vehicle_state = True
-
-                    # the vehicle length is typical 3 meters,
-                    # so we need to consider that when calculating the distance
-                    distance = positive(dist(vehicle) - 3)
-
-                    # updating the minimal distance and the closet vehicle
-                    if distance < min_distance:
-                        min_distance = distance
-                        target_vehicle = vehicle
-            return vehicle_state, target_vehicle, min_distance
-
-        else:
-            for vehicle in self.obstacle_vehicles:
-                collision_free = self._collision_check.collision_circle_check(
-                    rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
-                    adjacent_check=adjacent_check)
-                if not collision_free:
-                    vehicle_state = True
-
-                    # the vehicle length is typical 3 meters,
-                    # so we need to consider that when calculating the distance
-                    distance = positive(dist(vehicle) - 3)
-
-                    if distance < min_distance:
-                        min_distance = distance
-                        target_vehicle = vehicle
-
-            return vehicle_state, target_vehicle, min_distance
+        return vehicle_state, target_vehicle, min_distance
 
     def overtake_management(self, obstacle_vehicle, obstacle_vehicle_predictions):
         """
@@ -832,9 +853,9 @@ class BehaviorAgent(object):
         ego_vehicle_loc = self._ego_pos.location
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
-        # prediction
-        obstacle_vehicle_predictions = self.prediction_manager.predict()
+        obstacle_vehicle_predictions = {}
         if self.enable_prediction:
+            obstacle_vehicle_predictions = self.prediction_manager.predict()
             for v_id, predictions in obstacle_vehicle_predictions.items():
                 draw_prediction_points(self._cav_world, predictions['points'])
 
@@ -889,13 +910,21 @@ class BehaviorAgent(object):
         self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled,
                                                                      rk)
 
-        # 3. Collision check
+        # 3.1. Collision check
         is_hazard = False
         if collision_detector_enabled:
             is_hazard, obstacle_vehicle, distance = self.collision_manager(
                 rx, ry, ryaw, ego_vehicle_wp,
-                False,
-                obstacle_vehicle_predictions)
+                False)
+
+            # 3.2. Collision check based on prediction
+            if self.enable_prediction:
+                is_hazard_prediction, obstacle_vehicle_prediction, distance_prediction = self.collision_manager_prediction(
+                    rx, ry, ryaw, ego_vehicle_wp,
+                    False,
+                    obstacle_vehicle_predictions)
+                # print(f" is_harzard: {is_hazard}, obstacle vehicle {obstacle_vehicle}, distance prediction {distance}")
+                print(f" is_hazard_prediction: {is_hazard_prediction}, obstacle_vehicle_prediction {obstacle_vehicle_prediction}, distance prediction {distance_prediction}")
         car_following_flag = False
 
         if not is_hazard:
@@ -948,11 +977,16 @@ class BehaviorAgent(object):
                 else:
                     car_following_flag = True
 
+        if self.enable_prediction and is_hazard_prediction:
+            target_speed = get_speed(self.vehicle) - 3
+            target_speed, target_loc = self._local_planner.run_step(
+                rx, ry, rk, target_speed=target_speed)
+            return target_speed, target_loc
+
         # 7. Car following behavior
         if car_following_flag:
             if distance < max(self.break_distance, 3):
                 return 0, None
-
             target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
             target_speed, target_loc = self._local_planner.run_step(
                 rx, ry, rk, target_speed=target_speed)

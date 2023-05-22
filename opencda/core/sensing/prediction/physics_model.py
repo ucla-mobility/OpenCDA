@@ -68,7 +68,8 @@ def get_kinematics(trajectory_data, observed_length):
 
 class PredictionManager:
     def __init__(self, observed_length, predict_length, dt, model="ConstantVelocityHeading"):
-        assert isinstance(observed_length, int) and observed_length > 0, "observed_length must be int and greater than 0"
+        assert isinstance(observed_length,
+                          int) and observed_length > 0, "observed_length must be int and greater than 0"
         assert isinstance(predict_length, int) and predict_length > 0, "predict_length must be int and greater than 0"
         assert (isinstance(dt, int) or isinstance(dt, float)) and dt > 0, "dt must be real number and greater than 0"
         assert model in ["ConstantVelocityHeading", "ConstantAccelerationHeading",
@@ -83,8 +84,9 @@ class PredictionManager:
 
     def update_information(self, objects):
         # only keep track of the vehicles that is visible in current frame
-        self.vehicle_trajectory_data = {v.get_carla_id(): self.vehicle_trajectory_data.get(v.get_carla_id(), TrajectoryData(self.observed_length)) \
-                                        for v in objects['vehicles']}
+        self.vehicle_trajectory_data = {
+            v.get_carla_id(): self.vehicle_trajectory_data.get(v.get_carla_id(), TrajectoryData(self.observed_length)) \
+            for v in objects['vehicles']}
         self.objects = objects
         self.vehicles = {v.get_carla_id(): v for v in objects['vehicles']}
         for vehicle in objects['vehicles']:
