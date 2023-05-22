@@ -17,7 +17,7 @@ scenario_runner:
   scenario: Scenario_1
   num_actors: 2
   configFile: './opencda/scenario_testing/scenarios/scenario_1.xml'
-  additionalScenario: '/home/ucdavis/OpenCDA/opencda/scenario_testing/scenarios/scenario_1.py'
+  additionalScenario: '/home/ucdavis/Desktop/OpenCDA/opencda/scenario_testing/scenarios/scenario_1.py'
 
 
   host: *host

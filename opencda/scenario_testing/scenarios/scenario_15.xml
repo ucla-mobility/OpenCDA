@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<scenarios>
+    <scenario name="Scenario_15" type="Scenario_15" town="Town03">
+        <ego_vehicle x="232.9" y="-54.5" z="0.3" yaw="90" model="vehicle.nissan.patrol" />
+        <other_actor x="236.1" y="-54.5" z="-500" yaw="90" model="vehicle.nissan.seat.leon" />
+        <other_actor x="235.6" y="-28.9" z="-500" yaw="90" model="vehicle.nissan.seat.leon" />
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+</scenarios>

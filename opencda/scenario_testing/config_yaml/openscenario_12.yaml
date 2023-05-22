@@ -11,13 +11,22 @@ world:
 
 # Parameters needed for ScenarioRunner
 scenario_runner:
-  town: town03
+  town: town06
 
   # E.g., for the Overtake scenario
-  scenario: Scenario_3
+  scenario: Scenario_12
   num_actors: 2
-  configFile: './opencda/scenario_testing/scenarios/scenario_3.xml'
-  additionalScenario: '/home/ucdavis/Desktop/OpenCDA/opencda/scenario_testing/scenarios/scenario_3.py'
+  configFile: './opencda/scenario_testing/scenarios/scenario_12.xml'
+  additionalScenario: '/home/ucdavis/Desktop/OpenCDA/opencda/scenario_testing/scenarios/scenario_12.py'
+
+  # The following shows how to configure a A-to-B simple scenario
+#  : AtoB_1
+#  # Number of actors to load in, including ego and other actors
+#  num_actors: 1
+#
+#  configFile: './EIdrive/scenario_testing/scenarios/AtoB.xml'
+#  # Absolute path needed here
+#  additionalScenario: '/home/ucdavis/Desktop/EI-Drive/EIdrive/scenario_testing/scenarios/atob.py'
 
   host: *host
   port: *port
@@ -47,7 +56,7 @@ scenario_runner:
 scenario:
   single_cav_list:
     - name: cav1
-      destination: [-28.8, 134.7, 0.5]
+      destination: [138.0, 48.8, 0.5]
       v2x:
         enabled: false
       behavior:
@@ -62,4 +71,4 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true # whether to visualize lidar points using open3d
   behavior: &base_behavior
-    max_speed: 18 # maximum speed, 60km/h
+    max_speed: 25 # maximum speed, 60km/h
