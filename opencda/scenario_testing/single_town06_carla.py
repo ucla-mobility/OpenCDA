@@ -30,7 +30,8 @@ def run_scenario(opt, scenario_params):
                 start_recorder("single_town06_carla.log", True)
 
         single_cav_list = \
-            scenario_manager.create_vehicle_manager(application=['single'])
+            scenario_manager.create_vehicle_manager(application=['single'],
+                                                    data_dump=False)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = \

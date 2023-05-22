@@ -1,0 +1,74 @@
+description: |-
+  Author: Wei Shao <phdweishao@gmail.com>
+  Content: Test configurations for `openscenario_carla` that incorporates ScenarioRunner
+
+# Carla server settings
+
+world:
+  sync_mode: true
+  client_host: &host localhost
+  client_port: &port 2000
+
+# Parameters needed for ScenarioRunner
+scenario_runner:
+  town: town05
+
+  # E.g., for the Overtake scenario
+  scenario: Scenario_11
+  num_actors: 2
+  configFile: './opencda/scenario_testing/scenarios/scenario_11.xml'
+  additionalScenario: '/home/ucdavis/Desktop/OpenCDA/opencda/scenario_testing/scenarios/scenario_11.py'
+
+  # The following shows how to configure a A-to-B simple scenario
+#  : AtoB_1
+#  # Number of actors to load in, including ego and other actors
+#  num_actors: 1
+#
+#  configFile: './EIdrive/scenario_testing/scenarios/AtoB.xml'
+#  # Absolute path needed here
+#  additionalScenario: '/home/ucdavis/Desktop/EI-Drive/EIdrive/scenario_testing/scenarios/atob.py'
+
+  host: *host
+  port: *port
+  timeout: 10
+  debug: false
+  sync: false
+  repetitions: 1
+  agent: null
+  openscenario: null
+  route: null
+  reloadWorld: false
+  waitForEgo: false
+  trafficManagerPort: '8000'
+  trafficManagerSeed: '0'
+  record: ''
+  agentConfig: ''
+  file: false
+  json: false
+  junit: false
+  list: false
+  penscenarioparams: null
+  output: false
+  outputDir: ''
+  randomize: false
+
+# Define OpenCDA scenario
+scenario:
+  single_cav_list:
+    - name: cav1
+      destination: [155.0, -70.5, 0.5]
+      v2x:
+        enabled: false
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+
+vehicle_base: &vehicle_base
+  sensing: &base_sensing
+#    edge: true
+    perception: &base_perception
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true # whether to visualize lidar points using open3d
+  behavior: &base_behavior
+    max_speed: 24 # maximum speed, 60km/h

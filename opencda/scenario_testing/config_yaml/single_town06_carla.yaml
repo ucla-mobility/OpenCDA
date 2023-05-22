@@ -7,7 +7,7 @@ description: |-
 vehicle_base:
   sensing:
     perception:
-      activate: true # when not activated, objects positions will be retrieved from server directly
+      activate: false # when not activated, objects positions will be retrieved from server directly
       camera:
         visualize: 4 # how many camera images need to be visualized. 0 means no visualization for camera
         num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
@@ -50,3 +50,8 @@ scenario:
         local_planner:
           debug_trajectory: false
           debug: false
+          enable_prediction: true # default is not enabling the prediction
+          observation_seconds: 4 # 2 / 0.05 = 40 for the observation length
+          prediction_seconds: 3 # 2 / 0.05 = 40 for the prediction length
+          prediction_scan_window: 3 # this decides a range of the window to look at for the
+          prediction_model: "ConstantVelocityHeading" # "ConstantVelocityHeading", "ConstantAccelerationHeading", "ConstantSpeedYawRate", "ConstantMagnitudeAccelAndYawRate", "PhysicsOracle"
