@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<scenarios>
+    <scenario name="Scenario_11" type="Scenario_11" town="Town05">
+        <ego_vehicle x="155.5" y="31.3" z="0.3" yaw="270" model="vehicle.nissan.patrol" />
+        <other_actor x="151.4" y="9.8" z="-500" yaw="270" model="vehicle.carlamotors.firetruck" />
+        <other_actor x="124.9" y="1.8" z="-500" yaw="0" model="vehicle.nissan.seat.leon" />
+        <other_actor x="140.0" y="-1.9" z="-500" yaw="0" model="vehicle.lincoln.mkz_2017" />
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+</scenarios>
