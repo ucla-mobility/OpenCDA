@@ -1,0 +1,32 @@
+# Carla server settings
+
+world:
+  sync_mode: true
+  client_host: &host localhost
+  client_port: &port 2000
+
+# Parameters needed for ScenarioRunner
+scenario_runner:
+  host: *host
+  port: *port
+  timeout: 10
+  debug: false
+  sync: false
+  repetitions: 1
+  agent: null
+  openscenario: null
+  route: null
+  reloadWorld: false
+  waitForEgo: false
+  trafficManagerPort: '8000'
+  trafficManagerSeed: '0'
+  record: ''
+  agentConfig: ''
+  file: false
+  json: false
+  junit: false
+  list: false
+  penscenarioparams: null
+  output: false
+  outputDir: ''
+  randomize: false

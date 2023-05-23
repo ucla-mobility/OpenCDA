@@ -1,0 +1,10 @@
+# these are parameters supporting cooperative perception
+# models are pending to be added with all the models supported in the intermediate fusion
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'early'
