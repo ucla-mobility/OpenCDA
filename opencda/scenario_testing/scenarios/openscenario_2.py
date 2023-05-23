@@ -46,7 +46,7 @@ class Scenario_2(BasicScenario):
         self.vehicle_01_velocity = 0  # Stopped large vehicle
         self.vehicle_02_velocity = 5  # Vehicle blocked by large vehicle
         self.vehicle_03_velocity = 5  # Vehicle in front of ego vehicle
-        self.vehicle_04_velocity = 5  # Vehicle behind ego vehicle
+        self.vehicle_04_velocity = 4  # Vehicle behind ego vehicle
         self.vehicle_05_velocity = 7  # Vehicle in front of block vehicle
         self.vehicle_06_velocity = 5  # Vehicle on the right side of ego vehicle
         self.vehicle_07_velocity = 5
