@@ -50,11 +50,23 @@ def main():
     # set the yaml file for the specific testing scenario
     config_yaml = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'opencda/scenario_testing/config_yaml/%s.yaml' % opt.test_scenario)
+    # coperception default yaml
+    coperception_yaml = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'opencda/scenario_testing/config_yaml/coperception_default.yaml')
+
+    # open scenario default yaml
+    open_scenario_yaml = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'opencda/scenario_testing/config_yaml/openscenario_default.yaml')
+
     # load the default yaml file and the scenario yaml file as dictionaries
     default_dict = OmegaConf.load(default_yaml)
     scene_dict = OmegaConf.load(config_yaml)
+    coperception_dict = OmegaConf.load(coperception_yaml)
+    open_scenario_dict = OmegaConf.load(open_scenario_yaml)
     # merge the dictionaries
-    scene_dict = OmegaConf.merge(default_dict, scene_dict)
+    scene_dict = OmegaConf.merge(default_dict, scene_dict, coperception_dict, open_scenario_dict)
 
     # import the testing script
     testing_scenario = importlib.import_module(

@@ -2,47 +2,13 @@ description: |-
   Author: Wei Shao <phdweishao@gmail.com>
   Content: Test configurations for `openscenario_carla` that incorporates ScenarioRunner
 
-# Carla server settings
-
-world:
-  sync_mode: true
-  client_host: &host localhost
-  client_port: &port 2000
-
 # Parameters needed for ScenarioRunner
 scenario_runner:
-  town: town01
-
   # E.g., for the Overtake scenario
   scenario: Scenario_1
   num_actors: 2
   configFile: './opencda/scenario_testing/scenarios/openscenario_1.xml'
   additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/openscenario_1.py'
-
-
-  host: *host
-  port: *port
-  timeout: 10
-  debug: false
-  sync: false
-  repetitions: 1
-  agent: null
-  openscenario: null
-  route: null
-  reloadWorld: false
-  waitForEgo: false
-  trafficManagerPort: '8000'
-  trafficManagerSeed: '0'
-  record: ''
-  agentConfig: ''
-  file: false
-  json: false
-  junit: false
-  list: false
-  penscenarioparams: null
-  output: false
-  outputDir: ''
-  randomize: false
 
 # Define OpenCDA scenario
 scenario:

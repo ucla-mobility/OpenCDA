@@ -265,6 +265,9 @@ class CollisionChecker:
 
         return collision_free
 
+    """
+    TODO: the bounding box looks bigger than it should be - needs more troubleshooting
+    """
     def collision_circle_check_enable_prediction(
             self,
             path_x,
@@ -305,9 +308,8 @@ class CollisionChecker:
             # if enable the scan window, examine through
             # [vehicle_predictions[i - window], vehicle_predictions[i + window]]
             # calculating surrounding vehicle
-            scan_range = [max(0, time - prediction_scan_window),
-                          min(len(vehicle_predictions), time + prediction_scan_window)]
-            for idx in scan_range:
+            scan_start, scan_end = max(0, time - prediction_scan_window), min(len(vehicle_predictions), time + prediction_scan_window)
+            for idx in range(scan_start, scan_end):
                 x, y, obstacle_vehicle_yaw = vehicle_predictions[idx]
                 # obstacle_vehicle_yaw = math.radians(obstacle_vehicle_yaw)
                 draw_prediction_bbx(self._cav_world, x, y)

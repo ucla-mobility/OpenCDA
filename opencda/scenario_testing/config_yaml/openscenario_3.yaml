@@ -2,45 +2,13 @@ description: |-
   Author: Wei Shao <phdweishao@gmail.com>
   Content: Test configurations for `openscenario_carla` that incorporates ScenarioRunner
 
-# Carla server settings
-
-world:
-  sync_mode: true
-  client_host: &host localhost
-  client_port: &port 2000
-
 # Parameters needed for ScenarioRunner
 scenario_runner:
   town: town03
-
-  # E.g., for the Overtake scenario
   scenario: Scenario_3
   num_actors: 2
   configFile: './opencda/scenario_testing/scenarios/openscenario_3.xml'
   additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/openscenario_3.py'
-  host: *host
-  port: *port
-  timeout: 10
-  debug: false
-  sync: false
-  repetitions: 1
-  agent: null
-  openscenario: null
-  route: null
-  reloadWorld: false
-  waitForEgo: false
-  trafficManagerPort: '8000'
-  trafficManagerSeed: '0'
-  record: ''
-  agentConfig: ''
-  file: false
-  json: false
-  junit: false
-  list: false
-  penscenarioparams: null
-  output: false
-  outputDir: ''
-  randomize: false
 
 # Define OpenCDA scenario
 scenario:
@@ -57,7 +25,15 @@ scenario:
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        visualize: true # whether to visualize lidar points using open3d
+      activate: true
+      coperception: true
+      enable_communicate: true
+      enable_show_gt: true
   behavior: &base_behavior
-    max_speed: 18
+    max_speed: 20
+    local_planner:
+      enable_prediction: true # default is not enabling the prediction
+      observation_seconds: 4 # 2 / 0.05 = 40 for the observation length
+      prediction_seconds: 3 # 2 / 0.05 = 40 for the prediction length
+      prediction_scan_window: 3 # this decides a range of the window to look at for the
+      prediction_model: "ConstantVelocityHeading"

@@ -65,3 +65,8 @@ vehicle_base: &vehicle_base
     local_planner:
       debug_trajectory: true
       debug: true
+      enable_prediction: true # default is not enabling the prediction
+      observation_seconds: 4 # 2 / 0.05 = 40 for the observation length
+      prediction_seconds: 3 # 2 / 0.05 = 40 for the prediction length
+      prediction_scan_window: 3 # this decides a range of the window to look at for the
+      prediction_model: "ConstantVelocityHeading" # "ConstantVelocityHeading", "ConstantAccelerationHeading", "ConstantSpeedYawRate", "ConstantMagnitudeAccelAndYawRate", "PhysicsOracle"

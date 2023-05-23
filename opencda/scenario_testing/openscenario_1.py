@@ -20,10 +20,19 @@ def run_scenario(opt, scenario_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
+    enable_coperception = False
+    if 'perception' in scenario_manager['vehicle_base'] and \
+            'coperception' in scenario_manager['vehicle_base']['perception']:
+        enable_coperception = scenario_manager['vehicle_base']['perception']['coperception']
 
     try:
         # Create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        if enable_coperception:
+            cav_world = CavWorld(apply_ml=opt.apply_ml,
+                                 apply_coperception=True,
+                                 coperception_params=scenario_params['coperception'])
+        else:
+            cav_world = CavWorld(opt.apply_ml)
         # Create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
@@ -57,7 +66,7 @@ def run_scenario(opt, scenario_params):
 
         spectator = ego_vehicle.get_world().get_spectator()
         # Bird view following
-        spectator_altitude = 100
+        spectator_altitude = 50
         spectator_bird_pitch = -90
 
         while True:
