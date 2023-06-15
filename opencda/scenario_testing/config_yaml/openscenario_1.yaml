@@ -4,28 +4,26 @@ description: |-
 
 # Parameters needed for ScenarioRunner
 scenario_runner:
-  # E.g., for the Overtake scenario
+  town: town01
   scenario: Scenario_1
   num_actors: 2
-  configFile: './opencda/scenario_testing/scenarios/openscenario_1.xml'
-  additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/openscenario_1.py'
+  configFile: './opencda/scenario_testing/scenarios/scenario_1.xml'
+  additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/scenario_1.py'
 
 # Define OpenCDA scenario
 scenario:
   single_cav_list:
-    - name: cav1
+    - name: ego
       destination: [200.2, 195.4, 0.5]
       v2x:
         enabled: false
       behavior:
         local_planner:
           debug_trajectory: true
-          debug: true
+          debug: false
 
-vehicle_base: &vehicle_base
-  sensing: &base_sensing
-    perception: &base_perception
-      activate: true
-      coperception: false
-      enable_communicate: false
-      enable_show_gt: false
+vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: true

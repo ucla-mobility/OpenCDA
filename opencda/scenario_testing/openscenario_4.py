@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
-import carla
+import carla, time
 import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
+from opencda.constants import Profile
+from multiprocessing import Process
+from omegaconf import OmegaConf
 # from opencda.scenario_testing.utils.keyboard_listener import KeyListener
-
-import time
 from multiprocessing import Process
 import psutil
 
@@ -29,14 +30,27 @@ def exec_scenario_runner(scenario_params):
     scenario_runner.destroy()
 
 
-def run_scenario(opt, scenario_params):
+def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
-
+    enable_coperception = False
+    experiment_profile = Profile.DEFAULT
+    print(f"Experiment: {experiment_profile.name}")
+    # iterate through the profiles
+    for profile in experiment_profile.value:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_params[profile])
     try:
         # Create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        if experiment_profile is Profile.PREDICTION_OPENCOOD_SINGLE:
+            cav_world = CavWorld(apply_ml=True,
+                                 apply_coperception=True,
+                                 coperception_params=scenario_params['coperception'])
+        else:
+            if experiment_profile is Profile.DETECT_YOLO:
+                cav_world = CavWorld(True)
+            else:
+                cav_world = CavWorld(False)
         # Create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,

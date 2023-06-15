@@ -87,7 +87,7 @@ class VehicleManager(object):
         self.vid = str(uuid.uuid1())
         self.vehicle = vehicle
         self.carla_map = carla_map
-
+        self.cav_world = cav_world
         # retrieve the configure for different modules
         sensing_config = config_yaml['sensing']
         map_config = config_yaml['map_manager']
@@ -107,6 +107,8 @@ class VehicleManager(object):
         # safety manager
         self.safety_manager = SafetyManager(vehicle=vehicle,
                                             params=config_yaml['safety_manager'])
+
+        cav_world.update_global_ego_id(self.vehicle.id)
         # behavior agent
         self.agent = None
         if 'platooning' in application:
@@ -119,7 +121,7 @@ class VehicleManager(object):
                 platoon_config,
                 carla_map)
         else:
-            self.agent = BehaviorAgent(vehicle, carla_map, behavior_config)
+            self.agent = BehaviorAgent(vehicle, carla_map, behavior_config, self.cav_world.ego_id)
 
         # Control module
         self.controller = ControlManager(control_config)
@@ -143,6 +145,7 @@ class VehicleManager(object):
             self.data_dumper = None
 
         cav_world.update_vehicle_manager(self)
+
 
     def set_destination(
             self,
@@ -216,7 +219,7 @@ class VehicleManager(object):
         """
         # visualize the bev map if needed
         self.map_manager.run_step()
-        target_speed, target_pos = self.agent.run_step(target_speed)
+        target_speed, target_pos = self.agent.run_step(target_speed, self.cav_world.ego_id)
         control = self.controller.run_step(target_speed, target_pos)
 
         # dump data

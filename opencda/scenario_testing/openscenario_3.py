@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
-import carla
+import carla, time
 import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
-import time
+from opencda.constants import Profile
+from omegaconf import OmegaConf
 from multiprocessing import Process
-
 import scenario_runner as sr
 
 
@@ -24,31 +24,33 @@ def exec_scenario_runner(scenario_params):
     scenario_runner.destroy()
 
 
-def run_scenario(opt, scenario_params):
+def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
-    enable_coperception = False
-    if scenario_params.get('vehicle_base', {}).get('sensing', {}).get('perception', {}).get('coperception') is not None:
-        enable_coperception = scenario_params['vehicle_base']['sensing']['perception']['coperception']
+    experiment_profile = Profile.DEFAULT
+    print(f"🚀💯 [Scenario 3]: Experiment: {experiment_profile.name}")
+    # iterate through the profiles
+    for profile in experiment_profile.value:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_params[profile])
 
     try:
-        print("Enabling coperception....")
-        if enable_coperception:
-            cav_world = CavWorld(apply_ml=opt.apply_ml,
+        # Create CAV world
+        if experiment_profile is Profile.PREDICTION_OPENCOOD_SINGLE:
+            cav_world = CavWorld(apply_ml=True,
                                  apply_coperception=True,
                                  coperception_params=scenario_params['coperception'])
         else:
-            cav_world = CavWorld(opt.apply_ml)
+            if experiment_profile is Profile.DETECT_YOLO:
+                cav_world = CavWorld(True)
+            else:
+                cav_world = CavWorld(False)
 
-        # Create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
                                                    town=scenario_params.scenario_runner.town,
                                                    cav_world=cav_world)
-
-        # Create a background process to init and execute scenario runner
         sr_process = Process(target=exec_scenario_runner,
                              args=(scenario_params,))
         sr_process.start()

@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
 # License: TDG-Attribution-NonCommercial-NoDistrib
-
-import carla
-from carla.libcarla import VehicleControl
-
+import carla, time
 import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
-# from opencda.scenario_testing.utils.keyboard_listener import KeyListener
-
-import time
 from multiprocessing import Process
-import psutil
-
+from opencda.constants import Profile
+from omegaconf import OmegaConf
 import scenario_runner as sr
 
 
@@ -31,21 +25,29 @@ def exec_scenario_runner(scenario_params):
     scenario_runner.destroy()
 
 
-def run_scenario(opt, scenario_params):
+def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
-    scenario_manager = None
-
+    experiment_profile = Profile.DEFAULT
+    print(f"Experiment: {experiment_profile.name}")
+    for profile in experiment_profile.value:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_params[profile])
     try:
-        # Create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        if experiment_profile is Profile.PREDICTION_OPENCOOD_SINGLE:
+            cav_world = CavWorld(apply_ml=True,
+                                 apply_coperception=True,
+                                 coperception_params=scenario_params['coperception'])
+        else:
+            if experiment_profile is Profile.DETECT_YOLO:
+                cav_world = CavWorld(True)
+            else:
+                cav_world = CavWorld(False)
         # Create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
                                                    town=scenario_params.scenario_runner.town,
                                                    cav_world=cav_world)
-
         # Create a background process to init and execute scenario runner
         sr_process = Process(target=exec_scenario_runner,
                              args=(scenario_params,))

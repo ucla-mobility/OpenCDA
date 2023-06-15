@@ -90,15 +90,16 @@ class PredictionManager:
         self.objects = objects
         self.vehicles = {v.get_carla_id(): v for v in objects['vehicles']}
         for vehicle in objects['vehicles']:
-            location = vehicle.get_location()
-            x, y = location.x, location.y
-            v = vehicle.get_velocity()
-            yaw = math.radians(vehicle.get_transform().rotation.yaw)
-            self.vehicle_trajectory_data[vehicle.get_carla_id()].add([x, y], [v.x, v.y], self.dt, yaw)
-
+            if vehicle.get_transform() is not None:
+                location = vehicle.get_location()
+                x, y = location.x, location.y
+                v = vehicle.get_velocity()
+                yaw = math.radians(vehicle.get_transform().rotation.yaw)
+                self.vehicle_trajectory_data[vehicle.get_carla_id()].add([x, y], [v.x, v.y], self.dt, yaw)
     def predict(self):
         predictions = {}
         for vehicle_id, vehicle in self.vehicles.items():
+            if vehicle_id < 0: continue
             kinematics_data = get_kinematics(self.vehicle_trajectory_data[vehicle_id], self.observed_length)
             predictions.update({
                 vehicle_id: {

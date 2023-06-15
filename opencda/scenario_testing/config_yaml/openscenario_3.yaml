@@ -7,13 +7,13 @@ scenario_runner:
   town: town03
   scenario: Scenario_3
   num_actors: 2
-  configFile: './opencda/scenario_testing/scenarios/openscenario_3.xml'
-  additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/openscenario_3.py'
+  configFile: './opencda/scenario_testing/scenarios/scenario_3.xml'
+  additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/scenario_3.py'
 
 # Define OpenCDA scenario
 scenario:
   single_cav_list:
-    - name: cav1
+    - name: ego
       destination: [-28.8, 134.7, 0.5]
       v2x:
         enabled: false
@@ -22,18 +22,13 @@ scenario:
           debug_trajectory: false
           debug: false
 
-vehicle_base: &vehicle_base
-  sensing: &base_sensing
-    perception: &base_perception
-      activate: true
-      coperception: true
-      enable_communicate: true
-      enable_show_gt: true
-  behavior: &base_behavior
+vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: true
+  behavior:
     max_speed: 20
     local_planner:
-      enable_prediction: true # default is not enabling the prediction
-      observation_seconds: 4 # 2 / 0.05 = 40 for the observation length
-      prediction_seconds: 3 # 2 / 0.05 = 40 for the prediction length
-      prediction_scan_window: 3 # this decides a range of the window to look at for the
-      prediction_model: "ConstantVelocityHeading"
+      debug_trajectory: false
+      debug: false

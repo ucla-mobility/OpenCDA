@@ -53,22 +53,30 @@ def main():
     # coperception default yaml
     coperception_yaml = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
-        'opencda/scenario_testing/config_yaml/coperception_default.yaml')
+        'opencda/scenario_testing/config_yaml/enable_coperception.yaml')
 
     # open scenario default yaml
     open_scenario_yaml = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         'opencda/scenario_testing/config_yaml/openscenario_default.yaml')
 
+    # open scenario default yaml
+    prediction_yaml = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'opencda/scenario_testing/config_yaml/enable_prediction.yaml')
+
     # load the default yaml file and the scenario yaml file as dictionaries
     default_dict = OmegaConf.load(default_yaml)
     scene_dict = OmegaConf.load(config_yaml)
-    coperception_dict = OmegaConf.load(coperception_yaml)
     open_scenario_dict = OmegaConf.load(open_scenario_yaml)
-    # merge the dictionaries
-    scene_dict = OmegaConf.merge(default_dict, scene_dict, coperception_dict, open_scenario_dict)
 
+    # coperception & prediction
+    coperception_dict = OmegaConf.load(coperception_yaml)
+    enable_prediction_dict = OmegaConf.load(prediction_yaml)
+    # merge the dictionaries
+    scene_dict = OmegaConf.merge(default_dict, scene_dict, open_scenario_dict)
     # import the testing script
+    experiment_dict = OmegaConf.merge(coperception_dict, enable_prediction_dict)
     testing_scenario = importlib.import_module(
         "opencda.scenario_testing.%s" % opt.test_scenario)
     # check if the yaml file for the specific testing scenario exists
@@ -79,7 +87,7 @@ def main():
     # get the function for running the scenario from the testing script
     scenario_runner = getattr(testing_scenario, 'run_scenario')
     # run the scenario testing
-    scenario_runner(opt, scene_dict)
+    scenario_runner(opt, scene_dict, experiment_dict)
 
 
 if __name__ == '__main__':

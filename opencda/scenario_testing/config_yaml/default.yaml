@@ -48,7 +48,7 @@ rsu_base:
         dropoff_zero_intensity: 0.4
         noise_stddev: 0.02
     localization:
-      activate: true # when not activated, ego position will be retrieved from server directly
+      activate: false # when not activated, ego position will be retrieved from server directly
       dt: ${world.fixed_delta_seconds} # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.05
@@ -59,12 +59,15 @@ rsu_base:
 vehicle_base:
   sensing: # include perception and localization
     perception:
-      activate: false # when not activated, objects positions will be retrieved from server directly
+      activate: true # when not activated, objects positions will be retrieved from server directly
       camera:
-        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
-        num: 1 # how many cameras are mounted on the vehicle.
-        positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        visualize: 4
+        num: 4
+        positions:
           - [2.5, 0, 1.0, 0]
+          - [0.0, 0.3, 1.8, 100]
+          - [0.0, -0.3, 1.8, -100]
+          - [-2.0, 0.0, 1.5, 180]
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true
         channels: 32

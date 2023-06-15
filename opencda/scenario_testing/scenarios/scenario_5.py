@@ -63,7 +63,9 @@ class Scenario_5(BasicScenario):
         # Spawn vehicles
         for actor_config in config.other_actors:
             actor = CarlaDataProvider.request_new_actor(
-                actor_config.model, actor_config.transform)
+                actor_config.model, actor_config.transform,
+                color=actor_config.color,
+                rolename=actor_config.rolename)
             self.other_actors.append(actor)
             actor.set_simulate_physics(enabled=False)
 
@@ -99,11 +101,11 @@ class Scenario_5(BasicScenario):
             set_transform_behavior = ActorTransformSetter(actor, transform)
             if i == 0:
                 waypoint = [carla.Location(x=-108.6, y=129.5, z=0.5), carla.Location(x=-120.6, y=129.5, z=0.5),
-                            carla.Location(x=-140.6, y=115.2, z=0.5), carla.Location(x=-142.0, y=87.6, z=0.5)]
+                            carla.Location(x=-140.6, y=115.2, z=0.5), carla.Location(x=-142.0, y=115.6, z=0.5)]
                 drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
-            elif i == 6:
-                waypoint = [carla.Location(x=-50, y=135.6, z=0.5)]
-                drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
+            # elif i == 6:
+            #     waypoint = [carla.Location(x=-50, y=135.6, z=0.5)]
+            #     drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
             else:
                 drive_behavior = WaypointFollower(actor, velocity)
 

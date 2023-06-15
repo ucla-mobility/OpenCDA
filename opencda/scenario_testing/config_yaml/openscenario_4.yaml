@@ -17,7 +17,7 @@ scenario_runner:
   scenario: Scenario_4
   num_actors: 2
   configFile: './opencda/scenario_testing/scenarios/scenario_4.xml'
-  additionalScenario: '/home/ucdavis/Desktop/OpenCDA/opencda/scenario_testing/scenarios/scenario_4.py'
+  additionalScenario: '/home/ztu/OpenCDA/opencda/scenario_testing/scenarios/scenario_4.py'
 
   # The following shows how to configure a A-to-B simple scenario
 #  : AtoB_1

@@ -85,7 +85,7 @@ class BehaviorAgent(object):
         The helper class that help with the debug functions.
     """
 
-    def __init__(self, vehicle, carla_map, config_yaml):
+    def __init__(self, vehicle, carla_map, config_yaml, global_ego_id):
 
         self.vehicle = vehicle
         # ego pos(transform) and speed(km/h) retrieved from localization module
@@ -152,9 +152,14 @@ class BehaviorAgent(object):
         # prediction
         self.enable_prediction = False
         self.prediction_scan_window = 0
-        if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner'] \
+        print(f"vehicle {vehicle.id}")
+        print(f"global_ego_id {global_ego_id}")
+        # we only do prediction on ego, not other cavs
+        if self.vehicle.id == global_ego_id and 'local_planner' in config_yaml \
+                and 'enable_prediction' in config_yaml['local_planner'] \
                 and config_yaml['local_planner']['enable_prediction']:
-            print(f"Prediction is enabled with model used: {config_yaml['local_planner']['prediction_model']}")
+            print(f"Prediction is enabled on vehicle {self.vehicle.id} "
+                  f"with model used: {config_yaml['local_planner']['prediction_model']}")
             local_planner_config = config_yaml['local_planner']
             dt = local_planner_config['dt']
             self.enable_prediction = True
@@ -828,7 +833,8 @@ class BehaviorAgent(object):
             self,
             target_speed=None,
             collision_detector_enabled=True,
-            lane_change_allowed=True):
+            lane_change_allowed=True,
+            ego_id=None):
         """
         Execute one step of navigation
 
@@ -854,6 +860,7 @@ class BehaviorAgent(object):
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
         obstacle_vehicle_predictions = {}
+
         if self.enable_prediction:
             obstacle_vehicle_predictions = self.prediction_manager.predict()
             for v_id, predictions in obstacle_vehicle_predictions.items():

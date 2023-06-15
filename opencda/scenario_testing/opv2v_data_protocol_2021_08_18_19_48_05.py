@@ -5,6 +5,7 @@ customized 2-lane freeway simplified map sorely with carla
 """
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
+import os
 
 import carla
 
@@ -12,12 +13,12 @@ import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
-from opencda.scenario_testing.utils.yaml_utils import add_current_time, save_yaml
+from opencda.scenario_testing.utils.yaml_utils import add_current_time
 
 
-def run_scenario(opt, scenario_params, experiment_params=None):
+def run_scenario(opt, config_yaml):
     try:
-        scenario_params = add_current_time(scenario_params)
+        scenario_params = add_current_time(config_yaml)
 
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml,
@@ -33,11 +34,14 @@ def run_scenario(opt, scenario_params, experiment_params=None):
 
         if opt.record:
             scenario_manager.client. \
-                start_recorder("v2xp_online_carla.log", True)
+                start_recorder("opv2v_data_protocol_2021_08_18_19_48_05.log", True)
 
         single_cav_list = \
             scenario_manager.create_vehicle_manager(application=['single', 'cooperative'],
                                                     data_dump=False)
+        # single_cav_list = \
+        #     scenario_manager.create_vehicle_manager(application=['single'],
+        #                                             data_dump=False)
         # rsu_list = \
         #     scenario_manager.create_rsu_manager(data_dump=False)
 
@@ -54,6 +58,7 @@ def run_scenario(opt, scenario_params, experiment_params=None):
         spectator = scenario_manager.world.get_spectator()
         while True:
             scenario_manager.tick()
+            # cav_world.tick()
             transform = single_cav_list[0].vehicle.get_transform()
             spectator.set_transform(carla.Transform(
                 transform.location +
@@ -67,6 +72,7 @@ def run_scenario(opt, scenario_params, experiment_params=None):
                 single_cav.update_info()
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
+
             # for rsu in rsu_list:
             #     rsu.update_info()
             #     rsu.run_step()

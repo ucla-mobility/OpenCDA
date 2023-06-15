@@ -392,6 +392,66 @@ class ScenarioManager:
 
         return [vehicle_manager]
 
+    def create_vehicle_manager_openscenario(self, application,
+                                            vehicles,
+                                            map_helper=None,
+                                            data_dump=False):
+        """
+        Create a list of single CAVs.
+
+        Parameters
+        ----------
+        application : list
+            The application purpose, a list, eg. ['single'], ['platoon'].
+
+        map_helper : function
+            A function to help spawn vehicle on a specific position in
+            a specific map.
+
+        data_dump : bool
+            Whether to dump sensor data.
+
+        Returns
+        -------
+        single_cav_list : list
+            A list contains all single CAVs' vehicle manager.
+        """
+        print(f'Creating {len(vehicles)} CAVs (including ego).')
+        assert len(vehicles) == len(self.scenario_params['scenario']['single_cav_list'])
+        single_cav_list = []
+
+        for i, cav_config in enumerate(
+                self.scenario_params['scenario']['single_cav_list']):
+            # in case the cav wants to join a platoon later
+            # it will be empty dictionary for single cav application
+            platoon_base = OmegaConf.create(
+                {'platoon': self.scenario_params.get('platoon_base', {})})
+            cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
+                                         platoon_base,
+                                         cav_config)
+            # create vehicle manager for each cav
+            vehicle_manager = VehicleManager(
+                vehicles[i], cav_config, application,
+                self.carla_map, self.cav_world
+            )
+
+            self.world.tick()
+
+            vehicle_manager.v2x_manager.set_platoon(None)
+
+            destination = carla.Location(x=cav_config['destination'][0],
+                                         y=cav_config['destination'][1],
+                                         z=cav_config['destination'][2])
+            vehicle_manager.update_info()
+            vehicle_manager.set_destination(
+                vehicle_manager.vehicle.get_location(),
+                destination,
+                clean=True)
+
+            single_cav_list.append(vehicle_manager)
+
+        return single_cav_list
+
     def create_platoon_manager(self, map_helper=None, data_dump=False):
         """
         Create a list of platoons.

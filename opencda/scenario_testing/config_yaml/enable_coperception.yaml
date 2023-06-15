@@ -1,0 +1,23 @@
+enable_coperception:
+  vehicle_base: &vehicle_base
+    sensing: &base_sensing
+      perception: &base_perception
+        activate: true
+        coperception: true
+        enable_communicate: true
+        enable_show_gt: true
+    v2x: &base_v2x # communication related
+      enabled: true
+      communication_range: 70
+      loc_noise: 0.0
+      yaw_noise: 0.0
+      speed_noise: 0.0
+      lag: 0
+  coperception:
+    models:
+      early: 'opencood/logs/pointpillar_early_fusion'
+      intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+      intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+      intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+      late: 'opencood/logs/pointpillar_late_fusion'
+    fusion_method: 'early'

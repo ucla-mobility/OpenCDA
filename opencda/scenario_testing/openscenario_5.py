@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # License: TDG-Attribution-NonCommercial-NoDistrib
+import json
+import pprint
 
-import carla
+import carla, time
 import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
-# from opencda.scenario_testing.utils.keyboard_listener import KeyListener
-
-import time
+from opencda.constants import Profile
 from multiprocessing import Process
-import psutil
+from omegaconf import OmegaConf
 
 import scenario_runner as sr
 
@@ -29,14 +29,28 @@ def exec_scenario_runner(scenario_params):
     scenario_runner.destroy()
 
 
-def run_scenario(opt, scenario_params):
+def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
-
+    experiment_profile = Profile.DEFAULT
+    single_cav_list = []
+    bg_veh_list = []
+    print(f"Experiment: {experiment_profile.name}")
+    # iterate through the profiles
+    for profile in experiment_profile.value:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_params[profile])
     try:
         # Create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        if experiment_profile is Profile.PREDICTION_OPENCOOD_SINGLE:
+            cav_world = CavWorld(apply_ml=True,
+                                 apply_coperception=True,
+                                 coperception_params=scenario_params['coperception'])
+        else:
+            if experiment_profile is Profile.DETECT_YOLO:
+                cav_world = CavWorld(True)
+            else:
+                cav_world = CavWorld(False)
         # Create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
@@ -55,6 +69,7 @@ def run_scenario(opt, scenario_params):
         world = scenario_manager.world
         ego_vehicle = None
         num_actors = 0
+        other_cav_list = []
 
         while ego_vehicle is None or num_actors < scenario_params.scenario_runner.num_actors:
             print("Waiting for the actors")
@@ -65,12 +80,22 @@ def run_scenario(opt, scenario_params):
                 if vehicle.attributes['role_name'] == 'hero':
                     print("Ego vehicle found")
                     ego_vehicle = vehicle
+                elif vehicle.attributes['role_name'].startswith('cav'):
+                    print("CAV found")
+                    other_cav_list.append(vehicle)
             num_actors = len(vehicles) + len(walkers)
         print(f'Found all {num_actors} actors')
+        print(f'Found total {len(other_cav_list)} cavs')
 
-        single_cav_list = scenario_manager.create_vehicle_manager_from_scenario_runner(
-            vehicle=ego_vehicle,
+        single_cav_list = scenario_manager.create_vehicle_manager_openscenario(
+            application=['single', 'cooperative'], vehicles=[ego_vehicle] + other_cav_list
         )
+
+        print(f"length of single cav list: {len(single_cav_list)}")
+
+        # create background traffic in carla
+        traffic_manager, bg_veh_list = \
+            scenario_manager.create_traffic_carla()
 
         spectator = ego_vehicle.get_world().get_spectator()
         # Bird view following
@@ -78,16 +103,6 @@ def run_scenario(opt, scenario_params):
         spectator_bird_pitch = -90
 
         while True:
-            # if key_listener.keys['esc']:
-            #     sr_process.kill()
-            #     # Terminate the main process
-            #     return
-            # if key_listener.keys['p']:
-            #     psutil.Process(sr_process.pid).suspend()
-            #     continue
-            # if not key_listener.keys['p']:
-            #     psutil.Process(sr_process.pid).resume()
-
             scenario_manager.tick()
             ego_cav = single_cav_list[0].vehicle
 
@@ -115,4 +130,9 @@ def run_scenario(opt, scenario_params):
         if scenario_runner is not None:
             scenario_runner.destroy()
         print("Destroyed scenario_runner")
-
+        if single_cav_list is not None:
+            for v in single_cav_list:
+                v.destroy()
+        if bg_veh_list is not None:
+            for v in bg_veh_list:
+                v.destroy()

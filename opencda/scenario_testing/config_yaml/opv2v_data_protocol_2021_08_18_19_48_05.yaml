@@ -1,0 +1,217 @@
+carla_traffic_manager:
+  auto_lane_change: true
+  global_distance: 5
+  global_speed_perc: -200
+  ignore_lights_percentage: 100
+  random: true
+  range:
+  - - 500
+    - 610
+    - -25
+    - -9
+    - 7.5
+    - 3
+    - 20
+  set_osm_mode: true
+  sync_mode: true
+  vehicle_list: null
+current_time: '2021_08_24_21_29_01'
+description: "Copyright 2021 <UCLA Mobility Lab>\nAuthor: Runsheng Xu <rxx3386@ucla.edu>\n\
+  Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control\n\
+  \         testing in high speed in the customized 2lanefree simple version."
+scenario:
+  single_cav_list:
+  - behavior:
+      collision_time_ahead: 1.5
+      emergency_param: 0.4
+      ignore_traffic_light: true
+      local_planner:
+        buffer_size: 12
+        debug: false
+        debug_trajectory: false
+        min_dist: 3
+        trajectory_dt: 0.2
+        trajectory_update_freq: 15
+        waypoint_update_freq: 9
+      max_speed: 81
+      overtake_allowed: true
+      overtake_counter_recover: 35
+      safety_time: 4
+      sample_resolution: 4.5
+      speed_decrease: 15
+      speed_lim_dist: 3
+      tailgate_speed: 91
+    map_manager: &id003
+      pixels_per_meter: 2
+      raster_size: [ 224, 224 ]
+      lane_sample_resolution: 0.1
+      visualize: false
+      activate: false
+    controller: &id001
+      args:
+        dt: 0.05
+        dynamic: false
+        lat:
+          k_d: 0.02
+          k_i: 0.4
+          k_p: 0.75
+        lon:
+          k_d: 0.024
+          k_i: 0.032
+          k_p: 0.37
+        max_brake: 1.0
+        max_steering: 0.3
+        max_throttle: 1.0
+      type: pid_controller
+    destination:
+    - 322.23
+    - -20.51
+    - 0.3
+    sensing: &id002
+      localization:
+        activate: true
+        debug_helper:
+          show_animation: false
+          x_scale: 1.0
+          y_scale: 100.0
+        dt: 0.05
+        gnss:
+          heading_direction_stddev: 0.1
+          noise_alt_stddev: 0.005
+          noise_lat_stddev: 1.0e-06
+          noise_lon_stddev: 1.0e-06
+          speed_stddev: 0.2
+      perception:
+        activate: true
+        coperception: true # cooperative perception
+        enable_communicate: true
+        enable_show_gt: true
+        camera_num: 4
+        camera_visualize: 1
+        lidar:
+          channels: 64
+          dropoff_general_rate: 0.1
+          dropoff_intensity_limit: 0.7
+          dropoff_zero_intensity: 0.15
+          lower_fov: -25
+          noise_stddev: 0.02
+          points_per_second: 1300000
+          range: 120
+          rotation_frequency: 20
+          upper_fov: 2
+        lidar_visualize: true
+    spawn_position:
+    - 600.89
+    - -16.95
+    - 0.3
+    - 0
+    - -180
+    - 0
+    v2x:
+      communication_range: 45
+      enabled: true
+      lag: 0
+      loc_noise: 0.0
+      speed_noise: 0.0
+      yaw_noise: 0.0
+  - behavior:
+      collision_time_ahead: 1.5
+      emergency_param: 0.4
+      ignore_traffic_light: true
+      local_planner:
+        buffer_size: 12
+        debug: false
+        debug_trajectory: false
+        min_dist: 3
+        trajectory_dt: 0.2
+        trajectory_update_freq: 15
+        waypoint_update_freq: 9
+      max_speed: 81
+      overtake_allowed: true
+      overtake_counter_recover: 35
+      safety_time: 4
+      sample_resolution: 4.5
+      speed_decrease: 15
+      speed_lim_dist: 3
+      tailgate_speed: 91
+    map_manager: *id003
+    controller: *id001
+    destination:
+    - 222.23
+    - -20.51
+    - 0.3
+    sensing: *id002
+    spawn_position:
+    - 551.42
+    - -24.45
+    - 0.3
+    - 0
+    - -180
+    - 0
+    v2x:
+      communication_range: 45
+      enabled: true
+      lag: 0
+      loc_noise: 0.0
+      speed_noise: 0.0
+      yaw_noise: 0.0
+vehicle_base:
+  behavior:
+    collision_time_ahead: 1.5
+    emergency_param: 0.4
+    ignore_traffic_light: true
+    local_planner:
+      buffer_size: 12
+      debug: false
+      debug_trajectory: false
+      min_dist: 3
+      trajectory_dt: 0.2
+      trajectory_update_freq: 15
+      waypoint_update_freq: 9
+    max_speed: 81
+    overtake_allowed: true
+    overtake_counter_recover: 35
+    safety_time: 4
+    sample_resolution: 4.5
+    speed_decrease: 15
+    speed_lim_dist: 3
+    tailgate_speed: 91
+  controller: *id001
+  sensing: *id002
+  map_manager: *id003
+  v2x:
+    communication_range: 35
+    enabled: true
+    lag: 0
+    loc_noise: 0.0
+    speed_noise: 0.0
+    yaw_noise: 0.0
+world:
+  client_port: 2000
+  fixed_delta_seconds: 0.05
+  seed: 22
+  sync_mode: true
+  weather:
+    sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
+    cloudiness: 0 # 0 is the clean sky and 100 is the thickest cloud
+    precipitation: 0 # rain, 100 is the heaviest rain
+    precipitation_deposits: 0 # Determines the creation of puddles. Values range from 0 to 100, being 0 none at all and 100 a road completely capped with water.
+    wind_intensity: 0 # it will influence the rain
+    fog_density: 0 # fog thickness, 100 is the largest
+    fog_distance: 0  # Fog start distance. Values range from 0 to infinite.
+    fog_falloff: 0 # Density of the fog (as in specific mass) from 0 to infinity. The bigger the value, the more dense and heavy it will be, and the fog will reach smaller heights
+    wetness: 0
+
+
+# these are parameters supporting cooperative perception
+# models are pending to be added with all the models supported in the intermediate fusion
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion' # models too large, cannot run on local machine
+    intermediate_v2vnet: 'opencood/logs/pointpillar_v2vnet_fusion'
+    intermediate_fcooper: 'opencood/logs/pointpillar_fcooper_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'intermediate_v2xvit'

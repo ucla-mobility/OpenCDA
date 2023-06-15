@@ -31,7 +31,7 @@ def exec_scenario_runner(scenario_params):
     scenario_runner.destroy()
 
 
-def run_scenario(opt, scenario_params):
+def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None

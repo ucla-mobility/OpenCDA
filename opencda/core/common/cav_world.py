@@ -61,11 +61,11 @@ class CavWorld(object):
         # this is used only when co-simulation activated.
         self.sumo2carla_ids = {}
 
-    def update_global_ego_id(self):
+    def update_global_ego_id(self, id):
         """
         Return the smallest id as the ego_id
         """
-        self.ego_id = min(self.vehicle_id_set)
+        self.ego_id = min(self.vehicle_id_set) if len(self.vehicle_id_set) > 0 else id
 
     def update_vehicle_manager(self, vehicle_manager):
         """

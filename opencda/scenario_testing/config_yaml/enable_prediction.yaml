@@ -1,0 +1,13 @@
+enable_prediction:
+  vehicle_base: &vehicle_base
+    sensing: &base_sensing
+      perception: &base_perception
+        lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+          visualize: true
+    behavior: &base_behavior
+      local_planner:
+        enable_prediction: true
+        observation_seconds: 4
+        prediction_seconds: 3
+        prediction_scan_window: 3
+        prediction_model: "ConstantVelocityHeading"

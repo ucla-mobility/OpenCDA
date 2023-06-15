@@ -363,8 +363,6 @@ class PerceptionManager:
 
     def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
                  config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None):
-
-        print(f"[Config Yaml]: {config_yaml}")
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
@@ -519,7 +517,7 @@ class PerceptionManager:
         """
         Use OpenCOOD to detect objects
         """
-        self.cav_world.update_global_ego_id()
+        self.cav_world.update_global_ego_id(self.vehicle.id)
         ego_id = self.cav_world.ego_id
 
         if self.id != ego_id:

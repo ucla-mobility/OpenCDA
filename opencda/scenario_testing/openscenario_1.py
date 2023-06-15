@@ -6,6 +6,8 @@ import time
 import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from multiprocessing import Process
+from opencda.constants import Profile
+from omegaconf import OmegaConf
 
 import scenario_runner as sr
 
@@ -16,23 +18,27 @@ def exec_scenario_runner(scenario_params):
     scenario_runner.destroy()
 
 
-def run_scenario(opt, scenario_params):
+def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
-    enable_coperception = False
-    if 'perception' in scenario_manager['vehicle_base'] and \
-            'coperception' in scenario_manager['vehicle_base']['perception']:
-        enable_coperception = scenario_manager['vehicle_base']['perception']['coperception']
+    experiment_profile = Profile.PREDICTION_OPENCOOD_SINGLE
+    print(f"🚀💯 [Scenario 1]: Experiment: {experiment_profile.name}")
+    # iterate through the profiles
+    for profile in experiment_profile.value:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_params[profile])
 
     try:
         # Create CAV world
-        if enable_coperception:
-            cav_world = CavWorld(apply_ml=opt.apply_ml,
+        if experiment_profile is Profile.PREDICTION_OPENCOOD_SINGLE:
+            cav_world = CavWorld(apply_ml=True,
                                  apply_coperception=True,
                                  coperception_params=scenario_params['coperception'])
         else:
-            cav_world = CavWorld(opt.apply_ml)
+            if experiment_profile is Profile.DETECT_YOLO:
+                cav_world = CavWorld(True)
+            else:
+                cav_world = CavWorld(False)
         # Create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
