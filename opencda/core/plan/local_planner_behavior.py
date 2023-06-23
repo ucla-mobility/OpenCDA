@@ -259,6 +259,11 @@ class LocalPlanner(object):
         # find lane change status
         return self.same_road_lane_id_change or self.lane_lateral_change
 
+    def is_target_lane_blocked(self):
+        # check if target lane is blocked
+        is_blocked = False
+        return is_blocked
+
     def mark_lane_change_start(self):
         """
         Mark the start location of a lane change.
@@ -303,7 +308,7 @@ class LocalPlanner(object):
             # check lane change based on lane id and lateral offset
             self.lane_id_change = (previous_wpt.lane_id != future_wpt.lane_id)
             # find lane change status
-            is_different_lane = self.lane_id_change or self.lane_lateral_change
+            is_different_lane = self.lane_id_change and self.lane_lateral_change
             # if still in different lane, then lane change is not finished
             is_lane_change_finished = not is_different_lane
             return is_lane_change_finished
@@ -357,16 +362,16 @@ class LocalPlanner(object):
 
         # retrieve the future and past waypoint to check whether a lane change
         # is gonna operated
-        '''
-        Debug 
-        '''
-        print('waypoint buffer len...')
-        print(len(self._waypoint_buffer))
-        print('waypoint queue len...')
-        print(len(self.waypoints_queue))
-        '''
-        Debug
-        '''
+        # '''
+        # Debug
+        # '''
+        # print('waypoint buffer len...')
+        # print(len(self._waypoint_buffer))
+        # print('waypoint queue len...')
+        # print(len(self.waypoints_queue))
+        # '''
+        # Debug
+        # '''
         future_wpt = self._waypoint_buffer[-1][0]
         previous_wpt = self._history_buffer[0][0] if len(
             self._history_buffer) > 0 else current_wpt

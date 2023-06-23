@@ -17,6 +17,7 @@ import carla
 
 from opencda.core.plan.behavior_fsm_states import BehaviorSuperStates, BehaviorStates
 
+
 class BehaviorFSM(object):
     """
     A modulized version of carla BehaviorAgent.
@@ -78,8 +79,8 @@ class BehaviorFSM(object):
 
         # Lane change
         self.prepare_lane_change_counter = 0
-        self.is_blocked = True
         self.give_up_lane_change = False
+        self.reset_give_up_lane_change_counter = 10
 
     def init_superstate_transitions(self):
         # Add nodes to the graph
@@ -245,6 +246,14 @@ class BehaviorFSM(object):
         path = {}
         # generate path
         rx, ry, rk, ryaw = self._local_planner.generate_path()
+        # reset give up lane change marker
+        if self.give_up_lane_change:
+            # previous lane change was blocked, start a counter to reset it
+            self.reset_give_up_lane_change_counter -= 1
+        if self.reset_give_up_lane_change_counter == 0:
+            # reset marker and counter
+            self.give_up_lane_change = False
+            self.reset_give_up_lane_change_counter = 10
         if self.current_superstate.name == 'LANE_FOLLOWING':
             if 'GO_STRAIGHT' in next_states:
                 cost = 10
@@ -277,7 +286,7 @@ class BehaviorFSM(object):
             # check all next states
             if 'GO_STRAIGHT' in next_states:
                 if is_red_light or is_left_turn_ahead or is_right_turn_ahead:
-                    # do not proceeds if red light or turns ahead
+                    # do not proceed if red light or turns ahead
                     cost = 30
                 else:
                     cost = 1
@@ -350,17 +359,17 @@ class BehaviorFSM(object):
         # increase counter
         self.prepare_lane_change_counter += 1
         # check for obstacle on target lane (loop through all near-by actors)
-        self.is_blocked = False  # todo: implment a function to determine this
+        is_blocked = self._local_planner.is_target_lane_blocked()  # todo: implment a function to determine this
         # generate path
         rx, ry, rk, ryaw = self._local_planner.generate_path()
         if 'GO_STRAIGHT' in next_states:
-            if self.is_blocked:
+            if is_blocked:
                 cost = 5
             else:
                 cost = 15
             path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
         if 'LANE_CHANGE_LEFT' in next_states:
-            if not self.is_blocked:
+            if not is_blocked:
                 # start lane change, mark starting point
                 self._local_planner.mark_lane_change_start()
                 cost = 5
@@ -370,7 +379,7 @@ class BehaviorFSM(object):
         if 'PREPARE_LANE_CHANGE_LEFT' in next_states:
             if is_lane_change_ahead and \
                     self.prepare_lane_change_counter <= 2 and \
-                    self.is_blocked:
+                    is_blocked:
                 # if prepare counter small, still in favor of wait
                 cost = 3
             else:
@@ -408,7 +417,8 @@ class BehaviorFSM(object):
         # increase counter
         self.prepare_lane_change_counter += 1
         # check for obstacle on target lane (loop through all near-by actors)
-        is_blocked = True
+        # todo: Implement function in local planner to determine
+        is_blocked = self._local_planner.is_target_lane_blocked()
         # generate path
         rx, ry, rk, ryaw = self._local_planner.generate_path()
         if 'GO_STRAIGHT' in next_states:
@@ -431,12 +441,20 @@ class BehaviorFSM(object):
                     is_blocked:
                 # if prepare counter small, still in favor of wait
                 cost = 3
-            else:
-                # prepare counter exceeds limit, stop waiting and go straight
+            elif is_lane_change_ahead and \
+                    self.prepare_lane_change_counter > 2 and \
+                    is_blocked:
+                # give up lane change
+                self.give_up_lane_change = True
                 cost = 15
                 # reset counter
                 self.prepare_lane_change_counter = 0
-                self.give_up_lane_change = True
+            else:
+                # proceed to lane change if not blocked
+                cost = 15
+                # reset counter
+                self.prepare_lane_change_counter = 0
+
             path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
         return path
 
@@ -448,8 +466,6 @@ class BehaviorFSM(object):
                 cost = 5
                 # reset lane change starting point
                 self._local_planner.reset_lane_change_marker()
-                # reset give up lane change marker
-                self.give_up_lane_change = False
             else:
                 cost = 15
             path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
@@ -501,11 +517,12 @@ class BehaviorFSM(object):
                 cost = 30
             path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
         return path
+
     def generate_trajectory_no_superstate_transition(self, next_states, is_intersection,
                                                      is_hazard, is_red_light):
         path = {}
         # Transitions
-        if self.current_superstate.name =='LANE_FOLLOWING':
+        if self.current_superstate.name == 'LANE_FOLLOWING':
             # check if there's planned lane change ahead
             is_lane_change_ahead = self._local_planner.is_lane_change_ahead()
             # check if lane change finished
@@ -534,7 +551,7 @@ class BehaviorFSM(object):
                 path = self.state_transition_lane_change_right(next_states,
                                                                is_lane_change_finished)
 
-        elif self.current_superstate.name =='INTERSECTION':
+        elif self.current_superstate.name == 'INTERSECTION':
             if 'GO_STRAIGHT' in next_states:
                 path = self.state_transition_go_straight(next_states,
                                                          is_red_light=is_red_light,
@@ -587,8 +604,6 @@ class BehaviorFSM(object):
             # print(f"Transitioned to superstate {self.current_superstate}")
         if state_name:
             self.current_state = self.states[state_name]
-
-
 
 # test locally
 

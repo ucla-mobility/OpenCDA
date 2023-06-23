@@ -856,6 +856,7 @@ class BehaviorAgent(object):
         print('Current state is: ' + str(self.Behavior_FSM.current_state))
         print('Next superstate is: ' + str(best_superstate))
         print('is_red_light: ' + str(is_red_light))
+        print('is_target_lane_blocked: ' + str(self._local_planner.is_target_lane_blocked()))
         print('Next state is: ' + str(selected_nxt_state))
         print('-------')
         self.Behavior_FSM.transition(best_superstate, selected_nxt_state)
