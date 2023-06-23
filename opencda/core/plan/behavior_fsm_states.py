@@ -8,7 +8,6 @@
 
 from enum import Enum
 
-
 class BehaviorSuperStates(Enum):
     """
     The finite state machine superstates for generic behavioral planning.

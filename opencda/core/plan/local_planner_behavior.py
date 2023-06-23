@@ -125,6 +125,10 @@ class LocalPlanner(object):
         self.debug = config_yaml['debug']
         self.debug_trajectory = config_yaml['debug_trajectory']
 
+        # lane change marker
+        self.lane_change_start_location = None
+        self.lane_change_start_wpt = None
+
     def set_global_plan(self, current_plan, clean=False):
         """
         Sets new global plan.
@@ -213,6 +217,106 @@ class LocalPlanner(object):
         """
         return self._history_buffer
 
+    def is_lane_change_ahead(self):
+        """
+        Check whether a lane change is planned by the global route.
+
+        Returns
+        -------
+
+        """
+        # get the future and past waypoints to check for planned lane change
+        current_location = self._ego_pos.location
+        current_wpt = self._map.get_waypoint(current_location).next(1)[0]
+        future_wpt = self._waypoint_buffer[-1][0]
+        previous_wpt = self._history_buffer[0][0] if len(
+            self._history_buffer) > 0 else current_wpt
+
+        # check lateral offset from previous waypoint to current waypoint
+        vec_norm, angle = cal_distance_angle(previous_wpt.transform.location,
+                                             future_wpt.transform.location,
+                                             future_wpt.transform.rotation.yaw)
+
+        # distance in the lateral direction
+        lateral_diff = abs(
+            vec_norm *
+            math.sin(
+                math.radians(
+                    angle - 1 if angle > 90 else angle + 1)))
+
+        # find position of the vehicle
+        boundingbox = self._vehicle.bounding_box
+        veh_width = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
+        self.lane_lateral_change = veh_width < lateral_diff
+        # check lane change based on lane id and lateral offset
+        self.same_road_lane_id_change = (
+            (future_wpt.lane_id != current_wpt.lane_id or
+            previous_wpt.lane_id != future_wpt.lane_id)
+            and
+            (future_wpt.road_id == current_wpt.road_id or
+            previous_wpt.road_id == future_wpt.road_id)
+        )
+        # find lane change status
+        return self.same_road_lane_id_change or self.lane_lateral_change
+
+    def mark_lane_change_start(self):
+        """
+        Mark the start location of a lane change.
+        """
+        # get the future and past waypoints to check for planned lane change
+        current_location = self._ego_pos.location
+        current_wpt = self._map.get_waypoint(current_location).next(1)[0]
+        self.lane_change_start_location = current_location
+        self.lane_change_start_wpt = current_wpt
+
+    def reset_lane_change_marker(self):
+        #reset the lane change starting points
+        self.lane_change_start_location = None
+        self.lane_change_start_wpt = None
+
+    def is_lane_change_finished(self):
+        # if lane change already started
+        if self.lane_change_start_wpt:
+            # check if lane change is finished
+            current_location = self._ego_pos.location
+            current_wpt = self._map.get_waypoint(current_location).next(1)[0]
+            # here, future is the current, previous is the lane change starting point
+            future_wpt = current_wpt
+            previous_wpt = self.lane_change_start_wpt
+
+            # check lateral offset from previous waypoint to current waypoint
+            vec_norm, angle = cal_distance_angle(previous_wpt.transform.location,
+                                                 future_wpt.transform.location,
+                                                 future_wpt.transform.rotation.yaw)
+
+            # distance in the lateral direction
+            lateral_diff = abs(
+                vec_norm *
+                math.sin(
+                    math.radians(
+                        angle - 1 if angle > 90 else angle + 1)))
+
+            # find position of the vehicle
+            boundingbox = self._vehicle.bounding_box
+            veh_width = 2 * abs(boundingbox.location.y - boundingbox.extent.y)
+            self.lane_lateral_change = veh_width < lateral_diff
+            # check lane change based on lane id and lateral offset
+            self.lane_id_change = (previous_wpt.lane_id != future_wpt.lane_id)
+            # find lane change status
+            is_different_lane = self.lane_id_change or self.lane_lateral_change
+            # if still in different lane, then lane change is not finished
+            is_lane_change_finished = not is_different_lane
+            return is_lane_change_finished
+        # lane change never started
+        else:
+            return False
+
+    def is_turn_ahead(self):
+        # check if there is a turn ahead
+        is_left_turn_ahead = False
+        is_right_turn_ahead = False
+        return is_left_turn_ahead, is_right_turn_ahead
+
     def generate_path(self):
         """
         Generate the smooth path using cubic spline.
@@ -253,6 +357,16 @@ class LocalPlanner(object):
 
         # retrieve the future and past waypoint to check whether a lane change
         # is gonna operated
+        '''
+        Debug 
+        '''
+        print('waypoint buffer len...')
+        print(len(self._waypoint_buffer))
+        print('waypoint queue len...')
+        print(len(self.waypoints_queue))
+        '''
+        Debug
+        '''
         future_wpt = self._waypoint_buffer[-1][0]
         previous_wpt = self._history_buffer[0][0] if len(
             self._history_buffer) > 0 else current_wpt

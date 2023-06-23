@@ -20,6 +20,8 @@ from opencda.core.plan.local_planner_behavior import LocalPlanner
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.plan.planer_debug_helper import PlanDebugHelper
+# behavioral FSM
+from  opencda.core.plan.behavior_fsm import BehaviorFSM
 
 
 class BehaviorAgent(object):
@@ -145,6 +147,9 @@ class BehaviorAgent(object):
         # print message in debug mode
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
+
+        # behavioral FSM
+        self.Behavior_FSM = BehaviorFSM(self._local_planner)
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -771,27 +776,20 @@ class BehaviorAgent(object):
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
         # ttc reset to 1000 at the beginning
         self.ttc = 1000
-        # when overtake_counter > 0, another overtake/lane change is forbidden
+        # overtake_counter: two overtake/lane change at the same time is forbidden
         if self.overtake_counter > 0:
             self.overtake_counter -= 1
 
-        # we reset destination push flag for every n rounds
+        # reset destination: push flag for every n rounds
         if self.destination_push_flag > 0:
             self.destination_push_flag -= 1
-
-        # use traffic light to detect intersection
-        is_intersection = self.is_intersection(self.objects, waipoint_buffer)
 
         # 0. Simulation ends condition
         if self.is_close_to_destination():
             print('Simulation is Over')
             sys.exit(0)
 
-        # 1. Traffic light management
-        if self.traffic_light_manager(ego_vehicle_wp) != 0:
-            return 0, None
-
-        # 2. when the temporary route is finished, we return to the global route
+        # 0. Return to the global route when the temporary route is finished
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \
                 and len(self.get_local_planner().get_waypoint_buffer()) <= 2:
             if self.debug:
@@ -807,37 +805,96 @@ class BehaviorAgent(object):
                 clean=True,
                 clean_history=True)
 
-        # intersection behavior. if the car is near a intersection, no overtake is allowed
-        if is_intersection:
-            self.overtake_allowed = False
-        else:
-            self.overtake_allowed = True and self.overtake_allowed_origin
-
-        # Path generation based on the global route
+        # 1. Interpret current scenario
+        # check intersection
+        is_intersection = self.is_intersection(self.objects, waipoint_buffer)
+        # check light
+        # is_red_light = self.traffic_light_manager(ego_vehicle_wp)
+        is_red_light = False
+        # get current plan
         rx, ry, rk, ryaw = self._local_planner.generate_path()
-
-        # check whether lane change is allowed
-        self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled, rk)
-
-        # 3. Collision check
-        is_hazard = False
+        # check for hazard vehicle/obstacle
+        is_hazard, obstacle_vehicle, distance = self.collision_manager(
+            rx, ry, ryaw, ego_vehicle_wp)
+        # check collision
         if collision_detector_enabled:
             is_hazard, obstacle_vehicle, distance = self.collision_manager(
                 rx, ry, ryaw, ego_vehicle_wp)
-        car_following_flag = False
-
+        # overtaking hazard
         if not is_hazard:
             self.hazard_flag = False
 
-        # 4. push case. Push the car to a temporary destination when original lane change action can't be executed
-        # The case that the vehicle is doing lane change as planned
-        # but found vehicle blocking on the other lane
-        if not self.lane_change_allowed and \
-                self.get_local_planner().potential_curved_road \
-                and not self.destination_push_flag and \
-                self.overtake_counter <= 0:
-            self.overtake_allowed = False
-            # get push destination based on intersection flag and current waypoint (rule-based)
+
+        # 3. Behavior FSM planning
+        next_superstates = self.Behavior_FSM.get_possible_next_superstates()
+        all_next_states = self.Behavior_FSM.get_possible_next_states(next_superstates)
+        # 3a. Compare available next step super states
+        '''
+        Developmen note: 
+            1. 6/17: Add lane following self-transition case
+            2. 6/19: Add lane following to intersection transition case
+        '''
+        ranked_superstate = self.Behavior_FSM.rank_next_superstates(next_superstates,
+                                                                    is_intersection,
+                                                                    is_hazard,
+                                                                    is_red_light)
+        best_superstate = next(iter(ranked_superstate))
+        # 3b. List available next step states
+        next_states = self.Behavior_FSM.get_next_states_based_on_one_superstate(best_superstate)
+        # 3c. Compare cost for all next step states
+        all_path_w_cost = self.Behavior_FSM.generate_trajectory(best_superstate,
+                                                                next_states,
+                                                                is_intersection,
+                                                                is_hazard,
+                                                                is_red_light)
+
+        # 4. FSM transition to best option
+        selected_nxt_state = next(iter(all_path_w_cost))
+
+        print('----- Debug Stream ----')
+        print('Current superstate is: ' + str(self.Behavior_FSM.current_superstate))
+        print('Current state is: ' + str(self.Behavior_FSM.current_state))
+        print('Next superstate is: ' + str(best_superstate))
+        print('is_red_light: ' + str(is_red_light))
+        print('Next state is: ' + str(selected_nxt_state))
+        print('-------')
+        self.Behavior_FSM.transition(best_superstate, selected_nxt_state)
+        rx, ry, rk, ryaw, cost = next(iter(all_path_w_cost.values()))
+
+        # 5. Generate final control
+        # 5a. fixed target speed (stop or car-following)
+        '''
+        # 2. Target speed calculation
+        # 2a. stop
+        if is_red_light:
+            target_speed = 0
+        # 2b. car following
+        if self.Behavior_FSM.current_state.name == 'CAR_FOLLOWING':
+            if distance < max(self.break_distance, 3):
+                target_speed = 0
+            else:
+                target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
+        '''
+        # 5a.
+        if self.Behavior_FSM.current_state.name == 'STOP':
+            target_speed = 0
+            # generate control
+            target_speed, target_loc = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
+            return target_speed, target_loc
+        # 5b.
+        elif self.Behavior_FSM.current_state.name == 'CAR_FOLLOWING':
+            if distance < max(self.break_distance, 3):
+                target_speed = 0
+            else:
+                target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
+            # generate control
+            target_speed, target_loc = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
+            return target_speed, target_loc
+
+        # 5c. deny lane change
+        elif self.Behavior_FSM.current_superstate.name =='LANE_FOLLOWING' \
+                and self.Behavior_FSM.give_up_lane_change:
+            # push to a same lane destination
             reset_target = self.get_push_destination(ego_vehicle_wp, is_intersection)
             # set the flag, so the push operation is not allowed for the next few frames.
             self.destination_push_flag = 90
@@ -847,49 +904,12 @@ class BehaviorAgent(object):
                 clean=True,
                 end_reset=False)
             rx, ry, rk, ryaw = self._local_planner.generate_path()
-
-        # 5. the case that vehicle is blocking in front and overtake not
-        # allowed or it is doing overtaking the second condition is to
-        # prevent successive overtaking
-        elif is_hazard and (not self.overtake_allowed or
-                            self.overtake_counter > 0
-                            or self.get_local_planner().potential_curved_road):
-            car_following_flag = True
-        # 6. overtake handeling
-        elif is_hazard and self.overtake_allowed and \
-                self.overtake_counter <= 0:
-            obstacle_speed = get_speed(obstacle_vehicle)
-            obstacle_lane_id = self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id
-            ego_lane_id = self._map.get_waypoint(
-                self._ego_pos.location).lane_id
-            # overtake the obstacle vehicle only when speed is bigger and the
-            # lane id is the same
-            if ego_lane_id == obstacle_lane_id:
-                # this flag is used for transition from cut-in joining to back
-                # joining
-                self.hazard_flag = is_hazard
-                # we only consider overtaking when speed is faster than the
-                # front obstacle
-
-                if self._ego_speed >= obstacle_speed - 5:
-                    car_following_flag = self.overtake_management(obstacle_vehicle)
-                else:
-                    car_following_flag = True
-
-        # 7. Car following behavior
-        if car_following_flag:
-            if distance < max(self.break_distance, 3):
-                return 0, None
-
-            target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
-            target_speed, target_loc = self._local_planner.run_step(
-                rx, ry, rk, target_speed=target_speed)
+            target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
+                                                                    target_speed=self.max_speed - self.speed_lim_dist
+                                                                    if not target_speed else target_speed)
             return target_speed, target_loc
-
-        # 8. Normal behavior
-        target_speed, target_loc = self._local_planner.run_step(
-            rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
-            if not target_speed else target_speed)
-        return target_speed, target_loc
-
-
+        else:
+            target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
+                                                                    target_speed=self.max_speed - self.speed_lim_dist
+                                                                    if not target_speed else target_speed)
+            return target_speed, target_loc
