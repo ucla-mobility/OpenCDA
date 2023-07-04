@@ -14,7 +14,7 @@ scenario_runner:
 scenario:
   single_cav_list:
     - name: cav1
-      destination: [138.0, 48.8, 0.5]
+      destination: [155.0, 48.8, 0.5]
       v2x:
         enabled: false
       behavior:
@@ -28,4 +28,8 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true # whether to visualize lidar points using open3d
   behavior: &base_behavior
-    max_speed: 25 # maximum speed, 60km/h
+    max_speed: 32 # maximum speed, 60km/h
+    speed_lim_dist: 0
+    speed_decrease: 1 # used in car following mode to decrease speed for distance keeping
+    safety_time: 1 # ttc safety thresholding for decreasing speed
+    collision_time_ahead: 0.5 # used for collision checking

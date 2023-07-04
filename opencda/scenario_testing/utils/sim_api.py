@@ -365,8 +365,8 @@ class ScenarioManager:
             A list contains the singla CAV derived from the ego vehicle.
         """
         single_cav_params = self.scenario_params['scenario']['single_cav_list']
-        if len(single_cav_params) != 1:
-            raise ValueError('Only support one ego vehicle for ScenarioRunner')
+        # if len(single_cav_params) != 1:
+        #     raise ValueError('Only support one ego vehicle for ScenarioRunner')
 
         cav_config = single_cav_params[0]
         platoon_base = OmegaConf.create(

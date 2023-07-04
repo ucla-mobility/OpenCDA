@@ -28,4 +28,4 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true # whether to visualize lidar points using open3d
   behavior: &base_behavior
-    max_speed: 40 # maximum speed, 60km/h
+    max_speed: 32 # maximum speed, 60km/h

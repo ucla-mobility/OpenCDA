@@ -43,8 +43,8 @@ class Scenario_7(BasicScenario):
             config.trigger_points[0].location)
 
         self.num_vehicle = 2
-        self.vehicle_01_velocity = 7  # Vehicle in front of ego vehicle
-        self.vehicle_02_velocity = 7  # CAV
+        self.vehicle_01_velocity = 10  # Vehicle in front of ego vehicle
+        self.vehicle_02_velocity = 10  # CAV
         self._trigger_distance = 150
 
         super(Scenario_7, self).__init__("Scenario_7",
@@ -58,7 +58,9 @@ class Scenario_7(BasicScenario):
         # Spawn vehicles
         for actor_config in config.other_actors:
             actor = CarlaDataProvider.request_new_actor(
-                actor_config.model, actor_config.transform)
+                actor_config.model, actor_config.transform,
+                color=actor_config.color,
+                rolename=actor_config.rolename)
             self.other_actors.append(actor)
             actor.set_simulate_physics(enabled=False)
 
@@ -93,9 +95,10 @@ class Scenario_7(BasicScenario):
                                                            self._trigger_distance)
             set_transform_behavior = ActorTransformSetter(actor, transform)
             if i == 0:
-                waypoint = [carla.Location(x=-1.9, y=93.8, z=0.5), carla.Location(x=3.8, y=106.8, z=0.5),
+                waypoint = [carla.Location(x=-3.9, y=93.8, z=0.5), carla.Location(x=3.8, y=106.8, z=0.5),
                             carla.Location(x=-3.9, y=113.4, z=0.5), carla.Location(x=3.8, y=130.9, z=0.5),
-                            carla.Location(x=-1.9, y=143.9, z=0.5), carla.Location(x=-1.9, y=300.9, z=0.5)]
+                            carla.Location(x=-1.9, y=143.9, z=0.5), carla.Location(x=1.9, y=156.9, z=0.5),
+                            carla.Location(x=1.9, y=300.9, z=0.5)]
                 drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
             elif i == 1:
                 waypoint = [carla.Location(x=1.9, y=300.8, z=0.5)]

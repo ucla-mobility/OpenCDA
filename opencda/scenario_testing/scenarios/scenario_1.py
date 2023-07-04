@@ -19,6 +19,8 @@ from srunner.scenariomanager.scenarioatomics.atomic_criteria import CollisionTes
 from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import DriveDistance, InTriggerDistanceToLocation
 from srunner.scenarios.basic_scenario import BasicScenario
 
+from opencda.constants import Profile
+
 
 class Scenario_1(BasicScenario):
     """
@@ -32,11 +34,10 @@ class Scenario_1(BasicScenario):
     timeout = 1200
 
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
-                 timeout=600):
+                 timeout=600,):
         """
         Setup all relevant parameters and create scenario
         """
-        print("Running Overtake Scenario")
         self.timeout = timeout
         self._map = CarlaDataProvider.get_map()
         self._reference_waypoint = self._map.get_waypoint(
@@ -60,7 +61,9 @@ class Scenario_1(BasicScenario):
         # Spawn vehicles
         for actor_config in config.other_actors:
             actor = CarlaDataProvider.request_new_actor(
-                actor_config.model, actor_config.transform)
+                actor_config.model, actor_config.transform,
+                color=actor_config.color,
+                rolename=actor_config.rolename)
             self.other_actors.append(actor)
             actor.set_simulate_physics(enabled=False)
 

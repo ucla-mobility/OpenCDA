@@ -43,13 +43,13 @@ class Scenario_5(BasicScenario):
             config.trigger_points[0].location)
 
         self.num_vehicle = 7
-        self.vehicle_01_velocity = 7  # Violated vehicle
+        self.vehicle_01_velocity = 24  # Violated vehicle
         self.vehicle_02_velocity = 0  # Large vehicles from 02 to 06
         self.vehicle_03_velocity = 0
         self.vehicle_04_velocity = 0
         self.vehicle_05_velocity = 0
         self.vehicle_06_velocity = 0
-        self.vehicle_07_velocity = 5
+        self.vehicle_07_velocity = 24
         self._trigger_distance = 150
 
         super(Scenario_5, self).__init__("Scenario_5",
@@ -103,9 +103,9 @@ class Scenario_5(BasicScenario):
                 waypoint = [carla.Location(x=-108.6, y=129.5, z=0.5), carla.Location(x=-120.6, y=129.5, z=0.5),
                             carla.Location(x=-140.6, y=115.2, z=0.5), carla.Location(x=-142.0, y=115.6, z=0.5)]
                 drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
-            # elif i == 6:
-            #     waypoint = [carla.Location(x=-50, y=135.6, z=0.5)]
-            #     drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
+            elif i == 6:
+                waypoint = [carla.Location(x=-25, y=136.7, z=0.5)]
+                drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
             else:
                 drive_behavior = WaypointFollower(actor, velocity)
 

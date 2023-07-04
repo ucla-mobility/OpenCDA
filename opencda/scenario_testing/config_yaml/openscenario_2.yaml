@@ -12,7 +12,7 @@ scenario_runner:
 
 scenario:
   single_cav_list:
-    - name: cav1
+    - name: ego
       destination: [-28.8, 134.7, 0.5]
       v2x:
         enabled: false
@@ -20,6 +20,14 @@ scenario:
         local_planner:
           debug_trajectory: true
           debug: true
+    - name: cav1
+      destination: [ -25, 129.7, 0.5 ]
+      v2x:
+        enabled: true
+      behavior:
+        local_planner:
+          debug_trajectory: true
+          debug: false
 
 vehicle_base:
   sensing:
@@ -27,7 +35,7 @@ vehicle_base:
       lidar:
         visualize: true
   behavior:
-    max_speed: 18
+    max_speed: 27
     local_planner:
       debug_trajectory: false
       debug: false

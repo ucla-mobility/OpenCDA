@@ -44,12 +44,12 @@ class Scenario_2(BasicScenario):
 
         self.num_vehicle = 7
         self.vehicle_01_velocity = 0  # Stopped large vehicle
-        self.vehicle_02_velocity = 5  # Vehicle blocked by large vehicle
-        self.vehicle_03_velocity = 5  # Vehicle in front of ego vehicle
-        self.vehicle_04_velocity = 4  # Vehicle behind ego vehicle
-        self.vehicle_05_velocity = 7  # Vehicle in front of block vehicle
-        self.vehicle_06_velocity = 5  # Vehicle on the right side of ego vehicle
-        self.vehicle_07_velocity = 5
+        self.vehicle_02_velocity = 8  # Vehicle blocked by large vehicle
+        self.vehicle_03_velocity = 9  # Vehicle in front of ego vehicle
+        self.vehicle_04_velocity = 7  # Vehicle behind ego vehicle
+        self.vehicle_05_velocity = 9  # Vehicle in front of block vehicle
+        self.vehicle_06_velocity = 8  # Vehicle on the right side of ego vehicle
+        self.vehicle_07_velocity = 8
         self._trigger_distance = 150
 
         super(Scenario_2, self).__init__("Scenario_2",
@@ -63,7 +63,9 @@ class Scenario_2(BasicScenario):
         # Spawn vehicles
         for actor_config in config.other_actors:
             actor = CarlaDataProvider.request_new_actor(
-                actor_config.model, actor_config.transform)
+                actor_config.model, actor_config.transform,
+                color=actor_config.color,
+                rolename=actor_config.rolename)
             self.other_actors.append(actor)
             actor.set_simulate_physics(enabled=False)
 

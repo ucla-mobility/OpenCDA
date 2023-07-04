@@ -29,4 +29,8 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true # whether to visualize lidar points using open3d
   behavior: &base_behavior
-    max_speed: 24 # maximum speed, 60km/h
+    max_speed: 32 # maximum speed,
+    speed_lim_dist: 0
+    speed_decrease: 1 # used in car following mode to decrease speed for distance keeping
+    safety_time: 1 # ttc safety thresholding for decreasing speed
+    collision_time_ahead: 0.5 # used for collision checking

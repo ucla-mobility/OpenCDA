@@ -43,8 +43,8 @@ class Scenario_8(BasicScenario):
             config.trigger_points[0].location)
 
         self.num_vehicle = 3
-        self.vehicle_01_velocity = 7  # Vehicle in front of ego vehicle
-        self.vehicle_02_velocity = 7  # CAV
+        self.vehicle_01_velocity = 18  # Vehicle in front of ego vehicle
+        self.vehicle_02_velocity = 22  # CAV
         self.vehicle_03_velocity = 0  # Stopping vehicle
         self._trigger_distance = 150
 
@@ -59,7 +59,9 @@ class Scenario_8(BasicScenario):
         # Spawn vehicles
         for actor_config in config.other_actors:
             actor = CarlaDataProvider.request_new_actor(
-                actor_config.model, actor_config.transform)
+                actor_config.model, actor_config.transform,
+                color=actor_config.color,
+                rolename=actor_config.rolename)
             self.other_actors.append(actor)
             actor.set_simulate_physics(enabled=False)
 

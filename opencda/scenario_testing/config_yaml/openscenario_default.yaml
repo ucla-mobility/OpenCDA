@@ -30,3 +30,4 @@ scenario_runner:
   output: false
   outputDir: ''
   randomize: false
+  enable_cav: true

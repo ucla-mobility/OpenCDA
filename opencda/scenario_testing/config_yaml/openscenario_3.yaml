@@ -16,7 +16,15 @@ scenario:
     - name: ego
       destination: [-28.8, 134.7, 0.5]
       v2x:
-        enabled: false
+        enabled: true
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    - name: cav_1
+      destination: [ -142.0, 87.6, 0.5 ] # TODO: needs change
+      v2x:
+        enabled: true
       behavior:
         local_planner:
           debug_trajectory: false

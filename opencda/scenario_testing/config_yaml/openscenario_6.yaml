@@ -25,7 +25,15 @@ scenario:
     - name: ego
       destination: [-28.8, 134.7, 0.5]
       v2x:
-        enabled: false
+        enabled: true
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    - name: cav_1
+      destination: [ -122.9, 133.2, 0.5 ] # TODO: need change
+      v2x:
+        enabled: true
       behavior:
         local_planner:
           debug_trajectory: false
@@ -37,4 +45,4 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true # whether to visualize lidar points using open3d
   behavior: &base_behavior
-    max_speed: 17 # maximum speed, 60km/h
+    max_speed: 20 # maximum speed, 60km/h

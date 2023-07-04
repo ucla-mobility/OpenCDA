@@ -22,20 +22,27 @@ def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
-    experiment_profile = Profile.PREDICTION_OPENCOOD_SINGLE
-    print(f"🚀💯 [Scenario 1]: Experiment: {experiment_profile.name}")
+    experiment_profile = Profile.PREDICTION_OPENCOOD_CAV
+
+    print(scenario_params)
+    print(
+    )
+
     # iterate through the profiles
-    for profile in experiment_profile.value:
+    for profile in experiment_profile.profiles():
         scenario_params = OmegaConf.merge(scenario_params, experiment_params[profile])
 
     try:
         # Create CAV world
-        if experiment_profile is Profile.PREDICTION_OPENCOOD_SINGLE:
+        if experiment_profile in [Profile.PREDICTION_OPENCOOD_SINGLE,
+                                  Profile.PREDICTION_OPENCOOD_CAV]:
             cav_world = CavWorld(apply_ml=True,
                                  apply_coperception=True,
                                  coperception_params=scenario_params['coperception'])
+            if experiment_profile == Profile.PREDICTION_OPENCOOD_CAV:
+                print("enable cav")
         else:
-            if experiment_profile is Profile.DETECT_YOLO:
+            if experiment_profile == Profile.PREDICTION_YOLO:
                 cav_world = CavWorld(True)
             else:
                 cav_world = CavWorld(False)

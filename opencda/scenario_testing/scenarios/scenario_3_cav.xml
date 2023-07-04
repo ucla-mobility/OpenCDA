@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<scenarios>
+    <scenario name="Scenario_3" type="Scenario_3" town="Town03" enable_cav="True"> <!--'name' is same as yaml, 'type' is same as .py class-->
+        <ego_vehicle x="-84.8" y="98.8" z="0.3" yaw="90" model="vehicle.nissan.patrol" />
+        <other_actor x="-76.0" y="151.7" z="-500" yaw="270" model="vehicle.lincoln.mkz_2017" rolename="cav_1" color="(0,0,255)" />
+        <other_actor x="-42.4" y="127.7" z="-500" yaw="180" model="vehicle.lincoln.mkz_2017" />
+        <other_actor x="-77.5" y="127.7" z="-500" yaw="70" model="vehicle.carlamotors.firetruck" />
+        <other_actor x="-79.5" y="118.7" z="-500" yaw="80" model="vehicle.carlamotors.firetruck" />
+        <other_actor x="-80.5" y="109.7" z="-500" yaw="90" model="vehicle.carlamotors.firetruck" />
+        <other_actor x="-81.0" y="100.7" z="-500" yaw="90" model="vehicle.carlamotors.firetruck" />
+        <other_actor x="-81.0" y="91.7" z="-500" yaw="90" model="vehicle.carlamotors.firetruck" />
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+</scenarios>

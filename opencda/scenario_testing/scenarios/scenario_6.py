@@ -43,13 +43,13 @@ class Scenario_6(BasicScenario):
             config.trigger_points[0].location)
 
         self.num_vehicle = 7
-        self.vehicle_01_velocity = 7  # Violated vehicle
+        self.vehicle_01_velocity = 10  # Violated vehicle
         self.vehicle_02_velocity = 0  # Large vehicles from 02 to 06
         self.vehicle_03_velocity = 0
         self.vehicle_04_velocity = 0
         self.vehicle_05_velocity = 0
         self.vehicle_06_velocity = 0
-        self.vehicle_07_velocity = 7
+        self.vehicle_07_velocity = 10
         self._trigger_distance = 150
 
         super(Scenario_6, self).__init__("Scenario_6",
@@ -63,7 +63,9 @@ class Scenario_6(BasicScenario):
         # Spawn vehicles
         for actor_config in config.other_actors:
             actor = CarlaDataProvider.request_new_actor(
-                actor_config.model, actor_config.transform)
+                actor_config.model, actor_config.transform,
+                color=actor_config.color,
+                rolename=actor_config.rolename)
             self.other_actors.append(actor)
             actor.set_simulate_physics(enabled=False)
 
@@ -101,7 +103,7 @@ class Scenario_6(BasicScenario):
                 waypoint = [carla.Location(x=-108.6, y=129.5, z=0.5), carla.Location(x=-120.6, y=129.5, z=0.5),
                             carla.Location(x=-140.6, y=115.2, z=0.5), carla.Location(x=-142.0, y=87.6, z=0.5)]
                 drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
-            elif i == 6:
+            elif i == 6: # cav
                 waypoint = [carla.Location(x=-122.9, y=133.2, z=0.5)]
                 drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
             else:

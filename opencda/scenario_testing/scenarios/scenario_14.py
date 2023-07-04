@@ -43,11 +43,11 @@ class Scenario_14(BasicScenario):
             config.trigger_points[0].location)
 
         self.num_vehicle = 5
-        self.vehicle_01_velocity = 10   # Vehicle that may collide
-        self.vehicle_02_velocity = 10
-        self.vehicle_03_velocity = 10
-        self.vehicle_04_velocity = 10
-        self.vehicle_05_velocity = 10
+        self.vehicle_01_velocity = 30   # Vehicle that may collide
+        self.vehicle_02_velocity = 30
+        self.vehicle_03_velocity = 30
+        self.vehicle_04_velocity = 30
+        self.vehicle_05_velocity = 30
         self._trigger_distance = 150
 
         super(Scenario_14, self).__init__("Scenario_14",
@@ -61,7 +61,9 @@ class Scenario_14(BasicScenario):
         # Spawn vehicles
         for actor_config in config.other_actors:
             actor = CarlaDataProvider.request_new_actor(
-                actor_config.model, actor_config.transform)
+                actor_config.model, actor_config.transform,
+                color=actor_config.color,
+                rolename=actor_config.rolename)
             self.other_actors.append(actor)
             actor.set_simulate_physics(enabled=False)
 

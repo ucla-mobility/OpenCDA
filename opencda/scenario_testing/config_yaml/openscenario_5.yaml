@@ -21,7 +21,7 @@ scenario:
           debug_trajectory: true
           debug: false
     - name: cav1
-      destination: [-25, 129.7, 0.5]
+      destination: [-25, 136.7, 0.5]
       v2x:
         enabled: true
       behavior:
@@ -45,4 +45,4 @@ vehicle_base:
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true # whether to visualize lidar points using open3d
   behavior:
-    max_speed: 16 # maximum speed, 60km/h
+    max_speed: 32 # maximum speed, 60km/h
