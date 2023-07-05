@@ -45,7 +45,7 @@ class Scenario_9(BasicScenario):
         self.num_vehicle = 3
         self.vehicle_01_velocity = 0  # Stopped large vehicle
         self.vehicle_02_velocity = 30  # Vehicle blocked by large vehicle
-        self.vehicle_03_velocity = 26  # CAV
+        self.vehicle_03_velocity = 20  # CAV
         self._trigger_distance = 150
 
         super(Scenario_9, self).__init__("Scenario_9",
@@ -95,7 +95,12 @@ class Scenario_9(BasicScenario):
             trigger_behavior = InTriggerDistanceToLocation(self.ego_vehicles[0], trigger_location,
                                                            self._trigger_distance)
             set_transform_behavior = ActorTransformSetter(actor, transform)
-            drive_behavior = WaypointFollower(actor, velocity)
+
+            if i == 2:
+                waypoint = [carla.Location(x=-84, y=170.5, z=0.5), carla.Location(x=-70, y=190.5, z=0.5), carla.Location(x=-30, y=220.5, z=0.5)]
+                drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
+            else:
+                drive_behavior = WaypointFollower(actor, velocity)
 
             sequence_vehicle[i].add_child(set_transform_behavior)
             sequence_vehicle[i].add_child(trigger_behavior)

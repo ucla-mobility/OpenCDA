@@ -13,14 +13,22 @@ scenario_runner:
 # Define OpenCDA scenario
 scenario:
   single_cav_list:
-    - name: cav1
-      destination: [155.0, -70.5, 0.5]
+    - name: ego
+      destination: [155.0, -40.5, 0.5]
       v2x:
-        enabled: false
+        enabled: true
       behavior:
         local_planner:
-          debug_trajectory: false
-          debug: false
+          debug_trajectory: true
+          debug: true
+    - name: cav_1
+      destination: [155.0, -40.5, 0.5]
+      v2x:
+        enabled: true
+      behavior:
+        local_planner:
+          debug_trajectory: true
+          debug: true
 
 vehicle_base: &vehicle_base
   sensing: &base_sensing

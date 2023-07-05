@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <scenarios>
     <scenario name="Scenario_6" type="Scenario_6" town="Town03" enable_cav="True"> <!--'name' is same as yaml, 'type' is same as .py class-->
-        <ego_vehicle x="-84.8" y="90.8" z="1.3" yaw="90" model="vehicle.nissan.patrol" />
+        <ego_vehicle x="-84.8" y="89.8" z="1.3" yaw="90" model="vehicle.nissan.patrol" />
         <other_actor x="-42.4" y="127.7" z="-500" yaw="180" model="vehicle.lincoln.mkz_2017" />
         <other_actor x="-80.0" y="122.7" z="-500" yaw="80" model="vehicle.carlamotors.firetruck" />
         <other_actor x="-80.5" y="113.7" z="-500" yaw="85" model="vehicle.carlamotors.firetruck" />

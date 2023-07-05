@@ -15,7 +15,7 @@ scenario:
     - name: ego
       destination: [-28.8, 134.7, 0.5]
       v2x:
-        enabled: false
+        enabled: true
       behavior:
         local_planner:
           debug_trajectory: true

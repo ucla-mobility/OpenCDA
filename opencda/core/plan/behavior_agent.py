@@ -577,8 +577,8 @@ class BehaviorAgent(object):
             vehicle_state, _, _ = self.collision_manager(
                 rx, ry, ryaw, self._map.get_waypoint(
                     self._ego_pos.location),
-                True,
-                obstacle_vehicle_predictions)
+                True,)
+                # obstacle_vehicle_predictions)
             if not vehicle_state:
                 print("left overtake is operated")
                 self.overtake_counter = 100
@@ -984,8 +984,9 @@ class BehaviorAgent(object):
                 else:
                     car_following_flag = True
 
+        # 9. (Prediction) if in interaction, slow down
         if self.enable_prediction and is_hazard_prediction:
-            target_speed = get_speed(self.vehicle) - 3
+            target_speed = get_speed(self.vehicle) - 2
             target_speed, target_loc = self._local_planner.run_step(
                 rx, ry, rk, target_speed=target_speed)
             return target_speed, target_loc

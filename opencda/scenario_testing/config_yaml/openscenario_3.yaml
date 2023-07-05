@@ -14,7 +14,7 @@ scenario_runner:
 scenario:
   single_cav_list:
     - name: ego
-      destination: [-28.8, 134.7, 0.5]
+      destination: [-38.8, 134.7, 0.5]
       v2x:
         enabled: true
       behavior:
@@ -22,7 +22,7 @@ scenario:
           debug_trajectory: false
           debug: false
     - name: cav_1
-      destination: [ -142.0, 87.6, 0.5 ] # TODO: needs change
+      destination: [-28.8, 137.7, 0.5] # TODO: needs change
       v2x:
         enabled: true
       behavior:

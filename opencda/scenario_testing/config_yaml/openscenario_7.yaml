@@ -23,21 +23,22 @@ scenario_runner:
 scenario:
   single_cav_list:
     - name: ego
-      destination: [-28.8, 300.7, 0.5]
+      destination: [-1.9, 300.8, 0.5]
       v2x:
-        enabled: false
+        enabled: true
       behavior:
         local_planner:
-          debug_trajectory: false
-          debug: false
+          debug_trajectory: true
+          debug: true
     - name: cav_1
-      destination: [ 1.9, 300.8, 0.5 ]
+      destination: [1.9, 300.8, 0.5]
       v2x:
-        enabled: false
+        enabled: true
       behavior:
         local_planner:
-          debug_trajectory: false
-          debug: false
+          debug_trajectory: true
+          debug: true
+
 
 vehicle_base: &vehicle_base
   sensing: &base_sensing

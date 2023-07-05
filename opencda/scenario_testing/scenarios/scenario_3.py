@@ -98,7 +98,9 @@ class Scenario_3(BasicScenario):
                                                            self._trigger_distance)
             set_transform_behavior = ActorTransformSetter(actor, transform)
             if i == 0:
-                waypoint = [carla.Location(x=-108.6, y=129.5, z=0.5), carla.Location(x=-120.6, y=129.5, z=0.5), carla.Location(x=-140.6, y=115.2, z=0.5), carla.Location(x=-142.0, y=87.6, z=0.5)]
+                # waypoint = [carla.Location(x=-108.6, y=129.5, z=0.5), carla.Location(x=-120.6, y=129.5, z=0.5), carla.Location(x=-140.6, y=115.2, z=0.5), carla.Location(x=-142.0, y=87.6, z=0.5)]
+                # To have similar route to CAV mode
+                waypoint = [carla.Location(x=-74.0, y=144.5, z=0.5), carla.Location(x=-68.0, y=135.5, z=0.5), carla.Location(x=-28.8, y=134.7, z=0.5)]
                 drive_behavior = WaypointFollower(actor, velocity, plan=waypoint)
             else:
                 drive_behavior = WaypointFollower(actor, velocity)
