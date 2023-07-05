@@ -44,8 +44,8 @@ class Scenario_12(BasicScenario):
 
         self.num_vehicle = 3
         self.vehicle_01_velocity = 0  # Stopped large vehicle
-        self.vehicle_02_velocity = 8  # Vehicle blocked by large vehicle
-        self.vehicle_03_velocity = 10  # CAV
+        self.vehicle_02_velocity = 7  # Vehicle blocked by large vehicle
+        self.vehicle_03_velocity = 9  # CAV
         self._trigger_distance = 150
 
         super(Scenario_12, self).__init__("Scenario_12",
