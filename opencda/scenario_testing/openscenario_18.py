@@ -31,7 +31,7 @@ def run_scenario(opt, scenario_params, experiment_params):
     scenario_runner = None
     cav_world = None
     scenario_manager = None
-    experiment_profile = Profile.PREDICTION_OPENCOOD_CAV
+    experiment_profile = Profile.PREDICTION_OPENCOOD_SINGLE
 
     # iterate through the profiles
     for profile in experiment_profile.profiles():

@@ -18,7 +18,7 @@ scenario:
         enabled: true
       behavior:
         local_planner:
-          debug_trajectory: true
+          debug_trajectory: false
           debug: false
     - name: cav1
       destination: [-25, 136.7, 0.5]
@@ -26,7 +26,7 @@ scenario:
         enabled: true
       behavior:
         local_planner:
-          debug_trajectory: true
+          debug_trajectory: false
           debug: false
 
 # define the background traffic control by carla

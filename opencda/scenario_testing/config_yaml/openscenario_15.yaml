@@ -13,10 +13,23 @@ scenario_runner:
 # Define OpenCDA scenario
 scenario:
   single_cav_list:
-    - name: cav1
+    - name: ego
       destination: [230.1, 41.5, 0.5]
       v2x:
-        enabled: false
+        enabled: true
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+          enable_prediction: true
+          observation_seconds: 4
+          prediction_seconds: 1
+          prediction_scan_window: 1
+          prediction_model: "ConstantVelocityHeading"
+    - name: cav_1
+      destination: [235.1, 100.5, 0.5]
+      v2x:
+        enabled: true
       behavior:
         local_planner:
           debug_trajectory: false

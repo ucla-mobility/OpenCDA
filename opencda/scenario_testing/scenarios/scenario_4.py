@@ -43,9 +43,9 @@ class Scenario_4(BasicScenario):
             config.trigger_points[0].location)
 
         self.num_vehicle = 3
-        self.vehicle_01_velocity = 14  # Vehicle in front of ego vehicle
-        self.vehicle_02_velocity = 14  # Vehicle on the other lane
-        self.vehicle_03_velocity = 14  # Vehicle in front of all vehicle
+        self.vehicle_01_velocity = 8  # Vehicle in front of ego vehicle
+        self.vehicle_02_velocity = 8  # Vehicle on the other lane
+        self.vehicle_03_velocity = 8  # Vehicle in front of all vehicle
         self._trigger_distance = 150
 
         super(Scenario_4, self).__init__("Scenario_4",

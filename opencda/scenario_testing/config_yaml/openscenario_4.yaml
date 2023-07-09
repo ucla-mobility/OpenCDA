@@ -55,14 +55,24 @@ scenario_runner:
 # Define OpenCDA scenario
 scenario:
   single_cav_list:
-    - name: cav1
-      destination: [150.2, 3.7, 0.5]
+    - name: ego
+      destination: [130.2, 3.7, 0.5]
       v2x:
-        enabled: false
+        enabled: true
       behavior:
         local_planner:
           debug_trajectory: false
           debug: false
+
+    - name: cav_1
+      destination: [200.2, 3.7, 0.5]
+      v2x:
+        enabled: true
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+        max_speed: 30
 
 vehicle_base: &vehicle_base
   sensing: &base_sensing
@@ -71,4 +81,7 @@ vehicle_base: &vehicle_base
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: true # whether to visualize lidar points using open3d
   behavior: &base_behavior
-    max_speed: 30 # maximum speed, 60km/h
+    max_speed: 50 # maximum speed, 60km/h
+    speed_decrease: 0 # used in car following mode to decrease speed for distance keeping
+    safety_time: 0.5 # ttc safety thresholding for decreasing speed
+    collision_time_ahead: 0.5 # used for collision checking

@@ -43,12 +43,12 @@ class Scenario_13(BasicScenario):
             config.trigger_points[0].location)
 
         self.num_vehicle = 6
-        self.vehicle_01_velocity = 5
-        self.vehicle_02_velocity = 5
-        self.vehicle_03_velocity = 5
-        self.vehicle_04_velocity = 5
-        self.vehicle_05_velocity = 5
-        self.vehicle_06_velocity = 5
+        self.vehicle_01_velocity = 4
+        self.vehicle_02_velocity = 4
+        self.vehicle_03_velocity = 4
+        self.vehicle_04_velocity = 4
+        self.vehicle_05_velocity = 4
+        self.vehicle_06_velocity = 4
         self._trigger_distance = 150
 
         super(Scenario_13, self).__init__("Scenario_13",

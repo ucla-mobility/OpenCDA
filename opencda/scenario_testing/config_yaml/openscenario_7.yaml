@@ -28,16 +28,16 @@ scenario:
         enabled: true
       behavior:
         local_planner:
-          debug_trajectory: true
-          debug: true
+          debug_trajectory: false
+          debug: false
     - name: cav_1
       destination: [1.9, 300.8, 0.5]
       v2x:
         enabled: true
       behavior:
         local_planner:
-          debug_trajectory: true
-          debug: true
+          debug_trajectory: false
+          debug: false
 
 
 vehicle_base: &vehicle_base

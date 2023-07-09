@@ -7,6 +7,8 @@ from opencda.core.common.cav_world import CavWorld
 from opencda.constants import Profile, suffix, headline_str
 from omegaconf import OmegaConf
 from multiprocessing import Process
+from opencda.scenario_testing.evaluations.evaluate_manager import \
+    EvaluationManager
 
 import scenario_runner as sr
 
@@ -28,6 +30,7 @@ def exec_scenario_runner(scenario_params):
 
 
 def run_scenario(opt, scenario_params, experiment_params):
+    eval_manager = None
     scenario_runner = None
     cav_world = None
     scenario_manager = None
@@ -61,6 +64,12 @@ def run_scenario(opt, scenario_params, experiment_params):
                                                    opt.version,
                                                    town=scenario_params.scenario_runner.town,
                                                    cav_world=cav_world)
+
+        # create evaluation manager
+        eval_manager = \
+            EvaluationManager(scenario_manager.cav_world,
+                              script_name='openscenario_2',
+                              current_time="2023-07-08")
 
         # Create a background process to init and execute scenario runner
         sr_process = Process(target=exec_scenario_runner,
@@ -122,6 +131,8 @@ def run_scenario(opt, scenario_params, experiment_params):
             time.sleep(0.01)
 
     finally:
+        eval_manager.evaluate()
+        cav_world.ml_manager.evaluate_final_average_precision()
         if cav_world is not None:
             cav_world.destroy()
         print("Destroyed cav_world")

@@ -14,7 +14,7 @@ scenario_runner:
 scenario:
   single_cav_list:
     - name: cav1
-      destination: [-28.8, 300.7, 0.5]
+      destination: [-28.8, 200.7, 0.5]
       v2x:
         enabled: false
       behavior:
