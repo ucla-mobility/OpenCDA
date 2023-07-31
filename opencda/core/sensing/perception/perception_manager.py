@@ -161,12 +161,24 @@ class LidarSensor:
         blueprint.set_attribute('lower_fov', str(config_yaml['lower_fov']))
         blueprint.set_attribute('channels', str(config_yaml['channels']))
         blueprint.set_attribute('range', str(config_yaml['range']))
-        blueprint.set_attribute('points_per_second', str(config_yaml['points_per_second']))
-        blueprint.set_attribute('rotation_frequency', str(config_yaml['rotation_frequency']))
-        blueprint.set_attribute('dropoff_general_rate', str(config_yaml['dropoff_general_rate']))
-        blueprint.set_attribute('dropoff_intensity_limit', str(config_yaml['dropoff_intensity_limit']))
-        blueprint.set_attribute('dropoff_zero_intensity', str(config_yaml['dropoff_zero_intensity']))
-        blueprint.set_attribute('noise_stddev', str(config_yaml['noise_stddev']))
+        blueprint.set_attribute(
+            'points_per_second', str(
+                config_yaml['points_per_second']))
+        blueprint.set_attribute(
+            'rotation_frequency', str(
+                config_yaml['rotation_frequency']))
+        blueprint.set_attribute(
+            'dropoff_general_rate', str(
+                config_yaml['dropoff_general_rate']))
+        blueprint.set_attribute(
+            'dropoff_intensity_limit', str(
+                config_yaml['dropoff_intensity_limit']))
+        blueprint.set_attribute(
+            'dropoff_zero_intensity', str(
+                config_yaml['dropoff_zero_intensity']))
+        blueprint.set_attribute(
+            'noise_stddev', str(
+                config_yaml['noise_stddev']))
 
         # spawn sensor
         if global_position is None:
@@ -176,7 +188,8 @@ class LidarSensor:
                                                          y=global_position[1],
                                                          z=global_position[2]))
         if vehicle is not None:
-            self.sensor = world.spawn_actor(blueprint, spawn_point, attach_to=vehicle)
+            self.sensor = world.spawn_actor(
+                blueprint, spawn_point, attach_to=vehicle)
         else:
             self.sensor = world.spawn_actor(blueprint, spawn_point)
 
@@ -296,7 +309,6 @@ class SemanticLidarSensor:
             return
 
         # shape:(n, 6)
-        self.event = event
         data = np.frombuffer(event.raw_data, dtype=np.dtype([
             ('x', np.float32), ('y', np.float32), ('z', np.float32),
             ('CosAngle', np.float32), ('ObjIdx', np.uint32),

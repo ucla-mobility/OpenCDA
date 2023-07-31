@@ -15,19 +15,58 @@ import numpy as np
 from opencda.core.common.misc import get_speed
 from opencda.core.sensing.perception import sensor_transformation as st
 from opencda.scenario_testing.utils.yaml_utils import save_yaml
-import carla
 
 
 class DataDumper(object):
+    """
+    Data dumper class to save data in local disk.
+
+    Parameters
+    ----------
+    perception_manager : opencda object
+        The perception manager contains rgb camera data and lidar data.
+
+    vehicle_id : int
+        The carla.Vehicle id.
+
+    save_time : str
+        The timestamp at the beginning of the simulation.
+
+    Attributes
+    ----------
+    rgb_camera : list
+        A list of opencda.CameraSensor that containing all rgb sensor data
+        of the managed vehicle.
+
+    lidar ; opencda object
+        The lidar manager from perception manager.
+
+    save_parent_folder : str
+        The parent folder to save all data related to a specific vehicle.
+
+    count : int
+        Used to count how many steps have been executed. We dump data
+        every 10 steps.
+
+    """
 
     def __init__(self,
                  perception_manager,
-                 save_path):
+                 vehicle_id,
+                 save_time):
 
         self.rgb_camera = perception_manager.rgb_camera
         self.lidar = perception_manager.lidar
 
-        self.save_parent_folder = save_path
+        self.save_time = save_time
+        self.vehicle_id = vehicle_id
+
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        self.save_parent_folder = \
+            os.path.join(current_path,
+                         '../../../data_dumping',
+                         save_time,
+                         str(self.vehicle_id))
 
         if not os.path.exists(self.save_parent_folder):
             os.makedirs(self.save_parent_folder)
@@ -52,106 +91,50 @@ class DataDumper(object):
         behavior_agent : opencda object
             Open
         """
-        # self.count += 1 ###
-
+        self.count += 1
         # we ignore the first 60 steps
         if self.count < 60:
             return
-        # 10hz
-        # if self.count % 2 != 0:
-        #     return
 
-        # print('saving', self.count)
+        # 10hz
+        if self.count % 2 != 0:
+            return
+
         self.save_rgb_image(self.count)
+        self.save_lidar_points(self.count)
         self.save_yaml_file(perception_manager,
                             localization_manager,
                             behavior_agent,
                             self.count)
-        self.save_lidar_points(self.count)
 
     def save_rgb_image(self, count):
         """
         Save camera rgb images to disk.
         """
-        if not self.rgb_camera:
-            return
-            
         for (i, camera) in enumerate(self.rgb_camera):
 
+            frame = camera.frame
             image = camera.image
 
             image_name = '%06d' % count + '_' + 'camera%d' % i + '.png'
 
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
-            
-            # print('saved', self.perception_manager.id, os.path.join(self.save_parent_folder, image_name))###debug
-            # break # to save front only
-
-    # def reverse_transform(self, points, p, y, r):
-
-    #     tran = carla.Transform(carla.Rotation(pitch=p, yaw=y, roll=r))
-    #     rot = tran.get_matrix()[:3, :3]
-    #     return (rot @ points.T).T
-
-    # def reverse_transform(self, points, trans):
-        
-    #     x, y, z = trans.location.x, trans.location.y, trans.location.z
-    #     p, y, r = trans.rotation.pitch, trans.rotation.yaw, trans.rotation.roll
-    #     trans = carla.Transform(carla.Location(x,y,z), carla.Rotation(0,y,r))
-    #     rot = np.array(trans.get_matrix())
-
-    #     points = np.append(points, np.ones((points.shape[0], 1)), axis=1)
-    #     points = (rot @ points.T).T
-
-    #     return points[:, :-1]
-
-    def reverse_transform(self, points, trans):
-        
-        x, y, z = trans.location.x, trans.location.y, trans.location.z
-        p, y, r = trans.rotation.pitch, trans.rotation.yaw, trans.rotation.roll
-        # trans = carla.Transform(carla.Location(x,y,z), carla.Rotation(p,y,r))
-        trans = carla.Transform(carla.Location(0,0,0), carla.Rotation(p,0,0))
-        rot = np.linalg.inv(trans.get_matrix())
-        # rot = trans.get_matrix()
-
-        points = np.append(points, np.ones((points.shape[0], 1)), axis=1)
-        points = (rot @ points.T).T
-
-        return points[:, :-1]
 
     def save_lidar_points(self, count):
         """
         Save 3D lidar points to disk.
         """
         point_cloud = self.lidar.data
-        frame = count # self.lidar.frame
+        frame = count
 
         point_xyz = point_cloud[:, :-1]
-        # point_xyz[:, 1] = -point_xyz[:, 1] # horizontal flip
         point_intensity = point_cloud[:, -1]
         point_intensity = np.c_[
             point_intensity,
             np.zeros_like(point_intensity),
             np.zeros_like(point_intensity)
         ]
-
-        # x_rot = y_rot = z_rot = 0
-        roll_rot = pitch_rot = yaw_rot = 0
-        if self.lidar.spawn_point.rotation.pitch != 0:
-            # y_rot = np.radians(-self.lidar.spawn_point.rotation.pitch)
-            pitch_rot = -self.lidar.spawn_point.rotation.pitch
-        # if self.lidar.spawn_point.rotation.yaw != 0:
-            # z_rot = np.radians(-self.lidar.spawn_point.rotation.yaw)
-            # yaw_rot = -self.lidar.spawn_point.rotation.yaw
-
-        if roll_rot != 0 or pitch_rot != 0 or yaw_rot != 0:
-            # rot = o3d.geometry.get_rotation_matrix_from_axis_angle([x_rot, y_rot, z_rot])
-            # point_xyz = (rot @ point_xyz.T).T
-            # o3d_pcd.rotate(rot)
-            # point_xyz = self.reverse_transform(point_xyz, pitch_rot, yaw_rot, roll_rot)
-            pass
-            # point_xyz = self.reverse_transform(point_xyz, self.lidar.spawn_point)
 
         o3d_pcd = o3d.geometry.PointCloud()
         o3d_pcd.points = o3d.utility.Vector3dVector(point_xyz)
@@ -163,7 +146,6 @@ class DataDumper(object):
                                               pcd_name),
                                  pointcloud=o3d_pcd,
                                  write_ascii=True)
-        # print('saved', self.perception_manager.id, os.path.join(self.save_parent_folder,pcd_name))###debug
 
     def save_yaml_file(self,
                        perception_manager,
@@ -193,16 +175,9 @@ class DataDumper(object):
         # dump obstacle vehicles first
         objects = perception_manager.objects
         vehicle_list = objects['vehicles']
-        # print('\nperception_manager vehicles', vehicle_list)
 
         for veh in vehicle_list:
-            if perception_manager.id == veh.carla_id:
-                print('perception_manager.id', perception_manager.id)
-                print('veh.carla_id', veh.carla_id)
-                continue ###
-                
             veh_carla_id = veh.carla_id
-            # veh_carla_id = str(veh.attributes['role_name'])
             veh_pos = veh.get_transform()
             veh_bbx = veh.bounding_box
             veh_speed = get_speed(veh)
@@ -229,7 +204,6 @@ class DataDumper(object):
             }})
 
         dump_yml.update({'vehicles': vehicle_dict})
-        # print('perception_manager vehicle_dict', vehicle_dict)
 
         # dump ego pose and speed, if vehicle does not exist, then it is
         # a rsu(road side unit).
@@ -264,7 +238,7 @@ class DataDumper(object):
             lidar_transformation.rotation.roll,
             lidar_transformation.rotation.yaw,
             lidar_transformation.rotation.pitch]})
-        # print('dump_yml lidar pose', lidar_transformation);print(dump_yml['lidar_pose'])
+
         # dump camera sensor coordinates under world coordinate system
         for (i, camera) in enumerate(self.rgb_camera):
             camera_param = {}
@@ -318,7 +292,6 @@ class DataDumper(object):
                                  yml_name)
 
         save_yaml(dump_yml, save_path)
-        # print('saved', self.perception_manager.id, save_path)###debug
 
     @staticmethod
     def matrix2list(matrix):

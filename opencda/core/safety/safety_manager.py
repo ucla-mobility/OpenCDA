@@ -48,5 +48,4 @@ class SafetyManager:
 
     def destroy(self):
         for sensor in self.sensors:
-            if hasattr(sensor, 'destroy'):
-                sensor.destroy()
+            sensor.destroy()

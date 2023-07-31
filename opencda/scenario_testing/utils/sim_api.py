@@ -162,7 +162,7 @@ class ScenarioManager:
         CAV World that contains the information of all CAVs.
 
     carla_map : carla.map
-        Carla HD Map.
+        Car;a HD Map.
 
     """
 
@@ -680,7 +680,9 @@ class ScenarioManager:
 
         if isinstance(traffic_config['vehicle_list'], list) or \
                 isinstance(traffic_config['vehicle_list'], ListConfig):
-            bg_list = self.spawn_vehicles_by_list(tm, traffic_config, bg_list)
+            bg_list = self.spawn_vehicles_by_list(tm,
+                                                  traffic_config,
+                                                  bg_list)
 
         else:
             bg_list = self.spawn_vehicle_by_range(tm, traffic_config, bg_list)
