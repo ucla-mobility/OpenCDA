@@ -76,6 +76,16 @@ def draw_ttc_profile_single_plot(ttc_list):
     fig = plt.gcf()
     fig.set_size_inches(11, 5)
 
+def draw_dtg_profile_single_plot(dtg_list):
+    for i, v in enumerate(dtg_list):
+        x_s = np.arange(len(v)) * 0.05
+        plt.plot(x_s, v)
+
+    plt.xlabel("Time (s)")
+    plt.ylabel("Distance to Navigatio goal (m)")
+    # plt.ylim([0, 30])
+    fig = plt.gcf()
+    fig.set_size_inches(11, 5)
 
 def draw_time_gap_profile_singel_plot(gap_list):
     """

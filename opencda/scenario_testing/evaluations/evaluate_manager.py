@@ -7,6 +7,7 @@ Evaluation manager.
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import os
+import numpy as np
 from datetime import datetime
 from opencda.scenario_testing.evaluations.utils import lprint
 
@@ -85,6 +86,31 @@ class EvaluationManager(object):
             figure.savefig(figure_save_path, dpi=100)
 
             lprint(log_file, perform_txt)
+
+            # save raw data
+            raw_data_path = os.path.join(
+                self.eval_save_path,
+                '%d_kinematics_' %
+                actor_id)
+
+            # save trajectory 
+            np.savetxt(raw_data_path + "speed.csv", loc_debug_helper.speed_list, \
+                        delimiter=",", fmt='%.2f')
+            np.savetxt(raw_data_path + "acc.csv", loc_debug_helper.acc_list, \
+                        delimiter=",", fmt='%.2f')
+            np.savetxt(raw_data_path + "dtg.csv", loc_debug_helper.dist_to_goal, \
+                        delimiter=",", fmt='%.2f')
+            # save geo location 
+            np.savetxt(raw_data_path + "lat.csv", loc_debug_helper.latitude, \
+                        delimiter=",")
+            np.savetxt(raw_data_path + "lon.csv", loc_debug_helper.longitude, \
+                        delimiter=",")
+            # ecef 
+            np.savetxt(raw_data_path + "ecef_x.csv", loc_debug_helper.ecef_x, \
+                        delimiter=",")
+            np.savetxt(raw_data_path + "ecef_y.csv", loc_debug_helper.ecef_y, \
+                        delimiter=",")
+
 
     def localization_eval(self, log_file):
         """

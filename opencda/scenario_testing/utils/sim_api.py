@@ -338,6 +338,9 @@ class ScenarioManager:
             destination = carla.Location(x=cav_config['destination'][0],
                                          y=cav_config['destination'][1],
                                          z=cav_config['destination'][2])
+            # mark navigation goal
+            vehicle_manager.set_nav_goal(destination)
+
             vehicle_manager.update_info()
             vehicle_manager.set_destination(
                 vehicle_manager.vehicle.get_location(),

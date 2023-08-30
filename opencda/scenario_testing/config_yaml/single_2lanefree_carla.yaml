@@ -4,27 +4,71 @@ description: |-
   Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
            testing in high speed in the customized 2lanefree simple version.
 
+vehicle_base:
+  sensing: # include perception and localization
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 1 # how many cameras are mounted on the vehicle.
+        positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+          - [2.5, 0, 1.0, 0]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 50
+        points_per_second: 100000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+
+    localization:
+      activate: true # when not activated, ego position will be retrieved from server directly
+      dt: ${world.fixed_delta_seconds} # used for kalman filter
+      gnss: # gnss sensor configuration
+        noise_alt_stddev: 0.001
+        noise_lat_stddev: 1.0e-7
+        noise_lon_stddev: 1.0e-7
+        heading_direction_stddev: 0.1 # degree
+        speed_stddev: 0.2
+      debug_helper:
+        show_animation: false # whether to show real-time trajectory plotting
+        x_scale: 1.0 # used to multiply with the x coordinate to make the error on x axis clearer
+        y_scale: 100.0 # used to multiply with the y coordinate to make the error on y axis clearer
+
+  behavior:
+    max_speed: 120 # maximum speed, km/h
+    tailgate_speed: 120 # when a vehicles needs to be close to another vehicle asap
+    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
+
 # define the carla traffic
-carla_traffic_manager:
-  vehicle_list:
-    - spawn_position: [ -330, 8.3, 0.3, 0, 0, 0 ]
-      vehicle_speed_perc: 0
-    - spawn_position: [ -320, 4.8, 0.3, 0, 0, 0 ]
-      vehicle_speed_perc: -200
-    - spawn_position: [ -300, 8.3, 0.3, 0, 0, 0 ]
-      vehicle_speed_perc: -100
-    - spawn_position: [ -280, 4.8, 0.3, 0, 0, 0 ]
-      vehicle_speed_perc: -200
+# comment out for variable speed limit 
+# carla_traffic_manager:
+#   vehicle_list:
+#     - spawn_position: [ -330, 8.3, 0.3, 0, 0, 0 ]
+#       vehicle_speed_perc: 0
+#     # - spawn_position: [ -300, 4.8, 0.3, 0, 0, 0 ]
+#     #   vehicle_speed_perc: -200
+#     - spawn_position: [ -320, 8.3, 0.3, 0, 0, 0 ]
+#       vehicle_speed_perc: -100
+#     # - spawn_position: [ -285, 4.8, 0.3, 0, 0, 0 ]
+#     #   vehicle_speed_perc: -200
 
 
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [ -370, 8.3, 0.3, 0, 0, 0 ]
+      # spawn_position: [ -370, 8.3, 0.3, 0, 0, 0 ] # middle lane
+      spawn_position: [ -150, 4.8, 0.3, 0, 0, 0 ] # left lane 
       # this parameter will overwrite the spawn position, when it is set, the vehicle is spawn
       # at the merging lane. 0.5 means it is spawn at the middle of the whole merging lange.
       # spawn_special: [0.34]
-      destination: [ 700, 8.3, 0.3 ]
+      # destination: [ 200, 8.3, 0.3 ] # middle lane
+      destination: [ 200, 4.8, 0.3 ] # left lane  
       v2x:
         communication_range: 45
       behavior:

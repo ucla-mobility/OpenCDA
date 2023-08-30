@@ -91,11 +91,16 @@ class BehaviorAgent(object):
         self._ego_speed = 0.0
         self._map = carla_map
 
+        # ego lat and lon 
+        self._ego_geoloc = None
+
         # speed related, check yaml file to see the meaning
         self.max_speed = config_yaml['max_speed']
         self.tailgate_speed = config_yaml['tailgate_speed']
         self.speed_lim_dist = config_yaml['speed_lim_dist']
         self.speed_decrease = config_yaml['speed_decrease']
+        # nav goal 
+        self.nav_goal = None
 
         # safety related
         self.safety_time = config_yaml['safety_time']
@@ -106,6 +111,7 @@ class BehaviorAgent(object):
         self._collision_check = CollisionChecker(
             time_ahead=config_yaml['collision_time_ahead'])
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
+        # self.ignore_traffic_light = True
         self.overtake_allowed = config_yaml['overtake_allowed']
         self.overtake_allowed_origin = config_yaml['overtake_allowed']
         self.overtake_counter = 0
@@ -146,6 +152,9 @@ class BehaviorAgent(object):
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
 
+    def set_nav_goal(self, destination):
+        self.nav_goal = destination
+
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information
@@ -165,6 +174,9 @@ class BehaviorAgent(object):
         # update localization information
         self._ego_speed = ego_speed
         self._ego_pos = ego_pos
+        # update geo location 
+        self._ego_geoloc = self._map.transform_to_geolocation(ego_pos.location)
+
         self.break_distance = self._ego_speed / 3.6 * self.emergency_param
         # update the localization info to trajectory planner
         self.get_local_planner().update_information(ego_pos, ego_speed)
@@ -175,13 +187,25 @@ class BehaviorAgent(object):
         self.obstacle_vehicles = self.white_list_match(obstacle_vehicles)
 
         # update the debug helper
-        self.debug_helper.update(ego_speed, self.ttc)
+        dist_to_goal = self.find_distance_to_nav_goal()
+        
+        # varaible speed limit 
+        # if dist_to_goal <= 700:
+        #     self.max_speed = 90
+        
+        self.debug_helper.update(ego_speed, self.ttc, dist_to_goal, self._ego_geoloc, self._ego_pos)
 
-        if self.ignore_traffic_light:
-            self.light_state = "Green"
-        else:
-            # This method also includes stop signs and intersections.
-            self.light_state = str(self.vehicle.get_traffic_light_state())
+        # change the light state to be always reflecting the real condition 
+        self.light_state = str(self.vehicle.get_traffic_light_state())
+        # if self.ignore_traffic_light:
+        #     self.light_state = "Green"
+        # else:
+        #     # This method also includes stop signs and intersections.
+        #     self.light_state = str(self.vehicle.get_traffic_light_state())
+
+    def find_distance_to_nav_goal(self):
+        cur_loc = self._ego_pos.location
+        return math.sqrt((cur_loc.x-self.nav_goal.x)**2 + (cur_loc.y-self.nav_goal.y)**2)
 
     def add_white_list(self, vm):
         """
@@ -382,6 +406,7 @@ class BehaviorAgent(object):
             # when light state is red and light id is -1, it means the vehicle
             # is near a stop sign.
             if light_id == -1:
+                print('stop sign activated !')
                 # we force the vehicle wait for 2 sceconds in front of the
                 # stop sign
                 if self.stop_sign_wait_count < 60:
@@ -393,9 +418,26 @@ class BehaviorAgent(object):
                 else:
                     # indicate no need to stop
                     return 0
+            # right turn on red, stop before proceed
+            if self.ignore_traffic_light and self.light_id_to_ignore != light_id:
+                # we force the vehicle wait for 2 sceconds in front of the
+                # stop sign
+                if self.stop_sign_wait_count < 60:
+                    print('right turn on red activated !')
+                    self.stop_sign_wait_count += 1
+                    # indicate emergent stop needed
+                    return 1
+                # After pass a stop sign, the vehicle shouldn't stop at
+                # the stop sign in the opposite direction
+                else:
+                    # indicate no need to stop
+                    print('right turn on red finished !')
+                    self.light_id_to_ignore = light_id
+                    return 0
 
             if not waypoint.is_junction and (
                     self.light_id_to_ignore != light_id or light_id == -1):
+                print('normal traffic light activated !')
                 return 1
             elif waypoint.is_junction and light_id != -1:
                 self.light_id_to_ignore = light_id

@@ -111,6 +111,9 @@ class VehicleManager(object):
         # safety manager
         self.safety_manager = SafetyManager(vehicle=vehicle,
                                             params=config_yaml['safety_manager'])
+        # navigation goal 
+        self.nav_goal = None
+
         # behavior agent
         self.agent = None
         if 'platooning' in application:
@@ -136,6 +139,12 @@ class VehicleManager(object):
             self.data_dumper = None
 
         cav_world.update_vehicle_manager(self)
+
+    def set_nav_goal(self, destination):
+        '''
+        '''
+        self.nav_goal = destination
+        self.agent.set_nav_goal(destination)
 
     def set_destination(
             self,

@@ -37,10 +37,18 @@ class PlanDebugHelper(object):
         self.speed_list = [[]]
         self.acc_list = [[]]
         self.ttc_list = [[]]
+        # dist to goal
+        self.dist_to_goal = [[]]
+
+        # lat and lon
+        self.latitude = [[]]
+        self.longitude = [[]] 
+        self.ecef_x = [[]]
+        self.ecef_y = [[]]
 
         self.count = 0
 
-    def update(self, ego_speed, ttc):
+    def update(self, ego_speed, ttc, dist_to_goal, geo_location, ecef_loc):
         """
         Update the speed info.
         Args:
@@ -52,7 +60,16 @@ class PlanDebugHelper(object):
         # at the very beginning, the vehicle is in a spawn state, so we should
         # filter out the first 100 data points.
         if self.count > 100:
+            # speed
             self.speed_list[0].append(ego_speed / 3.6)
+            # dist 
+            self.dist_to_goal[0].append(dist_to_goal)
+            # geo location 
+            self.latitude[0].append(geo_location.latitude)
+            self.longitude[0].append(geo_location.longitude)
+            self.ecef_x[0].append(ecef_loc.location.x)
+            self.ecef_y[0].append(ecef_loc.location.y)
+
             if len(self.speed_list[0]) <= 1:
                 self.acc_list[0].append(0)
             else:
@@ -81,7 +98,8 @@ class PlanDebugHelper(object):
         open_plt.draw_acceleration_profile_single_plot(self.acc_list)
 
         plt.subplot(313)
-        open_plt.draw_ttc_profile_single_plot(self.ttc_list)
+        # open_plt.draw_ttc_profile_single_plot(self.ttc_list)
+        open_plt.draw_dtg_profile_single_plot(self.dist_to_goal)
 
         figure.suptitle('planning profile of actor id %d' % self.actor_id)
 
