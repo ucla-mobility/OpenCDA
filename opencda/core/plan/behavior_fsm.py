@@ -68,10 +68,13 @@ class BehaviorFSM(object):
         # Define state transitions for each superstates
         # Lane following
         self.lane_following_graph = nx.DiGraph()
-        self.init_lanefollowing_transitions()
+        self.init_lane_following_transitions()
         # Intersection
         self.intersection_graph = nx.DiGraph()
         self.init_intersection_transitions()
+        # Overtaking
+        self.overtaking_graph = nx.DiGraph()
+        self.init_overtaking_transitions()
 
         # Define initial superstate
         self.current_superstate = self.superstates["LANE_FOLLOWING"]
@@ -105,7 +108,7 @@ class BehaviorFSM(object):
         self.superstate_graph.add_edge(self.superstates["COLLISION_AVOIDANCE"], self.superstates["LANE_FOLLOWING"])
         self.superstate_graph.add_edge(self.superstates["COLLISION_AVOIDANCE"], self.superstates["COLLISION_AVOIDANCE"])
 
-    def init_lanefollowing_transitions(self):
+    def init_lane_following_transitions(self):
         # Add nodes to the graph
         for state in self.states.values():
             self.lane_following_graph.add_node(state)
@@ -121,6 +124,9 @@ class BehaviorFSM(object):
         self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
         self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
 
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
+
         self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"],
                                            self.states["PREPARE_LANE_CHANGE_RIGHT"])
         self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
@@ -128,9 +134,6 @@ class BehaviorFSM(object):
 
         self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
         self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
-
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
 
         self.lane_following_graph.add_edge(self.states["CAR_FOLLOWING"], self.states["CAR_FOLLOWING"])
         self.lane_following_graph.add_edge(self.states["CAR_FOLLOWING"], self.states["GO_STRAIGHT"])
@@ -168,6 +171,34 @@ class BehaviorFSM(object):
         self.intersection_graph.add_edge(self.states["CAR_FOLLOWING"], self.states["TURN_LEFT"])
         self.intersection_graph.add_edge(self.states["CAR_FOLLOWING"], self.states["TURN_RIGHT"])
         self.intersection_graph.add_edge(self.states["CAR_FOLLOWING"], self.states["STOP"])
+
+    def init_overtaking_transitions(self):
+        # Add nodes to the graph
+        for state in self.states.values():
+            self.overtaking_graph.add_node(state)
+
+        # Define transitions
+        self.lane_following_graph.add_edge(self.states["GO_STRAIGHT"], self.states["GO_STRAIGHT"])
+        self.lane_following_graph.add_edge(self.states["GO_STRAIGHT"], self.states["PREPARE_LANE_CHANGE_LEFT"])
+        self.lane_following_graph.add_edge(self.states["GO_STRAIGHT"], self.states["PREPARE_LANE_CHANGE_RIGHT"])
+
+        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"],
+                                           self.states["PREPARE_LANE_CHANGE_LEFT"])
+        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
+        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
+
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["PREPARE_LANE_CHANGE_RIGHT"])
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
+
+        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"],
+                                           self.states["PREPARE_LANE_CHANGE_RIGHT"])
+        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
+        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
+
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["PREPARE_LANE_CHANGE_LEFT"])
+        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
 
     def get_current_superstate(self):
         return self.current_superstate
@@ -215,7 +246,12 @@ class BehaviorFSM(object):
             possible_next_states_names.append(self.states["GO_STRAIGHT"].name)
         return possible_next_states_names
 
-    def rank_next_superstates(self, next_superstates, is_intersection, is_hazard, is_red_light):
+    def rank_next_superstates(self,
+                              next_superstates,
+                              is_intersection, is_hazard,
+                              is_red_light, lane_change_allowed,
+                              is_overtake_proper,
+                              is_obstacle_confirmed):
         nxt_superstates = {}
         if 'LANE_FOLLOWING' in next_superstates:
             if not is_intersection and not is_hazard:
@@ -228,7 +264,11 @@ class BehaviorFSM(object):
             else:
                 nxt_superstates['INTERSECTION'] = 10
         if 'OVERTAKING' in next_superstates:
-            nxt_superstates['OVERTAKING'] = 200
+            # condition where overtaking is in favor
+            if is_hazard and is_overtake_proper:
+                nxt_superstates['OVERTAKING'] = 5 if is_obstacle_confirmed else 10
+            else:
+                nxt_superstates['OVERTAKING'] = 200
         if 'COLLISION_AVOIDANCE' in next_superstates:
             if is_hazard:
                 nxt_superstates['COLLISION_AVOIDANCE'] = 100
@@ -238,10 +278,13 @@ class BehaviorFSM(object):
         sorted_superstates = dict(sorted(nxt_superstates.items(), key=lambda item: item[1]))
         return sorted_superstates
 
+    # state transition #0 GO_STRAIGHT
     def state_transition_go_straight(self, next_states,
                                      is_lane_change_ahead=None,
                                      is_red_light=None,
-                                     is_hazard=None):
+                                     is_hazard=None,
+                                     overtake_left=False,
+                                     overtake_right=False):
         # state transition started in go straight state as current state
         path = {}
         # generate path
@@ -254,6 +297,7 @@ class BehaviorFSM(object):
             # reset marker and counter
             self.give_up_lane_change = False
             self.reset_give_up_lane_change_counter = 10
+        # transitions associate with costs
         if self.current_superstate.name == 'LANE_FOLLOWING':
             if 'GO_STRAIGHT' in next_states:
                 cost = 10
@@ -270,10 +314,6 @@ class BehaviorFSM(object):
                 else:
                     cost = 15
                 path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
-            if 'CAR_FOLLOWING' in next_states:
-                # need to check obstacle vehicle here
-                cost = 15
-                path['CAR_FOLLOWING'] = [rx, ry, rk, ryaw, cost]
             if 'CAR_FOLLOWING' in next_states:
                 if is_hazard:
                     cost = 5
@@ -333,8 +373,271 @@ class BehaviorFSM(object):
                 else:
                     cost = 30
                 path['STOP'] = [rx, ry, rk, ryaw, cost]
+        elif self.current_superstate.name == 'OVERTAKING':
+            if 'GO_STRAIGHT' in next_states:
+                cost = 10
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'PREPARE_LANE_CHANGE_LEFT' in next_states:
+                if overtake_left:
+                    cost = 5
+                else:
+                    cost = 15
+                path['PREPARE_LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+            if 'PREPARE_LANE_CHANGE_RIGHT' in next_states:
+                if overtake_right:
+                    cost = 5
+                else:
+                    cost = 15
+                path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+
         return path
 
+    # state transition #1 PREPARE_LANE_CHANGE_LEFT
+    def state_transition_prepare_left_lane_change(self, next_states, is_lane_change_ahead,
+                                                  lane_change_allowed, is_target_lane_safe):
+        path = {}
+        # increase counter
+        self.prepare_lane_change_counter += 1
+        # check for obstacle on target lane (loop through all near-by actors)
+        is_blocked = lane_change_allowed  # todo: determine by original logic in OpenCDA behavior agent
+        # generate path
+        # lane following superstate
+        if self.current_superstate.name == 'LANE_FOLLOWING':
+            rx, ry, rk, ryaw = self._local_planner.generate_path()
+            if 'GO_STRAIGHT' in next_states:
+                if is_blocked:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_LEFT' in next_states:
+                if not is_blocked:
+                    # start lane change, mark starting point
+                    self._local_planner.mark_lane_change_start()
+                    cost = 5
+                else:
+                    cost = 15
+                path['LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+            if 'PREPARE_LANE_CHANGE_LEFT' in next_states:
+                if is_lane_change_ahead and \
+                        self.prepare_lane_change_counter <= 2 and \
+                        is_blocked:
+                    # if prepare counter small, still in favor of wait
+                    cost = 3
+                elif is_lane_change_ahead and \
+                        self.prepare_lane_change_counter > 2 and \
+                        is_blocked:
+                    # give up lane change
+                    self.give_up_lane_change = True
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                else:
+                    # proceed to lane change if not blocked
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                path['PREPARE_LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+        # overtaking superstate
+        elif self.current_superstate.name == 'OVERTAKING':
+            rx, ry, rk, ryaw = self._local_planner.generate_path()
+            if 'GO_STRAIGHT' in next_states:
+                if not is_target_lane_safe:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_LEFT' in next_states:
+                if is_target_lane_safe:
+                    # start lane change, mark starting point
+                    self._local_planner.mark_lane_change_start()
+                    cost = 5
+                else:
+                    cost = 15
+                path['LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+            if 'PREPARE_LANE_CHANGE_LEFT' in next_states:
+                if self.prepare_lane_change_counter <= 2 and \
+                        not is_target_lane_safe:
+                    # if prepare counter small, still in favor of wait
+                    cost = 3
+                elif is_lane_change_ahead and \
+                        self.prepare_lane_change_counter > 2 and \
+                        not is_target_lane_safe:
+                    # give up lane change
+                    self.give_up_lane_change = True
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                else:
+                    # proceed to lane change if not blocked
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                path['PREPARE_LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+        return path
+
+    # state transition #2 PREPARE_LANE_CHANGE_RIGHT
+    def state_transition_prepare_right_lane_change(self, next_states, is_lane_change_ahead,
+                                                   lane_change_allowed, is_target_lane_safe):
+        path = {}
+        # increase counter
+        self.prepare_lane_change_counter += 1
+        # check for obstacle on target lane (loop through all near-by actors)
+        is_blocked = lane_change_allowed # todo: determine by original logic in OpenCDA behavior agent
+        # lane following
+        if self.current_superstate.name == 'LANE_FOLLOWING':
+            # generate path
+            rx, ry, rk, ryaw = self._local_planner.generate_path()
+            if 'GO_STRAIGHT' in next_states:
+                if is_blocked:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_RIGHT' in next_states:
+                if not is_blocked:
+                    # start lane change, mark starting point
+                    self._local_planner.mark_lane_change_start()
+                    cost = 5
+                else:
+                    cost = 15
+                path['LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'PREPARE_LANE_CHANGE_RIGHT' in next_states:
+                if is_lane_change_ahead and \
+                        self.prepare_lane_change_counter <= 2 and \
+                        is_blocked:
+                    # if prepare counter small, still in favor of wait
+                    cost = 3
+                elif is_lane_change_ahead and \
+                        self.prepare_lane_change_counter > 2 and \
+                        is_blocked:
+                    # give up lane change
+                    self.give_up_lane_change = True
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                else:
+                    # proceed to lane change if not blocked
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+        # overtaking
+        elif self.current_superstate.name == 'OVERTAKING':
+            rx, ry, rk, ryaw = self._local_planner.generate_path()
+            if 'GO_STRAIGHT' in next_states:
+                if not is_target_lane_safe:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_RIGHT' in next_states:
+                if is_target_lane_safe:
+                    # start lane change, mark starting point
+                    self._local_planner.mark_lane_change_start()
+                    cost = 5
+                else:
+                    cost = 15
+                path['LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'PREPARE_LANE_CHANGE_RIGHT' in next_states:
+                if self.prepare_lane_change_counter <= 2 and \
+                        not is_target_lane_safe:
+                    # if prepare counter small, still in favor of wait
+                    cost = 3
+                elif is_lane_change_ahead and \
+                        self.prepare_lane_change_counter > 2 and \
+                        not is_target_lane_safe:
+                    # give up lane change
+                    self.give_up_lane_change = True
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                else:
+                    # proceed to lane change if not blocked
+                    cost = 15
+                    # reset counter
+                    self.prepare_lane_change_counter = 0
+                path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+        return path
+
+    # state transition #3. LANE_CHANGE_LEFT
+    def state_transition_lane_change_left(self, next_states, is_lane_change_finished):
+        path = {}
+        rx, ry, rk, ryaw = self._local_planner.generate_path()
+        if self.current_superstate.name == 'LANE_FOLLOWING':
+            if 'GO_STRAIGHT' in next_states:
+                if is_lane_change_finished:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_LEFT' in next_states:
+                if not is_lane_change_finished:
+                    cost = 5
+                    # reset lane change starting point
+                    self._local_planner.reset_lane_change_marker()
+                    # reset give up lane change marker
+                    self.give_up_lane_change = False
+                else:
+                    cost = 15
+                path['LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+        elif self.current_superstate.name == 'OVERTAKING':
+            if 'GO_STRAIGHT' in next_states:
+                if is_lane_change_finished:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_LEFT' in next_states:
+                if not is_lane_change_finished:
+                    cost = 5
+                    # reset lane change starting point
+                    self._local_planner.reset_lane_change_marker()
+                    # reset give up lane change marker
+                    self.give_up_lane_change = False
+                else:
+                    cost = 15
+                path['LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+
+        return path
+
+    # state transition #4. LANE_CHANGE_RIGHT
+    def state_transition_lane_change_right(self, next_states, is_lane_change_finished):
+        path = {}
+        rx, ry, rk, ryaw = self._local_planner.generate_path()
+        if self.current_superstate.name == 'LANE_FOLLOWING':
+            if 'GO_STRAIGHT' in next_states:
+                if is_lane_change_finished:
+                    cost = 5
+                    # reset lane change starting point
+                    self._local_planner.reset_lane_change_marker()
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_RIGHT' in next_states:
+                if not is_lane_change_finished:
+                    cost = 5
+                else:
+                    cost = 15
+                path['LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+        elif self.current_superstate.name == 'OVERTAKING':
+            if 'GO_STRAIGHT' in next_states:
+                if is_lane_change_finished:
+                    cost = 5
+                    # reset lane change starting point
+                    self._local_planner.reset_lane_change_marker()
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'LANE_CHANGE_RIGHT' in next_states:
+                if not is_lane_change_finished:
+                    cost = 5
+                else:
+                    cost = 15
+                path['LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+        return path
+
+    # state transition #5 car following
     def state_transition_car_followng(self, is_hazard):
         path = {}
         # generate path
@@ -354,129 +657,9 @@ class BehaviorFSM(object):
             path['CAR_FOLLOWING'] = [rx, ry, rk, ryaw, cost]
         return path
 
-    def state_transition_prepare_left_lane_change(self, next_states, is_lane_change_ahead):
-        path = {}
-        # increase counter
-        self.prepare_lane_change_counter += 1
-        # check for obstacle on target lane (loop through all near-by actors)
-        is_blocked = self._local_planner.is_target_lane_blocked()  # todo: implment a function to determine this
-        # generate path
-        rx, ry, rk, ryaw = self._local_planner.generate_path()
-        if 'GO_STRAIGHT' in next_states:
-            if is_blocked:
-                cost = 5
-            else:
-                cost = 15
-            path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
-        if 'LANE_CHANGE_LEFT' in next_states:
-            if not is_blocked:
-                # start lane change, mark starting point
-                self._local_planner.mark_lane_change_start()
-                cost = 5
-            else:
-                cost = 15
-            path['LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
-        if 'PREPARE_LANE_CHANGE_LEFT' in next_states:
-            if is_lane_change_ahead and \
-                    self.prepare_lane_change_counter <= 2 and \
-                    is_blocked:
-                # if prepare counter small, still in favor of wait
-                cost = 3
-            else:
-                # prepare counter exceeds limit, stop waiting and go straight
-                cost = 15
-                # reset counter
-                self.prepare_lane_change_counter = 0
-                self.give_up_lane_change = True
-            path['PREPARE_LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
-        return path
+    # todo: add determination for left and right turn
 
-    def state_transition_lane_change_left(self, next_states, is_lane_change_finished):
-        path = {}
-        rx, ry, rk, ryaw = self._local_planner.generate_path()
-        if 'GO_STRAIGHT' in next_states:
-            if is_lane_change_finished:
-                cost = 5
-            else:
-                cost = 15
-            path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
-        if 'LANE_CHANGE_LEFT' in next_states:
-            if not is_lane_change_finished:
-                cost = 5
-                # reset lane change starting point
-                self._local_planner.reset_lane_change_marker()
-                # reset give up lane change marker
-                self.give_up_lane_change = False
-            else:
-                cost = 15
-            path['LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
-        return path
-
-    def state_transition_prepare_right_lane_change(self, next_states, is_lane_change_ahead):
-        path = {}
-        # increase counter
-        self.prepare_lane_change_counter += 1
-        # check for obstacle on target lane (loop through all near-by actors)
-        # todo: Implement function in local planner to determine
-        is_blocked = self._local_planner.is_target_lane_blocked()
-        # generate path
-        rx, ry, rk, ryaw = self._local_planner.generate_path()
-        if 'GO_STRAIGHT' in next_states:
-            if is_blocked:
-                cost = 5
-            else:
-                cost = 15
-            path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
-        if 'LANE_CHANGE_RIGHT' in next_states:
-            if not is_blocked:
-                # start lane change, mark starting point
-                self._local_planner.mark_lane_change_start()
-                cost = 5
-            else:
-                cost = 15
-            path['LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
-        if 'PREPARE_LANE_CHANGE_RIGHT' in next_states:
-            if is_lane_change_ahead and \
-                    self.prepare_lane_change_counter <= 2 and \
-                    is_blocked:
-                # if prepare counter small, still in favor of wait
-                cost = 3
-            elif is_lane_change_ahead and \
-                    self.prepare_lane_change_counter > 2 and \
-                    is_blocked:
-                # give up lane change
-                self.give_up_lane_change = True
-                cost = 15
-                # reset counter
-                self.prepare_lane_change_counter = 0
-            else:
-                # proceed to lane change if not blocked
-                cost = 15
-                # reset counter
-                self.prepare_lane_change_counter = 0
-
-            path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
-        return path
-
-    def state_transition_lane_change_right(self, next_states, is_lane_change_finished):
-        path = {}
-        rx, ry, rk, ryaw = self._local_planner.generate_path()
-        if 'GO_STRAIGHT' in next_states:
-            if is_lane_change_finished:
-                cost = 5
-                # reset lane change starting point
-                self._local_planner.reset_lane_change_marker()
-            else:
-                cost = 15
-            path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
-        if 'LANE_CHANGE_RIGHT' in next_states:
-            if not is_lane_change_finished:
-                cost = 5
-            else:
-                cost = 15
-            path['LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
-        return path
-
+    # state transition #8. STOP
     def state_transition_stop(self, next_states,
                               is_red_light=None,
                               is_hazard=None):
@@ -519,9 +702,11 @@ class BehaviorFSM(object):
         return path
 
     def generate_trajectory_no_superstate_transition(self, next_states, is_intersection,
-                                                     is_hazard, is_red_light):
+                                                     is_hazard, is_red_light, lane_change_allowed,
+                                                     overtake_left, overtake_right, is_target_lane_safe):
         path = {}
         # Transitions
+        # Lane following
         if self.current_superstate.name == 'LANE_FOLLOWING':
             # check if there's planned lane change ahead
             is_lane_change_ahead = self._local_planner.is_lane_change_ahead()
@@ -537,7 +722,9 @@ class BehaviorFSM(object):
             # start in prepare left
             elif self.current_state.name == 'PREPARE_LANE_CHANGE_LEFT':
                 path = self.state_transition_prepare_left_lane_change(next_states,
-                                                                      is_lane_change_ahead)
+                                                                      is_lane_change_ahead,
+                                                                      lane_change_allowed,
+                                                                      is_target_lane_safe)
             # start in lane change left
             elif self.current_state.name == 'LANE_CHANGE_LEFT':
                 path = self.state_transition_lane_change_left(next_states,
@@ -545,12 +732,14 @@ class BehaviorFSM(object):
             # start in prepare right
             elif self.current_state.name == 'PREPARE_LANE_CHANGE_RIGHT':
                 path = self.state_transition_prepare_right_lane_change(next_states,
-                                                                       is_lane_change_ahead)
+                                                                       is_lane_change_ahead,
+                                                                       lane_change_allowed,
+                                                                       is_target_lane_safe)
             # start in lane change left
             elif self.current_state.name == 'LANE_CHANGE_RIGHT':
                 path = self.state_transition_lane_change_right(next_states,
                                                                is_lane_change_finished)
-
+        # Intersection
         elif self.current_superstate.name == 'INTERSECTION':
             if 'GO_STRAIGHT' in next_states:
                 path = self.state_transition_go_straight(next_states,
@@ -570,31 +759,74 @@ class BehaviorFSM(object):
                 rx, ry, rk, ryaw = self._local_planner.generate_path()
                 cost = 15
                 path['TURN_RIGHT'] = [rx, ry, rk, ryaw, cost]
+        # Overtaking
+        elif self.current_superstate.name == 'OVERTAKING':
+            # check if there's planned lane change ahead
+            is_lane_change_ahead = self._local_planner.is_lane_change_ahead()
+            # check if lane change finished
+            is_lane_change_finished = self._local_planner.is_lane_change_finished()
+
+            # start in go-straight
+            if self.current_state.name == 'GO_STRAIGHT':
+                path = self.state_transition_go_straight(next_states,
+                                                         is_lane_change_ahead=is_lane_change_ahead,
+                                                         overtake_left=overtake_left,
+                                                         overtake_right=overtake_right,
+                                                         )
+            # start in prepare left
+            elif self.current_state.name == 'PREPARE_LANE_CHANGE_LEFT':
+                path = self.state_transition_prepare_left_lane_change(next_states,
+                                                                      is_lane_change_ahead,
+                                                                      lane_change_allowed,
+                                                                      is_target_lane_safe)
+            # start in lane change left
+            elif self.current_state.name == 'LANE_CHANGE_LEFT':
+                path = self.state_transition_lane_change_left(next_states,
+                                                              is_lane_change_finished)
+            # start in prepare right
+            elif self.current_state.name == 'PREPARE_LANE_CHANGE_RIGHT':
+                path = self.state_transition_prepare_right_lane_change(next_states,
+                                                                       is_lane_change_ahead,
+                                                                       lane_change_allowed,
+                                                                       is_target_lane_safe)
+            # start in lane change left
+            elif self.current_state.name == 'LANE_CHANGE_RIGHT':
+                path = self.state_transition_lane_change_right(next_states,
+                                                               is_lane_change_finished)
 
         # rank dict
         sorted_path = dict(sorted(path.items(), key=lambda item: item[1]))
         return sorted_path
 
     def generate_trajectory_with_superstate_transition(self, next_states, is_intersection,
-                                                       is_hazard, is_red_light):
+                                                       is_hazard, is_red_light,lane_change_allowed,
+                                                       is_target_lane_safe):
         path = {}
         rx, ry, rk, ryaw = self._local_planner.generate_path()
         cost = 5
         path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
         return path
 
-    def generate_trajectory(self, next_superstate, next_states, is_intersection,
-                            is_hazard, is_red_light):
+    def generate_trajectory(self, next_superstate,
+                            next_states, is_intersection,
+                            is_hazard, is_red_light, lane_change_allowed,
+                            overtake_left, overtake_right, is_target_lane_safe):
         if next_superstate == self.current_superstate.name:
             path = self.generate_trajectory_no_superstate_transition(next_states,
                                                                      is_intersection,
                                                                      is_hazard,
-                                                                     is_red_light)
+                                                                     is_red_light,
+                                                                     lane_change_allowed,
+                                                                     overtake_left,
+                                                                     overtake_right,
+                                                                     is_target_lane_safe)
         else:
             path = self.generate_trajectory_with_superstate_transition(next_states,
                                                                        is_intersection,
                                                                        is_hazard,
-                                                                       is_red_light)
+                                                                       is_red_light,
+                                                                       lane_change_allowed,
+                                                                       is_target_lane_safe)
 
         return path
 

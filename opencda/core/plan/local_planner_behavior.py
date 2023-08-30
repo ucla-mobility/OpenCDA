@@ -220,6 +220,7 @@ class LocalPlanner(object):
     def is_lane_change_ahead(self):
         """
         Check whether a lane change is planned by the global route.
+        todo: Need to refine condition.
 
         Returns
         -------
@@ -259,10 +260,6 @@ class LocalPlanner(object):
         # find lane change status
         return self.same_road_lane_id_change or self.lane_lateral_change
 
-    def is_target_lane_blocked(self):
-        # check if target lane is blocked
-        is_blocked = False
-        return is_blocked
 
     def mark_lane_change_start(self):
         """
