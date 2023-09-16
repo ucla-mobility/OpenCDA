@@ -116,10 +116,14 @@ def multi_class_vehicle_blueprint_filter(label, blueprint_library, bp_meta):
         List of blueprints that have the class equals the specified label.
 
     """
-    blueprints = [
-        blueprint_library.find(k)
-        for k, v in bp_meta.items() if v["class"] == label
-    ]
+    # blueprints = [
+    #     blueprint_library.find(k)
+    #     for k, v in bp_meta.items() if v["class"] == label
+    # ]
+    for k, v in bp_meta.items():
+        if v["class"] == label:    
+            blueprints = [blueprint_library.find(k)]
+    print("我出来了！")
     return blueprints
 
 
@@ -314,7 +318,7 @@ class ScenarioManager:
                 spawn_transform = map_helper(self.carla_version,
                                              *cav_config['spawn_special'])
 
-            cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+            cav_vehicle_bp.set_attribute('color', '255, 0, 0')
             vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
             # create vehicle manager for each cav

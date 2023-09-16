@@ -33,18 +33,17 @@ def run_scenario(opt, config_yaml):
         if opt.record:
             scenario_manager.client. \
                 start_recorder("single_town06_carla.log", True)
+        # 创建感知车
+        single_cav_list = scenario_manager.create_vehicle_manager(application=['single'],
+                                                    data_dump=False)
+        # rsu_list = \
+        #     scenario_manager.create_rsu_manager(data_dump=True)
 
-        single_cav_list = \
-            scenario_manager.create_vehicle_manager(application=['single'],
-                                                    data_dump=True)
-        rsu_list = \
-            scenario_manager.create_rsu_manager(data_dump=True)
-
-        # create background traffic in carla
+        # create background traffic in carla 创建交通流和背景车辆
         traffic_manager, bg_veh_list = \
             scenario_manager.create_traffic_carla()
 
-        # create evaluation manager
+        # create evaluation manager 创建评估管理器
         eval_manager = \
             EvaluationManager(scenario_manager.cav_world,
                               script_name='coop_town06',
@@ -52,17 +51,17 @@ def run_scenario(opt, config_yaml):
 
         spectator = scenario_manager.world.get_spectator()
 
-        # save the data collection protocol to the folder
+        # save the data collection protocol to the folder 创建数据收集协议
         current_path = os.path.dirname(os.path.realpath(__file__))
         save_yaml_name = os.path.join(current_path,
                                       '../../data_dumping',
                                       scenario_params['current_time'],
                                       'data_protocol.yaml')
-        save_yaml(scenario_params, save_yaml_name)
+        # save_yaml(scenario_params, save_yaml_name)
 
         while True:
-            scenario_manager.tick()
-            transform = single_cav_list[0].vehicle.get_transform()
+            scenario_manager.tick()     # 更新场景
+            transform = single_cav_list[1].vehicle.get_transform()
             spectator.set_transform(carla.Transform(
                 transform.location +
                 carla.Location(
@@ -70,15 +69,17 @@ def run_scenario(opt, config_yaml):
                 carla.Rotation(
                     pitch=-
                     90)))
+            
+            scenario_manager.tick()     # 更新场景
 
             for i, single_cav in enumerate(single_cav_list):
                 single_cav.update_info()
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
 
-            for rsu in rsu_list:
-                rsu.update_info()
-                rsu.run_step()
+            # for rsu in rsu_list:
+            #     rsu.update_info()
+            #     rsu.run_step()
 
     finally:
         eval_manager.evaluate()
@@ -90,7 +91,7 @@ def run_scenario(opt, config_yaml):
 
         for v in single_cav_list:
             v.destroy()
-        for r in rsu_list:
-            r.destroy()
+        # for r in rsu_list:
+        #     r.destroy()
         for v in bg_veh_list:
             v.destroy()

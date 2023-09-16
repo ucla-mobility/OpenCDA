@@ -66,7 +66,7 @@ rsu_base: &rsu_base
 vehicle_base: &vehicle_base
   sensing: &base_sensing
     perception: &base_perception
-      activate: false # when not activated, objects positions will be retrieved from server directly
+      activate: true # when not activated, objects positions will be retrieved from server directly
       camera_visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
       camera_num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
       lidar_visualize: true # whether to visualize lidar points using open3d
@@ -142,7 +142,7 @@ vehicle_base: &vehicle_base
     loc_noise: 0.0
     yaw_noise: 0.0
     speed_noise: 0.0
-    lag: 0
+    lag: 0  # the lag of the communication in seconds
 
 # define the background traffic control by carla
 carla_traffic_manager:
@@ -170,25 +170,25 @@ scenario:
       spawn_position: [12.00, 192.31, 3.0]
       id: -1
 
-  single_cav_list:
-    - <<: *vehicle_base
+  single_cav_list:  # CAVs 
+    - <<: *vehicle_base # 第一个车的定义
       spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
-      destination: [67.12, 150.2, 1.0]
+      destination: [67.12, 150.2, 1.0]  # destination of the vehicle
       v2x:
         <<: *base_v2x
-        communication_range: 45
+        communication_range: 90
       behavior:
         <<: *base_behavior
         local_planner:
           <<: *base_local_planner
           debug_trajectory: false
           debug: false
-    - <<: *vehicle_base
+    - <<: *vehicle_base # 第二个车的定义
       spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
       destination: [-2.43, 263, 0.3]
       v2x:
         <<: *base_v2x
-        communication_range: 45
+        communication_range: 90
       behavior:
         <<: *base_behavior
         local_planner:

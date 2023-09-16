@@ -485,7 +485,7 @@ class PerceptionManager:
 
         if not self.activate:
             self.search_nearby_cav()
-            objects = self.deactivate_mode(objects)
+            objects = self.deactivate_mode(objects) # maybe 当不检测的时候通过v2x来查到周围的车的位置来作为障碍物的位置
         else:
             objects = self.activate_mode(objects)
 
@@ -578,7 +578,7 @@ class PerceptionManager:
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
-
+        print("第",self.count,"轮,",self.id,"号车检测到了",len(objects['vehicles']),"个车辆啦！")
         return objects
 
     def deactivate_mode(self, objects):
