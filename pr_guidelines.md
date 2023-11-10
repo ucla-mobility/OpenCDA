@@ -20,7 +20,7 @@ Please make changes in your local repo and when the codes are ready to merge wit
 ```
 git add .
 git commit -m "Description of changes"
-git push origin feature-branch
+git push origin feature/short_summary_of_feature
 ```
 
 **Submit Pull Request**
