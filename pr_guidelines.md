@@ -1,6 +1,8 @@
 Thank you for considering contributing to OpenCDA! We welcome contributions from the community to make our project better. Before you get started, please take a moment to read the following guidelines.
 
-**Please do not directly create a branch from the original repo. Please fork the OpenCDA repository to your local github repo instead. Please make changes in your local repo and when the codes are ready to merge with the main branch, please create a pull request to the official OpenCDA repo. Project maintainers will review your changes, suggest modifications if needed, and discuss any concerns.**
+**Please do not directly create a branch from the original repo.** Please fork the OpenCDA repository to your local github repo instead. 
+Forking the repository helps keep the main project tidy. It allows you to make changes in your forked repository without cluttering the original repository.
+Please make changes in your local repo and when the codes are ready to merge with the main branch, please create a pull request to the official OpenCDA repo. Project maintainers will review your changes, suggest modifications if needed, and discuss any concerns.
 
 
 **Fork the Repository**
