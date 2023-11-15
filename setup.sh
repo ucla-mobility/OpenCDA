@@ -1,16 +1,8 @@
 #!/bin/bash
 
 set -e
-
-if [ -z "$CARLA_HOME" ]; then
-    echo "Error: Please set \$CARLA_HOME before running this script"
-    return 0
-fi
-
-if [ -z "$CARLA_VERSION" ]; then
-   CARLA_VERSION="0.9.11"
-fi
-
+CARLA_HOME="/home/cav/CARLA_0.9.10"
+CARLA_VERSION="0.9.10"
 CARLA_EGG_FILE=${CARLA_HOME}/PythonAPI/carla/dist/carla-"${CARLA_VERSION}"-py3.7-linux-x86_64.egg
 if [ ! -f "$CARLA_EGG_FILE" ]; then
     echo "Error: $CARLA_EGG_FILE can not be found. Please make sure you are using python3.7 and carla 0.9.11. "

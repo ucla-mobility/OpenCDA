@@ -374,6 +374,10 @@ class BehaviorAgent(object):
         light_id = self.vehicle.get_traffic_light(
         ).id if self.vehicle.get_traffic_light() is not None else -1
 
+        # printing traffic light ID
+        if light_id != -1:
+            print('Traffic light detection result: ' + str(light_id))
+
         # this is the case where the vehicle just pass a stop sign, and won't
         # stop at any stop sign in the next 4 seconds.
         if 60 <= self.stop_sign_wait_count < 240:

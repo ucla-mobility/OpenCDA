@@ -13,6 +13,9 @@ from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import add_current_time
 
+import pygame
+import sys
+
 
 def run_scenario(opt, scenario_params):
     try:
@@ -23,10 +26,13 @@ def run_scenario(opt, scenario_params):
         cav_world = CavWorld(opt.apply_ml)
 
         # create scenario manager
+        '''
+        Note: delete twon04 variable, so openCDA can sync with TENA adapter.
+        This requires CARLA launched in Town04 as default.
+        '''
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
-                                                   town='Town04',
                                                    cav_world=cav_world)
 
         if opt.record:
@@ -48,28 +54,36 @@ def run_scenario(opt, scenario_params):
 
         spectator = scenario_manager.world.get_spectator()
         
-        # transform = single_cav_list[0].vehicle.get_transform()
-        # spectator.set_transform(carla.Transform(
-        #     transform.location +
-        #     carla.Location(
-        #         x=-7,
-        #         z=2.5),
-        #     carla.Rotation(
-        #         pitch=-
-        #         8))
-        # )
-        # for i, single_cav in enumerate(single_cav_list):
-        #     single_cav.update_info()
-        #     control = single_cav.run_step()
-        #     single_cav.vehicle.apply_control(control)
-        # # pause until press enter
-        # scenario_manager.tick()
-        counter = 0
+        world = scenario_manager.client.get_world()
+
+        print("Press SPACE key to start the vehicle")
+        running = False
+
+        # Set up the Pygame window and clock
+        pygame.init()
+
+        screen = pygame.display.set_mode((700, 100))
+        # Set the font and text for the message
+        font = pygame.font.SysFont("monospace", 30)
+        text = font.render("Press SPACE to start vehicle movement", True, (255, 255, 255))
+
+        # Draw the message on the screen
+        screen.blit(text, (10, 10))
+        pygame.display.flip()
+
+        clock = pygame.time.Clock()
+
         # run steps
         while True:
-            if counter == 30:
-                input("Press Enter to continue...")
             scenario_manager.tick()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    running = True
+                    
             transform = single_cav_list[0].vehicle.get_transform()
             spectator.set_transform(carla.Transform(
             transform.location +
@@ -79,12 +93,15 @@ def run_scenario(opt, scenario_params):
             carla.Rotation(
                 pitch=-
                 8)))
-            print("counter: ", counter)
-            for i, single_cav in enumerate(single_cav_list):
-                single_cav.update_info()
-                control = single_cav.run_step()
-                single_cav.vehicle.apply_control(control)
-            counter += 1
+
+            if running == True:
+                # scenario_manager.tick()
+                # pygame.display.quit()
+                for i, single_cav in enumerate(single_cav_list):
+                    single_cav.update_info()
+                    control = single_cav.run_step()
+                    single_cav.vehicle.apply_control(control)
+
 
     finally:
         eval_manager.evaluate()

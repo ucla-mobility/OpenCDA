@@ -1,0 +1,27 @@
+copying egg file to cache folder
+unzip egg file
+Archive:  /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64.egg
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/EGG-INFO/PKG-INFO  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/EGG-INFO/SOURCES.txt  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/EGG-INFO/dependency_links.txt  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/EGG-INFO/native_libs.txt  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/EGG-INFO/not-zip-safe  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/EGG-INFO/top_level.txt  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/carla/__init__.py  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/carla/command.py  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/carla/libcarla.cpython-37m-x86_64-linux-gnu.so  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/carla/libcarla.py  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/carla/__pycache__/__init__.cpython-37.pyc  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/carla/__pycache__/command.cpython-37.pyc  
+  inflating: /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64/carla/__pycache__/libcarla.cpython-37.pyc  
+copy setup file to egg folder
+Successful! Run 'pip install -e /home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64' to install carla into your python package 
+Obtaining file:///home/cav/OpenCDA_Carla_0.9.10/OpenCDA/cache/carla-0.9.10-py3.7-linux-x86_64
+Installing collected packages: carla
+  Attempting uninstall: carla
+    Found existing installation: carla 0.9.10
+    Uninstalling carla-0.9.10:
+      Successfully uninstalled carla-0.9.10
+  Running setup.py develop for carla
+Successfully installed carla-0.9.10
+Sucessful Setup!

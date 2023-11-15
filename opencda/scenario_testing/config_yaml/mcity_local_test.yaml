@@ -1,0 +1,72 @@
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
+           testing in high speed in the customized 2lanefree simple version.
+
+# First define the basic parameters of the vehicles
+vehicle_base:
+  sensing:
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 1 # 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+        positions:
+          - [2.5, 0, 1.0, 0]
+          # - [0.0, 0.3, 1.8, 100]
+          # - [0.0, -0.3, 1.8, -100]
+          # - [-2.0, 0.0, 1.5, 180]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 16 # 32
+        range: 120
+        points_per_second: 10000 # 1000000  # note: consider reduce
+        rotation_frequency: 20   # 20 # the simulation is 20 fps
+        upper_fov: 2
+        lower_fov: -25
+        dropoff_general_rate: 0.3
+        dropoff_intensity_limit: 0.7
+        dropoff_zero_intensity: 0.4
+        noise_stddev: 0.02
+  map_manager:
+    visualize: true
+    activate: true
+  behavior:
+    max_speed: 30 # maximum speed, km/h
+    tailgate_speed: 25 # 34 # when a vehicles needs to be close to another vehicle asap
+    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
+    sample_resolution: 1.5 # the unit distance between two adjacent waypoints in meter
+    ignore_traffic_light: false # whether to ignore traffic light
+    local_planner:  # trajectory planning related
+      buffer_size: 12 # waypoint buffer size  ------------------------- change from 12
+      trajectory_update_freq: 15 # used to control trajectory points updating frequency
+      waypoint_update_freq: 9 # used to control waypoint updating frequency
+      min_dist: 3 # used to pop out the waypoints too close to current location
+      trajectory_dt: 0.50 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
+      debug: false # whether to draw future/history waypoints
+      debug_trajectory: false # whether to draw the trajectory points and path
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  global_distance: 5.0 # 4.0 # the minimum distance in meters that vehicles have to keep with the rest
+  # Sets the difference the vehicle's intended speed and its current speed limit.
+  #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
+  # and 20 represents 24 km/h
+  global_speed_perc: 5
+  vehicle_list: []
+
+# define scenario. In this scenario, a 4-vehicle platoon already exists.
+scenario:
+  single_cav_list: # this is for merging vehicle or single cav without v2x
+    - name: cav1
+      spawn_position: [29.775, -35.102, 238.5, 0.0, 0.0, 0.0] 
+      destination: [87.877, -32.807, 238.5]
+
+      v2x:
+        communication_range: 45
+      behavior:
+        local_planner:
+          debug_trajectory: true
+          debug: true

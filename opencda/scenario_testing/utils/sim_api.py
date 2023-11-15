@@ -310,11 +310,9 @@ class ScenarioManager:
         """
         print('Creating single CAVs.')
         # By default, we use lincoln as our cav model.
-        """
         default_model = 'vehicle.lincoln.mkz2017' \
             if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
-        """
-        default_model = 'vehicle.audi.a2'
+        # default_model = 'vehicle.audi.a2'
         cav_vehicle_bp = \
             self.world.get_blueprint_library().find(default_model)
         single_cav_list = []
@@ -345,7 +343,22 @@ class ScenarioManager:
 
             cav_vehicle_bp.set_attribute('color', '0, 0, 255')
             cav_vehicle_bp.set_attribute('role_name', 'UCLA-OPENCDA')
-            vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
+
+            # ------------------------------------------------------------------------
+            '''
+            Note: do not spawn vehicle, read vehicle from adpater (VOICES)
+            '''
+            # vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
+            carlaVehicles = self.world.get_actors().filter('vehicle.*')
+            for carla_vehicle in carlaVehicles:
+                currentAttributes = carla_vehicle.attributes
+                print("Checking vehicle: " + str(currentAttributes["role_name"]))
+                if currentAttributes["role_name"] == 'UCLA-OPENCDA':
+                    vehicle = carla_vehicle
+            
+            if not vehicle:
+                print("ERROR: Unable to find vehicle with rolename: UCLA-OPENCDA.")
+            # ------------------------------------------------------------------------
 
             # create vehicle manager for each cav
             vehicle_manager = VehicleManager(
@@ -716,6 +729,33 @@ class ScenarioManager:
 
         print('CARLA traffic flow generated.')
         return tm, bg_list
+
+    # ----- note: new function to change traffic signal green time for the VOICE tesing -----
+    # def change_green_time(self, traffic_light_x_location, traffic_light_y_location, change_ratio):
+    #     """
+    #     change the green time of a traffic light in the given location
+    #     """
+    #     # get all traffic actors
+    #     all_traffic_list = self.world.get_actors().filter('traffic.traffic_light')
+    #     all_traffic_locations = [light.get_location() for light in all_traffic_list ]
+
+    #     # find the correct traffic light
+    #     for i,location in enumerate(all_traffic_locations):
+    #         if (int(location.x) == traffic_light_x_location and 
+    #             int(location.y) == traffic_light_y_location):
+    #             current_light_index = i 
+        
+    #     # reset green time 
+    #     # all_traffic_list[current_light_index].set_green_time(
+    #     #     change_ratio*all_traffic_list[current_light_index].get_green_time())
+
+    # def change_intersection_green_time(self, intersection_light_locations, change_ratio):
+    #     """
+    #     change the green time for the entire green time.
+    #     """
+    #     for light_location in intersection_light_locations:
+    #         self.change_green_time(light_location[0],light_location[1], change_ratio)
+    #     print('Intersection green time is overwritten...')
 
     def tick(self):
         """

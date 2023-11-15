@@ -367,6 +367,7 @@ class PerceptionManager:
         self.id = infra_id if infra_id is not None else vehicle.id
 
         self.activate = config_yaml['activate']
+        # self.activate = False
         self.camera_visualize = config_yaml['camera']['visualize']
         self.camera_num = config_yaml['camera']['num']
         self.lidar_visualize = config_yaml['lidar']['visualize']
@@ -560,6 +561,10 @@ class PerceptionManager:
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
 
+        '''
+        temporary debug stream
+        '''
+        print('The ego vehicle is using Lidar + Yolo to detect objets...')
         return objects
 
     def deactivate_mode(self, objects):
