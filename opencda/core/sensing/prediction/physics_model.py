@@ -6,17 +6,22 @@ import math
 import numpy as np
 from collections import deque
 
+def check_positive_integer(value, name):
+    assert isinstance(value, int) and value > 0, f"{name} must be int and greater than 0"
 
+def check_positive_real_number(value, name):
+    assert (isinstance(value, int) or isinstance(value, float)) and value > 0, f"{name} must be real number and greater than 0"
+                       
 def angle_diff(x, y):
     """
     Get the smallest angle difference between 2 angles: the angle from y to x.
     Parameters
     ----------
     x : float
-        To angle
+        To angle.
 
     y : float
-        From angle
+        From angle.
 
     Returns
     -------
@@ -66,17 +71,25 @@ def get_kinematics(trajectory_data, observed_length):
     return observed_traj, velocity, acc, yaw, yaw_rate
 
 
+
 class PredictionManager:
     def __init__(self, observed_length, predict_length, dt, model="ConstantVelocityHeading"):
-        assert isinstance(observed_length, int) and observed_length > 0, "observed_length must be int and greater than 0"
-        assert isinstance(predict_length, int) and predict_length > 0, "predict_length must be int and greater than 0"
-        assert (isinstance(dt, int) or isinstance(dt, float)) and dt > 0, "dt must be real number and greater than 0"
-        assert model in ["ConstantVelocityHeading", "ConstantAccelerationHeading",
-                         "ConstantSpeedYawRate", "ConstantMagnitudeAccelAndYawRate", "PhysicsOracle"]
+        check_positive_integer(observed_length, "observed_length")
+        check_positive_integer(predict_length, "predict_length")
+        check_positive_real_number(dt, "dt")
+        
+        model_classes = {
+            "ConstantVelocityHeading": ConstantVelocityHeading,
+            "ConstantAccelerationHeading": ConstantAccelerationHeading,
+            "ConstantSpeedYawRate": ConstantSpeedYawRate,
+            "ConstantMagnitudeAccelAndYawRate": ConstantMagnitudeAccelAndYawRate,
+            "PhysicsOracle": PhysicsOracle
+        }
+
         self.observed_length = observed_length
         self.predict_length = predict_length
         self.dt = dt
-        self.model = eval(model)(self.observed_length, self.predict_length, self.dt)
+        self.model = model_classes[model](self.observed_length, self.predict_length, self.dt)
         self.vehicle_trajectory_data = {}
         self.objects = None
         self.vehicles = {}
@@ -124,10 +137,9 @@ class Baseline:
     """
 
     def __init__(self, observed_length, predict_length, dt):
-        assert isinstance(observed_length,
-                          int) and observed_length > 0, "observed_length must be int and greater than 0"
-        assert isinstance(predict_length, int) and predict_length > 0, "predict_length must be int and greater than 0"
-        assert (isinstance(dt, int) or isinstance(dt, float)) and dt > 0, "dt must be real number and greater than 0"
+        check_positive_integer(observed_length, "observed_length")
+        check_positive_integer(predict_length, "predict_length")
+        check_positive_real_number(dt, "dt")
         self.observed_length = observed_length
         self.predict_length = predict_length
         self.dt = dt
@@ -138,7 +150,6 @@ class ConstantVelocityHeading(Baseline):
         observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
-        # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
         vx, vy = velocity
         pred_traj = constant_velocity_heading(x, y, vx, vy, yaw, self.predict_length, self.dt)
         return pred_traj
@@ -149,7 +160,6 @@ class ConstantAccelerationHeading(Baseline):
         observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
-        # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
         vx, vy = velocity
         ax, ay = acc
         pred_traj = constant_acceleration_and_heading(x, y, vx, vy, yaw, ax, ay, self.predict_length, self.dt)
@@ -161,7 +171,6 @@ class ConstantSpeedYawRate(Baseline):
         observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
-        # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
         vx, vy = velocity
         pred_traj = constant_speed_and_yaw_rate(x, y, vx, vy, yaw, yaw_rate, self.predict_length, self.dt)
         return pred_traj
@@ -172,7 +181,6 @@ class ConstantMagnitudeAccelAndYawRate(Baseline):
         observed_traj, velocity, acc, yaw, yaw_rate = kinematics_data
         x = observed_traj[-1][0]
         y = observed_traj[-1][1]
-        # vx, vy = v * np.cos(yaw), v * np.sin(yaw)
         vx, vy = velocity
         ax, ay = acc
         pred_traj = constant_magnitude_accel_and_yaw_rate(x, y, vx, vy, ax, ay,

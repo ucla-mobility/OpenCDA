@@ -13,8 +13,8 @@ import sys
 
 import numpy as np
 import carla
-from opencda.core.common.misc import draw_prediction_points
 
+from opencda.core.common.misc import draw_prediction_points
 from opencda.core.common.misc import get_speed, positive, cal_distance_angle
 from opencda.core.plan.collision_check import CollisionChecker
 from opencda.core.plan.local_planner_behavior import LocalPlanner
@@ -152,7 +152,8 @@ class BehaviorAgent(object):
         # prediction
         self.enable_prediction = False
         self.prediction_scan_window = 0
-        if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner']:
+        if 'local_planner' in config_yaml and 'enable_prediction' in config_yaml['local_planner'] and \
+                config_yaml['local_planner']['enable_prediction']:
             print("Prediction is enabled")
             print(f"Prediction model used: {config_yaml['local_planner']['prediction_model']}")
             local_planner_config = config_yaml['local_planner']
@@ -189,7 +190,8 @@ class BehaviorAgent(object):
         # update the localization info to trajectory planner
         self.get_local_planner().update_information(ego_pos, ego_speed)
         # prediction
-        self.prediction_manager.update_information(objects)
+        if self.enable_prediction:
+            self.prediction_manager.update_information(objects)
 
         self.objects = objects
         # current version only consider about vehicles
@@ -833,8 +835,9 @@ class BehaviorAgent(object):
         ego_vehicle_wp = self._map.get_waypoint(ego_vehicle_loc)
         waipoint_buffer = self.get_local_planner().get_waypoint_buffer()
         # prediction
-        obstacle_vehicle_predictions = self.prediction_manager.predict()
+        obstacle_vehicle_predictions = {}
         if self.enable_prediction:
+            obstacle_vehicle_predictions = self.prediction_manager.predict()
             for v_id, predictions in obstacle_vehicle_predictions.items():
                 draw_prediction_points(self._cav_world, predictions['points'])
 

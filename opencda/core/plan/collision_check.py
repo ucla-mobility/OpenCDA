@@ -21,7 +21,9 @@ class CollisionChecker:
     Parameters
     ----------
     time_ahead : float
-        how many seconds we look ahead in advance for collision check.
+        How many seconds we look ahead in advance for collision check.
+    cav_world : carla.world
+        The simulation world.
     circle_radius : float
         The radius of the collision checking circle.
     circle_offsets : float
@@ -275,6 +277,22 @@ class CollisionChecker:
             speed,
             prediction_scan_window,
             adjacent_check=False):
+        """
+        This function checks for potential collisions between a vehicle and obstacles along a given path.
+
+        Parameters:
+        path_x (list): The x-coordinates of the path.
+        path_y (list): The y-coordinates of the path.
+        path_yaw (list): The yaw angles of the path.
+        obstacle_vehicle (Vehicle): The obstacle vehicle to check for collisions.
+        vehicle_predictions (list): The predicted positions of the vehicle.
+        speed (float): The speed of the vehicle.
+        prediction_scan_window (int): The time window for prediction scan.
+        adjacent_check (bool, optional): Whether to check for adjacent collisions. Default is False.
+
+        Returns:
+        collision_free (bool): True if the path is collision-free, False otherwise.
+        """
         collision_free = True
         dt = 0.05
         max_time_on_path = min(int((len(path_x) * 0.1 / max(speed, 2.0) / dt)),
