@@ -21,12 +21,12 @@ The key features of OpenCDA are:
 Users could refer to [OpenCDA documentation](https://opencda-documentation.readthedocs.io/en/latest/) for more details.
 
 ## What's New
-### March 2022
+### March 2023
 * OpenCDA now supports Docker Installation! Many thanks to @GoodarzMehr!
 * OpenCDA has make the configuration system better! We provide a `default.yaml` as a template for all scenarios. Users now can
 only change the parts that are different from the default parameters, which makes the configuration file much cleaner.
 
-### Jan 2022
+### Jan 2023
 * Our paper [The OpenCDA Open-source Ecosystem for Cooperative Driving Automation Research](https://ieeexplore.ieee.org/document/10045043)
 has been accepted by **IEEE Transactions on Intelligent Vehicles**. We extend the scope of the original OpenCDA simulation framework to a
 ecosystem, which contains a model zoo, a suite of driving simulators at various resolutions, large-scale real-world and simulated datasets, complete devel-opment toolkits for benchmark training/testing, and a scenario database/generator.
@@ -102,7 +102,7 @@ The arxiv link to the paper:  https://arxiv.org/abs/2107.06260
 Also, under this LICENSE, OpenCDA is for non-commercial research only. Researchers can modify the source code for their own research only. Contracted work that generates corporate revenues and other general commercial use are prohibited under this LICENSE. See the LICENSE file for details and possible opportunities for commercial use.
 
 ## Contributors
-OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/). <br>
+OpenCDA is mainly supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.edu/). <br>
 
 ### Lab Principal Investigator:
 - Dr. Jiaqi Ma ([linkedin](https://www.linkedin.com/in/jiaqi-ma-17037838/),
@@ -118,3 +118,6 @@ OpenCDA is supported by the [UCLA Mobility Lab](https://mobility-lab.seas.ucla.e
  - Zonglin Meng([linkedin](https://www.linkedin.com/in/zonglin-meng-a393b31ab/)
  - Dr. Xin Xia ([linkedin](https://www.linkedin.com/in/yi-guo-4008baaa/))
 
+### External Contributor Acknowledgements
+- We would  like to acknowledge the great contributions from UC Davis Professor [Junshan Zhang's](https://faculty.engineering.ucdavis.edu/jzhang/) group,  particularly to Dr. [Wei Shao](https://scholar.google.com.au/citations?user=zbqNhWwAAAAJ&hl=en), who played a crucial role in this collaboration. Their expertise enabled the seamless integration of openScenario with OpenCDA.
+- We would like to thank @GoodarzMehr for his outstanding contribution in creating the OpenCDA Dockerfile.

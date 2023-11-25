@@ -133,6 +133,12 @@ class ObstacleVehicle(object):
         """
         return self.velocity
 
+    def get_carla_id(self):
+        """
+        Return the carla id
+        """
+        return self.carla_id
+
     def set_carla_id(self, id):
         """
         Set carla id according to the carla.vehicle.
