@@ -144,8 +144,15 @@ export SUMO_HOME=/usr/share/sumo
 ```
 ---
 
+### 5. Install OpenScenario (Optional)
+If you want to use OpenScenario to conduct scenario testing, e.g. `python opencda.py -t openscenario_carla -v 0.9.12`, you need to install OpenScenario first. <br>
+
+Please follow the [openscenario installation](coperception/setup_scenario_runner.md) to install OpenScenario.
+
 ## Docker Installation
 OpenCDA provides docker image for users to run directly.
+
+Note: Openscenario is not supported in docker image yet.
 
 ### 1. Prerequisite
 First, make sure that you have installed `docker` in your ubuntu system. If you have nvidia gpu, it is recommended to
