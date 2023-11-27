@@ -1,0 +1,64 @@
+name: pixor_intermediate_fusion
+
+yaml_parser: "load_bev_params"
+root_dir: "opv2v_data_dumping/train"
+validate_dir: "opv2v_data_dumping/validate"
+train_params:
+  batch_size: &batch_size 2
+  epoches: 15
+  eval_freq: 1
+  save_freq: 1
+fusion:
+  core_method: 'IntermediateFusionDataset' # LateFusionDataset, EarlyFusionDataset, IntermediateFusionDataset supported
+  args: []
+
+# preprocess-related
+preprocess:
+  # options: BasePreprocessor, VoxelPreprocessor, BevPreprocessor
+  core_method: 'BevPreprocessor'
+  args:
+    res: &res 0.2 # discretization resolusion
+    downsample_rate: &downsample_rate 4 # pixor downsample ratio
+  # lidar range for each individual cav.
+  cav_lidar_range: &cav_lidar [-160, -40, -3, 160, 40, 1] # must be divisible by 16
+
+data_augment: []
+
+# anchor box related
+postprocess:
+  core_method: 'BevPostprocessor' # VoxelPostprocessor, BevPostprocessor supported
+  nms_thresh: 0.15
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    res: *res
+    downsample_rate: *downsample_rate # pixor downsample ratio
+  target_args:
+    score_threshold: 0.7
+
+
+  order: 'lwh' # hwl or lwh
+  max_num: 100 # maximum number of objects in a single frame. use this number to make sure different frames has the same dimension in the same batch
+
+# model related
+model:
+  core_method: pixor_intermediate
+  args:
+    use_bn: True
+    decode: False
+
+loss:
+  core_method: pixor_loss
+  args:
+    alpha: 1.0
+    beta: 1.0
+
+optimizer:
+  core_method: Adam
+  lr: 0.001
+  args:
+    eps: 1e-10
+    weight_decay: 1e-4
+
+lr_scheduler:
+  core_method: Exponential #step, multistep and Exponential support
+  gamma: 0.99
