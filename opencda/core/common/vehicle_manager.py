@@ -109,7 +109,8 @@ class VehicleManager(object):
                                       carla_map,
                                       map_config)
         # safety manager
-        self.safety_manager = SafetyManager(vehicle=vehicle,
+        self.safety_manager = SafetyManager(cav_world=cav_world,
+                                            vehicle=vehicle,
                                             params=config_yaml['safety_manager'])
         # behavior agent
         self.agent = None

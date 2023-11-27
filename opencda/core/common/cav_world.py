@@ -43,6 +43,7 @@ class CavWorld(object):
         self._platooning_dict = {}
         self._rsu_manager_dict = {}
         self.ml_manager = None
+        self.global_clock = 0
 
         if apply_ml:
             # we import in this way so the user don't need to install ml
@@ -140,3 +141,17 @@ class CavWorld(object):
                 break
 
         return target_vm
+
+    def get_ego_vehicle_manager(self):
+        """
+        Return vehicle manager for ego car
+        The ego vehicle id is always smallest amongst cavs
+        """
+        ego_id = min(self.vehicle_id_set)
+        for vid, vm in self._vehicle_manager_dict.items():
+            if vm.vehicle.id == ego_id:
+                return vm
+        return None
+
+    def tick(self):
+        self.global_clock += 1
