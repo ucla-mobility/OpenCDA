@@ -74,9 +74,7 @@ class V2XManager(object):
         self.vid = vid
 
         # check if lag or noise needed to be added during communication
-        self.loc_noise = 0.0
-        self.yaw_noise = 0.0
-        self.speed_noise = 0.0
+        self.loc_noise = self.yaw_noise = self.speed_noise = 0.0
         self.lag = 0
 
         # Add noise to V2X communication if needed.
