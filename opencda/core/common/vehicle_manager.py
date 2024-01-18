@@ -22,6 +22,9 @@ from opencda.core.plan.behavior_agent \
     import BehaviorAgent
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
+# import vision-language model
+from opencda.core.sensing.perception.vision_language_manager \
+    import VisionLanguageInterpreter
 
 
 class VehicleManager(object):
@@ -111,6 +114,9 @@ class VehicleManager(object):
         # safety manager
         self.safety_manager = SafetyManager(vehicle=vehicle,
                                             params=config_yaml['safety_manager'])
+        # navigation goal 
+        self.nav_goal = None
+
         # behavior agent
         self.agent = None
         if 'platooning' in application:
@@ -135,7 +141,18 @@ class VehicleManager(object):
         else:
             self.data_dumper = None
 
+        # Vision Language Model
+        self.vision_language_interpreter = VisionLanguageInterpreter(self.perception_manager,
+                                                                     vehicle.id,
+                                                                     save_time=current_time)
+
         cav_world.update_vehicle_manager(self)
+
+    def set_nav_goal(self, destination):
+        '''
+        '''
+        self.nav_goal = destination
+        self.agent.set_nav_goal(destination)
 
     def set_destination(
             self,
@@ -215,6 +232,9 @@ class VehicleManager(object):
             self.data_dumper.run_step(self.perception_manager,
                                       self.localizer,
                                       self.agent)
+
+        # run vision-language model
+        self.vision_language_interpreter.run_step()
 
         return control
 

@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+Vision-language model integration.
+"""
+import os
+
+import cv2
+import open3d as o3d
+import numpy as np
+
 import argparse
 import torch
 
@@ -119,24 +129,11 @@ class VisionLanguageInterpreter(object):
             "max_new_tokens": 128
         })
 
-    def run_step(self,
-                 perception_manager,
-                 localization_manager,
-                 behavior_agent):
+    def run_step(self):
         """
         Run vision-language model every 10 steps to interpret the scene
         based on camera input.
 
-        Parameters
-        ----------
-        perception_manager : opencda object
-            OpenCDA perception manager.
-
-        localization_manager : opencda object
-            OpenCDA localization manager.
-
-        behavior_agent : opencda object
-            OpenCDA behavior agent that controls vehicle behavior.
         """
         self.count += 1
         # warm-up: first 60 steps
@@ -166,6 +163,8 @@ class VisionLanguageInterpreter(object):
         self.save_rgb_image(self.count)
         # 2. save LLaVA response 
         self.save_model_response(self.count, model_response)
+        # 3. DEBUG: print step 
+        print('Save vision-language interpretation to local directory...')
 
     def save_rgb_image(self, count):
         """
