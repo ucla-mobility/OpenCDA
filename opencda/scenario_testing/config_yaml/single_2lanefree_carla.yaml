@@ -20,7 +20,7 @@ carla_traffic_manager:
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [ -370, 8.3, 0.3, 0, 0, 0 ]
+      spawn_position: [ -350, 8.3, 0.3, 0, 0, 0 ]
       # this parameter will overwrite the spawn position, when it is set, the vehicle is spawn
       # at the merging lane. 0.5 means it is spawn at the middle of the whole merging lange.
       # spawn_special: [0.34]

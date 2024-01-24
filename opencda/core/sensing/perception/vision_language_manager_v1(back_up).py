@@ -37,9 +37,6 @@ from llava.model.builder import load_pretrained_model
 from llava.mm_utils import get_model_name_from_path
 from llava.eval.run_llava import eval_model
 
-# define GPU 
-os.environ['CUDA_VISIBLE_DEVICES'] ='1'
-
 '''
 Helper class for accessing arguments.
 '''
@@ -116,9 +113,7 @@ class VisionLanguageInterpreter(object):
         self.image_processor, self.context_len = load_pretrained_model(
             model_path=self.model_path,
             model_base=None,
-            model_name=self.model_name,
-            # use 4-bit quantization
-            load_4bit=True
+            model_name=self.model_name
         )
         # # define GPU id
         # self.gpu_id = 1
@@ -166,11 +161,13 @@ class VisionLanguageInterpreter(object):
 
         # save results to folder
         # 1. save image feed 
-        # self.save_rgb_image(self.count)
+        self.save_rgb_image(self.count)
         # 2. load images and get response 
         for (i, camera) in enumerate(self.rgb_camera):
-            images=[]         
-            image = Image.fromarray(np.array(camera.image)).convert("RGB")
+            images=[]
+            image_name = '%06d' % self.count + '_' + 'camera%d' % i + '.png'
+            image_path = os.path.join(self.save_parent_folder, image_name)        
+            image = Image.open(image_path).convert("RGB")
             images.append(image)
 
         # run llava
