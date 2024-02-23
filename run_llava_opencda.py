@@ -198,7 +198,7 @@ try:
     while True:
         i += 1
         # img path 
-        image_path = '/home/cav/OpenCDA/opencda/vision_language_interpret/seperate_test/'
+        image_path = '/home/cav/OpenCDA/vision_language_interpret/seperate_test/'
         image_name = 'current_front_view_'+ str(int(i)) +'.png'
         save_img_path = os.path.join(image_path, image_name)
        
