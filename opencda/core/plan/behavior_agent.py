@@ -146,6 +146,9 @@ class BehaviorAgent(object):
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
 
+        # add delay to stop vehcile closer to stop bar
+        self.red_light_brake_counter = 0
+
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information
@@ -242,7 +245,8 @@ class BehaviorAgent(object):
             end_location,
             clean=False,
             end_reset=True,
-            clean_history=False):
+            clean_history=False,
+            middle_point=None):
         """
         This method creates a list of waypoints from agent's
         position to destination location based on the route returned
@@ -290,7 +294,30 @@ class BehaviorAgent(object):
         if end_reset:
             self.end_waypoint = end_waypoint
 
-        route_trace = self._trace_route(self.start_waypoint, end_waypoint)
+        # check middle point 
+        if middle_point:
+            middle_point_loc_list = []
+            if len(middle_point) == 1:
+                # get location 
+                middle_point_loc = carla.Location(x=middle_point[0][0],
+                                                  y=middle_point[0][1],
+                                                  z=middle_point[0][2])
+                middle_point_loc_list.append(middle_point_loc)
+            else:
+                # get location 
+                for coords in middle_point:
+                    middle_point_loc = carla.Location(x=coords[0],
+                                                      y=coords[1],
+                                                      z=coords[2])
+                    # middle_point_wpt = self._map.get_waypoint(middle_point_loc)
+                    middle_point_loc_list.append(middle_point_loc)
+            
+            # go thru middle point 
+            route_trace = self._trace_route(self.start_waypoint, end_waypoint, 
+                                            middle_point_loc_list=middle_point_loc_list)
+            
+        else:
+            route_trace = self._trace_route(self.start_waypoint, end_waypoint)
 
         self._local_planner.set_global_plan(route_trace, clean)
 
@@ -323,7 +350,7 @@ class BehaviorAgent(object):
 
         self.set_destination(new_start, destination)
 
-    def _trace_route(self, start_waypoint, end_waypoint):
+    def _trace_route(self, start_waypoint, end_waypoint, middle_point_loc_list=None):
         """
         This method sets up a global router and returns the
         optimal route from start_waypoint to end_waypoint.
@@ -346,9 +373,15 @@ class BehaviorAgent(object):
             self._global_planner = grp
 
         # Obtain route plan
-        route = self._global_planner.trace_route(
-            start_waypoint.transform.location,
-            end_waypoint.transform.location)
+        if middle_point_loc_list:
+            route = self._global_planner.trace_route(
+                start_waypoint.transform.location,
+                end_waypoint.transform.location,
+                middle_point_loc_list=middle_point_loc_list)
+        else:
+            route = self._global_planner.trace_route(
+                start_waypoint.transform.location,
+                end_waypoint.transform.location)
 
         return route
 
@@ -370,6 +403,10 @@ class BehaviorAgent(object):
 
         light_id = self.vehicle.get_traffic_light(
         ).id if self.vehicle.get_traffic_light() is not None else -1
+
+        # printing traffic light ID
+        # if light_id != -1:
+            # print('Traffic light detection result: ' + str(light_id))
 
         # this is the case where the vehicle just pass a stop sign, and won't
         # stop at any stop sign in the next 4 seconds.
@@ -397,8 +434,12 @@ class BehaviorAgent(object):
             if not waypoint.is_junction and (
                     self.light_id_to_ignore != light_id or light_id == -1):
                 return 1
-            elif waypoint.is_junction and light_id != -1:
-                self.light_id_to_ignore = light_id
+            # elif waypoint.is_junction and light_id != -1:
+            #     self.light_id_to_ignore = light_id
+            # note: stop the vehicle at intersection
+            elif waypoint.is_junction:
+                return 1
+
         if self.light_id_to_ignore != light_id:
             self.light_id_to_ignore = -1
         return 0
@@ -789,7 +830,11 @@ class BehaviorAgent(object):
 
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
-            return 0, None
+            self.red_light_brake_counter += 1
+            # delay brake by 1.8s to bring vehicle closer to the stop line
+            if self.red_light_brake_counter >= self._ego_speed*0.4:
+                return 0, None
+            # return 0, None
 
         # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \

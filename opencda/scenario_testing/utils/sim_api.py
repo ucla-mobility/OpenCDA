@@ -47,7 +47,27 @@ def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
         The list of suitable blueprints for vehicles.
     """
 
-    if carla_version == '0.9.11':
+    if carla_version == '0.9.10':
+        print('version 0.9.10')
+        blueprints = [
+            blueprint_library.find('vehicle.audi.a2'),
+            blueprint_library.find('vehicle.audi.tt'),
+            blueprint_library.find('vehicle.dodge_charger.police'),
+            blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+            blueprint_library.find('vehicle.chevrolet.impala'),
+            blueprint_library.find('vehicle.audi.etron'),
+            blueprint_library.find('vehicle.mercedes-benz.coupe'),
+            blueprint_library.find('vehicle.bmw.grandtourer'),
+            blueprint_library.find('vehicle.toyota.prius'),
+            blueprint_library.find('vehicle.citroen.c3'),
+            blueprint_library.find('vehicle.mustang.mustang'),
+            blueprint_library.find('vehicle.tesla.model3'),
+            blueprint_library.find('vehicle.seat.leon'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.micra'),
+        ]
+
+    elif carla_version == '0.9.11':
         print('old version')
         blueprints = [
             blueprint_library.find('vehicle.audi.a2'),
@@ -238,6 +258,9 @@ class ScenarioManager:
         self.carla_map = self.world.get_map()
         self.apply_ml = apply_ml
 
+        # middle point 
+        self.has_middle_point = False 
+
     @staticmethod
     def set_weather(weather_settings):
         """
@@ -292,13 +315,18 @@ class ScenarioManager:
         # By default, we use lincoln as our cav model.
         default_model = 'vehicle.lincoln.mkz2017' \
             if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
-
+        # default_model = 'vehicle.audi.a2'
         cav_vehicle_bp = \
             self.world.get_blueprint_library().find(default_model)
         single_cav_list = []
 
         for i, cav_config in enumerate(
                 self.scenario_params['scenario']['single_cav_list']):
+
+            # check if middle point is presented
+            self.has_middle_point = True if 'middle_point' in cav_config \
+                                    else False 
+
             # in case the cav wants to join a platoon later
             # it will be empty dictionary for single cav application
             platoon_base = OmegaConf.create({'platoon': self.scenario_params.get('platoon_base',{})})
@@ -322,7 +350,23 @@ class ScenarioManager:
                                              *cav_config['spawn_special'])
 
             cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+            cav_vehicle_bp.set_attribute('role_name', 'UCLA-OPENCDA')
+
+            # ------------------------------------------------------------------------
+            '''
+            Note: do not spawn vehicle, read vehicle from adpater (VOICES)
+            '''
             vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
+            # carlaVehicles = self.world.get_actors().filter('vehicle.*')
+            # for carla_vehicle in carlaVehicles:
+            #     currentAttributes = carla_vehicle.attributes
+            #     print("Checking vehicle: " + str(currentAttributes["role_name"]))
+            #     if currentAttributes["role_name"] == 'UCLA-OPENCDA':
+            #         vehicle = carla_vehicle
+            
+            # if not vehicle:
+            #     print("ERROR: Unable to find vehicle with rolename: UCLA-OPENCDA.")
+            # ------------------------------------------------------------------------
 
             # create vehicle manager for each cav
             vehicle_manager = VehicleManager(
@@ -339,10 +383,28 @@ class ScenarioManager:
                                          y=cav_config['destination'][1],
                                          z=cav_config['destination'][2])
             vehicle_manager.update_info()
-            vehicle_manager.set_destination(
-                vehicle_manager.vehicle.get_location(),
-                destination,
-                clean=True)
+
+            print('********** middle point mode: ' + str(self.has_middle_point))
+            if self.has_middle_point:
+                middle_point = cav_config['middle_point']
+                # only one middle point 
+                if len(cav_config['middle_point']) == 1:
+                    print('Only one middle point for this route.')
+                else:
+                    print('Multiple middle point detected with length: %i.' %len(cav_config['middle_point']))
+                # has middle point
+                vehicle_manager.set_destination(
+                    vehicle_manager.vehicle.get_location(),
+                    destination,
+                    clean=True,
+                    middle_point=middle_point)
+
+            else:
+                # no middle point
+                vehicle_manager.set_destination(
+                    vehicle_manager.vehicle.get_location(),
+                    destination,
+                    clean=True)
 
             single_cav_list.append(vehicle_manager)
 
@@ -493,9 +555,13 @@ class ScenarioManager:
 
         # if not random select, we always choose lincoln.mkz with green color
         color = '0, 255, 0'
+        """
         default_model = 'vehicle.lincoln.mkz2017' \
             if self.carla_version == '0.9.11' else 'vehicle.lincoln.mkz_2017'
+        """
+        default_model = 'vehicle.audi.a2'
         ego_vehicle_bp = blueprint_library.find(default_model)
+        
 
         for i, vehicle_config in enumerate(traffic_config['vehicle_list']):
             spawn_transform = carla.Transform(
@@ -689,6 +755,33 @@ class ScenarioManager:
 
         print('CARLA traffic flow generated.')
         return tm, bg_list
+
+    # ----- note: new function to change traffic signal green time for the VOICE tesing -----
+    # def change_green_time(self, traffic_light_x_location, traffic_light_y_location, change_ratio):
+    #     """
+    #     change the green time of a traffic light in the given location
+    #     """
+    #     # get all traffic actors
+    #     all_traffic_list = self.world.get_actors().filter('traffic.traffic_light')
+    #     all_traffic_locations = [light.get_location() for light in all_traffic_list ]
+
+    #     # find the correct traffic light
+    #     for i,location in enumerate(all_traffic_locations):
+    #         if (int(location.x) == traffic_light_x_location and 
+    #             int(location.y) == traffic_light_y_location):
+    #             current_light_index = i 
+        
+    #     # reset green time 
+    #     # all_traffic_list[current_light_index].set_green_time(
+    #     #     change_ratio*all_traffic_list[current_light_index].get_green_time())
+
+    # def change_intersection_green_time(self, intersection_light_locations, change_ratio):
+    #     """
+    #     change the green time for the entire green time.
+    #     """
+    #     for light_location in intersection_light_locations:
+    #         self.change_green_time(light_location[0],light_location[1], change_ratio)
+    #     print('Intersection green time is overwritten...')
 
     def tick(self):
         """
