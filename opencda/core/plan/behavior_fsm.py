@@ -178,27 +178,27 @@ class BehaviorFSM(object):
             self.overtaking_graph.add_node(state)
 
         # Define transitions
-        self.lane_following_graph.add_edge(self.states["GO_STRAIGHT"], self.states["GO_STRAIGHT"])
-        self.lane_following_graph.add_edge(self.states["GO_STRAIGHT"], self.states["PREPARE_LANE_CHANGE_LEFT"])
-        self.lane_following_graph.add_edge(self.states["GO_STRAIGHT"], self.states["PREPARE_LANE_CHANGE_RIGHT"])
+        self.overtaking_graph.add_edge(self.states["GO_STRAIGHT"], self.states["GO_STRAIGHT"])
+        self.overtaking_graph.add_edge(self.states["GO_STRAIGHT"], self.states["PREPARE_LANE_CHANGE_LEFT"])
+        self.overtaking_graph.add_edge(self.states["GO_STRAIGHT"], self.states["PREPARE_LANE_CHANGE_RIGHT"])
 
-        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"],
+        self.overtaking_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"],
                                            self.states["PREPARE_LANE_CHANGE_LEFT"])
-        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
-        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
+        self.overtaking_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
+        self.overtaking_graph.add_edge(self.states["PREPARE_LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
 
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["PREPARE_LANE_CHANGE_RIGHT"])
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
+        self.overtaking_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["LANE_CHANGE_LEFT"])
+        self.overtaking_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["PREPARE_LANE_CHANGE_RIGHT"])
+        self.overtaking_graph.add_edge(self.states["LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
 
-        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"],
+        self.overtaking_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"],
                                            self.states["PREPARE_LANE_CHANGE_RIGHT"])
-        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
-        self.lane_following_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
+        self.overtaking_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
+        self.overtaking_graph.add_edge(self.states["PREPARE_LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
 
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["PREPARE_LANE_CHANGE_LEFT"])
-        self.lane_following_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
+        self.overtaking_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["LANE_CHANGE_RIGHT"])
+        self.overtaking_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["PREPARE_LANE_CHANGE_LEFT"])
+        self.overtaking_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
 
     def get_current_superstate(self):
         return self.current_superstate
@@ -242,6 +242,11 @@ class BehaviorFSM(object):
                 # search graph
                 possible_next_states_names += [state.name for state in \
                                                self.intersection_graph.neighbors(self.current_state)]
+            # case 3. OVERTAKE
+            elif self.current_superstate.name == 'OVERTAKING':
+                # search graph
+                possible_next_states_names += [state.name for state in \
+                                               self.overtaking_graph.neighbors(self.current_state)]
         else:
             possible_next_states_names.append(self.states["GO_STRAIGHT"].name)
         return possible_next_states_names

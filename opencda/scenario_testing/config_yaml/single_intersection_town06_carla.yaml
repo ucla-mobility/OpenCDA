@@ -5,37 +5,109 @@ description: |-
            testing in high speed in the customized 2lanefree simple version.
 
 # First define the basic parameters of the vehicles
+#vehicle_base:
+#  sensing:
+#    perception:
+#      camera:
+#        visualize: 0
+#        num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
+#        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+#        positions: []
+#  behavior:
+#    max_speed: 40 # maximum speed, km/h
+#    ignore_traffic_light: false # whether to ignore traffic light
+#    collision_time_ahead: 2.0 # used for collision checking
+#
+## define the background traffic control by carla
+#carla_traffic_manager:
+#  random: true # whether to random select vehicles' color and model
+#  vehicle_list: ~  # a number or a list
+#  # Used only when vehicle_list is a number.
+#  # x_min, x_max, y_min, y_max, x_step, y_step, veh_num
+#  range:
+#    - [ 2, 10, 0, 200, 3.5, 25, 30]
+#
+## define scenario. In this scenario, a 4-vehicle platoon already exists.
+#scenario:
+#  single_cav_list: # this is for merging vehicle or single cav without v2x
+#    - name: cav1
+#      spawn_position: [6.31, 125.03, 0.3, 0, -92, 0]
+#      destination: [-12.51, 110.31, 0.3]
+#      v2x:
+#        communication_range: 45
+#      behavior:
+#        local_planner:
+#          debug_trajectory: true
+#          debug: true
+
 vehicle_base:
   sensing:
     perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
       camera:
-        visualize: 0
-        num: 0 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)
-        # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
-        positions: []
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 1 # how many cameras are mounted on the vehicle.
+        positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+          - [2.5, 0, 1.0, 0]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: true
+        channels: 32
+        range: 50
+        points_per_second: 100000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
   behavior:
-    max_speed: 40 # maximum speed, km/h
+    max_speed: 35 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
     ignore_traffic_light: false # whether to ignore traffic light
+    overtake_allowed: true
     collision_time_ahead: 2.0 # used for collision checking
+    sample_resolution: 6 # the unit distance between two adjacent waypoints in meter
+    local_planner:  # trajectory planning related
+      buffer_size: 12 # waypoint buffer size
+      trajectory_update_freq: 15 # used to control trajectory points updating frequency
+      waypoint_update_freq: 20 # used to control waypoint updating frequency
+      min_dist: 3 # used to pop out the waypoints too close to current location
+      trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
+      debug: false # whether to draw future/history waypoints
+      debug_trajectory: false # whether to draw the trajectory points and path
 
-# define the background traffic control by carla
-carla_traffic_manager:
-  random: true # whether to random select vehicles' color and model
-  vehicle_list: ~  # a number or a list
-  # Used only when vehicle_list is a number.
-  # x_min, x_max, y_min, y_max, x_step, y_step, veh_num
-  range:
-    - [ 2, 10, 0, 200, 3.5, 25, 30]
+  controller:
+    type: pid_controller # this has to be exactly the same name as the controller py file
+    args:
+      lat:
+        k_p: 0.65
+        k_d: 0.02
+        k_i: 0.2
+      lon:
+        k_p: 0.37
+        k_d: 0.024
+        k_i: 0.032
+      dynamic: false # whether use dynamic pid setting
+      dt: ${world.fixed_delta_seconds} # this should be equal to your simulation time-step
+      max_brake: 1.0
+      max_throttle: 1.0
+      max_steering: 0.8
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [6.31, 125.03, 0.3, 0, -92, 0]
-      destination: [-12.51, 110.31, 0.3]
+      spawn_position: [10, 140, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      # spawn_position: [6, 110, 0.3, 0, -92, 0] # going straight
+      destination: [170, 52.0, 0.3] # end [137, 52] for right turn
+      # destination: [6, -90.0, 0.3]
       v2x:
         communication_range: 45
       behavior:
         local_planner:
           debug_trajectory: true
           debug: true
+    - name: bicycle
+      spawn_position: [10, 110, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      # destination: [-12.51, 110.31, 0.3]
+      destination: [137, 52.0, 0.3] # end [137, 52] for right turn

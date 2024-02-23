@@ -160,7 +160,7 @@ carla_traffic_manager:
   # Sets the difference the vehicle's intended speed and its current speed limit.
   #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
   # and 20 represents 24 km/h
-  global_speed_perc: -100
+  global_speed_perc: -150
   set_osm_mode: true # Enables or disables the OSM mode.
   auto_lane_change: false
   ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights

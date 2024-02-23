@@ -305,9 +305,14 @@ class ScenarioManager:
             cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
                                          platoon_base,
                                          cav_config)
-            # if the spawn position is a single scalar, we need to use map
-            # helper to transfer to spawn transform
-            if 'spawn_special' not in cav_config:
+            # Add cyclist spawning option
+            if cav_config['name'] == 'bicycle':
+                # select bicycle blueprint
+                default_model = 'vehicle.bh.crossbike' \
+                    if self.carla_version == '0.9.11' \
+                    else 'vehicle.bh.crossbike'
+                cav_vehicle_bp = \
+                    self.world.get_blueprint_library().find(default_model)
                 spawn_transform = carla.Transform(
                     carla.Location(
                         x=cav_config['spawn_position'][0],
@@ -317,34 +322,53 @@ class ScenarioManager:
                         pitch=cav_config['spawn_position'][5],
                         yaw=cav_config['spawn_position'][4],
                         roll=cav_config['spawn_position'][3]))
+                bicycle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
+
+                # bicycle control: currently the cyclist is only stationary
+                bicycle_control = carla.VehicleControl()
+                bicycle_control.brake = 1.0
+                bicycle.apply_control(bicycle_control)
             else:
-                spawn_transform = map_helper(self.carla_version,
-                                             *cav_config['spawn_special'])
+                # if the spawn position is a single scalar, we need to use map
+                # helper to transfer to spawn transform
+                if 'spawn_special' not in cav_config:
+                    spawn_transform = carla.Transform(
+                        carla.Location(
+                            x=cav_config['spawn_position'][0],
+                            y=cav_config['spawn_position'][1],
+                            z=cav_config['spawn_position'][2]),
+                        carla.Rotation(
+                            pitch=cav_config['spawn_position'][5],
+                            yaw=cav_config['spawn_position'][4],
+                            roll=cav_config['spawn_position'][3]))
+                else:
+                    spawn_transform = map_helper(self.carla_version,
+                                                 *cav_config['spawn_special'])
 
-            cav_vehicle_bp.set_attribute('color', '0, 0, 255')
-            vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
+                cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+                vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
-            # create vehicle manager for each cav
-            vehicle_manager = VehicleManager(
-                vehicle, cav_config, application,
-                self.carla_map, self.cav_world,
-                current_time=self.scenario_params['current_time'],
-                data_dumping=data_dump)
+                # create vehicle manager for each cav
+                vehicle_manager = VehicleManager(
+                    vehicle, cav_config, application,
+                    self.carla_map, self.cav_world,
+                    current_time=self.scenario_params['current_time'],
+                    data_dumping=data_dump)
 
-            self.world.tick()
+                self.world.tick()
 
-            vehicle_manager.v2x_manager.set_platoon(None)
+                vehicle_manager.v2x_manager.set_platoon(None)
 
-            destination = carla.Location(x=cav_config['destination'][0],
-                                         y=cav_config['destination'][1],
-                                         z=cav_config['destination'][2])
-            vehicle_manager.update_info()
-            vehicle_manager.set_destination(
-                vehicle_manager.vehicle.get_location(),
-                destination,
-                clean=True)
+                destination = carla.Location(x=cav_config['destination'][0],
+                                             y=cav_config['destination'][1],
+                                             z=cav_config['destination'][2])
+                vehicle_manager.update_info()
+                vehicle_manager.set_destination(
+                    vehicle_manager.vehicle.get_location(),
+                    destination,
+                    clean=True)
 
-            single_cav_list.append(vehicle_manager)
+                single_cav_list.append(vehicle_manager)
 
         return single_cav_list
 

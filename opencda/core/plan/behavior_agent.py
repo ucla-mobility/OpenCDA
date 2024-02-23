@@ -151,6 +151,9 @@ class BehaviorAgent(object):
         # behavioral FSM
         self.Behavior_FSM = BehaviorFSM(self._local_planner)
 
+        # overtake once at a time
+        self.overtake_once = False
+
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information
@@ -518,7 +521,8 @@ class BehaviorAgent(object):
         vehicle_state, _, _ = self.collision_manager(
             rx, ry, ryaw, self._map.get_waypoint(
                 self._ego_pos.location), True)
-        return target_wpt, vehicle_state
+        is_target_lane_safe = not vehicle_state
+        return target_wpt, is_target_lane_safe
 
     def overtake_management(self, obstacle_vehicle):
         """
@@ -886,6 +890,15 @@ class BehaviorAgent(object):
         # check for hazard vehicle/obstacle
         is_hazard, obstacle_vehicle, distance = self.collision_manager(
             rx, ry, ryaw, ego_vehicle_wp)
+
+        # DEMO: add condition for cyclist
+        for object_v in self.objects['vehicles']:
+            if 'bike' in object_v.type_id:
+                is_hazard = True
+                # count cyclist to be obstacle vehicle
+                # obstacle_vehicle = object_v
+                self.obstacle_vehicles.append(object_v)
+
         # check collision
         if collision_detector_enabled:
             is_hazard, obstacle_vehicle, distance = self.collision_manager(
@@ -911,7 +924,9 @@ class BehaviorAgent(object):
             obstacle_speed = get_speed(obstacle_vehicle)
             obstacle_lane_id = self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id
             ego_lane_id = self._map.get_waypoint(self._ego_pos.location).lane_id
-            is_obstacle_confirmed = (ego_lane_id == obstacle_lane_id and self._ego_speed >= obstacle_speed - 5)
+            is_obstacle_same_lane = ego_lane_id == obstacle_lane_id or \
+                                    abs(self._ego_pos.location.x - obstacle_vehicle.get_location().x)<2
+            is_obstacle_confirmed = is_obstacle_same_lane and self._ego_speed >= obstacle_speed - 5
             # determine overtake direction
             overtake_left, overtake_right = self.overtake_direction(obstacle_vehicle)
             # check target lane safety
@@ -981,7 +996,8 @@ class BehaviorAgent(object):
 
         # 5c. deny lane change
         elif self.Behavior_FSM.current_superstate.name == 'LANE_FOLLOWING' \
-                and self.Behavior_FSM.give_up_lane_change:
+                and self.Behavior_FSM.give_up_lane_change \
+                and self.overtake_counter <= 0:
             # push to a same lane destination
             reset_target = self.get_push_destination(ego_vehicle_wp, is_intersection)
             # set the flag, so the push operation is not allowed for the next few frames.
@@ -996,19 +1012,19 @@ class BehaviorAgent(object):
                                                                     target_speed=self.max_speed - self.speed_lim_dist
                                                                     if not target_speed else target_speed)
             return target_speed, target_loc
-        # 6. overtake
+        # 6. overtake (currently only to the left)
         elif self.Behavior_FSM.current_superstate.name == 'OVERTAKING' \
-                and (self.Behavior_FSM.current_state.name == 'LANE_CHANGE_RIGHT' or
-                     self.Behavior_FSM.current_state.name == 'LANE_CHANGE_LEFT') \
-                and overtake_target_wpt:
+                and self.Behavior_FSM.current_state.name == 'LANE_CHANGE_LEFT' \
+                and overtake_target_wpt \
+                and not self.overtake_once:
             print("overtake is operated")
             self.overtake_counter = 100
-            next_wpt_list = overtake_target_wpt.next(self._ego_speed / 3.6 * 6)
+            next_wpt_list = overtake_target_wpt.next(self._ego_speed / 3.6 * 3)
             if len(next_wpt_list) == 0:
                 return True
 
             next_wpt = next_wpt_list[0]
-            left_wpt = overtake_target_wpt.next(5)[0]
+            left_wpt = overtake_target_wpt.next(1)[0]
             self.set_destination(
                 left_wpt.transform.location,
                 next_wpt.transform.location,
@@ -1018,6 +1034,7 @@ class BehaviorAgent(object):
             target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
                                                                     target_speed=self.max_speed - self.speed_lim_dist
                                                                     if not target_speed else target_speed)
+            self.overtake_once = True
             return target_speed, target_loc
 
         else:

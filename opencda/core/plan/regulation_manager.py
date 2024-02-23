@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""HDMap manager
 """
-
-# Author: Runsheng Xu <rxx3386@ucla.edu>
+HDMap manager
+"""
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import math
@@ -366,6 +365,11 @@ class RegulationManager(object):
             self.current_scene['Weather Induced Road Condition'] = True
         else:
             self.current_scene['Weather Induced Road Condition'] = False
+
+        # demo scenarios avoid bike
+        for v in self.objects['vehicles']:
+            self.current_scene['Cyclist Nearby'] = True if 'bike' in v.type_id else False
+            self.current_scene['Cyclist ID'] = v.id
 
 
         '''
