@@ -6,6 +6,11 @@ Basic class of CAV
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import uuid
+from collections import deque
+from PIL import Image
+import numpy as np
+import sys
+import cv2
 
 from opencda.core.actuation.control_manager \
     import ControlManager
@@ -22,9 +27,6 @@ from opencda.core.plan.behavior_agent \
     import BehaviorAgent
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
-# import vision-language model
-from opencda.core.sensing.perception.vision_language_manager \
-    import VisionLanguageInterpreter
 
 
 class VehicleManager(object):
@@ -141,11 +143,6 @@ class VehicleManager(object):
         else:
             self.data_dumper = None
 
-        # Vision Language Model
-        self.vision_language_interpreter = VisionLanguageInterpreter(self.perception_manager,
-                                                                     vehicle.id,
-                                                                     save_time=current_time)
-
         cav_world.update_vehicle_manager(self)
 
     def set_nav_goal(self, destination):
@@ -233,9 +230,6 @@ class VehicleManager(object):
                                       self.localizer,
                                       self.agent)
 
-        # run vision-language model
-        self.vision_language_interpreter.run_step()
-
         return control
 
     def destroy(self):
@@ -246,3 +240,11 @@ class VehicleManager(object):
         self.localizer.destroy()
         self.vehicle.destroy()
         self.map_manager.destroy()
+
+    # VLM functions
+    def update_vlm_info(self, result):
+        '''
+        Update lates vlm response.
+        '''
+        self.perception_manager.update_vlm_info(result) 
+      

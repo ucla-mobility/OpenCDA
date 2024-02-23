@@ -255,8 +255,20 @@ class MapManager(object):
 
         for tl_id, tl_content in self.traffic_light_info.items():
             trigger_poly = tl_content['corners']
+
             # use Path to do fast computation
-            trigger_path = Path(trigger_poly.boundary)
+            # trigger_path = Path(trigger_poly.boundary)
+            '''
+            Note: new version of shapely do not support direct np.array interface.
+            So "trigger_poly.boundry" will remain as a lineString, which is not accepted 
+            by matplotlib.path. The new shaply only support direct conversion 
+            through coordinates, so the code is updated accordingly to make sure 
+            the "trigger_poly.boundry" is a <N,2> array.
+
+            '''
+            boundary_array = np.array(trigger_poly.boundary.coords)
+            trigger_path = Path(boundary_array)
+
             # check if any point in the middle line inside the trigger area
             check_array = trigger_path.contains_points(mid_lane[:, :2])
 
@@ -274,8 +286,8 @@ class MapManager(object):
         crosswalks_ids = []
 
         # boundary of each lane for later filtering
-        lanes_bounds = np.empty((0, 2, 2), dtype=np.float32)
-        crosswalks_bounds = np.empty((0, 2, 2), dtype=np.float32)
+        lanes_bounds = np.empty((0, 2, 2), dtype=np.float)
+        crosswalks_bounds = np.empty((0, 2, 2), dtype=np.float)
 
         # loop all waypoints to get lane information
         for (i, waypoint) in enumerate(self.topology):

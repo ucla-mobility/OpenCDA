@@ -2,14 +2,23 @@
 """
 Vision-language model integration.
 """
+import time
 import os
-
 import cv2
 import open3d as o3d
 import numpy as np
-
 import argparse
 import torch
+from collections import deque
+import requests
+from PIL import Image
+from io import BytesIO
+import re
+# multi-process
+from multiprocessing import Process, Queue
+import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Pool
 
 from llava.constants import (
     IMAGE_TOKEN_INDEX,
@@ -28,26 +37,12 @@ from llava.mm_utils import (
     KeywordsStoppingCriteria,
 )
 
-import requests
-from PIL import Image
-from io import BytesIO
-import re
-
 from llava.model.builder import load_pretrained_model
 from llava.mm_utils import get_model_name_from_path
 from llava.eval.run_llava import eval_model
 
 # define GPU 
 os.environ['CUDA_VISIBLE_DEVICES'] ='1'
-
-'''
-Helper class for accessing arguments.
-'''
-class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
 
 
 class VisionLanguageInterpreter(object):
@@ -84,141 +79,35 @@ class VisionLanguageInterpreter(object):
 
     """
 
-    def __init__(self,
-                 perception_manager,
-                 vehicle_id,
-                 save_time):
-
-        self.rgb_camera = perception_manager.rgb_camera
-        self.lidar = perception_manager.lidar
-
-        self.save_time = save_time
-        self.vehicle_id = vehicle_id
-
+    def __init__(self, model_path, prompt_input):
+        # modle path
+        self.model_path = model_path
+        # prompt 
+        self.prompt_input = prompt_input
+        # saving path 
         current_path = os.path.dirname(os.path.realpath(__file__))
-        # save the save path for debug purpose
-        self.save_parent_folder = \
-            os.path.join(current_path,
-                         '../../../vision_language_interpret',
-                         save_time,
-                         str(self.vehicle_id))
-
-        if not os.path.exists(self.save_parent_folder):
-            os.makedirs(self.save_parent_folder)
-
+        # step count 
         self.count = 0
+        
+    def get_model_name_from_path(self, model_path):
+        '''Wrapper for original llava function'''
+        return get_model_name_from_path(model_path)
 
-        # load LLaVA model for the rest of the simulation...
-        self.model_path = "liuhaotian/llava-v1.5-7b"
-        self.model_name=get_model_name_from_path(self.model_path)
-
-        self.tokenizer, self.model, \
-        self.image_processor, self.context_len = load_pretrained_model(
-            model_path=self.model_path,
-            model_base=None,
-            model_name=self.model_name,
-            # use 4-bit quantization
-            load_4bit=True
-        )
-        # # define GPU id
-        # self.gpu_id = 1
-        # model.cuda(device=gpu_id)
-
-        # arguments 
-        self.args = dotdict({
-            "conv_mode": None,
-            "sep": ",",
-            "temperature": 0,
-            "top_p": None,
-            "num_beams": 1,
-            "max_new_tokens": 128
-        })
-
-    def run_step(self):
-        """
-        Run vision-language model every 10 steps to interpret the scene
-        based on camera input.
-
-        """
-        self.count += 1
-        # warm-up: first 60 steps
-        if self.count < 60:
-            return
-
-        # run vision-language model at 10hz
-        if self.count % 2 != 0:
-            return
-
-        # run LLaVA  
-        prompt_input = "Observe the traffic light condition and recommend driveing plans."
-
-        # # get response for each camera 
-        # for (i, camera) in enumerate(self.rgb_camera):
-        #     camera_img = camera.image
-        #     model_response = self.get_llava_response(self.tokenizer,
-        #                                              self.model, 
-        #                                              self.model_name,
-        #                                              self.image_processor, 
-        #                                              self.context_len, 
-        #                                              self.args,
-        #                                              prompt_input, 
-        #                                              camera_img)
-
-        # save results to folder
-        # 1. save image feed 
-        # self.save_rgb_image(self.count)
-        # 2. load images and get response 
-        for (i, camera) in enumerate(self.rgb_camera):
-            images=[]         
-            image = Image.fromarray(np.array(camera.image)).convert("RGB")
-            images.append(image)
-
-        # run llava
-        model_response = self.get_llava_response(self.tokenizer,
-                                                 self.model, 
-                                                 self.model_name,
-                                                 self.image_processor, 
-                                                 self.context_len, 
-                                                 self.args,
-                                                 prompt_input, 
-                                                 images)
-
-        # 2. save LLaVA response 
-        self.save_model_response(self.count, model_response)
-        # 3. DEBUG: print step 
-        print(model_response)
-        print('Save vision-language interpretation to local directory... \n')
-
-    def save_rgb_image(self, count):
-        """
-        Save camera rgb images to local directory.
-        """
-        for (i, camera) in enumerate(self.rgb_camera):
-
-            frame = camera.frame
-            image = camera.image
-
-            image_name = '%06d' % count + '_' + 'camera%d' % i + '.png'
-
-            cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
-                        image)
-
-    def save_model_response(self, count, model_response):
-        """
-        Save model output text to local directory.
-        """
-        for (i, camera) in enumerate(self.rgb_camera):
-
-            file_name = '%06d' % count + '_' + 'camera%d' % i + '.txt'
-            file_path = os.path.join(self.save_parent_folder, file_name)
-            
-            with open(file_path, "w") as text_file:
-                text_file.write("LLaVA model response for this image is: \n" \
-                                + model_response)
+    def load_pretrained_model(self, model_path, model_base, model_name):
+        '''Wrapper for orignial llava function'''
+        return load_pretrained_model(model_path=model_path, 
+                                     model_base=None, 
+                                     model_name=model_name)
 
     def get_llava_response(self, 
-                           tokenizer, model, model_name, image_processor, context_len, args, 
-                           prompt_input, images):
+                           tokenizer, 
+                           model, 
+                           model_name, 
+                           image_processor, 
+                           context_len, 
+                           args, 
+                           prompt_input, 
+                           images):
         '''
         Get image response from llava.
         '''
@@ -303,6 +192,7 @@ class VisionLanguageInterpreter(object):
         if outputs.endswith(stop_str):
             outputs = outputs[: -len(stop_str)]
         outputs = outputs.strip()
-
-        # return results 
         return outputs
+      
+
+        
