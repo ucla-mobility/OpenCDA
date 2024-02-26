@@ -93,7 +93,7 @@ scenario:
       destination: [606.87, 145.39, 0]
       sensing:
         perception:
-          activate: true
+          activate: false
           camera:
             visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
             num: 4 # how many cameras are mounted on the vehicle. Maximum 3(frontal, left and right cameras)

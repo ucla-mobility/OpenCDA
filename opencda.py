@@ -28,7 +28,7 @@ def arg_parse():
                         help='whether to record and save the simulation process to .log file')
     parser.add_argument("--apply_ml",
                         # action='store_false',
-                        action='store_true',
+                        action='store_true',  # ==> false
                         help='whether ml/dl framework such as sklearn/pytorch is needed in the testing. '
                              'Set it to true only when you have installed the pytorch/sklearn package.')
     parser.add_argument('-v', "--version", type=str, default='0.9.11',

@@ -61,8 +61,12 @@ carla_traffic_manager:
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [29.775, -35.102, 238.5, 0.0, 0.0, 0.0] 
-      destination: [87.877, -32.807, 238.5]
+      # new route 0: 54.25676727 38.41537476 
+      # new route 10: 54.23977661 33.7761879
+      # new route 25: 53.61002731 26.30117035
+      spawn_position: [54.25676727, 38.41537476, 238, 0.0, -90.0, 0.0] 
+      # new destination 99.35767365 -83.24427795  238.8289642 --> sp #53
+      destination: [99.35, -83.24, 239]
 
       v2x:
         communication_range: 45

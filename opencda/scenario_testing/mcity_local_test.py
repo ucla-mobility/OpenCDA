@@ -29,6 +29,7 @@ def run_scenario(opt, scenario_params):
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
+                                                   # use cav world for VOICES tests and mcity map for
                                                    # town='mcity_map_v2',
                                                    cav_world=cav_world)
 
