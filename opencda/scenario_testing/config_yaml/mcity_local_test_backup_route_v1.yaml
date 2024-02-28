@@ -34,10 +34,10 @@ vehicle_base:
     visualize: true
     activate: true
   behavior:
-    max_speed: 50 # maximum speed, km/h
+    max_speed: 30 # maximum speed, km/h
     tailgate_speed: 25 # 34 # when a vehicles needs to be close to another vehicle asap
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
-    sample_resolution: 2.0 # the unit distance between two adjacent waypoints in meter
+    sample_resolution: 1.5 # the unit distance between two adjacent waypoints in meter
     ignore_traffic_light: true # whether to ignore traffic light
     local_planner:  # trajectory planning related
       buffer_size: 12 # waypoint buffer size  ------------------------- change from 12
@@ -65,36 +65,36 @@ scenario:
       # new route 10: 54.23977661 33.7761879
       # new route 25: 53.61002731 26.30117035
       # spawn_position: [54.25676727, 38.41537476, 238, 0.0, -90.0, 0.0] 
-      # spawn_position: [118.37894439697266, -207.12489318847656, 250.47, 0.0, 100.0, 0.0] # start at right lane pass intersection
-      spawn_position: [118.378, -207.124, 245.47, 0.0, 103.0, 0.0] # start at right lane pass intersection
-      
+      spawn_position: [52.17525101,  1.916740417, 238.92836, 0.0, -90.0, 0.0] # start at right lane pass intersection
+      # middle_point: 
+      #   - [52.6541481, -10.57926941,  239.0293884]
       middle_point:
-      #   - [113.83, -150.61, 247.80]
-      #   - [114.21, -120.41, 245.90]
-      #   - [111.37, -73.13, 243.76]
-      #   - [109.05, -15.81, 242.51]
-      #   - [106.72, 45.20, 241.55]
-      #   - [95.74, 69.66, 240.96]
-      #   - [62.51, 76.98, 240.31]
-      #   - [54.34, 44.42, 241.53]
-        - [109.453369140625,-60.56306076049805,238.5633]
-        - [100.36329650878906,63.37815475463867,236.299]
-        - [55.18695068359375,42.16797637939453,236.76719665527344]
-        - [56.35572814941406,-10.1939058303833,237.1010284423828]
-        - [57.89147186279297,-66.89228820800781,238.0032958984375]
-      destination: [103.129180908203, -130.716384887695, 241.379486083984]
+        # - [54.23977661, 33.7761879, 239] #0
+        # - [53.85541153, 28.79143143, 239] #20
+        # - [52.46577835, 18.88845634, 239] #40
+        # - [51.87062454, 9.413476944, 239] #60
+        # - [52.27010345, -0.5824640393, 239] #80
+        - [52.65414810, -10.57926941, 239] #100
+        # - [53.02688599, -20.1726532, 239] #120
+        # - [53.83349609, -30.14216614, 239] #140
+        # - [55.41676712, -40.01877213, 239] #160
+        # - [57.11081314, -49.87939453, 239] #180
+        - [57.71843338,-59.38758087, 239] #200
+        # - [63.57483673, -68.06799316, 239] #220
+        # - [72.31018829, -71.82905579, 239] #240
+        # - [81.14382172, -75.55809021, 239] #260
+        # - [90.35282135, -79.45609283, 239] #280
+        # - [99.35767365, -83.24427795, 239] #300
+      # new destination 99.35767365 -83.24427795  238.8289642 --> sp #53
+      destination: [99.35, -83.24, 239]
+      # destination: [51.870625, 9.413477, 240.868576] # #74 middle lane; end edge is: (288, 293)
+      # destination: [56.048939, 9.584656, 240.868576] # #89 right lane; end edge is: (352, 292)
       v2x:
         communication_range: 45
       behavior:
         local_planner:
           debug_trajectory: true
           debug: true
-  map_manager:
-    pixels_per_meter: 2 # rasterization map resolution
-    raster_size: [224, 224] # the rasterize map size (pixel)
-    lane_sample_resolution: 1.0 # for every 0.1m, we draw a point of lane
-    visualize: true # whether to visualize the rasteraization map
-    activate: true # whether activate the map manager
 
 
 

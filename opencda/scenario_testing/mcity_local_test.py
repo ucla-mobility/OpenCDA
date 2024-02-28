@@ -29,7 +29,7 @@ def run_scenario(opt, scenario_params):
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
-                                                   # use cav world for VOICES tests and mcity map for
+                                                   # use cav world for VOICES tests and mcity map for local test
                                                    # town='mcity_map_v2',
                                                    cav_world=cav_world)
 
@@ -47,7 +47,7 @@ def run_scenario(opt, scenario_params):
         # create evaluation manager
         eval_manager = \
             EvaluationManager(scenario_manager.cav_world,
-                              script_name='smart_intersection_local_test',
+                              script_name='mcity_local_test',
                               current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
@@ -73,20 +73,19 @@ def run_scenario(opt, scenario_params):
         clock = pygame.time.Clock()
 
         # -------------------------------------------------
+        # Stationary view for VOICES
+        transform = single_cav_list[0].vehicle.get_transform()
+        spectator.set_transform(carla.Transform(
+            transform.location +
+            carla.Location(
+                z=70),
+            carla.Rotation(
+                pitch=-
+                90)))
 
         # run steps
         while True:
             scenario_manager.tick()
-
-            # Note: do not need for VOICES
-            # transform = single_cav_list[0].vehicle.get_transform()
-            # spectator.set_transform(carla.Transform(
-            #     transform.location +
-            #     carla.Location(
-            #         z=50),
-            #     carla.Rotation(
-            #         pitch=-
-            #         90)))
 
             # pygame event 
             for event in pygame.event.get():
@@ -102,6 +101,12 @@ def run_scenario(opt, scenario_params):
                 for i, single_cav in enumerate(single_cav_list):
                     single_cav.update_info()
                     control = single_cav.run_step()
+                    single_cav.vehicle.apply_control(control)
+            else:
+                # brake the vehicle to prevent roll back
+                for i, single_cav in enumerate(single_cav_list):
+                    single_cav.update_info()
+                    control = carla.VehicleControl(brake=1.0)
                     single_cav.vehicle.apply_control(control)
 
     finally:

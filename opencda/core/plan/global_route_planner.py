@@ -313,15 +313,10 @@ class GlobalRoutePlanner(object):
                 route = route_1st + route_2nd[1:]
                 route.append(end[1])
 
-                print('****** routing debug stream ********')
-                print('The 1st route is: ' + str(route_1st))
-                print('The 2st route is: ' + str(route_2nd))
-                print('The overall route is: ' + str(route))
-
             # multiple middle points along route 
             else:  
                 # list start and end wpt
-                print('****** beginning of route ********')
+                print('****** beginning of route debug ********')
                 route = []
                 start, end = self._localize(origin), self._localize(destination)
                 # loop thru middle points to build route
@@ -360,14 +355,9 @@ class GlobalRoutePlanner(object):
                         print('*** i == ' + str(i) + ' route: ' + str(curr_route))
                 route.append(end[1])
 
-                # eliminate duplicate numbers
-                # unique_numbers, indices = np.unique(route_list, return_index=True)
-                # sorted_indices = np.sort(indices)
-                # route = np.array(route_list)[sorted_indices].tolist()
-
                 print('****** routing debug stream ********')
                 # print('The overall route is: ' + str(route_list))
-                print('using np unique: ' + str(route))
+                print('The final route is: ' + str(route))
 
         else:
             start, end = self._localize(origin), self._localize(destination)
@@ -376,8 +366,6 @@ class GlobalRoutePlanner(object):
                 self._graph, source=start[0], target=end[0],
                 heuristic=self._distance_heuristic, weight='length')
             route.append(end[1])
-            print('****** routing debug stream ********')
-            print('The overall route is: ' + str(route))
 
         return route
 
@@ -447,7 +435,9 @@ class GlobalRoutePlanner(object):
                         if select_edge['type'] == RoadOption.LANEFOLLOW:
                             if neighbor != route[index + 1]:
                                 sv = select_edge['net_vector']
-                                cross_list.append(np.cross(cv, sv)[2])
+                                # note: encounter situation where sv is none.
+                                if sv:
+                                    cross_list.append(np.cross(cv, sv)[2])
                     next_cross = np.cross(cv, nv)[2]
                     deviation = math.acos(np.clip(
                         np.dot(cv, nv) / (np.linalg.norm(cv) *
@@ -571,5 +561,4 @@ class GlobalRoutePlanner(object):
                             destination_waypoint, path)
                         if closest_index > destination_index:
                             break
-
         return route_trace

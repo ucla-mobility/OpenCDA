@@ -694,8 +694,8 @@ class BehaviorAgent(object):
             It is True if the current ego vehicle's position is close to destination
 
         """
-        flag = abs(self._ego_pos.location.x - self.end_waypoint.transform.location.x) <= 10 and \
-               abs(self._ego_pos.location.y - self.end_waypoint.transform.location.y) <= 10
+        flag = abs(self._ego_pos.location.x - self.end_waypoint.transform.location.x) <= 3 and \
+               abs(self._ego_pos.location.y - self.end_waypoint.transform.location.y) <= 3
         return flag
 
     def check_lane_change_permission(self, lane_change_allowed, collision_detector_enabled, rk):
@@ -735,7 +735,8 @@ class BehaviorAgent(object):
                self.get_local_planner().lane_lateral_change and \
                self.overtake_counter <= 0 and \
                not self.destination_push_flag
-        if lane_change_enabled_flag:
+        # if lane_change_enabled_flag:
+        if True:
             lane_change_allowed = lane_change_allowed and self.lane_change_management()
             if not lane_change_allowed:
                 print("lane change not allowed")
@@ -874,24 +875,25 @@ class BehaviorAgent(object):
         if not is_hazard:
             self.hazard_flag = False
 
-        # 4. push case. Push the car to a temporary destination when original lane change action can't be executed
-        # The case that the vehicle is doing lane change as planned
-        # but found vehicle blocking on the other lane
-        if not self.lane_change_allowed and \
-                self.get_local_planner().potential_curved_road \
-                and not self.destination_push_flag and \
-                self.overtake_counter <= 0:
-            self.overtake_allowed = False
-            # get push destination based on intersection flag and current waypoint (rule-based)
-            reset_target = self.get_push_destination(ego_vehicle_wp, is_intersection)
-            # set the flag, so the push operation is not allowed for the next few frames.
-            self.destination_push_flag = 90
-            self.set_destination(
-                ego_vehicle_loc,
-                reset_target.transform.location,
-                clean=True,
-                end_reset=False)
-            rx, ry, rk, ryaw = self._local_planner.generate_path()
+        # disable this for VOICES as route is fixed.    
+        # # 4. push case. Push the car to a temporary destination when original lane change action can't be executed
+        # # The case that the vehicle is doing lane change as planned
+        # # but found vehicle blocking on the other lane
+        # if not self.lane_change_allowed and \
+        #         self.get_local_planner().potential_curved_road \
+        #         and not self.destination_push_flag and \
+        #         self.overtake_counter <= 0:
+        #     self.overtake_allowed = False
+        #     # get push destination based on intersection flag and current waypoint (rule-based)
+        #     reset_target = self.get_push_destination(ego_vehicle_wp, is_intersection)
+        #     # set the flag, so the push operation is not allowed for the next few frames.
+        #     self.destination_push_flag = 90
+        #     self.set_destination(
+        #         ego_vehicle_loc,
+        #         reset_target.transform.location,
+        #         clean=True,
+        #         end_reset=False)
+        #     rx, ry, rk, ryaw = self._local_planner.generate_path()
 
         # 5. the case that vehicle is blocking in front and overtake not
         # allowed or it is doing overtaking the second condition is to
