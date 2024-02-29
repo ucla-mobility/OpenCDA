@@ -152,6 +152,8 @@ class BehaviorAgent(object):
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
 
+        self.avoid_bike_once = False
+
     def set_nav_goal(self, destination):
         self.nav_goal = destination
 
@@ -189,9 +191,9 @@ class BehaviorAgent(object):
         # update the debug helper
         dist_to_goal = self.find_distance_to_nav_goal()
         
-        # varaible speed limit 
-        # if dist_to_goal <= 700:
-        #     self.max_speed = 90
+        # ADS reulation: varaible speed limit 
+        # if dist_to_goal >= 30 and dist_to_goal <= 70:
+        #     self.max_speed = 25
         
         self.debug_helper.update(ego_speed, self.ttc, dist_to_goal, self._ego_geoloc, self._ego_pos)
 
@@ -266,7 +268,8 @@ class BehaviorAgent(object):
             end_location,
             clean=False,
             end_reset=True,
-            clean_history=False):
+            clean_history=False,
+            cyclist=False):
         """
         This method creates a list of waypoints from agent's
         position to destination location based on the route returned
@@ -311,6 +314,7 @@ class BehaviorAgent(object):
                     self.start_waypoint.transform.location, cur_loc, cur_yaw)
 
         end_waypoint = self._map.get_waypoint(end_location)
+
         if end_reset:
             self.end_waypoint = end_waypoint
 
@@ -738,6 +742,8 @@ class BehaviorAgent(object):
                not self.destination_push_flag
         if lane_change_enabled_flag:
             lane_change_allowed = lane_change_allowed and self.lane_change_management()
+            # temporarly disable this Check to avoid bicycle
+            # lane_change_allowed = True
             if not lane_change_allowed:
                 print("lane change not allowed")
 
@@ -781,6 +787,38 @@ class BehaviorAgent(object):
                  reset_target.transform.location.y,
                  reset_target.transform.location.z))
         return reset_target
+
+    def find_destination_around_object(self, obj_location, target_dist):
+        '''
+        Find a target waypoint on the current lane to avoid small object.
+        '''
+        # 1. find the corresponing waypoint locate at the center of lane
+        center_wpt = self._map.get_waypoint(obj_location, project_to_road=True)
+
+        # 2. determine relative location (center wpt vs obj wpt)
+        vec_center_to_object = carla.Vector3D(
+            x=obj_location.x - center_wpt.transform.location.x,
+            y=obj_location.y - center_wpt.transform.location.y)
+        # Get the right vector of the center waypoint
+        right_vector = center_wpt.transform.get_right_vector()
+        # Check the relation
+        dot_product = right_vector.x * vec_center_to_object.x + \
+                        right_vector.y * vec_center_to_object.y
+        if dot_product > 0:
+            offset_direction = -1  # move left
+        else:
+            offset_direction = 1  # move right
+
+        # Calculate new location
+        new_location = carla.Location(
+            x=center_wpt.transform.location.x + offset_direction * right_vector.x * target_dist,
+            y=center_wpt.transform.location.y + offset_direction * right_vector.y * target_dist,
+            z=center_wpt.transform.location.z
+        )
+        new_wpt = self._map.get_waypoint(new_location, project_to_road=False) #.next(10)[0]
+        return new_wpt
+        # return self._map.get_waypoint(new_location, project_to_road=False)
+
 
     def run_step(
             self,
@@ -889,6 +927,47 @@ class BehaviorAgent(object):
                 clean=True,
                 end_reset=False)
             rx, ry, rk, ryaw = self._local_planner.generate_path()
+
+        # 4a. Bicycle avoidance: maintain a minimal distance to the bicycle 
+
+        if len(self.objects['vehicles'])>0 and \
+            not self.destination_push_flag and\
+            not self.avoid_bike_once:
+
+            for object_v in self.objects['vehicles']:
+                if 'bike' in object_v.type_id:
+
+                    # reset target to avoid bike 
+                    bike_location = object_v.location
+                    bike_bbox = object_v.bounding_box
+                    bike_extend_x = bike_bbox.extent.x
+                    v_extend_x = self.vehicle.bounding_box.extent.x
+                    # California: vehicle need to maintain at least 3 feet (1m) distance 
+                    distance = 0.5*(v_extend_x + bike_extend_x + 1)
+                    # generate target waypoint to avoid bike 
+                    reset_location_wpt = self.find_destination_around_object(bike_location, distance)
+                    nxt_location_wpt = reset_location_wpt.next(15)[0]
+                    # reset target 
+                    self.overtake_allowed = False
+                    # set the flag, so the push operation is not allowed for the next few frames.
+                    self.destination_push_flag = 90
+                    
+                    # use previous loc to smooth trajectory
+                    # history_buffer = self.get_local_planner().get_history_buffer()
+                    # previous_loc = history_buffer[-1][0].transform.location\
+                    #                  if len(history_buffer) > 0 \
+                    #                     else ego_vehicle_loc
+
+                    self.set_destination(
+                        reset_location_wpt.transform.location,
+                        nxt_location_wpt.transform.location,
+                        clean=True,
+                        end_reset=False)
+
+                    rx, ry, rk, ryaw = self._local_planner.generate_path()
+                    self.avoid_bike_once = True
+
+                    break
 
         # 5. the case that vehicle is blocking in front and overtake not
         # allowed or it is doing overtaking the second condition is to

@@ -36,8 +36,8 @@ def run_scenario(opt, scenario_params):
             scenario_manager.create_vehicle_manager(application=['single'])
 
         # create background traffic in carla
-        # traffic_manager, bg_veh_list = \
-        #     scenario_manager.create_traffic_carla()
+        traffic_manager, bg_veh_list = \
+            scenario_manager.create_traffic_carla()
 
         # create evaluation manager
         eval_manager = \

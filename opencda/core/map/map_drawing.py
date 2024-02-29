@@ -34,7 +34,7 @@ def cv2_subpixel(coords: np.ndarray) -> np.ndarray:
         np.ndarray: XY coords as int for cv2 shift draw
     """
     coords = coords * CV2_SHIFT_VALUE
-    coords = coords.astype(np.int)
+    coords = coords.astype(np.int32)
     return coords
 
 

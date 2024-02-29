@@ -40,9 +40,10 @@ def run_scenario(opt, scenario_params):
         rsu_list = \
             scenario_manager.create_rsu_manager(data_dump=True)
 
+        # note: 1/3/2024 diable background traffic for llava test
         # create background traffic in carla
-        traffic_manager, bg_veh_list = \
-            scenario_manager.create_traffic_carla()
+        # traffic_manager, bg_veh_list = \
+        #     scenario_manager.create_traffic_carla()
 
         # create evaluation manager
         eval_manager = \

@@ -412,8 +412,8 @@ def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
     new_intensity = intensity[points_in_canvas_mask]
 
     # Extract the screen coords (uv) as integers.
-    u_coord = new_points_2d[:, 0].astype(np.int)
-    v_coord = new_points_2d[:, 1].astype(np.int)
+    u_coord = new_points_2d[:, 0].astype(np.int32)
+    v_coord = new_points_2d[:, 1].astype(np.int32)
 
     # Since at the time of the creation of this script, the intensity function
     # is returning high values, these are adjusted to be nicely visualized.
@@ -422,7 +422,7 @@ def project_lidar_to_camera(lidar, camera, point_cloud, rgb_image):
         np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 0]) * 255.0,
         np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 1]) * 255.0,
         np.interp(new_intensity, VID_RANGE, VIRIDIS[:, 2]) * 255.0]).\
-        astype(np.int).T
+        astype(np.int32).T
 
     for i in range(len(new_points_2d)):
         rgb_image[v_coord[i] - 1: v_coord[i] + 1,

@@ -274,8 +274,8 @@ class MapManager(object):
         crosswalks_ids = []
 
         # boundary of each lane for later filtering
-        lanes_bounds = np.empty((0, 2, 2), dtype=np.float)
-        crosswalks_bounds = np.empty((0, 2, 2), dtype=np.float)
+        lanes_bounds = np.empty((0, 2, 2), dtype=np.float32)
+        crosswalks_bounds = np.empty((0, 2, 2), dtype=np.float32)
 
         # loop all waypoints to get lane information
         for (i, waypoint) in enumerate(self.topology):

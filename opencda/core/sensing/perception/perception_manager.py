@@ -59,7 +59,11 @@ class CameraSensor:
             world = vehicle.get_world()
 
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
-        blueprint.set_attribute('fov', '100')
+        blueprint.set_attribute('fov', '100')        
+        # try increase the image resolution (1920 x 1080) for LLaVa performance tests
+        blueprint.set_attribute('image_size_x', f'{1920}')
+        blueprint.set_attribute('image_size_y', f'{1080}')
+
 
         spawn_point = self.spawn_point_estimation(relative_position,
                                                   global_position)
@@ -81,6 +85,8 @@ class CameraSensor:
         # camera attributes
         self.image_width = int(self.sensor.attributes['image_size_x'])
         self.image_height = int(self.sensor.attributes['image_size_y'])
+
+
 
     @staticmethod
     def spawn_point_estimation(relative_position, global_position):
@@ -582,7 +588,9 @@ class PerceptionManager:
 
         vehicle_list = world.get_actors().filter("*vehicle*")
         # todo: hard coded
-        thresh = 50 if not self.data_dump else 120
+        # thresh = 50 if not self.data_dump else 120
+        # temporarly change to 20 for intersection cyclist detection; check with zonglin
+        thresh = 25
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
                         v.id != self.id]

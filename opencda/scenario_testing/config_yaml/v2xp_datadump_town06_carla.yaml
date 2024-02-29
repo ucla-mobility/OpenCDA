@@ -52,16 +52,17 @@ vehicle_base:
 
 
 # define the background traffic control by carla
-carla_traffic_manager:
-  global_speed_perc: -10
-  auto_lane_change: true
-  random: true # whether to random select vehicles' color and model
-  ignore_lights_percentage: 100 # whether set the traffic ignore traffic lights
-  vehicle_list: ~  # a number or a list
-  # Used only when vehicle_list is a number.
-  #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
-  range:
-    - [-11, 12, 100, 200, 3.5, 15, 25]
+# 2024/1/3 : disable background traffic to test llava
+# carla_traffic_manager:
+#   global_speed_perc: -10
+#   auto_lane_change: true
+#   random: true # whether to random select vehicles' color and model
+#   ignore_lights_percentage: 100 # whether set the traffic ignore traffic lights
+#   vehicle_list: ~  # a number or a list
+#   # Used only when vehicle_list is a number.
+#   #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
+#   range:
+#     - [-11, 12, 100, 200, 3.5, 15, 25]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
@@ -72,20 +73,27 @@ scenario:
 
   single_cav_list:
     - name: cav1
-      spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
-      destination: [67.12, 150.2, 1.0]
+      # spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
+      spawn_position: [10, 140, 0.3, 0, -92, 0] 
+      # destination: [67.12, 150.2, 1.0]
+      destination: [170, 52.0, 0.3]
       v2x:
         communication_range: 45
       behavior:
         local_planner:
           debug_trajectory: false
           debug: false
-    - name: cav2
-      spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
-      destination: [-2.43, 263, 0.3]
-      v2x:
-        communication_range: 45
-      behavior:
-        local_planner:
-          debug_trajectory: false
-          debug: false
+    - name: bicycle
+      spawn_position: [10, 110, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      # destination: [-12.51, 110.31, 0.3]
+      destination: [137, 52.0, 0.3] # end [137, 52] for right turn
+    # note: 1/3/2024: disable background vehicle to test llava
+    # - name: cav2
+    #   spawn_position: [-5.51, 110.24, 0.3, 0, 90, 0]
+    #   destination: [-2.43, 263, 0.3]
+    #   v2x:
+    #     communication_range: 45
+    #   behavior:
+    #     local_planner:
+    #       debug_trajectory: false
+    #       debug: false
