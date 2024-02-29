@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+2# -*- coding: utf-8 -*-
 
 """Finite State Machine
 """

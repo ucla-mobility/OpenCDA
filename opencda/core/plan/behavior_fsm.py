@@ -841,18 +841,3 @@ class BehaviorFSM(object):
             # print(f"Transitioned to superstate {self.current_superstate}")
         if state_name:
             self.current_state = self.states[state_name]
-
-# test locally
-
-# current_FSM = BehaviorFSM()
-# print('Current superstate name is: ' + str(current_FSM.get_current_superstate()))
-# print('Current state is: ' + str(current_FSM.get_current_state()))
-# next_superstates = current_FSM.get_possible_next_superstates()
-# print(next_superstates)
-# next_states = current_FSM.get_possible_next_states(next_superstates)
-# print(next_states)
-# ranked_superstate = current_FSM.rank_next_superstates(next_superstates, is_intersection=False, is_hazard=False)
-# best_option = next(iter(ranked_superstate))
-# print(best_option)
-# possible_states = current_FSM.get_next_states_based_on_one_superstate(best_option)
-# print(possible_states)
