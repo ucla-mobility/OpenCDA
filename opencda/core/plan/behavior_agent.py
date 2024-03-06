@@ -405,8 +405,8 @@ class BehaviorAgent(object):
         ).id if self.vehicle.get_traffic_light() is not None else -1
 
         # printing traffic light ID
-        # if light_id != -1:
-            # print('Traffic light detection result: ' + str(light_id))
+        if light_id != -1:
+            print('Traffic light detection result: ' + str(light_id))
 
         # this is the case where the vehicle just pass a stop sign, and won't
         # stop at any stop sign in the next 4 seconds.
@@ -473,10 +473,12 @@ class BehaviorAgent(object):
         min_distance = 100000
         target_vehicle = None
 
+        
         for vehicle in self.obstacle_vehicles:
             collision_free = self._collision_check.collision_circle_check(
                 rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
                 adjacent_check=adjacent_check)
+            
             if not collision_free:
                 vehicle_state = True
 
@@ -735,11 +737,10 @@ class BehaviorAgent(object):
                self.get_local_planner().lane_lateral_change and \
                self.overtake_counter <= 0 and \
                not self.destination_push_flag
-        # if lane_change_enabled_flag:
-        if True:
+        if lane_change_enabled_flag:
             lane_change_allowed = lane_change_allowed and self.lane_change_management()
-            if not lane_change_allowed:
-                print("lane change not allowed")
+            # if not lane_change_allowed:
+            #     print("lane change not allowed")
 
         return lane_change_allowed
 
@@ -833,9 +834,9 @@ class BehaviorAgent(object):
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             self.red_light_brake_counter += 1
             # delay brake by 1.8s to bring vehicle closer to the stop line
-            if self.red_light_brake_counter >= self._ego_speed*0.4:
-                return 0, None
-            # return 0, None
+            # if self.red_light_brake_counter >= self._ego_speed*0.4:
+            #     return 0, None
+            return 0, None
 
         # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \
@@ -925,7 +926,10 @@ class BehaviorAgent(object):
 
         # 7. Car following behavior
         if car_following_flag:
-            if distance < max(self.break_distance, 3):
+            # if distance < max(self.break_distance, 3):
+
+            # adjust parameter to make it more sensitive (corner case: failed to avoid corner imapct)
+            if distance < max(self.break_distance, 6):
                 return 0, None
 
             target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)

@@ -34,13 +34,14 @@ vehicle_base:
     visualize: true
     activate: true
   behavior:
-    max_speed: 50 # maximum speed, km/h
+    max_speed: 40 # maximum speed, km/h
     tailgate_speed: 25 # 34 # when a vehicles needs to be close to another vehicle asap
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
     sample_resolution: 2.0 # the unit distance between two adjacent waypoints in meter
-    ignore_traffic_light: true # whether to ignore traffic light
+    emergency_param: 0.2 # 0.4 # used to identify whether a emergency stop needed
+    ignore_traffic_light: false # whether to ignore traffic light
     local_planner:  # trajectory planning related
-      buffer_size: 12 # waypoint buffer size  ------------------------- change from 12
+      buffer_size: 12 # waypoint buffer size 
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
       waypoint_update_freq: 9 # used to control waypoint updating frequency
       min_dist: 3 # used to pop out the waypoints too close to current location
