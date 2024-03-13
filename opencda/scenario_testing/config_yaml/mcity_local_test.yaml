@@ -34,7 +34,7 @@ vehicle_base:
     visualize: true
     activate: true
   behavior:
-    max_speed: 40 # maximum speed, km/h
+    max_speed: 30 # maximum speed, km/h
     tailgate_speed: 25 # 34 # when a vehicles needs to be close to another vehicle asap
     overtake_allowed: false # whether overtake allowed, typically false for platoon leader
     sample_resolution: 2.0 # the unit distance between two adjacent waypoints in meter

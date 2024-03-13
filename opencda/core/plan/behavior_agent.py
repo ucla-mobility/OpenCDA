@@ -825,6 +825,10 @@ class BehaviorAgent(object):
         # use traffic light to detect intersection
         is_intersection = self.is_intersection(self.objects, waipoint_buffer)
 
+        # Debug Stream 
+        print('***[Debug Stream Behavioral Agent - ego speed]: ' + \
+                str(self._ego_speed))
+
         # 0. Simulation ends condition
         if self.is_close_to_destination():
             print('Simulation is Over')
