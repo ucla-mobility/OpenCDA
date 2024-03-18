@@ -401,12 +401,19 @@ class BehaviorAgent(object):
 
         """
 
+        curr_light = self.vehicle.get_traffic_light()
         light_id = self.vehicle.get_traffic_light(
         ).id if self.vehicle.get_traffic_light() is not None else -1
 
         # printing traffic light ID
         if light_id != -1:
             print('Traffic light detection result: ' + str(light_id))
+            print('[The Red time for the light is]     --> ' + \
+                                str(curr_light.get_red_time()))
+            print('[The Green time for the light is]   --> ' + \
+                                str(curr_light.get_green_time()))
+            print('[The elspsed time for the light is] --> ' + \
+                                str(curr_light.get_elapsed_time()))
 
         # this is the case where the vehicle just pass a stop sign, and won't
         # stop at any stop sign in the next 4 seconds.
@@ -826,13 +833,16 @@ class BehaviorAgent(object):
         is_intersection = self.is_intersection(self.objects, waipoint_buffer)
 
         # Debug Stream 
-        print('***[Debug Stream Behavioral Agent - ego speed]: ' + \
-                str(self._ego_speed))
+        # print('***[Debug Stream Behavioral Agent - ego speed]: ' + \
+        #         str(self._ego_speed))
 
         # 0. Simulation ends condition
         if self.is_close_to_destination():
             print('Simulation is Over')
-            sys.exit(0)
+            # sys.exit(0)
+            # VOICES Change: 
+            #  |---> do not exit the simulation, but hold the vehicle there.
+            return 0, None
 
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
