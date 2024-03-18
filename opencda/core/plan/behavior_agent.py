@@ -21,7 +21,6 @@ from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.plan.planer_debug_helper import PlanDebugHelper
 
-
 class BehaviorAgent(object):
     """
     A modulized version of carla BehaviorAgent.

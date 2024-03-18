@@ -30,7 +30,7 @@ def run_scenario(opt, scenario_params):
                                                    opt.apply_ml,
                                                    opt.version,
                                                    # use cav world for VOICES tests and mcity map for local test
-                                                   # town='mcity_map_v2',
+                                                   town='mcity_map_voices_v2-2-21',
                                                    cav_world=cav_world)
 
         if opt.record:
@@ -100,7 +100,8 @@ def run_scenario(opt, scenario_params):
                 # iterate vehicle control
                 for i, single_cav in enumerate(single_cav_list):
                     single_cav.update_info()
-                    control = single_cav.run_step()
+                    # control = single_cav.run_step()
+                    control = carla.VehicleControl(brake=1.0)
                     single_cav.vehicle.apply_control(control)
             else:
                 # brake the vehicle to prevent roll back

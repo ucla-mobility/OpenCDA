@@ -186,6 +186,19 @@ class VehicleManager(object):
         # object detection
         objects = self.perception_manager.detect(ego_pos)
 
+        # debug stream 
+        print('***[Debug Stream @vehicle_manager regarding traffic light]***')
+        curr_tl = objects['traffic_lights'][0]
+        # display info 
+        print('[Signal LightID] --- ' + str(curr_tl.light_id))
+        print('[Current state]  --- ' + str(curr_tl.state))
+        print('[Green time]     --- ' + str(curr_tl.green_time))
+        print('[Red Time]       --- ' + str(curr_tl.red_time))
+        print('[Yellow Time]    --- ' + str(curr_tl.yellow_time))
+        print('[Elapsed time]   --- ' + str(curr_tl.elapsed_time))
+        
+        print('-------------------------------------------------------------')
+
         # update the ego pose for map manager
         self.map_manager.update_information(ego_pos)
 

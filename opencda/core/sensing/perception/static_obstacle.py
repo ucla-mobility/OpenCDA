@@ -90,12 +90,51 @@ class TrafficLight(object):
         self._location = trigger_location
         self.state = light_state
         self.actor = tl
+        self.light_id = tl.id
+        # spat variables
+        self.green_time = 0.0
+        self.red_time = 0.0
+        self.yellow_time = 0.0
+        self.elapsed_time = 0.0
+        self.time_left = 0.0
 
     def get_location(self):
         return self._location
 
     def get_state(self):
         return self.state
+
+    def calculate_time_left(self):
+        if self.state == "Red":
+            # red phase
+            self.time_left = self.red_time - self.elapsed_time
+        
+        elif self.state == "Yellow":
+            # yellow phase
+            self.time_left = self.yellow_time - self.elapsed_time
+        
+        elif self.state == "Green":
+            # green 
+            self.time_left = self.green_time - self.elapsed_time
+
+        else:
+            # traffic signal not working 
+            self.time_left = 0.0
+            print('*** Warning stream: The current traffic signal is not working. ***')
+
+    def calculate_spat_data(self):
+        # run along with opencda and calculate SPaT. 
+        self.green_time = self.actor.get_green_time()
+        self.red_time = self.actor.get_red_time()
+        self.yellow_time = self.actor.get_yellow_time()
+        self.elapsed_time = self.actor.get_elapsed_time()
+        self.time_left = self.calculate_time_left()
+        # display info 
+        # print('*** Debug Stream Traffic Signal ***')
+        # print('[Signal LightID] --- ' + self.light_id)
+        # print('[Current state]  --- ' + self.state)
+        # print('[Elapsed time]   --- ' + self.elapsed_time)
+        # print('[Time Left]      --- ' + self.time_left)
 
     @staticmethod
     def get_trafficlight_trigger_location(traffic_light: carla.Actor) \

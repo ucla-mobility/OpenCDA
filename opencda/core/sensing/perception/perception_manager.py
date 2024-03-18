@@ -779,7 +779,7 @@ class PerceptionManager:
 
     def retrieve_traffic_lights(self, objects):
         """
-        Retrieve the traffic lights nearby from the server  directly.
+        Retrieve the traffic lights nearby from the server directly.
         Next version may consider add traffic light detection module.
 
         Parameters
@@ -807,17 +807,26 @@ class PerceptionManager:
             traffic_light = TrafficLight(activate_tl,
                                          light_trigger_location,
                                          activate_tl.get_state())
+            # detect spat data
+            traffic_light.calculate_spat_data()
+
             objects['traffic_lights'].append(traffic_light)
         return objects
 
     def _get_active_light(self, tl_list, vehicle_location, vehicle_waypoint):
         for tl in tl_list:
+
             object_location = \
                 TrafficLight.get_trafficlight_trigger_location(tl)
+
             object_waypoint = self._map.get_waypoint(object_location)
 
-            if object_waypoint.road_id != vehicle_waypoint.road_id:
-                continue
+            # Note: 
+            # Comment this out for the VOICES project, as Mcity have multiple 
+            # layers of roads that is blocking the extraction of traffic lights.
+            #
+            # if object_waypoint.road_id != vehicle_waypoint.road_id:
+            #     continue
 
             ve_dir = vehicle_waypoint.transform.get_forward_vector()
             wp_dir = object_waypoint.transform.get_forward_vector()
@@ -828,6 +837,7 @@ class PerceptionManager:
             if dot_ve_wp < 0:
                 continue
             while not object_waypoint.is_intersection:
+                # next_waypoint = object_waypoint.next(0.5)[0]
                 next_waypoint = object_waypoint.next(0.5)[0]
                 if next_waypoint and not next_waypoint.is_intersection:
                     object_waypoint = next_waypoint

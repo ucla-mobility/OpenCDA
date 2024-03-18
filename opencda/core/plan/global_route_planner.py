@@ -316,7 +316,7 @@ class GlobalRoutePlanner(object):
             # multiple middle points along route 
             else:  
                 # list start and end wpt
-                print('****** beginning of route debug ********')
+                # print('****** beginning of route debug ********')
                 route = []
                 start, end = self._localize(origin), self._localize(destination)
                 # loop thru middle points to build route
@@ -335,7 +335,7 @@ class GlobalRoutePlanner(object):
                             self._graph, source=middle_point_edge[0], target=nxt_middle_point_edge[0],
                             heuristic=self._distance_heuristic, weight='length')
                         route += curr_route_0 + curr_route_1[1:]
-                        print('*** i == 0 route: ' + str(curr_route_0 + curr_route_1))
+                        # print('*** i == 0 route: ' + str(curr_route_0 + curr_route_1))
                     
                     # last mid point 
                     elif i==len(middle_point_loc_list)-1:
@@ -343,7 +343,7 @@ class GlobalRoutePlanner(object):
                             self._graph, source=middle_point_edge[0], target=end[0],
                             heuristic=self._distance_heuristic, weight='length')
                         route += curr_route[1:]
-                        print('*** i == -1 route: ' + str(curr_route))
+                        # print('*** i == -1 route: ' + str(curr_route))
                     
                     # mid point in between 
                     else:
@@ -352,12 +352,12 @@ class GlobalRoutePlanner(object):
                             self._graph, source=middle_point_edge[0], target=nxt_middle_point_edge[0],
                             heuristic=self._distance_heuristic, weight='length')
                         route += curr_route[1:]
-                        print('*** i == ' + str(i) + ' route: ' + str(curr_route))
+                        # print('*** i == ' + str(i) + ' route: ' + str(curr_route))
                 route.append(end[1])
 
-                print('****** routing debug stream ********')
+                # print('****** routing debug stream ********')
                 # print('The overall route is: ' + str(route_list))
-                print('The final route is: ' + str(route))
+                # print('The final route is: ' + str(route))
 
         else:
             start, end = self._localize(origin), self._localize(destination)

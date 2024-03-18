@@ -354,18 +354,20 @@ class ScenarioManager:
             Note: do not spawn vehicle, read vehicle from adpater (VOICES)
             '''
             vehicle = None
-            # cav_vehicle_bp.set_attribute('color', '0, 0, 255')
-            # cav_vehicle_bp.set_attribute('role_name', 'UCLA-OPENCDA')
-            # vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
-            carlaVehicles = self.world.get_actors().filter('vehicle.*')
-            for carla_vehicle in carlaVehicles:
-                currentAttributes = carla_vehicle.attributes
-                print("Checking vehicle: " + str(currentAttributes["role_name"]))
-                if currentAttributes["role_name"] == 'UCLA-OPENCDA':
-                    vehicle = carla_vehicle
+            cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+            cav_vehicle_bp.set_attribute('role_name', 'UCLA-OPENCDA')
+            vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
             
-            if not vehicle:
-                print("ERROR: Unable to find vehicle with rolename: UCLA-OPENCDA.")
+            # # VOICES setting, load vehicle.
+            # carlaVehicles = self.world.get_actors().filter('vehicle.*')
+            # for carla_vehicle in carlaVehicles:
+            #     currentAttributes = carla_vehicle.attributes
+            #     print("Checking vehicle: " + str(currentAttributes["role_name"]))
+            #     if currentAttributes["role_name"] == 'UCLA-OPENCDA':
+            #         vehicle = carla_vehicle
+            
+            # if not vehicle:
+            #     print("ERROR: Unable to find vehicle with rolename: UCLA-OPENCDA.")
             # ------------------------------------------------------------------------
 
             # create vehicle manager for each cav
@@ -384,7 +386,7 @@ class ScenarioManager:
                                          z=cav_config['destination'][2])
             vehicle_manager.update_info()
 
-            print('********** middle point mode: ' + str(self.has_middle_point))
+            print('[Note: middle point mode for planning is]---> [' + str(self.has_middle_point) + ']')
             if self.has_middle_point:
                 middle_point = cav_config['middle_point']
                 # only one middle point 

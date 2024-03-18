@@ -67,7 +67,7 @@ scenario:
       # new route 25: 53.61002731 26.30117035
       # spawn_position: [54.25676727, 38.41537476, 238, 0.0, -90.0, 0.0] 
       # spawn_position: [118.37894439697266, -207.12489318847656, 250.47, 0.0, 100.0, 0.0] # start at right lane pass intersection
-      spawn_position: [118.378, -207.124, 245.47, 0.0, 103.0, 0.0] # start at right lane pass intersection
+      spawn_position: [112.11, -59.47, 242.42, 0.0, 100.0, 0.0] # start at right lane pass intersection
       
       middle_point:
       #   - [113.83, -150.61, 247.80]
