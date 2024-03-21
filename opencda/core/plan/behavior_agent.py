@@ -411,6 +411,15 @@ class BehaviorAgent(object):
             # note: VOICES reset traffic life time to 9999 and use J2735 to overwrite state.
             #       need to use decoder to get traffic light state. 
 
+            # !!! NOTE !!!: add I/O to use spat data here !!!
+
+            # print('[The Red time for the light is]     --> ' + \
+            #                     str(curr_light.get_red_time()))
+            # print('[The Green time for the light is]   --> ' + \
+            #                     str(curr_light.get_green_time()))
+            # print('[The elspsed time for the light is] --> ' + \
+            #                     str(curr_light.get_elapsed_time()))
+
         # this is the case where the vehicle just pass a stop sign, and won't
         # stop at any stop sign in the next 4 seconds.
         if 60 <= self.stop_sign_wait_count < 240:
