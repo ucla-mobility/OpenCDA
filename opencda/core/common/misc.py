@@ -57,6 +57,30 @@ def draw_trajetory_points(world, waypoints, z=0.25,
             life_time=lt)
 
 
+def draw_prediction_points(world, points, z=0.5, lt=0.06, size=0.05):
+    """
+    This function draws prediction points on the carla server.
+
+    Parameters:
+    world (carla.World): The world object where points will be drawn.
+    points (list): A list of points to be drawn. Each point is a tuple (x, y, yaw).
+    z (float, optional): The z-coordinate for the points. Default is 0.5.
+    lt (float, optional): The lifetime of the points in seconds. Default is 0.06.
+    size (float, optional): The size of the points. Default is 0.05.
+
+    Returns:
+    None
+    """
+    for point in points:
+        color = carla.Color(255, 103, 0)
+        x, y, yaw = point
+        world.debug.draw_point(carla.Location(x, y, z), size=size, color=color, life_time=lt)
+
+
+def draw_prediction_bbx(world, x, y, color=carla.Color(255, 0, 0), z=2.0, lt=0.06, size=0.05):
+    """ Draw the bounding box of the predicted vehicle."""
+    world.debug.draw_point(carla.Location(x, y, z), size=size, color=color, life_time=lt)
+
 def draw_waypoints(world, waypoints, z=0.5):
     """
     Draw a list of waypoints at a certain height given in z.
