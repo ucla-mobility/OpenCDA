@@ -79,9 +79,11 @@ class VisionLanguageInterpreter(object):
 
     """
 
-    def __init__(self, model_path):
+    def __init__(self, model_path, prompt_input):
         # modle path
         self.model_path = model_path
+        # prompt 
+        self.prompt_input = prompt_input
         # saving path 
         current_path = os.path.dirname(os.path.realpath(__file__))
         # step count 
@@ -145,7 +147,7 @@ class VisionLanguageInterpreter(object):
         prompt = conv.get_prompt()
 
         # load image 
-        image_tensor = process_images(
+        images_tensor = process_images(
             images,
             image_processor,
             model.config
@@ -155,8 +157,7 @@ class VisionLanguageInterpreter(object):
         input_ids = (
             tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
             .unsqueeze(0)
-            .to(model.device)
-            # .cuda()
+            .cuda()
         )
 
         # stopping criteria 
@@ -168,7 +169,7 @@ class VisionLanguageInterpreter(object):
         with torch.inference_mode():
             output_ids = model.generate(
                 input_ids,
-                images=image_tensor,
+                images=images_tensor,
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
                 top_p=args.top_p,

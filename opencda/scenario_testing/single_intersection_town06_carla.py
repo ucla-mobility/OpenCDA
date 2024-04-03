@@ -36,7 +36,7 @@ class dotdict(dict):
 def vlm_gpu_task_handler(input_queue, output_queue, vlm_manager):
     # load LLaVA model for the rest of the simulation...
     model_path = vlm_manager.model_path
-    prompt_input =  vlm_manager.prompt_input
+    # prompt_input =  vlm_manager.prompt_input
     model_name = vlm_manager.get_model_name_from_path(model_path)
 
     tokenizer, model, image_processor, context_len = vlm_manager.load_pretrained_model(
@@ -55,7 +55,7 @@ def vlm_gpu_task_handler(input_queue, output_queue, vlm_manager):
     })
     
     while True:
-        images = input_queue.get()  # Get data from the simulation 
+        images, prompt_input = input_queue.get()  # Get data from the simulation 
         if images is None:  # Use None as a signal to stop the process
             break
 
@@ -108,7 +108,7 @@ def run_scenario(opt, scenario_params):
                     generate future driving plan in one short sentence.\
                     If there's no traffic light in pucture, just say it's not detected"
 
-        vlm_manager = VisionLanguageInterpreter(model_path, prompt_input)
+        vlm_manager = VisionLanguageInterpreter(model_path)
 
         # multi-processing with GPU
         ctx = get_context('spawn')  # Get the context using 'spawn'
@@ -153,7 +153,7 @@ def run_scenario(opt, scenario_params):
                     
                     # adjust llava frequency (delta_seconds = 0.05s)
                     if step%10 == 0 and step >= 50:
-                        input_queue.put(vlm_image)
+                        input_queue.put((vlm_image, prompt_input))
                         print('***debug stream: lenght of input queue is: ' \
                                 + str(input_queue.qsize()))
                 
