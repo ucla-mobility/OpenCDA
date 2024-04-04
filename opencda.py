@@ -11,6 +11,7 @@ import importlib
 import os
 import sys
 from omegaconf import OmegaConf
+from multiprocessing import Process, Queue, get_context
 
 from opencda.version import __version__
 
@@ -73,5 +74,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+        multiprocessing.set_start_method('spawn', force=True)
     except KeyboardInterrupt:
         print(' - Exited by user.')

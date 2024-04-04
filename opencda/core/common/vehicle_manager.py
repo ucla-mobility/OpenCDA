@@ -6,6 +6,11 @@ Basic class of CAV
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import uuid
+from collections import deque
+from PIL import Image
+import numpy as np
+import sys
+import cv2
 
 from opencda.core.actuation.control_manager \
     import ControlManager
@@ -111,6 +116,9 @@ class VehicleManager(object):
         # safety manager
         self.safety_manager = SafetyManager(vehicle=vehicle,
                                             params=config_yaml['safety_manager'])
+        # navigation goal 
+        self.nav_goal = None
+
         # behavior agent
         self.agent = None
         if 'platooning' in application:
@@ -136,6 +144,12 @@ class VehicleManager(object):
             self.data_dumper = None
 
         cav_world.update_vehicle_manager(self)
+
+    def set_nav_goal(self, destination):
+        '''
+        '''
+        self.nav_goal = destination
+        self.agent.set_nav_goal(destination)
 
     def set_destination(
             self,
@@ -226,3 +240,10 @@ class VehicleManager(object):
         self.localizer.destroy()
         self.vehicle.destroy()
         self.map_manager.destroy()
+
+    # VLM functions
+    def update_vlm_info(self, result):
+        '''
+        Update lates vlm response.
+        '''
+        self.perception_manager.update_vlm_info(result)

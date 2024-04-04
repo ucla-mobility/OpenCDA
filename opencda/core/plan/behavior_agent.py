@@ -966,14 +966,15 @@ class BehaviorAgent(object):
         # 4. FSM transition to best option
         selected_nxt_state = next(iter(all_path_w_cost))
 
-        print('----- Debug Stream ----')
-        print('Current superstate is: ' + str(self.Behavior_FSM.current_superstate))
-        print('Current state is: ' + str(self.Behavior_FSM.current_state))
-        print('Next superstate is: ' + str(best_superstate))
-        print('is_red_light: ' + str(is_red_light))
-        print('is_target_lane_blocked: ' + str(self.lane_change_allowed))
-        print('Next state is: ' + str(selected_nxt_state))
-        print('-------')
+        # print('----- Debug Stream ----')
+        # print('Current superstate is: ' + str(self.Behavior_FSM.current_superstate))
+        # print('Current state is: ' + str(self.Behavior_FSM.current_state))
+        # print('Next superstate is: ' + str(best_superstate))
+        # print('is_red_light: ' + str(is_red_light))
+        # print('is_target_lane_blocked: ' + str(self.lane_change_allowed))
+        # print('Next state is: ' + str(selected_nxt_state))
+        # print('-------')
+        
         self.Behavior_FSM.transition(best_superstate, selected_nxt_state)
         rx, ry, rk, ryaw, cost = next(iter(all_path_w_cost.values()))
 

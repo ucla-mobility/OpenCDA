@@ -14,6 +14,8 @@ import carla
 import cv2
 import numpy as np
 import open3d as o3d
+from PIL import Image
+from collections import deque
 
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import \
@@ -59,7 +61,10 @@ class CameraSensor:
             world = vehicle.get_world()
 
         blueprint = world.get_blueprint_library().find('sensor.camera.rgb')
-        blueprint.set_attribute('fov', '100')
+        blueprint.set_attribute('fov', '70')
+        # update resolution 
+        blueprint.set_attribute('image_size_x', '1920')
+        blueprint.set_attribute('image_size_y', '1080')
 
         spawn_point = self.spawn_point_estimation(relative_position,
                                                   global_position)
@@ -436,6 +441,10 @@ class PerceptionManager:
         self.traffic_thresh = config_yaml['traffic_light_thresh'] \
             if 'traffic_light_thresh' in config_yaml else 50
 
+        # vlm  
+        self.vlm_response = "Waiting for VLM response ..."
+        self.camera_img_buffer = deque(maxlen=5)
+
     def dist(self, a):
         """
         A fast method to retrieve the obstacle distance the ego
@@ -619,6 +628,11 @@ class PerceptionManager:
             names = ['front', 'right', 'left', 'back']
 
             for (i, rgb_camera) in enumerate(self.rgb_camera):
+                # populate VLM img buffer (BGR to RGB) 
+                image_rgb = np.array(rgb_camera.image)[:, :, ::-1]
+                image = Image.fromarray(image_rgb).convert("RGB")
+                self.camera_img_buffer.append(image)
+
                 if i > self.camera_num - 1 or i > self.camera_visualize - 1:
                     break
                 # we only visualiz the frontal camera
@@ -629,6 +643,24 @@ class PerceptionManager:
                                                                i)
                 # resize to make it fittable to the screen
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
+
+                # add VLM text 
+                height, width = rgb_image.shape[:2]
+                text = self.vlm_response
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.5
+                font_color = (255, 255, 255) # White
+                font_thickness = 1
+                text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+                text_x = (width - text_size[0]) // 2
+                text_y = height - 10  
+                background_y = height - 30  
+                # background 
+                cv2.rectangle(rgb_image, (0, background_y), \
+                              (width, height), (0, 0, 0), -1)
+                # text
+                cv2.putText(rgb_image, text, (text_x, text_y), \
+                            font, font_scale, font_color, font_thickness)
 
                 # show image using cv2
                 cv2.imshow(
@@ -852,3 +884,10 @@ class PerceptionManager:
 
         if self.data_dump:
             self.semantic_lidar.sensor.destroy()
+
+    # VLM functions
+    def update_vlm_info(self, result):
+        '''
+        Update lates vlm response.
+        '''
+        self.vlm_response = result
