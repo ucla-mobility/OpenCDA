@@ -147,6 +147,14 @@ def run_scenario(opt, scenario_params):
             for i, single_cav in enumerate(single_cav_list):
                 single_cav.update_info()
 
+                # simulation step 
+                control, vlm_prompt = single_cav.run_step()
+                if idle_vehicle:
+                    single_cav.vehicle.apply_control(
+                                        carla.VehicleControl(brake=1.0))
+                else:
+                    single_cav.vehicle.apply_control(control)
+
                 # off load camera feed
                 if single_cav.perception_manager.camera_img_buffer:
                     vlm_image=[single_cav.perception_manager.camera_img_buffer[-1]]
@@ -154,8 +162,10 @@ def run_scenario(opt, scenario_params):
                     # adjust llava frequency (delta_seconds = 0.05s)
                     if step%10 == 0 and step >= 50:
                         input_queue.put((vlm_image, prompt_input))
-                        print('***debug stream: lenght of input queue is: ' \
-                                + str(input_queue.qsize()))
+                        # print('***debug stream: lenght of input queue is: ' \
+                        #         + str(input_queue.qsize()))
+                    elif step >= 100:
+                        input_queue.put((vlm_image, vlm_prompt))
                 
                 # VLM GPU process
                 if not output_queue.empty():
@@ -168,14 +178,6 @@ def run_scenario(opt, scenario_params):
                     # debug print, vlm response 
                     print('*** vlm response from vehicle manager is : ' \
                             + str(single_cav.perception_manager.vlm_response))
-
-                # simulation step 
-                control = single_cav.run_step()
-                if idle_vehicle:
-                    single_cav.vehicle.apply_control(
-                                        carla.VehicleControl(brake=1.0))
-                else:
-                    single_cav.vehicle.apply_control(control)
 
     finally:
         # Clean up

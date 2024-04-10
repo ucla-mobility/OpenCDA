@@ -879,8 +879,8 @@ class BehaviorAgent(object):
         # check intersection
         is_intersection = self.is_intersection(self.objects, waipoint_buffer)
         # check light
-        # is_red_light = self.traffic_light_manager(ego_vehicle_wp)
-        is_red_light = False
+        is_red_light = self.traffic_light_manager(ego_vehicle_wp)
+        # is_red_light = False
         # get current plan
         rx, ry, rk, ryaw = self._local_planner.generate_path()
         # check lane change
@@ -966,25 +966,32 @@ class BehaviorAgent(object):
         # 4. FSM transition to best option
         selected_nxt_state = next(iter(all_path_w_cost))
 
-        # print('----- Debug Stream ----')
-        # print('Current superstate is: ' + str(self.Behavior_FSM.current_superstate))
-        # print('Current state is: ' + str(self.Behavior_FSM.current_state))
-        # print('Next superstate is: ' + str(best_superstate))
-        # print('is_red_light: ' + str(is_red_light))
-        # print('is_target_lane_blocked: ' + str(self.lane_change_allowed))
-        # print('Next state is: ' + str(selected_nxt_state))
-        # print('-------')
-        
+        print('----- Debug Stream ----')
+        print('Current superstate is: ' + str(self.Behavior_FSM.current_superstate))
+        print('Current state is: ' + str(self.Behavior_FSM.current_state))
+        print('Next superstate is: ' + str(best_superstate))
+        print('is_red_light: ' + str(is_red_light))
+        print('is_lane_change_allowed: ' + str(self.lane_change_allowed))
+        print('Next state is: ' + str(selected_nxt_state))
+        print('-------')
+
         self.Behavior_FSM.transition(best_superstate, selected_nxt_state)
         rx, ry, rk, ryaw, cost = next(iter(all_path_w_cost.values()))
 
         # 5. Generate final control
+        # get prompt 
+        vlm_prompt = self.Behavior_FSM.get_current_prompt()
+        
+        # 5aa. red light 
+        if self.traffic_light_manager(ego_vehicle_wp) != 0:
+            return 0, None, vlm_prompt
+
         # 5a.
         if self.Behavior_FSM.current_state.name == 'STOP':
             target_speed = 0
             # generate control
             target_speed, target_loc = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
-            return target_speed, target_loc
+            return target_speed, target_loc, vlm_prompt
         # 5b.
         elif self.Behavior_FSM.current_state.name == 'CAR_FOLLOWING':
             if distance < max(self.break_distance, 3):
@@ -993,7 +1000,7 @@ class BehaviorAgent(object):
                 target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
             # generate control
             target_speed, target_loc = self._local_planner.run_step(rx, ry, rk, target_speed=target_speed)
-            return target_speed, target_loc
+            return target_speed, target_loc, vlm_prompt
 
         # 5c. deny lane change
         elif self.Behavior_FSM.current_superstate.name == 'LANE_FOLLOWING' \
@@ -1012,7 +1019,7 @@ class BehaviorAgent(object):
             target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
                                                                     target_speed=self.max_speed - self.speed_lim_dist
                                                                     if not target_speed else target_speed)
-            return target_speed, target_loc
+            return target_speed, target_loc, vlm_prompt
         # 6. overtake (currently only to the left)
         elif self.Behavior_FSM.current_superstate.name == 'OVERTAKING' \
                 and self.Behavior_FSM.current_state.name == 'LANE_CHANGE_LEFT' \
@@ -1036,10 +1043,10 @@ class BehaviorAgent(object):
                                                                     target_speed=self.max_speed - self.speed_lim_dist
                                                                     if not target_speed else target_speed)
             self.overtake_once = True
-            return target_speed, target_loc
+            return target_speed, target_loc, vlm_prompt
 
         else:
             target_speed, target_loc = self._local_planner.run_step(rx, ry, rk,
                                                                     target_speed=self.max_speed - self.speed_lim_dist
                                                                     if not target_speed else target_speed)
-            return target_speed, target_loc
+            return target_speed, target_loc, vlm_prompt

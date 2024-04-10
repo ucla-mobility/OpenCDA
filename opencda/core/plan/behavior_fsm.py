@@ -80,6 +80,9 @@ class BehaviorFSM(object):
         self.current_superstate = self.superstates["LANE_FOLLOWING"]
         self.current_state = self.states["GO_STRAIGHT"]
 
+        # Current prompt for vision-language model
+        self.prompt = ""
+
         # Lane change
         self.prepare_lane_change_counter = 0
         self.give_up_lane_change = False
@@ -841,3 +844,53 @@ class BehaviorFSM(object):
             # print(f"Transitioned to superstate {self.current_superstate}")
         if state_name:
             self.current_state = self.states[state_name]
+
+    def get_current_prompt(self):
+        '''
+        Generate prompt for Vision-language model.
+        '''
+        if self.current_state == self.states["GO_STRAIGHT"]:
+            prompt = "Based on current traffic condition including traffic light, \
+                    generate future driving plan in one short sentence.\
+                    If there's no traffic light in pucture, just say it's not detected."
+
+        elif self.current_state == self.states["PREPARE_LANE_CHANGE_LEFT"]:
+            prompt = "Based on current lane position and traffic condition, generate future\
+                 driving plan for a potential left lane change in one short sentence."
+
+        elif self.current_state == self.states["PREPARE_LANE_CHANGE_RIGHT"]:
+            prompt = "Based on current lane position and traffic condition, generate future\
+                 driving plan for a potential right lane change in one short sentence."
+
+        elif self.current_state == self.states["LANE_CHANGE_LEFT"]:
+            prompt = "Based on current lane position and traffic condition, generate future\
+                 driving plan for a lane change to the left adjacent lane in one short sentence."
+
+        elif self.current_state == self.states["LANE_CHANGE_RIGHT"]:
+            prompt = "Based on current lane position and traffic condition, generate future\
+                 driving plan for a lane change to the right adjacent lane in one short sentence."
+
+        elif self.current_state == self.states["CAR_FOLLOWING"]:
+            prompt = "Based on current lane position and traffic condition, generate future\
+                 driving plan for a car following behavior in one short sentence."
+
+        elif self.current_state == self.states["TURN_LEFT"]:
+            prompt = "Based on current lane position and traffic light, generate future\
+                 driving plan for a left turn in one short sentence."
+
+        elif self.current_state == self.states["TURN_RIGHT"]:
+            prompt = "Based on current lane position and traffic light, generate future\
+                 driving plan for a right turn in one short sentence."
+
+        elif self.current_state == self.states["STOP"]:
+            prompt = "Based on current lane position, traffic light and traffic condition, generate future\
+                 driving plan to stop the ego vehicle in one short sentence."
+
+        else:
+            print('Warning: FSM state error. Current state not exist.')
+            prompt = "Based on current traffic condition including traffic light, \
+                    generate future driving plan in one short sentence.\
+                    If there's no traffic light in pucture, just say it's not detected."
+
+        return prompt
+

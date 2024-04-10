@@ -15,7 +15,7 @@ vehicle_base:
         positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
           - [10, 0, 1.0, 0]
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        visualize: true
+        visualize: false
         channels: 8
         range: 50
         points_per_second: 1000
@@ -29,9 +29,9 @@ vehicle_base:
   behavior:
     max_speed: 35 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
     ignore_traffic_light: false # whether to ignore traffic light
-    overtake_allowed: true
+    # overtake_allowed: true
     collision_time_ahead: 2.0 # used for collision checking
-    sample_resolution: 6 # the unit distance between two adjacent waypoints in meter
+    # sample_resolution: 6 # the unit distance between two adjacent waypoints in meter
     local_planner:  # trajectory planning related
       buffer_size: 12 # waypoint buffer size
       trajectory_update_freq: 15 # used to control trajectory points updating frequency
@@ -55,7 +55,7 @@ vehicle_base:
         k_p: 0.37
         k_d: 0.024
         k_i: 0.032
-      dynamic: false # whether use dynamic pid setting
+      dynamic: false # whether use dynamic pid settings
       dt: ${world.fixed_delta_seconds} # this should be equal to your simulation time-step
       max_brake: 1.0
       max_throttle: 1.0
@@ -73,8 +73,8 @@ scenario:
         communication_range: 45
       behavior:
         local_planner:
-          debug_trajectory: true
-          debug: true
+          debug_trajectory: false
+          debug: false
     # - name: bicycle
     #   spawn_position: [10, 110, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
     #   # destination: [-12.51, 110.31, 0.3]

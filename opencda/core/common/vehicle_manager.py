@@ -221,7 +221,7 @@ class VehicleManager(object):
         """
         # visualize the bev map if needed
         self.map_manager.run_step()
-        target_speed, target_pos = self.agent.run_step(target_speed)
+        target_speed, target_pos, vlm_prompt = self.agent.run_step(target_speed)
         control = self.controller.run_step(target_speed, target_pos)
 
         # dump data
@@ -230,7 +230,7 @@ class VehicleManager(object):
                                       self.localizer,
                                       self.agent)
 
-        return control
+        return control, vlm_prompt
 
     def destroy(self):
         """

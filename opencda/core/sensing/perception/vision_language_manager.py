@@ -42,7 +42,7 @@ from llava.mm_utils import get_model_name_from_path
 from llava.eval.run_llava import eval_model
 
 # define GPU 
-os.environ['CUDA_VISIBLE_DEVICES'] ='1'
+os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 
 
 class VisionLanguageInterpreter(object):
