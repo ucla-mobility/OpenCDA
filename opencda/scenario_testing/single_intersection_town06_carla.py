@@ -13,7 +13,11 @@ from multiprocessing import Process, Queue, get_context
 import multiprocessing
 # Set multiprocessing start method to 'spawn'
 multiprocessing.set_start_method('spawn', force=True)
+import pygame
 import sys
+import socket
+import time
+import json
 
 import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
@@ -104,9 +108,14 @@ def run_scenario(opt, scenario_params):
 
         # multi-process llava
         model_path = "liuhaotian/llava-v1.5-7b"
-        prompt_input = "Based on current traffic condition including traffic light, \
-                    generate future driving plan in one short sentence.\
-                    If there's no traffic light in pucture, just say it's not detected"
+        # prompt_input = "Based on current traffic condition including traffic light, \
+        #             generate future driving plan in one short sentence.\
+        #             If there's no traffic light in pucture, just say it's not detected"
+        prompt_input = "Based on current traffic light,\
+                        determine driving plan in less then 10 words.\
+                        If no traffic light, say it's not detected. \
+                        Do not report green light."
+
 
         vlm_manager = VisionLanguageInterpreter(model_path)
 
@@ -126,6 +135,31 @@ def run_scenario(opt, scenario_params):
         vlm_ready = False
         idle_vehicle = True
 
+        # ------------- space key press event -------------
+        world = scenario_manager.client.get_world()
+
+        print("Press SPACE key to start the vehicle")
+        running = False
+
+        # Set up the Pygame window and clock
+        pygame.init()
+
+        screen = pygame.display.set_mode((700, 100))
+        # Set the font and text for the message
+        font = pygame.font.SysFont("monospace", 30)
+        text = font.render("Press SPACE to start vehicle movement", True, (255, 255, 255))
+
+        # Draw the message on the screen
+        screen.blit(text, (10, 10))
+        pygame.display.flip()
+
+        clock = pygame.time.Clock()
+
+        # -------------------------------------------------
+        # connect to llm tcp 
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(('localhost', 5000))
+
         # run steps
         while True:
             step += 1
@@ -139,6 +173,14 @@ def run_scenario(opt, scenario_params):
                     pitch=-
                     90)))
 
+            # pygame event 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    running = True
+
             # VLM GPU multi-processing 
             if not input_queue.empty():
                 if not gpu_process.is_alive(): 
@@ -149,11 +191,6 @@ def run_scenario(opt, scenario_params):
 
                 # simulation step 
                 control, vlm_prompt = single_cav.run_step()
-                if idle_vehicle:
-                    single_cav.vehicle.apply_control(
-                                        carla.VehicleControl(brake=1.0))
-                else:
-                    single_cav.vehicle.apply_control(control)
 
                 # off load camera feed
                 if single_cav.perception_manager.camera_img_buffer:
@@ -175,9 +212,37 @@ def run_scenario(opt, scenario_params):
                     # print(f"Received result: {result}")
                     single_cav.update_vlm_info(result)
 
-                    # debug print, vlm response 
-                    print('*** vlm response from vehicle manager is : ' \
-                            + str(single_cav.perception_manager.vlm_response))
+                    # # debug print, vlm response 
+                    # print('*** vlm response from vehicle manager is : ' \
+                    #         + str(single_cav.perception_manager.vlm_response))
+
+                # vehicle control
+                if running == True:
+                    single_cav.vehicle.apply_control(control)
+                    vlm_response = single_cav.perception_manager.vlm_response
+                    
+                    # FSM info 
+                    behavior_FSM = single_cav.agent.Behavior_FSM
+                    current_superstate = str(behavior_FSM.current_superstate.name)
+                    current_state = str(behavior_FSM.current_state.name)
+                    next_superstate = str(single_cav.agent.best_superstate)
+                    next_state = str(single_cav.agent.selected_nxt_state)
+
+                    # construct dict
+                    message_dict = {'vlm_response': vlm_response, 
+                                    'current_superstate': current_superstate,
+                                    'current_state': current_state,
+                                    'next_superstate': next_superstate,
+                                    'next_state': next_state}
+                    # decode 
+                    message = json.dumps(message_dict).encode('utf-8')
+
+                    # send vlm 
+                    if vlm_response:
+                        client_socket.sendall(message)
+                else: 
+                    single_cav.vehicle.apply_control(
+                                        carla.VehicleControl(brake=1.0))
 
     finally:
         # Clean up

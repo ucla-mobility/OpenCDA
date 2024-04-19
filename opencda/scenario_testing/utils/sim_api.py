@@ -346,6 +346,8 @@ class ScenarioManager:
                                                  *cav_config['spawn_special'])
 
                 cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+                # assign role name
+                cav_vehicle_bp.set_attribute('role_name', 'UCLA-OPENCDA')
                 vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
                 # create vehicle manager for each cav

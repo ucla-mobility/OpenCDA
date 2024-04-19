@@ -150,6 +150,8 @@ class BehaviorAgent(object):
 
         # behavioral FSM
         self.Behavior_FSM = BehaviorFSM(self._local_planner)
+        self.best_superstate = ""
+        self.selected_nxt_state = ""
 
         # overtake once at a time
         self.overtake_once = False
@@ -949,11 +951,11 @@ class BehaviorAgent(object):
                                                                     is_overtake_proper,
                                                                     is_obstacle_confirmed
                                                                     )
-        best_superstate = next(iter(ranked_superstate))
+        self.best_superstate = next(iter(ranked_superstate))
         # 3b. List available next step states
-        next_states = self.Behavior_FSM.get_next_states_based_on_one_superstate(best_superstate)
+        next_states = self.Behavior_FSM.get_next_states_based_on_one_superstate(self.best_superstate)
         # 3c. Compare cost for all next step states
-        all_path_w_cost = self.Behavior_FSM.generate_trajectory(best_superstate,
+        all_path_w_cost = self.Behavior_FSM.generate_trajectory(self.best_superstate,
                                                                 next_states,
                                                                 is_intersection,
                                                                 is_hazard,
@@ -964,18 +966,18 @@ class BehaviorAgent(object):
                                                                 is_target_lane_safe)
 
         # 4. FSM transition to best option
-        selected_nxt_state = next(iter(all_path_w_cost))
+        self.selected_nxt_state = next(iter(all_path_w_cost))
 
-        print('----- Debug Stream ----')
-        print('Current superstate is: ' + str(self.Behavior_FSM.current_superstate))
-        print('Current state is: ' + str(self.Behavior_FSM.current_state))
-        print('Next superstate is: ' + str(best_superstate))
-        print('is_red_light: ' + str(is_red_light))
-        print('is_lane_change_allowed: ' + str(self.lane_change_allowed))
-        print('Next state is: ' + str(selected_nxt_state))
-        print('-------')
+        # print('----- Debug Stream ----')
+        # print('Current superstate is: ' + str(self.Behavior_FSM.current_superstate))
+        # print('Current state is: ' + str(self.Behavior_FSM.current_state))
+        # print('Next superstate is: ' + str(self.best_superstate))
+        # print('is_red_light: ' + str(is_red_light))
+        # print('is_lane_change_allowed: ' + str(self.lane_change_allowed))
+        # print('Next state is: ' + str(self.selected_nxt_state))
+        # print('-------')
 
-        self.Behavior_FSM.transition(best_superstate, selected_nxt_state)
+        self.Behavior_FSM.transition(self.best_superstate, self.selected_nxt_state)
         rx, ry, rk, ryaw, cost = next(iter(all_path_w_cost.values()))
 
         # 5. Generate final control
