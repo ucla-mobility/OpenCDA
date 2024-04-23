@@ -70,7 +70,8 @@ def run_scenario(opt, scenario_params):
 
             for i, single_cav in enumerate(single_cav_list):
                 single_cav.update_info()
-                control = single_cav.run_step()
+                control, vlm_prompt = single_cav.run_step()
+                print('Debug: control is: ' + str(control))
                 single_cav.vehicle.apply_control(control)
 
     finally:
