@@ -75,9 +75,9 @@ carla_traffic_manager:
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [10, 140, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      spawn_position: [9.81, 124.9, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
       # spawn_position: [6, 110, 0.3, 0, -92, 0] # going straight
-      destination: [170, 52.0, 0.3] # end [137, 52] for right turn
+      destination: [122.57, 52.25, 0.3] # end [137, 52] for right turn
       # destination: [6, -90.0, 0.3]
       v2x:
         communication_range: 45

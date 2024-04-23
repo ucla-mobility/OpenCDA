@@ -86,7 +86,7 @@ def run_scenario(opt, scenario_params):
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
-                                                   town='Town06',
+                                                   town='Town06_Signs',
                                                    cav_world=cav_world)
 
         if opt.record:
@@ -193,19 +193,21 @@ def run_scenario(opt, scenario_params):
                 control, vlm_prompt = single_cav.run_step()
 
                 # off load camera feed
-                if single_cav.perception_manager.camera_img_buffer:
+                if step%10 == 0 and \
+                    single_cav.perception_manager.camera_img_buffer:
                     vlm_image=[single_cav.perception_manager.camera_img_buffer[-1]]
+                    input_queue.put((vlm_image, vlm_prompt))
                     
                     # adjust llava frequency (delta_seconds = 0.05s)
-                    if step%10 == 0 and step >= 50:
-                        input_queue.put((vlm_image, prompt_input))
-                        # print('***debug stream: lenght of input queue is: ' \
-                        #         + str(input_queue.qsize()))
-                    elif step >= 100:
-                        input_queue.put((vlm_image, vlm_prompt))
+                    # if step%10 == 0 and step >= 50:
+                    #     input_queue.put((vlm_image, prompt_input))
+                    #     # print('***debug stream: lenght of input queue is: ' \
+                    #     #         + str(input_queue.qsize()))
+                    # elif step >= 100:
+                    #     input_queue.put((vlm_image, vlm_prompt))
                 
                 # VLM GPU process
-                if not output_queue.empty():
+                if step%10 == 0 and not output_queue.empty():
                     # start moving vehicle 
                     idle_vehicle = False
                     result = output_queue.get()
