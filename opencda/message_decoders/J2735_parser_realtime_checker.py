@@ -11,7 +11,8 @@ import socket
 import time
 from datetime import datetime
 
-import J2735_201603_combined_voices_mr_fix as J2735
+# import J2735_201603_combined_voices_mr_fix as J2735
+from opencda.message_decoders import J2735_201603_combined_voices_mr_fix as J2735
 
 lightStatusDict = {'protected-Movement-Allowed': 'green',
                    'permissive-Movement-Allowed': 'green',
@@ -31,7 +32,7 @@ def decode_hex_data(j2735_hex):
         # format data into json
         # decoded_msg_json = decoded_msg.to_json()
 
-        print('')
+        # print('')
         # print(decoded_msg_json)
     except Exception as err:
         print(f"Unexpected {err}, {type(err)}")
@@ -49,14 +50,14 @@ def convert_time_format(meta_J2735_intersection, reference_timestamp, minEndTime
     currentTime = '{}:{}:{}'.format(hour, minute, seconds)
     currentTimestamp = datetime.strptime(currentTime, '%H:%M:%S.%f')
     # convert current time
-    print('#####Current Time: ', currentTimestamp)
+    # print('#####Current Time: ', currentTimestamp)
     currentTimeReference = (currentTimestamp.hour * 3600 + currentTimestamp.minute * 60 + currentTimestamp.second) - \
                            ((reference_timestamp.hour * 60 + reference_timestamp.minute) * 60 + reference_timestamp.second)
     
     # reformat min end time
     minEndTimeSecond = round(float(minEndTime / 10 - minute * 60), 3)
     if minEndTimeSecond < 60:
-        print('{}:{}:{}'.format(hour, minute, minEndTimeSecond))
+        # print('{}:{}:{}'.format(hour, minute, minEndTimeSecond))
         minEndTimeStamp = datetime.strptime('{}:{}:{:.3f}'.format(hour, minute, minEndTimeSecond), '%H:%M:%S.%f')
     else:
         minEndTimeStamp = datetime.strptime(
@@ -99,7 +100,7 @@ def getSpatWindow(j2735_hex, reference_timestamp, intersectin_index, phase_index
 
     # extract phase array
     instersectionPhaseArray = meta_J2735_intersection['states']
-    print('Note: The intersection %s has a totle of %i phases.' %(intersectionID, len(instersectionPhaseArray)))
+    # print('Note: The intersection %s has a totle of %i phases.' %(intersectionID, len(instersectionPhaseArray)))
     # print('Note: Intersection Phase array: ' + str(instersectionPhaseArray))
     
     # 2. Extract meta spat data for the intersection 
@@ -148,7 +149,11 @@ def getSpatWindow(j2735_hex, reference_timestamp, intersectin_index, phase_index
     t2s = t1e + red_duration
     t2e = t2s + green_duration
 
-    spatWindow = {'current Time': currentTimeReference, 'light status': lightStatus, 't1s': t1s, 't1e': t1e, 't2s': t2s, 't2e': t2e, 'r1s': r1s}
+    spatWindow = {'current Time': currentTimeReference, \
+                'light status': lightStatus, \
+                't1s': t1s, 't1e': t1e, \
+                't2s': t2s, 't2e': t2e, \
+                'r1s': r1s}
     #print(spatWindow)
 
     return spatWindow
@@ -159,13 +164,13 @@ def process_SPaT(hex_data):
     reference_timestamp = datetime.strptime('06:30:00', '%H:%M:%S')
 
     if hex_data.startswith("0013"):
-        print("Received SPaT")
+        # print("Received SPaT")
         spatWindown = getSpatWindow(hex_data, 
-                                  reference_timestamp, 
-                                  intersectin_index=0,
-                                  phase_index=2,
-                                  green_duration=40, 
-                                  red_duration=30)
+                                    reference_timestamp, 
+                                    intersectin_index=0,
+                                    phase_index=2,
+                                    green_duration=40, 
+                                    red_duration=30)
         return True, spatWindown
     else:
         return False, {}

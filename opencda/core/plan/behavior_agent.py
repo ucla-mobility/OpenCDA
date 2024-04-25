@@ -148,6 +148,10 @@ class BehaviorAgent(object):
 
         # add delay to stop vehcile closer to stop bar
         self.red_light_brake_counter = 0
+        # spat info for eco drive
+        self.spat_info = {}
+        self._eco_approach_calculated = False
+        self.eco_approach_speed = 0.0
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -455,6 +459,72 @@ class BehaviorAgent(object):
         if self.light_id_to_ignore != light_id:
             self.light_id_to_ignore = -1
         return 0
+
+    
+    def set_spat_info(self, spat_info):
+        """
+        Set the spat info for behavior agent 
+        """
+        self.spat_info = spat_info
+
+    def find_eco_speed(self, spat_info, dist_to_bar):
+        """
+        Find seconds left to the next green cycle. 
+        """
+        curr_state = spat_info['light status']
+        if curr_state == 'red':
+            # t1s in red indicate when red will change to green  
+            time_to_traverse = spat_info['t1s'] - spat_info['current Time']
+            # wait red end, need to slow down and use all length
+            target_speed = min(35, (dist_to_bar/time_to_traverse)*3.6)
+            target_speed += 4
+
+        elif curr_state == 'yellow':
+            # 3s in yellow plus 35s for green
+            time_to_traverse = 3 + 35
+            # wait red end, need to slow down and use all length
+            target_speed = min(35, (dist_to_bar/time_to_traverse)*3.6)
+        else:
+            # t1e in green indicate green ends.
+            time_left_in_green = spat_info['t1e'] - spat_info['current Time']
+            
+            # vehicle speed is 30kmh, 8.3 m/s; 
+            time_needed_to_reach_bar = dist_to_bar/7.5
+            if time_left_in_green >= time_needed_to_reach_bar:
+                time_to_traverse = time_left_in_green
+                # normal speed, traverse intersection 
+                target_speed = (self.max_speed - self.speed_lim_dist)
+            
+            # not enough for all vehicles, wait for next cycle
+            else:
+                time_to_traverse = time_left_in_green + 3 + 35
+                # wait cycle end, slow down
+                target_speed = min(35, (dist_to_bar/time_to_traverse)*3.6)
+
+        print('Debug Stream for eco drive...')
+        print('Current state: ' + str(curr_state))
+        print('Current time: ' + str(spat_info['current Time']))
+        print('Time to traverse: ' + str(time_to_traverse))
+
+        return target_speed
+
+    def eco_drive_manager(self, spat_info):
+        """
+        This function calculate proper time for eco approaching. 
+        Note: Specifically design for VOICES, Mcity map. 
+        """
+        # these are harcoded value for VOICES project, mcity map
+        stop_bar_loc = carla.Location(x=106.9463, y=11.1924, z=245.0)
+        stop_bar_wpt = self._map.get_waypoint(stop_bar_loc)
+        cur_loc = self._ego_pos.location
+        cur_yaw = self._ego_pos.rotation.yaw
+        dist_to_bar, angle_to_light = cal_distance_angle(
+                                        stop_bar_loc, cur_loc, cur_yaw)
+
+        # find spat
+        target_speed = self.find_eco_speed(spat_info, dist_to_bar)
+        
+        return target_speed
 
     def collision_manager(self, rx, ry, ryaw, waypoint, adjacent_check=False):
         """
@@ -849,38 +919,59 @@ class BehaviorAgent(object):
             #  |---> do not exit the simulation, but hold the vehicle there.
             return 0, None
 
+        # Path generation based on the global route
+        rx, ry, rk, ryaw = self._local_planner.generate_path()
+
+        # 7a. eco drive
+        if  106.94 <= self._ego_pos.location.x <= 109.08 and \
+            -54.02 <= self._ego_pos.location.y <= 11.19 and \
+            self.spat_info != {}:
+            eco_approach_target_speed = self.eco_drive_manager(self.spat_info)
+            if not self._eco_approach_calculated:
+                self.eco_approach_speed = eco_approach_target_speed
+                self._eco_approach_calculated = True
+                target_speed = eco_approach_target_speed
+            else:
+                # target_speed = self.eco_approach_speed
+                target_speed = eco_approach_target_speed
+
+            print('case 7: Eco Approach Tartet speed is: ' + str(target_speed))
+
+            target_speed, target_loc = self._local_planner.run_step(
+                rx, ry, rk, target_speed=target_speed)
+            return target_speed, target_loc
+
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
+            print('case 1 ...')
             self.red_light_brake_counter += 1
             # delay brake by 1.8s to bring vehicle closer to the stop line
             # if self.red_light_brake_counter >= self._ego_speed*0.4:
             #     return 0, None
             return 0, None
 
-        # 2. when the temporary route is finished, we return to the global route
-        if len(self.get_local_planner().get_waypoints_queue()) == 0 \
-                and len(self.get_local_planner().get_waypoint_buffer()) <= 2:
-            if self.debug:
-                print('Destination Reset!')
-            # in case the vehicle is disabled overtaking function
-            # at the beginning
-            self.overtake_allowed = True and self.overtake_allowed_origin
-            self.lane_change_allowed = True
-            self.destination_push_flag = 0
-            self.set_destination(
-                ego_vehicle_loc,
-                self.end_waypoint.transform.location,
-                clean=True,
-                clean_history=True)
+        # disable for VOICES
+        # # 2. when the temporary route is finished, we return to the global route
+        # if len(self.get_local_planner().get_waypoints_queue()) == 0 \
+        #         and len(self.get_local_planner().get_waypoint_buffer()) <= 2:
+        #     if self.debug:
+        #         print('Destination Reset!')
+        #     # in case the vehicle is disabled overtaking function
+        #     # at the beginning
+        #     self.overtake_allowed = True and self.overtake_allowed_origin
+        #     self.lane_change_allowed = True
+        #     self.destination_push_flag = 0
+        #     self.set_destination(
+        #         ego_vehicle_loc,
+        #         self.end_waypoint.transform.location,
+        #         clean=True,
+        #         clean_history=True)
 
         # intersection behavior. if the car is near a intersection, no overtake is allowed
         if is_intersection:
             self.overtake_allowed = False
         else:
             self.overtake_allowed = True and self.overtake_allowed_origin
-
-        # Path generation based on the global route
-        rx, ry, rk, ryaw = self._local_planner.generate_path()
 
         # check whether lane change is allowed
         self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled, rk)
@@ -921,10 +1012,12 @@ class BehaviorAgent(object):
         elif is_hazard and (not self.overtake_allowed or
                             self.overtake_counter > 0
                             or self.get_local_planner().potential_curved_road):
+            print('case 5 ...')
             car_following_flag = True
         # 6. overtake handeling
         elif is_hazard and self.overtake_allowed and \
                 self.overtake_counter <= 0:
+            print('case 6 ...')
             obstacle_speed = get_speed(obstacle_vehicle)
             obstacle_lane_id = self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id
             ego_lane_id = self._map.get_waypoint(
@@ -954,12 +1047,32 @@ class BehaviorAgent(object):
             target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
             target_speed, target_loc = self._local_planner.run_step(
                 rx, ry, rk, target_speed=target_speed)
+            print('case 7 ...')
             return target_speed, target_loc
 
         # 8. Normal behavior
-        target_speed, target_loc = self._local_planner.run_step(
-            rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
-            if not target_speed else target_speed)
-        return target_speed, target_loc
+        if not self._eco_approach_calculated:
+            target_speed, target_loc = self._local_planner.run_step(
+                rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
+                if not target_speed else target_speed)
+            print('case 8 ...')
+            return target_speed, target_loc
+        # eco drive area traversed 
+        elif self._ego_pos.location.x <106 or\
+            self._ego_pos.location.y >11 :
+            target_speed, target_loc = self._local_planner.run_step(
+                rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
+                if not target_speed else target_speed)
+            print('case 9; eco approach done, current target speed is: ' + str(target_speed))
+            return target_speed, target_loc
+        else: 
+            # target_speed = self.eco_approach_speed
+            eco_approach_target_speed = self.eco_drive_manager(self.spat_info)
+            target_speed = eco_approach_target_speed
+            target_speed, target_loc = self._local_planner.run_step(
+                rx, ry, rk, target_speed=target_speed)
+            print('case 7 continue eco approach, current target speed is: ' + str(target_speed))
+            return target_speed, target_loc
+
 
 

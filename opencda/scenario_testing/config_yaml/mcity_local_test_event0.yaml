@@ -3,12 +3,6 @@ description: |-
   Author: Runsheng Xu <rxx3386@ucla.edu>
   Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
            testing in high speed in the customized 2lanefree simple version.
-# define carla simulation setting
-world:
-  sync_mode: true
-  client_port: 2000
-  fixed_delta_seconds: 0.05
-  seed: 11 # seed for numpy and random
 
 # First define the basic parameters of the vehicles
 vehicle_base:
@@ -25,17 +19,17 @@ vehicle_base:
           # - [0.0, -0.3, 1.8, -100]
           # - [-2.0, 0.0, 1.5, 180]
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        visualize: false
+        visualize: true
         channels: 16 # 32
         range: 120
         points_per_second: 10000 # 1000000  # note: consider reduce
-        rotation_frequency: 5   # 20 # the simulation is 20 fps
+        rotation_frequency: 20   # 20 # the simulation is 20 fps
         upper_fov: 2
         lower_fov: -25
         dropoff_general_rate: 0.3
         dropoff_intensity_limit: 0.7
         dropoff_zero_intensity: 0.4
-        noise_stddev: 0.0
+        noise_stddev: 0.02
   map_manager:
     visualize: true
     activate: true
@@ -72,25 +66,16 @@ scenario:
       # new route 10: 54.23977661 33.7761879
       # new route 25: 53.61002731 26.30117035
       # spawn_position: [54.25676727, 38.41537476, 238, 0.0, -90.0, 0.0] 
-      spawn_position: [118.37894439697266, -207.12489318847656, 250.47, 0.0, 100.0, 0.0] # start at right lane pass intersection
-      # spawn_position: [118.378, -207.124, 245.47, 0.0, 103.0, 0.0] # start at right lane pass intersection
-      # spawn_position: [109.084, -54.020, 245.47, 0.0, 92.0, 0.0]
-
-      middle_point:
-      #   - [113.83, -150.61, 247.80]
-      #   - [114.21, -120.41, 245.90]
-      #   - [111.37, -73.13, 243.76]
-      #   - [109.05, -15.81, 242.51]
-      #   - [106.72, 45.20, 241.55]
-      #   - [95.74, 69.66, 240.96]
-      #   - [62.51, 76.98, 240.31]
-      #   - [54.34, 44.42, 241.53]
-        - [109.453369140625,-60.56306076049805,238.5633]
-        - [100.36329650878906,63.37815475463867,236.299]
-        - [55.18695068359375,42.16797637939453,236.76719665527344]
-        - [56.35572814941406,-10.1939058303833,237.1010284423828]
-        - [57.89147186279297,-66.89228820800781,238.0032958984375]
-      destination: [103.129180908203, -130.716384887695, 241.379486083984]
+      # spawn_position: [118.37894439697266, -207.12489318847656, 250.47, 0.0, 100.0, 0.0] # start at right lane pass intersection
+      spawn_position: [118.378, -207.124, 245.47, 0.0, 103.0, 0.0] # start at right lane pass intersection
+      
+      # middle_point:
+        # - [109.453369140625,-60.56306076049805,238.5633]
+        # - [100.36329650878906,63.37815475463867,236.299]
+        # - [55.18695068359375,42.16797637939453,236.76719665527344]
+        # - [56.35572814941406,-10.1939058303833,237.1010284423828]
+        # - [57.89147186279297,-66.89228820800781,238.0032958984375]
+      destination: [85.819435, -33.195053, 237.77]
       v2x:
         communication_range: 45
       behavior:

@@ -6,24 +6,16 @@ Scenario testing: single vehicle behavior in intersection
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import carla
-import pygame
-import sys
-import json
-import csv
-import binascii as ba
-import math, sys
-import numpy as np
-import socket
-import time
-from datetime import datetime
 
 import opencda.scenario_testing.utils.sim_api as sim_api
 from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import add_current_time
-# J2735 parser
-from opencda.message_decoders.J2735_parser import process_SPaT
+
+import pygame
+import sys
+
 
 
 def run_scenario(opt, scenario_params):
@@ -80,14 +72,6 @@ def run_scenario(opt, scenario_params):
 
         clock = pygame.time.Clock()
 
-        # connect to J2735 adapter
-        UDP_IP = "192.168.2.6"
-        #UDP_IP = os.getenv("VUG_LOCAL_ADDRESS")  #### VPN testing to get SPaT
-        UDP_PORT = 5398
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind((UDP_IP, UDP_PORT))
-
         # # -------------------------------------------------
         # # Stationary view for VOICES
         # transform = single_cav_list[0].vehicle.get_transform()
@@ -119,28 +103,13 @@ def run_scenario(opt, scenario_params):
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     running = True
                     
-            # print spat befor engaging 
-            # check target trafficl light state 
-            data, addr = sock.recvfrom(4096)
-            hex_data = data.hex()
-            SPaT_flag, spatInfo = process_SPaT(hex_data)
-            # print SPaT
-            if spatInfo != {}:
-                # print spat data
-                print('SPaT data is: ' + str(spatInfo))
-
             # continue when key pressed 
             if running == True:
                 # iterate vehicle control
                 for i, single_cav in enumerate(single_cav_list):
-                    # send SPaT to eco drive manager here for eco approach
-                    if spatInfo != {}:
-                        single_cav.agent.set_spat_info(spatInfo)
-                    # vehicle control
                     single_cav.update_info()
                     control = single_cav.run_step()
                     single_cav.vehicle.apply_control(control)
-
             else:
                 # brake the vehicle to prevent roll back
                 for i, single_cav in enumerate(single_cav_list):
