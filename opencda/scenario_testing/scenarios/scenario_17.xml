@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<scenarios>
+    <scenario name="Scenario_17" type="Scenario_17" town="Town03"> <!--'name' is same as yaml, 'type' is same as .py class-->
+        <ego_vehicle x="170.5" y="95.5" z="0.3" yaw="270" model="vehicle.nissan.patrol" />
+        <other_actor x="167.5" y="81.5" z="-500" yaw="270" model="vehicle.carlamotors.firetruck" />
+        <other_actor x="153.2" y="71.5" z="-500" yaw="270" model="walker.pedestrian.0001" />
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+</scenarios>
