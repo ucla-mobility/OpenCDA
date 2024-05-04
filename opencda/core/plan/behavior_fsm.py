@@ -268,13 +268,13 @@ class BehaviorFSM(object):
                 nxt_superstates['LANE_FOLLOWING'] = 10
         if 'INTERSECTION' in next_superstates:
             if is_intersection:
-                nxt_superstates['INTERSECTION'] = 5
+                nxt_superstates['INTERSECTION'] = 3
             else:
                 nxt_superstates['INTERSECTION'] = 10
         if 'OVERTAKING' in next_superstates:
             # condition where overtaking is in favor
             if is_hazard and is_overtake_proper:
-                nxt_superstates['OVERTAKING'] = 5 if is_obstacle_confirmed else 10
+                nxt_superstates['OVERTAKING'] = 100 if is_obstacle_confirmed else 100
             else:
                 nxt_superstates['OVERTAKING'] = 200
         if 'COLLISION_AVOIDANCE' in next_superstates:
@@ -283,7 +283,9 @@ class BehaviorFSM(object):
             else:
                 nxt_superstates['COLLISION_AVOIDANCE'] = 100
         # rank dict
-        sorted_superstates = dict(sorted(nxt_superstates.items(), key=lambda item: item[1]))
+        sorted_superstates = dict(sorted(nxt_superstates.items(), key=lambda item: item[-1]))
+        # print('Debug ranked ss: ' + str(sorted_superstates.keys()))
+        # print('Is at intersection: ' + str(is_intersection))
         return sorted_superstates
 
     # state transition #0 GO_STRAIGHT
@@ -308,17 +310,17 @@ class BehaviorFSM(object):
         # transitions associate with costs
         if self.current_superstate.name == 'LANE_FOLLOWING':
             if 'GO_STRAIGHT' in next_states:
-                cost = 10
+                cost = 3
                 path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
             if 'PREPARE_LANE_CHANGE_LEFT' in next_states:
                 if is_lane_change_ahead:
-                    cost = 5
+                    cost = 6
                 else:
                     cost = 15
                 path['PREPARE_LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
             if 'PREPARE_LANE_CHANGE_RIGHT' in next_states:
                 if is_lane_change_ahead:
-                    cost = 1
+                    cost = 5
                 else:
                     cost = 15
                 path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
@@ -337,21 +339,23 @@ class BehaviorFSM(object):
                     # do not proceed if red light or turns ahead
                     cost = 30
                 else:
-                    cost = 1
-
+                    cost = 4
             if 'TURN_RIGHT' in next_states:
                 # prepare right turn
                 # todo: Add regulation here to determine right turn on red, hardcode for now
-                is_right_turn_on_red_legal = False
-                if is_right_turn_ahead and is_red_light:
-                    # go ahead on red
-                    cost = 10 if is_right_turn_on_red_legal else 30
-                elif is_right_turn_ahead and not is_red_light:
-                    # go ahead on green
-                    cost = 10
+                is_right_turn_on_red_legal = True
+                if is_right_turn_ahead:
+                    if is_right_turn_on_red_legal: 
+                        cost = 3
+                    else:
+                        cost = 30
                 else:
                     # do not proceed on all other condition
                     cost = 30
+                # patch if detection shows "is_lane_change_ahead"
+                if is_lane_change_ahead:
+                    # make turn 
+                    cost = 3
                 path['TURN_RIGHT'] = [rx, ry, rk, ryaw, cost]
             if 'TURN_LEFT' in next_states:
                 # prepare left turn
@@ -377,10 +381,12 @@ class BehaviorFSM(object):
                 if is_red_light and not \
                         (is_left_turn_ahead or is_right_turn_ahead):
                     # stop at red
-                    cost = 3
+                    cost = 2
                 else:
                     cost = 30
                 path['STOP'] = [rx, ry, rk, ryaw, cost]
+            # debug
+            # print('Debug all path: ' + str(path.keys()))
         elif self.current_superstate.name == 'OVERTAKING':
             if 'GO_STRAIGHT' in next_states:
                 cost = 10
@@ -759,14 +765,15 @@ class BehaviorFSM(object):
                 path = self.state_transition_stop(next_states,
                                                   is_red_light=is_red_light,
                                                   is_hazard=is_hazard)
-            if 'TURN_LEFT' in next_states:
-                rx, ry, rk, ryaw = self._local_planner.generate_path()
-                cost = 15
-                path['TURN_LEFT'] = [rx, ry, rk, ryaw, cost]
-            if 'TURN_RIGHT' in next_states:
-                rx, ry, rk, ryaw = self._local_planner.generate_path()
-                cost = 15
-                path['TURN_RIGHT'] = [rx, ry, rk, ryaw, cost]
+            # if 'TURN_LEFT' in next_states:
+            #     rx, ry, rk, ryaw = self._local_planner.generate_path()
+            #     cost = 15
+            #     path['TURN_LEFT'] = [rx, ry, rk, ryaw, cost]
+            # if 'TURN_RIGHT' in next_states:
+            #     rx, ry, rk, ryaw = self._local_planner.generate_path()
+            #     cost = 15
+            #     path['TURN_RIGHT'] = [rx, ry, rk, ryaw, cost]
+
         # Overtaking
         elif self.current_superstate.name == 'OVERTAKING':
             # check if there's planned lane change ahead
@@ -803,7 +810,7 @@ class BehaviorFSM(object):
                                                                is_lane_change_finished)
 
         # rank dict
-        sorted_path = dict(sorted(path.items(), key=lambda item: item[1]))
+        sorted_path = dict(sorted(path.items(), key=lambda item: item[-1]))
         return sorted_path
 
     def generate_trajectory_with_superstate_transition(self, next_states, is_intersection,
@@ -849,48 +856,53 @@ class BehaviorFSM(object):
         '''
         Generate prompt for Vision-language model.
         '''
-        if self.current_state == self.states["GO_STRAIGHT"]:
-            prompt = "Based on current traffic condition including traffic light, \
-                    generate future driving plan in one short sentence.\
-                    If there's no traffic light in pucture, just say it's not detected."
-
-        elif self.current_state == self.states["PREPARE_LANE_CHANGE_LEFT"]:
-            prompt = "Based on current lane position and traffic condition, generate future\
-                 driving plan for a potential left lane change in one short sentence."
-
-        elif self.current_state == self.states["PREPARE_LANE_CHANGE_RIGHT"]:
-            prompt = "Based on current lane position and traffic condition, generate future\
-                 driving plan for a potential right lane change in one short sentence."
-
-        elif self.current_state == self.states["LANE_CHANGE_LEFT"]:
-            prompt = "Based on current lane position and traffic condition, generate future\
-                 driving plan for a lane change to the left adjacent lane in one short sentence."
-
-        elif self.current_state == self.states["LANE_CHANGE_RIGHT"]:
-            prompt = "Based on current lane position and traffic condition, generate future\
-                 driving plan for a lane change to the right adjacent lane in one short sentence."
-
-        elif self.current_state == self.states["CAR_FOLLOWING"]:
-            prompt = "Based on current lane position and traffic condition, generate future\
-                 driving plan for a car following behavior in one short sentence."
-
-        elif self.current_state == self.states["TURN_LEFT"]:
-            prompt = "Based on current lane position and traffic light, generate future\
-                 driving plan for a left turn in one short sentence."
-
-        elif self.current_state == self.states["TURN_RIGHT"]:
-            prompt = "Based on current lane position and traffic light, generate future\
-                 driving plan for a right turn in one short sentence."
-
-        elif self.current_state == self.states["STOP"]:
-            prompt = "Based on current lane position, traffic light and traffic condition, generate future\
-                 driving plan to stop the ego vehicle in one short sentence."
-
+        if self.current_superstate == self.superstates["INTERSECTION"]:
+            prompt = "Based on current traffic light, and traffic sign (no turn on red),\
+                        generate future driving plan in one short sentence." 
         else:
-            print('Warning: FSM state error. Current state not exist.')
-            prompt = "Based on current traffic condition including traffic light, \
-                    generate future driving plan in one short sentence.\
-                    If there's no traffic light in pucture, just say it's not detected."
+            if self.current_state == self.states["GO_STRAIGHT"]:
+                prompt = "Based on current traffic light, and traffic sign (no turn on red),, \
+                        generate future driving plan in one short sentence.\
+                        If there's no traffic light in pucture, just say it's not detected."
+
+            elif self.current_state == self.states["PREPARE_LANE_CHANGE_LEFT"]:
+                prompt = "Based on current lane position and traffic condition, generate future\
+                     driving plan for a potential left lane change in one short sentence."
+
+            elif self.current_state == self.states["PREPARE_LANE_CHANGE_RIGHT"]:
+                prompt = "Based on current lane position and traffic condition, generate future\
+                     driving plan for a potential right lane change in one short sentence."
+
+            elif self.current_state == self.states["LANE_CHANGE_LEFT"]:
+                prompt = "Based on current lane position and traffic condition, generate future\
+                     driving plan for a lane change to the left adjacent lane in one short sentence."
+
+            elif self.current_state == self.states["LANE_CHANGE_RIGHT"]:
+                prompt = "Based on current lane position and traffic condition, generate future\
+                     driving plan for a lane change to the right adjacent lane in one short sentence."
+
+            elif self.current_state == self.states["CAR_FOLLOWING"]:
+                prompt = "Based on current lane position and traffic condition, generate future\
+                     driving plan for a car following behavior in one short sentence."
+
+            elif self.current_state == self.states["TURN_LEFT"]:
+                prompt = "Based on current lane position and traffic light, generate future\
+                     driving plan for a left turn in one short sentence."
+
+            elif self.current_state == self.states["TURN_RIGHT"]:
+                prompt = "Based on current lane position and traffic light, generate future\
+                     driving plan for a right turn in one short sentence."
+
+            elif self.current_state == self.states["STOP"]:
+                prompt = "Based on current traffic light, and traffic sign (no turn on red), \
+                        generate future driving plan to stop the ego vehicle in one short \
+                        sentence."
+
+            else:
+                print('Warning: FSM state error. Current state not exist.')
+                prompt = "Based on current traffic condition including traffic light, \
+                        generate future driving plan in one short sentence.\
+                        If there's no traffic light in pucture, just say it's not detected."
 
         return prompt
 

@@ -90,8 +90,10 @@ def pygame_loop(args):
 
         connected_text = f'Connection established with {addr}'
         world.hud.notification(connected_text, seconds=1.0)
+        count = 0
 
         while True:
+            count += 1
             clock.tick_busy_loop(60)
             if controller.parse_events():
                 return
@@ -122,9 +124,11 @@ def pygame_loop(args):
             
             # Convert JSON and update pygame
             message_dict = json.loads(raw_msg)
+
+            # update FSM at lower freq
             world.hud.update_FSM(message_dict)
             # debug 
-            print('meta msg: ' + str(message_dict))
+            # print('meta msg: ' + str(message_dict))
             
             # render VLM in pygame
             vlm_msg = message_dict['vlm_response']

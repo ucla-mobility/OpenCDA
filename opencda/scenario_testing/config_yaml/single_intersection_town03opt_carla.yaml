@@ -27,8 +27,8 @@ vehicle_base:
         dropoff_zero_intensity: 0.4
         noise_stddev: 0.0
   behavior:
-    max_speed: 30 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
-    ignore_traffic_light: false # whether to ignore traffic light
+    max_speed: 18 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
+    ignore_traffic_light: true # whether to ignore traffic light
     # overtake_allowed: true
     collision_time_ahead: 2.0 # used for collision checking
     # sample_resolution: 6 # the unit distance between two adjacent waypoints in meter
@@ -48,11 +48,11 @@ vehicle_base:
     type: pid_controller # this has to be exactly the same name as the controller py file
     args:
       lat:
-        k_p: 0.60
+        k_p: 0.65
         k_d: 0.02
         k_i: 0.2
       lon:
-        k_p: 0.3
+        k_p: 0.37
         k_d: 0.024
         k_i: 0.032
       dynamic: false # whether use dynamic pid settings
@@ -62,27 +62,21 @@ vehicle_base:
       max_steering: 0.8
 
 # define the background traffic control by carla
-carla_traffic_manager:
-  random: true # whether to random select vehicles' color and model
-  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
-  vehicle_list:
-    - spawn_position: [6.5, 110, 0.3, 0, -92, 0]
-      vehicle_speed_perc: 0
-    - spawn_position: [6.5, 120, 0.3, 0, -92, 0]
-      vehicle_speed_perc: 0
-    - spawn_position: [3, 100, 0.3, 0, -92, 0]
-      vehicle_speed_perc: 0
-    - spawn_position: [3, 80, 0.3, 0, -92, 0]
-      vehicle_speed_perc: 0
-
+# carla_traffic_manager:
+#   random: true # whether to random select vehicles' color and model
+#   ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
+#   vehicle_list: ~  # a number or a list
+#   # Used only when vehicle_list is a number.
+#   # x_min, x_max, y_min, y_max, x_step, y_step
+#   range:
+#     - [ -100, 0, -150, -50, 5, 5, 40]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [9.81, 124.9, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
-      # spawn_position: [6, 110, 0.3, 0, -92, 0] # going straight
-      destination: [122.57, 52.25, 0.3] # end [137, 52] for right turn
+      spawn_position: [-54.630997, -194.923615, 0.3, 0, 1.439547, 0] # start; number 2
+      destination: [-4.364792, -126.337181, 0.275307] # end [137, 52] for right turn
       # destination: [6, -90.0, 0.3]
       v2x:
         communication_range: 45

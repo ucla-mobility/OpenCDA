@@ -316,7 +316,7 @@ class LocalPlanner(object):
     def is_turn_ahead(self):
         # check if there is a turn ahead
         is_left_turn_ahead = False
-        is_right_turn_ahead = False
+        is_right_turn_ahead = True
         return is_left_turn_ahead, is_right_turn_ahead
 
     def generate_path(self):
@@ -358,17 +358,6 @@ class LocalPlanner(object):
         current_wpt_loc = current_wpt.transform.location
 
         # retrieve the future and past waypoint to check whether a lane change
-        # is gonna operated
-        # '''
-        # Debug
-        # '''
-        # print('waypoint buffer len...')
-        # print(len(self._waypoint_buffer))
-        # print('waypoint queue len...')
-        # print(len(self.waypoints_queue))
-        # '''
-        # Debug
-        # '''
         future_wpt = self._waypoint_buffer[-1][0]
         previous_wpt = self._history_buffer[0][0] if len(
             self._history_buffer) > 0 else current_wpt

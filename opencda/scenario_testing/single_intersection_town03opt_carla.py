@@ -86,7 +86,7 @@ def run_scenario(opt, scenario_params):
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
-                                                   town='Town06_Signs',
+                                                   town='Town03_Opt',
                                                    cav_world=cav_world)
 
         if opt.record:
@@ -147,8 +147,7 @@ def run_scenario(opt, scenario_params):
         screen = pygame.display.set_mode((700, 100))
         # Set the font and text for the message
         font = pygame.font.SysFont("monospace", 30)
-        text = font.render("Press SPACE to start vehicle movement", \
-                    True, (255, 255, 255))
+        text = font.render("Press SPACE to start vehicle movement", True, (255, 255, 255))
 
         # Draw the message on the screen
         screen.blit(text, (10, 10))
@@ -198,6 +197,14 @@ def run_scenario(opt, scenario_params):
                     single_cav.perception_manager.camera_img_buffer:
                     vlm_image=[single_cav.perception_manager.camera_img_buffer[-1]]
                     input_queue.put((vlm_image, vlm_prompt))
+                    
+                    # adjust llava frequency (delta_seconds = 0.05s)
+                    # if step%10 == 0 and step >= 50:
+                    #     input_queue.put((vlm_image, prompt_input))
+                    #     # print('***debug stream: lenght of input queue is: ' \
+                    #     #         + str(input_queue.qsize()))
+                    # elif step >= 100:
+                    #     input_queue.put((vlm_image, vlm_prompt))
                 
                 # VLM GPU process
                 if step%10 == 0 and not output_queue.empty():
@@ -216,16 +223,13 @@ def run_scenario(opt, scenario_params):
                     single_cav.vehicle.apply_control(control)
                     vlm_response = single_cav.perception_manager.vlm_response
                     if 'green' in vlm_response:
-                        vlm_response = 'No traffic light detected, proceed with current plan.'
-                    elif 'not possible' in vlm_response:
-                        vlm_response = 'No traffic light detected, proceed with current plan.'
-                    elif 'middle lane' in vlm_response:
                         vlm_response = 'Vehicle should stop at red traffic light and yield to other vehicles.'
-                    else: 
-                        vlm_response = vlm_response
-
-                    if single_cav.agent.near_target_intersection:
-                        vlm_response = 'Traffic light is red, and there is a no turn on red sign, so vehicle should plan to stop.'
+                    # elif 'not possible' in vlm_response:
+                    #     vlm_response = 'No traffic light detected, proceed with current plan.'
+                    # elif 'middle lane' in vlm_response:
+                    #     vlm_response = 'Vehicle should stop at red traffic light and yield to other vehicles.'
+                    # else: 
+                    #     vlm_response = vlm_response
                     
                     # FSM info 
                     behavior_FSM = single_cav.agent.Behavior_FSM
