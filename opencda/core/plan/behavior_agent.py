@@ -157,6 +157,7 @@ class BehaviorAgent(object):
         self.overtake_once = False
         self.counter = 0
         self.near_target_intersection = False
+        self.stop_on_red_counter = 0
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -189,11 +190,12 @@ class BehaviorAgent(object):
         # update the debug helper
         self.debug_helper.update(ego_speed, self.ttc)
 
-        if self.ignore_traffic_light:
-            self.light_state = "Green"
-        else:
-            # This method also includes stop signs and intersections.
-            self.light_state = str(self.vehicle.get_traffic_light_state())
+        # if self.ignore_traffic_light:
+        #     self.light_state = "Green"
+        # else:
+        #     # This method also includes stop signs and intersections.
+        #     self.light_state = str(self.vehicle.get_traffic_light_state())
+        self.light_state = str(self.vehicle.get_traffic_light_state())
 
     def add_white_list(self, vm):
         """
@@ -872,7 +874,7 @@ class BehaviorAgent(object):
             # is_intersection = False
 
         # intersection area to stablize llava output
-        if self._ego_pos.location.x < 15 and \
+        if self._ego_pos.location.x < 12 and \
             50.0 <= self._ego_pos.location.y <= 80.0:
             self.near_target_intersection = True
         else:
@@ -967,7 +969,18 @@ class BehaviorAgent(object):
 
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
-            return 0, None, vlm_prompt
+            if self.ignore_traffic_light: 
+                # still need to stop on red before proceed 
+                if self.stop_on_red_counter <= 40:
+                    # stop for 2 seconds 
+                    self.stop_on_red_counter += 1
+                    return 0, None, vlm_prompt
+                else:
+                    # procedd on red
+                    pass
+            else: 
+                # do not ignore traffic light 
+                return 0, None, vlm_prompt
 
         # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \

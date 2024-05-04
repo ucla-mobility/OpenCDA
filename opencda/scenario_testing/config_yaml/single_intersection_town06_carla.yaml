@@ -28,7 +28,7 @@ vehicle_base:
         noise_stddev: 0.0
   behavior:
     max_speed: 30 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
-    ignore_traffic_light: false # whether to ignore traffic light
+    ignore_traffic_light: true # whether to ignore traffic light
     # overtake_allowed: true
     collision_time_ahead: 2.0 # used for collision checking
     # sample_resolution: 6 # the unit distance between two adjacent waypoints in meter
