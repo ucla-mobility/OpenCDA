@@ -196,6 +196,7 @@ class BehaviorAgent(object):
         #     # This method also includes stop signs and intersections.
         #     self.light_state = str(self.vehicle.get_traffic_light_state())
         self.light_state = str(self.vehicle.get_traffic_light_state())
+        print('Debug at behavior agent: light state: ' + str(self.light_state))
 
     def add_white_list(self, vm):
         """
