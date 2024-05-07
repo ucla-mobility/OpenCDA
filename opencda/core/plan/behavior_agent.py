@@ -196,7 +196,7 @@ class BehaviorAgent(object):
         #     # This method also includes stop signs and intersections.
         #     self.light_state = str(self.vehicle.get_traffic_light_state())
         self.light_state = str(self.vehicle.get_traffic_light_state())
-        print('Debug at behavior agent: light state: ' + str(self.light_state))
+        # print('Debug at behavior agent: light state: ' + str(self.light_state))
 
     def add_white_list(self, vm):
         """
@@ -972,7 +972,7 @@ class BehaviorAgent(object):
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             if self.ignore_traffic_light: 
                 # still need to stop on red before proceed 
-                if self.stop_on_red_counter <= 40:
+                if self.stop_on_red_counter <= 50:
                     # stop for 2 seconds 
                     self.stop_on_red_counter += 1
                     return 0, None, vlm_prompt

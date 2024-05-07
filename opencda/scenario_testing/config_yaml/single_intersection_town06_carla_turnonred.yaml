@@ -80,11 +80,50 @@ carla_traffic_manager:
     - spawn_position: [3, 80, 0.3, 0, -92, 0]
       vehicle_speed_perc: 0
     # left and right traffic 
-    - spawn_position: [-10, 50, 0.3, 0, -92, 0]
+    - spawn_position: [-90, 41, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
-    - spawn_position: [-10, 46, 0.3, 0, -92, 0]
+    - spawn_position: [-90, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 80
+    - spawn_position: [-90, 48, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
-    - spawn_position: [-10, 42, 0.3, 0, -92, 0]
+    - spawn_position: [-90, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-70, 41, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-70, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 100
+    - spawn_position: [-70, 48, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-70, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-60, 41, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-60, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 100
+    - spawn_position: [-60, 48, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-60, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-50, 41, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-50, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 100
+    - spawn_position: [-50, 48, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-50, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    # incoming traffic 
+    - spawn_position: [-9, 18, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-5, 18, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-9, 9, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-5, 9, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-9, -5, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-5, -5, 0.3, 0, 90, 0]
       vehicle_speed_perc: 0
 
 

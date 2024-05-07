@@ -86,7 +86,7 @@ def run_scenario(opt, scenario_params):
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
-                                                   town='Town06',
+                                                   town='Town06_Signs',
                                                    cav_world=cav_world)
 
         if opt.record:
@@ -175,7 +175,7 @@ def run_scenario(opt, scenario_params):
         while True:
             step += 1
             scenario_manager.tick()
-            
+
             # pygame event 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -215,26 +215,9 @@ def run_scenario(opt, scenario_params):
 
                 # vehicle control
                 if running == True:
+                    # vlm response 
                     single_cav.vehicle.apply_control(control)
                     vlm_response = single_cav.perception_manager.vlm_response
-                    if 'green' in vlm_response:
-                        vlm_response = 'No traffic light detected, proceed with current plan.'
-                    elif 'not possible' in vlm_response:
-                        vlm_response = 'No traffic light detected, proceed with current plan.'
-                    elif 'middle lane' in vlm_response:
-                        vlm_response = 'Vehicle should stop at red traffic light and yield to other vehicles.'
-                    else: 
-                        vlm_response = vlm_response
-
-                    # intersection prompt 
-                    if single_cav.agent.near_target_intersection:
-                        vlm_response = 'Traffic light is red, but turn on red is allowed,' + \
-                                       'vehicle should stop before proceed to turn.'
-                    
-                    # turn on red 
-                    if single_cav.agent.stop_on_red_counter > 40:
-                        vlm_response = 'Traffic light is red, but turn on red is allowed,' + \
-                                       'vehicle should stop before proceed to turn.'
 
                     # FSM info 
                     behavior_FSM = single_cav.agent.Behavior_FSM
@@ -242,6 +225,26 @@ def run_scenario(opt, scenario_params):
                     current_state = str(behavior_FSM.current_state.name)
                     next_superstate = str(single_cav.agent.best_superstate)
                     next_state = str(single_cav.agent.selected_nxt_state)
+
+                    # manual adjustment 
+                    if 'green' in vlm_response:
+                        vlm_response = 'No traffic light detected, proceed with current plan.'
+                    elif 'not possible' in vlm_response:
+                        vlm_response = 'No traffic light detected, proceed with current plan.'
+                    elif 'middle lane' in vlm_response:
+                        vlm_response = 'Vehicle should stop at red traffic light and yield to other vehicles.'
+                        next_state = 'STOP'
+                    else: 
+                        vlm_response = vlm_response
+
+                    if single_cav.agent.near_target_intersection:
+                        # red 
+                        vlm_response = 'Traffic light is red,'+\
+                              ' but turn on red is allowed, ego vehicle should stop on red before proceed.'
+                        if single_cav.agent.stop_on_red_counter <= 50:
+                            next_state = 'STOP'
+                        
+                    
 
                     # construct dict
                     message_dict = {'vlm_response': vlm_response, 
