@@ -743,7 +743,7 @@ class BehaviorAgent(object):
         if lane_change_enabled_flag:
             lane_change_allowed = lane_change_allowed and self.lane_change_management()
             # temporarly disable this Check to avoid bicycle
-            # lane_change_allowed = True
+            lane_change_allowed = True
             if not lane_change_allowed:
                 print("lane change not allowed")
 
@@ -950,7 +950,7 @@ class BehaviorAgent(object):
                     # reset target 
                     self.overtake_allowed = False
                     # set the flag, so the push operation is not allowed for the next few frames.
-                    self.destination_push_flag = 90
+                    self.destination_push_flag = 10
                     
                     # use previous loc to smooth trajectory
                     # history_buffer = self.get_local_planner().get_history_buffer()
@@ -959,13 +959,21 @@ class BehaviorAgent(object):
                     #                     else ego_vehicle_loc
 
                     self.set_destination(
+                        # ego_vehicle_loc,
                         reset_location_wpt.transform.location,
                         nxt_location_wpt.transform.location,
                         clean=True,
                         end_reset=False)
 
                     rx, ry, rk, ryaw = self._local_planner.generate_path()
-                    self.avoid_bike_once = True
+                    print('Bike Avoidance Target Set!')
+
+                    # revert to normal behavior when wpt is finish
+                    if len(self.get_local_planner().get_waypoints_queue()) == 0 \
+                            and len(self.get_local_planner().get_waypoint_buffer()) <= 1:
+                        # bike avoidance done  
+                        print('Bike Avoidance Target Reset!')
+                        self.avoid_bike_once = True
 
                     break
 

@@ -15,10 +15,10 @@ vehicle_base:
         positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
           - [2.5, 0, 1.0, 0]
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
-        visualize: true
-        channels: 32
+        visualize: false
+        channels: 16
         range: 50
-        points_per_second: 100000
+        points_per_second: 1000
         rotation_frequency: 20 # the simulation is 20 fps
         upper_fov: 10.0
         lower_fov: -30.0
@@ -27,7 +27,7 @@ vehicle_base:
         dropoff_zero_intensity: 0.0
         noise_stddev: 0.0
   behavior:
-    max_speed: 65 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
+    max_speed: 30 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
     ignore_traffic_light: false # whether to ignore traffic light
     overtake_allowed: true
     collision_time_ahead: 2.0 # used for collision checking
@@ -89,11 +89,11 @@ vehicle_base:
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      # spawn_position: [10, 147, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
-      spawn_position: [6, 110, 0.3, 0, -92, 0] # going straight
+      spawn_position: [10, 147, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      # spawn_position: [6, 110, 0.3, 0, -92, 0] # going straight
       # destination: [-12.51, 110.31, 0.3]
-      # destination: [170, 52.0, 0.3] # end [137, 52] for right turn
-      destination: [6, -90.0, 0.3]
+      destination: [170, 52.0, 0.3] # end [137, 52] for right turn
+      # destination: [6, -90.0, 0.3]
       v2x:
         communication_range: 45
       behavior:
