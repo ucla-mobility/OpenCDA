@@ -196,13 +196,13 @@ def run_scenario(opt, scenario_params):
                 control, vlm_prompt = single_cav.run_step()
 
                 # off load camera feed
-                if step%10 == 0 and \
+                if step%15 == 0 and \
                     single_cav.perception_manager.camera_img_buffer:
                     vlm_image=[single_cav.perception_manager.camera_img_buffer[-1]]
                     input_queue.put((vlm_image, vlm_prompt))
                 
                 # VLM GPU process
-                if step%10 == 0 and not output_queue.empty():
+                if step%15 == 0 and not output_queue.empty():
                     # start moving vehicle 
                     idle_vehicle = False
                     result = output_queue.get()

@@ -905,7 +905,7 @@ class BehaviorAgent(object):
             self.hazard_flag = False
 
         # ------------------------------
-        if self.counter%10 == 0:
+        if self.counter%20 == 0:
             # Behavior FSM planning
             next_superstates = self.Behavior_FSM.get_possible_next_superstates()
             all_next_states = self.Behavior_FSM.get_possible_next_states(next_superstates)
