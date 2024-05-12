@@ -86,7 +86,7 @@ def run_scenario(opt, scenario_params):
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
                                                    opt.version,
-                                                   town='Town06_Signs',
+                                                   town='Town06',
                                                    cav_world=cav_world)
 
         if opt.record:
@@ -240,11 +240,15 @@ def run_scenario(opt, scenario_params):
                     if single_cav.agent.near_target_intersection:
                         # red 
                         vlm_response = 'Traffic light is red,'+\
-                              ' but turn on red is allowed, ego vehicle should stop on red before proceed.'
+                              ' but turn on red is allowed. Ego vehicle should stop before proceed.'
                         if single_cav.agent.stop_on_red_counter <= 50:
                             next_state = 'STOP'
+
+                    # after intersection 
+                    if single_cav.agent._ego_pos.rotation.yaw > -45:
+                        # no more traffic related prompt
+                        vlm_response = 'No traffic light detected, proceed with current plan.'
                         
-                    
 
                     # construct dict
                     message_dict = {'vlm_response': vlm_response, 

@@ -158,6 +158,9 @@ class BehaviorAgent(object):
         self.counter = 0
         self.near_target_intersection = False
         self.stop_on_red_counter = 0
+        # add pause for red 
+        self.stoped_for_red = False
+        self.red_delay = 0
 
     def update_information(self, ego_pos, ego_speed, objects):
         """
@@ -876,8 +879,9 @@ class BehaviorAgent(object):
 
         # intersection area to stablize llava output
         if self._ego_pos.location.x < 12 and \
-            50.0 <= self._ego_pos.location.y <= 80.0:
+            50.0 <= self._ego_pos.location.y <= 100.0:
             self.near_target_intersection = True
+            # print('behavioral agent: near_target_intersection!!')
         else:
             self.near_target_intersection = False
 
@@ -905,7 +909,7 @@ class BehaviorAgent(object):
             self.hazard_flag = False
 
         # ------------------------------
-        if self.counter%20 == 0:
+        if self.counter%10 == 0:
             # Behavior FSM planning
             next_superstates = self.Behavior_FSM.get_possible_next_superstates()
             all_next_states = self.Behavior_FSM.get_possible_next_states(next_superstates)
@@ -981,7 +985,19 @@ class BehaviorAgent(object):
                     pass
             else: 
                 # do not ignore traffic light 
+                self.stoped_for_red = True
                 return 0, None, vlm_prompt
+
+        # delay for red-->green
+        if self.stoped_for_red:
+            if self.red_delay<30:
+                self.red_delay += 1
+                return 0, None, vlm_prompt
+            else:
+                self.stoped_for_red = False
+                self.red_delay = 0
+
+
 
         # 2. when the temporary route is finished, we return to the global route
         if len(self.get_local_planner().get_waypoints_queue()) == 0 \

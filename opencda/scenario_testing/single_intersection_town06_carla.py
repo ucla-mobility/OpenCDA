@@ -238,17 +238,27 @@ def run_scenario(opt, scenario_params):
                         vlm_response = vlm_response
 
                     if single_cav.agent.near_target_intersection:
-                        if single_cav.agent.light_state == "Red":
-                            # red 
+                        # detect sign close by
+                        if single_cav.agent._ego_pos.location.y < 85:
                             vlm_response = 'Traffic light is red,'+\
-                                  ' and there is a no turn on red sign, so vehicle should plan to stop.'
-                            next_state = 'STOP'
-                        else:
+                              ' and there is a no turn on red sign, so vehicle should plan to stop.'
+                        else: 
+                            # red 
+                            vlm_response = 'Traffic light is red, so ' + \
+                                         'vehicle should plan to stop and yield to other vehicles.'
+                        next_state = 'STOP'
+
+                        # green light behavior 
+                        if single_cav.agent.light_state == "Green" and \
+                            single_cav.agent._ego_pos.location.y < 71:
                             # green
                             vlm_response = 'Traffic light is green,'+\
                                   ' ego vehicle should plan to proceed.'
-                        
-                    
+
+                    # after intersection 
+                    if single_cav.agent._ego_pos.rotation.yaw > -45:
+                        # no more traffic related prompt
+                        vlm_response = 'No traffic light detected, proceed with current plan.'
 
                     # construct dict
                     message_dict = {'vlm_response': vlm_response, 
@@ -281,4 +291,3 @@ def run_scenario(opt, scenario_params):
             v.destroy()
         for v in bg_veh_list:
             v.destroy()
-
