@@ -1073,6 +1073,15 @@ class BehaviorAgent(object):
             return target_speed, target_loc, vlm_prompt
 
         # 8. Normal behavior
+        # varaible speed limit 
+        # x = 14 after turn
+        # x = 42, speed limit change to 40 mph  
+        if self._ego_pos.location.x >= 42: 
+            target_speed = 40
+        # x = 95, speed limit change to 30 mph
+        if self._ego_pos.location.x >= 95:
+            target_speed = 30
+         
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)

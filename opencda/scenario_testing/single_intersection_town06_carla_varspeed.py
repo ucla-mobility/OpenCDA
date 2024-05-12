@@ -219,6 +219,9 @@ def run_scenario(opt, scenario_params):
                     single_cav.vehicle.apply_control(control)
                     vlm_response = single_cav.perception_manager.vlm_response
 
+                    # debug 
+                    print('Debug stream, vehicle location: ' + str(single_cav.agent._ego_pos))
+
                     # FSM info 
                     behavior_FSM = single_cav.agent.Behavior_FSM
                     current_superstate = str(behavior_FSM.current_superstate.name)
@@ -233,8 +236,7 @@ def run_scenario(opt, scenario_params):
                         vlm_response = 'No traffic light detected, proceed with current plan.'
                     elif 'middle lane' in vlm_response:
                         vlm_response = 'Vehicle should stop at red traffic light and yield to other vehicles.'
-                        if current_state == 'STOP':
-                            next_state = 'STOP'
+                        next_state = 'STOP'
                     else: 
                         vlm_response = vlm_response
 
@@ -247,8 +249,7 @@ def run_scenario(opt, scenario_params):
                             # red 
                             vlm_response = 'Traffic light is red, so ' + \
                                          'vehicle should plan to stop and yield to other vehicles.'
-                        if current_state == 'STOP':
-                            next_state = 'STOP'
+                        next_state = 'STOP'
 
                         # green light behavior 
                         if single_cav.agent.light_state == "Green" and \
@@ -261,6 +262,13 @@ def run_scenario(opt, scenario_params):
                     if single_cav.agent._ego_pos.rotation.yaw > -45:
                         # no more traffic related prompt
                         vlm_response = 'No traffic light detected, proceed with current plan.'
+
+                    # variable speed limit 
+                    if single_cav.agent._ego_pos.location.x >= 42:
+                        vlm_response = 'Speed limit sign indicate 40 mph, ego vehicle should adjust speed.'
+
+                    if single_cav.agent._ego_pos.location.x >= 92:
+                        vlm_response = 'Speed limit sign indicate 30 mph, ego vehicle should adjust speed.'
 
                     # construct dict
                     message_dict = {'vlm_response': vlm_response, 
