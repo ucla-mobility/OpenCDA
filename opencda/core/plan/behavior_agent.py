@@ -159,6 +159,9 @@ class BehaviorAgent(object):
         self.near_target_intersection = False
         self.stop_on_red_counter = 0
 
+        # bike avoidance 
+        self.avoid_bike_once = False
+
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information
@@ -231,6 +234,10 @@ class BehaviorAgent(object):
             o_waypoint = self._map.get_waypoint(o.get_location())
             o_lane_id = o_waypoint.lane_id
 
+            # add bike to obstacle list 
+            if 'bike' in o.type_id:
+                new_obstacle_list.append(o)
+
             for vm in self.white_list:
                 pos = vm.v2x_manager.get_ego_pos()
                 vm_x = pos.location.x
@@ -246,6 +253,7 @@ class BehaviorAgent(object):
                 if abs(vm_x - o_x) <= 3.0 and abs(vm_y - o_y) <= 3.0:
                     flag = True
                     break
+
             if not flag:
                 new_obstacle_list.append(o)
 
@@ -448,9 +456,15 @@ class BehaviorAgent(object):
         target_vehicle = None
 
         for vehicle in self.obstacle_vehicles:
-            collision_free = self._collision_check.collision_circle_check(
-                rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
-                adjacent_check=adjacent_check)
+            if 'bike' in vehicle.type_id:
+                collision_free = False
+            else:
+                # resume normal check 
+                collision_free = self._collision_check.collision_circle_check(
+                    rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
+                    adjacent_check=adjacent_check)
+
+            # handle hazard condition 
             if not collision_free:
                 vehicle_state = True
 
@@ -778,6 +792,8 @@ class BehaviorAgent(object):
                not self.destination_push_flag
         if lane_change_enabled_flag:
             lane_change_allowed = lane_change_allowed and self.lane_change_management()
+            # hard reset for bike avoidance 
+            lane_change_allowed = True
             if not lane_change_allowed:
                 print("lane change not allowed")
 
@@ -821,6 +837,37 @@ class BehaviorAgent(object):
                  reset_target.transform.location.y,
                  reset_target.transform.location.z))
         return reset_target
+
+    def find_destination_around_object(self, obj_location, target_dist):
+        '''
+        Find a target waypoint on the current lane to avoid small object.
+        '''
+        # 1. find the corresponing waypoint locate at the center of lane
+        center_wpt = self._map.get_waypoint(obj_location, project_to_road=True)
+
+        # 2. determine relative location (center wpt vs obj wpt)
+        vec_center_to_object = carla.Vector3D(
+            x=obj_location.x - center_wpt.transform.location.x,
+            y=obj_location.y - center_wpt.transform.location.y)
+        # Get the right vector of the center waypoint
+        right_vector = center_wpt.transform.get_right_vector()
+        # Check the relation
+        dot_product = right_vector.x * vec_center_to_object.x + \
+                        right_vector.y * vec_center_to_object.y
+        if dot_product > 0:
+            offset_direction = -1  # move left
+        else:
+            offset_direction = 1  # move right
+
+        # Calculate new location
+        new_location = carla.Location(
+            x=center_wpt.transform.location.x + offset_direction * right_vector.x * target_dist,
+            y=center_wpt.transform.location.y + offset_direction * right_vector.y * target_dist,
+            z=center_wpt.transform.location.z
+        )
+        new_wpt = self._map.get_waypoint(new_location, project_to_road=False) #.next(10)[0]
+        return new_wpt
+
 
     def run_step(
             self,
@@ -892,9 +939,10 @@ class BehaviorAgent(object):
         rx, ry, rk, ryaw = self._local_planner.generate_path()
 
         # check whether lane change is allowed
-        self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled, rk)
+        self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, \
+                                                                     collision_detector_enabled, rk)
 
-        # 3. Collision check
+        # Collision check
         is_hazard = False
         if collision_detector_enabled:
             is_hazard, obstacle_vehicle, distance = self.collision_manager(
@@ -926,12 +974,16 @@ class BehaviorAgent(object):
                                                                                          overtake_left,
                                                                                          overtake_right)
             else:
-                is_overtake_proper = False  # note: default as true, then penalize by high cost
+                is_overtake_proper = True  # note: default as true, then penalize by high cost
                 is_obstacle_confirmed = False # if not hazard, then safe to obstacle
                 # overtake left by default
-                overtake_left = False
+                overtake_left = True
                 overtake_right = False
                 is_target_lane_safe = True
+
+            # print('Debug behavior agent states [is_hazard]: ' + str(is_hazard))
+            # print('Debug behavior agent states [is_overtake_proper]: ' + str(is_overtake_proper))
+            # print('Debug behavior agent states [is_obstacle_confirmed]: ' + str(is_obstacle_confirmed))
 
             ranked_superstate = self.Behavior_FSM.rank_next_superstates(next_superstates,
                                                                         is_intersection,
@@ -939,8 +991,7 @@ class BehaviorAgent(object):
                                                                         is_red_light,
                                                                         self.lane_change_allowed,
                                                                         is_overtake_proper,
-                                                                        is_obstacle_confirmed
-                                                                        )
+                                                                        is_obstacle_confirmed)
             self.best_superstate = next(iter(ranked_superstate))
             # List available next step states
             next_states = self.Behavior_FSM.get_next_states_based_on_one_superstate(self.best_superstate)
@@ -955,6 +1006,7 @@ class BehaviorAgent(object):
                                                                     overtake_right,
                                                                     is_target_lane_safe)
 
+            # print('Debug stream all path with cost: ' + str(all_path_w_cost.keys()))
             # FSM transition to best option
             self.selected_nxt_state = next(iter(all_path_w_cost))
             # state transition
@@ -1018,13 +1070,55 @@ class BehaviorAgent(object):
                 end_reset=False)
             rx, ry, rk, ryaw = self._local_planner.generate_path()
 
+        # 4a. Bicycle avoidance: maintain a minimal distance to the bicycle 
+        if len(self.objects['vehicles'])>0 and \
+            not self.destination_push_flag and\
+            not self.avoid_bike_once:
+
+            for object_v in self.objects['vehicles']:
+                if 'bike' in object_v.type_id:
+
+                    # reset target to avoid bike 
+                    bike_location = object_v.location
+                    bike_bbox = object_v.bounding_box
+                    bike_extend_x = bike_bbox.extent.x
+                    v_extend_x = self.vehicle.bounding_box.extent.x
+                    # California: vehicle need to maintain at least 3 feet (1m) distance 
+                    distance = 0.5*(v_extend_x + bike_extend_x + 1)
+                    # generate target waypoint to avoid bike 
+                    reset_location_wpt = self.find_destination_around_object(bike_location, distance)
+                    nxt_location_wpt = reset_location_wpt.next(15)[0]
+                    # reset target 
+                    self.overtake_allowed = False
+                    # set the flag, so the push operation is not allowed for the next few frames.
+                    self.destination_push_flag = 90
+
+                    self.set_destination(
+                        # ego_vehicle_loc,
+                        reset_location_wpt.transform.location,
+                        nxt_location_wpt.transform.location,
+                        clean=True,
+                        end_reset=False)
+
+                    rx, ry, rk, ryaw = self._local_planner.generate_path()
+                    # print('Bike Avoidance Target Set!')
+
+                    # revert to normal behavior when wpt is finish
+                    if len(self.get_local_planner().get_waypoints_queue()) == 0 \
+                            and len(self.get_local_planner().get_waypoint_buffer()) <= 1:
+                        # bike avoidance done  
+                        # print('Bike Avoidance Target Reset!')
+                        self.avoid_bike_once = True
+
+                    break
+
         # 5. the case that vehicle is blocking in front and overtake not
         # allowed or it is doing overtaking the second condition is to
         # prevent successive overtaking
-        elif is_hazard and (not self.overtake_allowed or
-                            self.overtake_counter > 0
-                            or self.get_local_planner().potential_curved_road):
-            car_following_flag = True
+        # elif is_hazard and (not self.overtake_allowed or
+        #                     self.overtake_counter > 0
+        #                     or self.get_local_planner().potential_curved_road):
+        #     car_following_flag = True
         # 6. overtake handeling
         elif is_hazard and self.overtake_allowed and \
                 self.overtake_counter <= 0:

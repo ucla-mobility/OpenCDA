@@ -49,7 +49,7 @@ class BehaviorFSM(object):
             "LANE_FOLLOWING": BehaviorSuperStates.LANE_FOLLOWING,
             "INTERSECTION": BehaviorSuperStates.INTERSECTION,
             "OVERTAKING": BehaviorSuperStates.OVERTAKING,
-            "COLLISION_AVOIDANCE": BehaviorSuperStates.COLLISION_AVOIDANCE,
+            "OBSTACLE_AVOIDANCE": BehaviorSuperStates.OBSTACLE_AVOIDANCE,
         }
         self.init_superstate_transitions()
 
@@ -64,6 +64,9 @@ class BehaviorFSM(object):
             "TURN_LEFT": BehaviorStates.TURN_LEFT,
             "TURN_RIGHT": BehaviorStates.TURN_RIGHT,
             "STOP": BehaviorStates.STOP,
+            "EMERGENCY_STOP": BehaviorStates.EMERGENCY_STOP ,
+            "AVOIDANCE_LANE_CHANGE_LEFT": BehaviorStates.AVOIDANCE_LANE_CHANGE_LEFT, 
+            "AVOIDANCE_LANE_CHANGE_RIGHT": BehaviorStates.AVOIDANCE_LANE_CHANGE_RIGHT
         }
         # Define state transitions for each superstates
         # Lane following
@@ -75,6 +78,9 @@ class BehaviorFSM(object):
         # Overtaking
         self.overtaking_graph = nx.DiGraph()
         self.init_overtaking_transitions()
+        # obstacle avoidance 
+        self.obstacle_avoidance_graph = nx.DiGraph()
+        self.init_obstacle_avoidance_transitions()
 
         # Define initial superstate
         self.current_superstate = self.superstates["LANE_FOLLOWING"]
@@ -97,19 +103,19 @@ class BehaviorFSM(object):
         # start in lane following
         self.superstate_graph.add_edge(self.superstates["LANE_FOLLOWING"], self.superstates["INTERSECTION"])
         self.superstate_graph.add_edge(self.superstates["LANE_FOLLOWING"], self.superstates["OVERTAKING"])
-        self.superstate_graph.add_edge(self.superstates["LANE_FOLLOWING"], self.superstates["COLLISION_AVOIDANCE"])
+        self.superstate_graph.add_edge(self.superstates["LANE_FOLLOWING"], self.superstates["OBSTACLE_AVOIDANCE"])
         self.superstate_graph.add_edge(self.superstates["LANE_FOLLOWING"], self.superstates["LANE_FOLLOWING"])
         # start in intersection
         self.superstate_graph.add_edge(self.superstates["INTERSECTION"], self.superstates["LANE_FOLLOWING"])
-        self.superstate_graph.add_edge(self.superstates["INTERSECTION"], self.superstates["COLLISION_AVOIDANCE"])
+        self.superstate_graph.add_edge(self.superstates["INTERSECTION"], self.superstates["OBSTACLE_AVOIDANCE"])
         self.superstate_graph.add_edge(self.superstates["INTERSECTION"], self.superstates["INTERSECTION"])
         # start in overtaking
         self.superstate_graph.add_edge(self.superstates["OVERTAKING"], self.superstates["LANE_FOLLOWING"])
-        self.superstate_graph.add_edge(self.superstates["OVERTAKING"], self.superstates["COLLISION_AVOIDANCE"])
+        self.superstate_graph.add_edge(self.superstates["OVERTAKING"], self.superstates["OBSTACLE_AVOIDANCE"])
         self.superstate_graph.add_edge(self.superstates["OVERTAKING"], self.superstates["OVERTAKING"])
         # start in collision avoidance
-        self.superstate_graph.add_edge(self.superstates["COLLISION_AVOIDANCE"], self.superstates["LANE_FOLLOWING"])
-        self.superstate_graph.add_edge(self.superstates["COLLISION_AVOIDANCE"], self.superstates["COLLISION_AVOIDANCE"])
+        self.superstate_graph.add_edge(self.superstates["OBSTACLE_AVOIDANCE"], self.superstates["LANE_FOLLOWING"])
+        self.superstate_graph.add_edge(self.superstates["OBSTACLE_AVOIDANCE"], self.superstates["OBSTACLE_AVOIDANCE"])
 
     def init_lane_following_transitions(self):
         # Add nodes to the graph
@@ -203,6 +209,22 @@ class BehaviorFSM(object):
         self.overtaking_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["PREPARE_LANE_CHANGE_LEFT"])
         self.overtaking_graph.add_edge(self.states["LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
 
+    def init_obstacle_avoidance_transitions(self):
+        # Add nodes to the graph
+        for state in self.states.values():
+            self.obstacle_avoidance_graph.add_node(state)
+
+        # Define transitions
+        self.obstacle_avoidance_graph.add_edge(self.states["GO_STRAIGHT"], self.states["GO_STRAIGHT"])
+        self.obstacle_avoidance_graph.add_edge(self.states["GO_STRAIGHT"], self.states["AVOIDANCE_LANE_CHANGE_LEFT"])
+        self.obstacle_avoidance_graph.add_edge(self.states["GO_STRAIGHT"], self.states["AVOIDANCE_LANE_CHANGE_RIGHT"])
+
+        self.obstacle_avoidance_graph.add_edge(self.states["AVOIDANCE_LANE_CHANGE_LEFT"], self.states["AVOIDANCE_LANE_CHANGE_LEFT"])
+        self.obstacle_avoidance_graph.add_edge(self.states["AVOIDANCE_LANE_CHANGE_LEFT"], self.states["GO_STRAIGHT"])
+
+        self.obstacle_avoidance_graph.add_edge(self.states["AVOIDANCE_LANE_CHANGE_RIGHT"], self.states["AVOIDANCE_LANE_CHANGE_RIGHT"])
+        self.obstacle_avoidance_graph.add_edge(self.states["AVOIDANCE_LANE_CHANGE_RIGHT"], self.states["GO_STRAIGHT"])
+
     def get_current_superstate(self):
         return self.current_superstate
 
@@ -227,6 +249,17 @@ class BehaviorFSM(object):
                 # search graph
                 possible_next_states_names += [state.name for state in \
                                                self.intersection_graph.neighbors(self.current_state)]
+            # case 3. OVERTAKE
+            elif self.current_superstate.name == 'OVERTAKING':
+                # search graph
+                possible_next_states_names += [state.name for state in \
+                                               self.overtaking_graph.neighbors(self.current_state)]
+            # case 4. AVOIDANCE
+            elif self.current_superstate.name == 'OBSTACLE_AVOIDANCE':
+                # search graph 
+                possible_next_states_names += [state.name for state in \
+                                                self.obstacle_avoidance_graph.neighbors(self.current_state)]
+
             # following case wait to be implemented
         # if superstate transitioned, it is only possible to start in "go straight" state.
         else:
@@ -250,6 +283,12 @@ class BehaviorFSM(object):
                 # search graph
                 possible_next_states_names += [state.name for state in \
                                                self.overtaking_graph.neighbors(self.current_state)]
+
+            # case 4. AVOIDANCE 
+            elif self.current_superstate.name == 'OBSTACLE_AVOIDANCE':
+                # search graph
+                possible_next_states_names += [state.name for state in \
+                                               self.obstacle_avoidance_graph.neighbors(self.current_state)]
         else:
             possible_next_states_names.append(self.states["GO_STRAIGHT"].name)
         return possible_next_states_names
@@ -277,11 +316,11 @@ class BehaviorFSM(object):
                 nxt_superstates['OVERTAKING'] = 100 if is_obstacle_confirmed else 100
             else:
                 nxt_superstates['OVERTAKING'] = 200
-        if 'COLLISION_AVOIDANCE' in next_superstates:
+        if 'OBSTACLE_AVOIDANCE' in next_superstates:
             if is_hazard:
-                nxt_superstates['COLLISION_AVOIDANCE'] = 100
+                nxt_superstates['OBSTACLE_AVOIDANCE'] = 5
             else:
-                nxt_superstates['COLLISION_AVOIDANCE'] = 100
+                nxt_superstates['OBSTACLE_AVOIDANCE'] = 100
         # rank dict
         sorted_superstates = dict(sorted(nxt_superstates.items(), key=lambda item: item[-1]))
         # print('Debug ranked ss: ' + str(sorted_superstates.keys()))
@@ -403,6 +442,23 @@ class BehaviorFSM(object):
                 else:
                     cost = 15
                 path['PREPARE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+        elif self.current_superstate.name == 'OBSTACLE_AVOIDANCE':
+            # transition for avoidance 
+            if 'GO_STRAIGHT' in next_states:
+                cost = 5
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'AVOIDANCE_LANE_CHANGE_LEFT' in next_states:
+                if overtake_left:
+                    cost = 3
+                else:
+                    cost = 15
+                path['AVOIDANCE_LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+            if 'AVOIDANCE_LANE_CHANGE_RIGHT' in next_states:
+                if overtake_right:
+                    cost = 3
+                else:
+                    cost = 15
+                path['AVOIDANCE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
 
         return path
 
@@ -715,6 +771,57 @@ class BehaviorFSM(object):
             path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
         return path
 
+    # lane chage left for avoidance 
+    def state_transition_avoidance_lane_change_left(self, next_states, is_lane_change_finished):
+        path = {}
+        rx, ry, rk, ryaw = self._local_planner.generate_path()
+        if self.current_superstate.name == 'OBSTACLE_AVOIDANCE':
+            if 'GO_STRAIGHT' in next_states:
+                if is_lane_change_finished:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'AVOIDANCE_LANE_CHANGE_LEFT' in next_states:
+                if not is_lane_change_finished:
+                    cost = 5
+                    # reset lane change starting point
+                    self._local_planner.reset_lane_change_marker()
+                    # reset give up lane change marker
+                    self.give_up_lane_change = False
+                else:
+                    cost = 15
+                path['AVOIDANCE_LANE_CHANGE_LEFT'] = [rx, ry, rk, ryaw, cost]
+        else:
+            path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, 5]
+
+        return path
+
+    def state_transition_avoidance_lane_change_right(self, next_states, is_lane_change_finished):
+        path = {}
+        rx, ry, rk, ryaw = self._local_planner.generate_path()
+        if self.current_superstate.name == 'OBSTACLE_AVOIDANCE':
+            if 'GO_STRAIGHT' in next_states:
+                if is_lane_change_finished:
+                    cost = 5
+                else:
+                    cost = 15
+                path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, cost]
+            if 'AVOIDANCE_LANE_CHANGE_RIGHT' in next_states:
+                if not is_lane_change_finished:
+                    cost = 5
+                    # reset lane change starting point
+                    self._local_planner.reset_lane_change_marker()
+                    # reset give up lane change marker
+                    self.give_up_lane_change = False
+                else:
+                    cost = 15
+                path['AVOIDANCE_LANE_CHANGE_RIGHT'] = [rx, ry, rk, ryaw, cost]
+        else:
+            path['GO_STRAIGHT'] = [rx, ry, rk, ryaw, 5]
+
+        return path
+
     def generate_trajectory_no_superstate_transition(self, next_states, is_intersection,
                                                      is_hazard, is_red_light, lane_change_allowed,
                                                      overtake_left, overtake_right, is_target_lane_safe):
@@ -753,6 +860,7 @@ class BehaviorFSM(object):
             elif self.current_state.name == 'LANE_CHANGE_RIGHT':
                 path = self.state_transition_lane_change_right(next_states,
                                                                is_lane_change_finished)
+        
         # Intersection
         elif self.current_superstate.name == 'INTERSECTION':
             if 'GO_STRAIGHT' in next_states:
@@ -808,6 +916,27 @@ class BehaviorFSM(object):
             elif self.current_state.name == 'LANE_CHANGE_RIGHT':
                 path = self.state_transition_lane_change_right(next_states,
                                                                is_lane_change_finished)
+
+        # Avoidance 
+        elif self.current_superstate.name == 'OBSTACLE_AVOIDANCE':
+            # check if there's planned lane change ahead
+            is_lane_change_ahead = self._local_planner.is_lane_change_ahead()
+            # check if lane change finished
+            is_lane_change_finished = self._local_planner.is_lane_change_finished()
+
+            if self.current_state.name == 'GO_STRAIGHT':
+                path = self.state_transition_go_straight(next_states,
+                                                         is_lane_change_ahead=is_lane_change_ahead,
+                                                         overtake_left=overtake_left,
+                                                         overtake_right=overtake_right)
+
+            elif self.current_state.name == 'AVOIDANCE_LANE_CHANGE_LEFT':
+                path = self.state_transition_avoidance_lane_change_left(next_states,
+                                                              is_lane_change_finished)
+
+            elif self.current_state.name == 'AVOIDANCE_LANE_CHANGE_RIGHT':
+                path = self.state_transition_avoidance_lane_change_right(next_states,
+                                                              is_lane_change_finished)
 
         # rank dict
         sorted_path = dict(sorted(path.items(), key=lambda item: item[-1]))
@@ -897,6 +1026,12 @@ class BehaviorFSM(object):
                 prompt = "Based on current traffic light, and traffic sign (no turn on red), \
                         generate future driving plan to stop the ego vehicle in one short \
                         sentence."
+            elif self.current_state == self.states["AVOIDANCE_LANE_CHANGE_LEFT"]:
+                prompt = "Watch for current traffic condition, determine if there is obstacle \
+                          in the left adjacent lane."
+            elif self.current_state == self.states["AVOIDANCE_LANE_CHANGE_RIGHT"]:
+                prompt = "Watch for current traffic condition, determine if there is obstacle \
+                          in the right adjacent lane."
 
             else:
                 print('Warning: FSM state error. Current state not exist.')

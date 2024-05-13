@@ -591,7 +591,8 @@ class PerceptionManager:
 
         vehicle_list = world.get_actors().filter("*vehicle*")
         # todo: hard coded
-        thresh = 50 if not self.data_dump else 120
+        # thresh = 50 if not self.data_dump else 120
+        thresh = 20 # temporarly adjust for natural behavior of bike detection
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
                         v.id != self.id]

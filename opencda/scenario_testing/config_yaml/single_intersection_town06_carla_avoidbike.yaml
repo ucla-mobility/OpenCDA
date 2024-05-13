@@ -1,0 +1,147 @@
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
+           testing in high speed in the customized 2lanefree simple version.
+
+# First define the basic parameters of the vehicles
+vehicle_base:
+  sensing:
+    perception:
+      activate: false # when not activated, objects positions will be retrieved from server directly
+      camera:
+        visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
+        num: 1 # how many cameras are mounted on the vehicle.
+        positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
+          - [3, 0, 1.0, 0]
+      lidar: # lidar sensor configuration, check CARLA sensor reference for more details
+        visualize: false
+        channels: 8
+        range: 50
+        points_per_second: 1000
+        rotation_frequency: 20 # the simulation is 20 fps
+        upper_fov: 2.0
+        lower_fov: -25.0
+        dropoff_general_rate: 0.3
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.4
+        noise_stddev: 0.0
+  behavior:
+    max_speed: 30 # 45 # 35 (first 3 scenarios for ADS) # maximum speed, km/h
+    ignore_traffic_light: true # whether to ignore traffic light
+    # overtake_allowed: true
+    collision_time_ahead: 2.0 # used for collision checking
+    # sample_resolution: 6 # the unit distance between two adjacent waypoints in meter
+    local_planner:  # trajectory planning related
+      buffer_size: 12 # waypoint buffer size
+      trajectory_update_freq: 15 # used to control trajectory points updating frequency
+      waypoint_update_freq: 20 # used to control waypoint updating frequency
+      min_dist: 3 # used to pop out the waypoints too close to current location
+      trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
+      debug: true # whether to draw future/history waypoints
+      debug_trajectory: true # whether to draw the trajectory points and path
+  map_manager:
+    visualize: false # whether to visualize the rasteraization map
+    activate: false # whether activate the map manager
+
+  controller:
+    type: pid_controller # this has to be exactly the same name as the controller py file
+    args:
+      lat:
+        k_p: 0.60
+        k_d: 0.02
+        k_i: 0.2
+      lon:
+        k_p: 0.3
+        k_d: 0.024
+        k_i: 0.032
+      dynamic: false # whether use dynamic pid settings
+      dt: ${world.fixed_delta_seconds} # this should be equal to your simulation time-step
+      max_brake: 1.0
+      max_throttle: 1.0
+      max_steering: 0.8
+
+# define the background traffic control by carla
+# carla_traffic_manager:
+#   random: true # whether to random select vehicles' color and model
+#   ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
+#   vehicle_list:
+#     # same direction
+#     - spawn_position: [6.5, 110, 0.3, 0, -92, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [6.5, 120, 0.3, 0, -92, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [6.5, 130, 0.3, 0, -92, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [3, 130, 0.3, 0, -92, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [3, 100, 0.3, 0, -92, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [3, 80, 0.3, 0, -92, 0]
+#       vehicle_speed_perc: 0
+#     # left and right traffic 
+#     - spawn_position: [-90, 41, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-90, 45, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 80
+#     - spawn_position: [-90, 48, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-90, 52, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-70, 41, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-70, 45, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 100
+#     - spawn_position: [-70, 48, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-70, 52, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-60, 41, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-60, 45, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 100
+#     - spawn_position: [-60, 48, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-60, 52, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-50, 41, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-50, 45, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 100
+#     - spawn_position: [-50, 48, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-50, 52, 0.3, 0, 0, 0]
+#       vehicle_speed_perc: 0
+#     # incoming traffic 
+#     - spawn_position: [-9, 18, 0.3, 0, 90, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-5, 18, 0.3, 0, 90, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-9, 9, 0.3, 0, 90, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-5, 9, 0.3, 0, 90, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-9, -5, 0.3, 0, 90, 0]
+#       vehicle_speed_perc: 0
+#     - spawn_position: [-5, -5, 0.3, 0, 90, 0]
+#       vehicle_speed_perc: 0
+
+
+# define scenario. In this scenario, a 4-vehicle platoon already exists.
+scenario:
+  single_cav_list: # this is for merging vehicle or single cav without v2x
+    - name: cav1
+      spawn_position: [9.81, 150, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      # spawn_position: [6, 110, 0.3, 0, -92, 0] # going straight
+      destination: [122.57, 52.25, 0.3] # end [137, 52] for right turn
+      # destination: [6, -90.0, 0.3]
+      v2x:
+        communication_range: 45
+      behavior:
+        local_planner:
+          debug_trajectory: true
+          debug: true
+    - name: bicycle
+      spawn_position: [10, 110, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      # destination: [-12.51, 110.31, 0.3]
+      destination: [137, 52.0, 0.3] # end [137, 52] for right turn

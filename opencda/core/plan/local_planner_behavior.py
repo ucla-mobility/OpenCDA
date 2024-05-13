@@ -721,8 +721,8 @@ class LocalPlanner(object):
                                   color=carla.Color(0, 255, 0),
                                   size=0.05,
                                   lt=0.1)
-            # draw_trajetory_points(self._vehicle.get_world(),
-            # self._trajectory_buffer, size=0.1, arrow_size=0.2, z=0.1, lt=0.1)
+            draw_trajetory_points(self._vehicle.get_world(),
+            self._trajectory_buffer, size=0.1, arrow_size=0.2, z=0.1, lt=0.1)
 
         if self.debug:
             draw_trajetory_points(self._vehicle.get_world(),
