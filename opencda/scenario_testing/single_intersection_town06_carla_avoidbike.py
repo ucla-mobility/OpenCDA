@@ -133,6 +133,7 @@ def run_scenario(opt, scenario_params):
         step = 0
         vlm_ready = False
         idle_vehicle = True
+        use_pygame = False
 
         # ------------- space key press event -------------
         world = scenario_manager.client.get_world()
@@ -157,8 +158,9 @@ def run_scenario(opt, scenario_params):
 
         # -------------------------------------------------
         # connect to llm tcp 
-        # client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # client_socket.connect(('localhost', 5000))
+        if use_pygame:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect(('localhost', 5000))
 
         # manual spectator 
         transform = single_cav_list[0].vehicle.get_transform()
@@ -216,7 +218,9 @@ def run_scenario(opt, scenario_params):
                 if running == True:
                     # vlm response 
                     single_cav.vehicle.apply_control(control)
-                    vlm_response = single_cav.perception_manager.vlm_response
+                    # vlm_response = single_cav.perception_manager.vlm_response
+                    # default VLM response
+                    vlm_response = 'Normal traffic, ego vehicle should proceed with current plan.'
 
                     # FSM info 
                     behavior_FSM = single_cav.agent.Behavior_FSM
@@ -225,47 +229,57 @@ def run_scenario(opt, scenario_params):
                     next_superstate = str(single_cav.agent.best_superstate)
                     next_state = str(single_cav.agent.selected_nxt_state)
 
-                    print('----- FSM Debug stream @ scenario script -----')
-                    print('Current super state: ' + str(current_superstate))
-                    print('Current state: ' + str(current_state))
-                    print('Next super state: ' + str(next_superstate))
-                    print('Next state: ' + str(next_state))
-                    print('----------------------------------------------')
-                    print(' ')
+                    # print('----- FSM Debug stream @ scenario script -----')
+                    # print('Current super state: ' + str(current_superstate))
+                    # print('Current state: ' + str(current_state))
+                    # print('Next super state: ' + str(next_superstate))
+                    # print('Next state: ' + str(next_state))
+                    # print('----------------------------------------------')
+                    # print(' ')
 
                     # temporarly disable, debug without VLM
-                    # # manual adjustment 
-                    # if 'green' in vlm_response:
-                    #     vlm_response = 'No traffic light detected, proceed with current plan.'
-                    # elif 'not possible' in vlm_response:
-                    #     vlm_response = 'No traffic light detected, proceed with current plan.'
-                    # elif 'middle lane' in vlm_response:
-                    #     vlm_response = 'Vehicle should stop at red traffic light and yield to other vehicles.'
-                    #     next_state = 'STOP'
-                    # else: 
-                    #     vlm_response = vlm_response
+                    # manual adjustment 
+                    if 'green' in vlm_response:
+                        vlm_response = 'No traffic light detected, proceed with current plan.'
+                    elif 'not possible' in vlm_response:
+                        vlm_response = 'No traffic light detected, proceed with current plan.'
+                    elif 'middle lane' in vlm_response:
+                        vlm_response = 'Vehicle should stop at red traffic light and yield to other vehicles.'
+                        next_state = 'STOP'
+                    else: 
+                        vlm_response = vlm_response
 
-                    # if single_cav.agent.near_target_intersection:
-                    #     # red 
-                    #     vlm_response = 'Traffic light is red,'+\
-                    #           ' but turn on red is allowed, ego vehicle should stop on red before proceed.'
-                    #     if single_cav.agent.stop_on_red_counter <= 50:
-                    #         next_state = 'STOP'
+                    # intersection 
+                    if single_cav.agent.near_target_intersection:
+                        # red 
+                        vlm_response = 'Traffic light is red,'+\
+                              ' but turn on red is allowed, ego vehicle should stop on red before proceed.'
+                        if single_cav.agent.stop_on_red_counter <= 50:
+                            next_state = 'STOP'
                         
-                    
+                    # bike avoidance
+                    if 110 <= single_cav.agent._ego_pos.location.y <= 145:
+                        # avoid bike
+                        vlm_response = 'There is a cyclist in the current lane, ego vehicle ' + \
+                            'should slow down or plan to go around with caution.'
+                    elif 90 <= single_cav.agent._ego_pos.location.y < 110 and\
+                            single_cav.agent._ego_pos.location.x < 9.8:
+                        vlm_response = 'There is no obstacle in the current lane, ' +\
+                            'ego vehicle should proceed with current plan.'
 
-                    # # construct dict
-                    # message_dict = {'vlm_response': vlm_response, 
-                    #                 'current_superstate': current_superstate,
-                    #                 'current_state': current_state,
-                    #                 'next_superstate': next_superstate,
-                    #                 'next_state': next_state}
-                    # # decode 
-                    # message = json.dumps(message_dict).encode('utf-8')
 
-                    # # send vlm 
-                    # if vlm_response:
-                    #     client_socket.sendall(message)
+                    # construct dict
+                    message_dict = {'vlm_response': vlm_response, 
+                                    'current_superstate': current_superstate,
+                                    'current_state': current_state,
+                                    'next_superstate': next_superstate,
+                                    'next_state': next_state}
+                    # decode 
+                    message = json.dumps(message_dict).encode('utf-8')
+
+                    # send vlm 
+                    if vlm_response and use_pygame:
+                        client_socket.sendall(message)
                 else: 
                     single_cav.vehicle.apply_control(
                                         carla.VehicleControl(brake=1.0))

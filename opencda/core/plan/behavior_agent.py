@@ -1022,6 +1022,7 @@ class BehaviorAgent(object):
 
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
+            print('Case 1!')
             if self.ignore_traffic_light: 
                 # still need to stop on red before proceed 
                 if self.stop_on_red_counter <= 50:
@@ -1036,8 +1037,10 @@ class BehaviorAgent(object):
                 return 0, None, vlm_prompt
 
         # 2. when the temporary route is finished, we return to the global route
-        if len(self.get_local_planner().get_waypoints_queue()) == 0 \
-                and len(self.get_local_planner().get_waypoint_buffer()) <= 2:
+        if (len(self.get_local_planner().get_waypoints_queue()) == 0 \
+                and len(self.get_local_planner().get_waypoint_buffer()) <= 2)\
+            or (self.avoid_bike_once and self.stop_on_red_counter > 50):
+            print('Case 2!')
             if self.debug:
                 print('Destination Reset!')
             # in case the vehicle is disabled overtaking function
@@ -1058,6 +1061,7 @@ class BehaviorAgent(object):
                 self.get_local_planner().potential_curved_road \
                 and not self.destination_push_flag and \
                 self.overtake_counter <= 0:
+            print('Case 4!')
             self.overtake_allowed = False
             # get push destination based on intersection flag and current waypoint (rule-based)
             reset_target = self.get_push_destination(ego_vehicle_wp, is_intersection)
@@ -1074,7 +1078,7 @@ class BehaviorAgent(object):
         if len(self.objects['vehicles'])>0 and \
             not self.destination_push_flag and\
             not self.avoid_bike_once:
-
+            print('Case 4a!')
             for object_v in self.objects['vehicles']:
                 if 'bike' in object_v.type_id:
 
@@ -1110,6 +1114,16 @@ class BehaviorAgent(object):
                         # print('Bike Avoidance Target Reset!')
                         self.avoid_bike_once = True
 
+                        # # reset route
+                        # self.overtake_allowed = True and self.overtake_allowed_origin
+                        # self.lane_change_allowed = True
+                        # self.destination_push_flag = 0
+                        # self.set_destination(
+                        #     ego_vehicle_loc,
+                        #     self.end_waypoint.transform.location,
+                        #     clean=True,
+                        #     clean_history=True)
+
                     break
 
         # 5. the case that vehicle is blocking in front and overtake not
@@ -1122,6 +1136,7 @@ class BehaviorAgent(object):
         # 6. overtake handeling
         elif is_hazard and self.overtake_allowed and \
                 self.overtake_counter <= 0:
+            print('Case 6!')
             obstacle_speed = get_speed(obstacle_vehicle)
             obstacle_lane_id = self._map.get_waypoint(obstacle_vehicle.get_location()).lane_id
             ego_lane_id = self._map.get_waypoint(
@@ -1142,6 +1157,7 @@ class BehaviorAgent(object):
 
         # 7. Car following behavior
         if car_following_flag:
+            print('Case 7!')
             if distance < max(self.break_distance, 3):
                 return 0, None, vlm_prompt
 
@@ -1151,6 +1167,7 @@ class BehaviorAgent(object):
             return target_speed, target_loc, vlm_prompt
 
         # 8. Normal behavior
+        print('Case 8!')
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
             if not target_speed else target_speed)

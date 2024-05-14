@@ -62,69 +62,69 @@ vehicle_base:
       max_steering: 0.8
 
 # define the background traffic control by carla
-# carla_traffic_manager:
-#   random: true # whether to random select vehicles' color and model
-#   ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
-#   vehicle_list:
-#     # same direction
-#     - spawn_position: [6.5, 110, 0.3, 0, -92, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [6.5, 120, 0.3, 0, -92, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [6.5, 130, 0.3, 0, -92, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [3, 130, 0.3, 0, -92, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [3, 100, 0.3, 0, -92, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [3, 80, 0.3, 0, -92, 0]
-#       vehicle_speed_perc: 0
-#     # left and right traffic 
-#     - spawn_position: [-90, 41, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-90, 45, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 80
-#     - spawn_position: [-90, 48, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-90, 52, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-70, 41, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-70, 45, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 100
-#     - spawn_position: [-70, 48, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-70, 52, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-60, 41, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-60, 45, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 100
-#     - spawn_position: [-60, 48, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-60, 52, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-50, 41, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-50, 45, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 100
-#     - spawn_position: [-50, 48, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-50, 52, 0.3, 0, 0, 0]
-#       vehicle_speed_perc: 0
-#     # incoming traffic 
-#     - spawn_position: [-9, 18, 0.3, 0, 90, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-5, 18, 0.3, 0, 90, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-9, 9, 0.3, 0, 90, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-5, 9, 0.3, 0, 90, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-9, -5, 0.3, 0, 90, 0]
-#       vehicle_speed_perc: 0
-#     - spawn_position: [-5, -5, 0.3, 0, 90, 0]
-#       vehicle_speed_perc: 0
+carla_traffic_manager:
+  random: true # whether to random select vehicles' color and model
+  ignore_lights_percentage: 0 # whether set the traffic ignore traffic lights
+  vehicle_list:
+    # same direction
+    - spawn_position: [6.5, 110, 0.3, 0, -92, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [6.5, 120, 0.3, 0, -92, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [6.5, 130, 0.3, 0, -92, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [3, 130, 0.3, 0, -92, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [3, 100, 0.3, 0, -92, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [3, 80, 0.3, 0, -92, 0]
+      vehicle_speed_perc: 0
+    # left and right traffic 
+    - spawn_position: [-90, 41, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-90, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 80
+    - spawn_position: [-90, 48, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-90, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-70, 41, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-70, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 100
+    - spawn_position: [-70, 48, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-70, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-60, 41, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-60, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 100
+    - spawn_position: [-60, 48, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-60, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-50, 41, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-50, 45, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 100
+    - spawn_position: [-50, 48, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-50, 52, 0.3, 0, 0, 0]
+      vehicle_speed_perc: 0
+    # incoming traffic 
+    - spawn_position: [-9, 18, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-5, 18, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-9, 9, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-5, 9, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-9, -5, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
+    - spawn_position: [-5, -5, 0.3, 0, 90, 0]
+      vehicle_speed_perc: 0
 
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
@@ -144,4 +144,4 @@ scenario:
     - name: bicycle
       spawn_position: [10, 110, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
       # destination: [-12.51, 110.31, 0.3]
-      destination: [137, 52.0, 0.3] # end [137, 52] for right turn
+      destination: [150, 52.0, 0.3] # end [137, 52] for right turn
