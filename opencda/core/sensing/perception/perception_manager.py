@@ -9,6 +9,7 @@ Perception module base.
 import weakref
 import sys
 import time
+import os
 
 import carla
 import cv2
@@ -649,6 +650,11 @@ class PerceptionManager:
                                                                i)
                 # resize to make it fittable to the screen
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
+
+                # # save camera feed 
+                # path = '/home/xuhan/OpenCDA/ADS_regulations/bike_avoidance_feed'
+                # img_name = 'camera_feed_frame' + str(self.count) + '.jpg'
+                # cv2.imwrite(os.path.join(path , img_name), rgb_image)
 
                 # add VLM text 
                 height, width = rgb_image.shape[:2]

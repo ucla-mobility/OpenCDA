@@ -38,8 +38,8 @@ vehicle_base:
       waypoint_update_freq: 20 # used to control waypoint updating frequency
       min_dist: 3 # used to pop out the waypoints too close to current location
       trajectory_dt: 0.20 # for every dt seconds, we sample a trajectory point from the trajectory path as next goal state
-      debug: true # whether to draw future/history waypoints
-      debug_trajectory: true # whether to draw the trajectory points and path
+      debug: false # whether to draw future/history waypoints
+      debug_trajectory: false # whether to draw the trajectory points and path
   map_manager:
     visualize: false # whether to visualize the rasteraization map
     activate: false # whether activate the map manager
@@ -71,19 +71,19 @@ carla_traffic_manager:
       vehicle_speed_perc: 0
     - spawn_position: [6.5, 120, 0.3, 0, -92, 0]
       vehicle_speed_perc: 0
-    - spawn_position: [6.5, 130, 0.3, 0, -92, 0]
-      vehicle_speed_perc: 0
+    # - spawn_position: [6.5, 130, 0.3, 0, -92, 0]
+    #   vehicle_speed_perc: 0
     - spawn_position: [3, 130, 0.3, 0, -92, 0]
       vehicle_speed_perc: 0
-    - spawn_position: [3, 100, 0.3, 0, -92, 0]
-      vehicle_speed_perc: 0
+    # - spawn_position: [3, 100, 0.3, 0, -92, 0]
+    #   vehicle_speed_perc: 0
     - spawn_position: [3, 80, 0.3, 0, -92, 0]
       vehicle_speed_perc: 0
     # left and right traffic 
     - spawn_position: [-90, 41, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-90, 45, 0.3, 0, 0, 0]
-      vehicle_speed_perc: 80
+      vehicle_speed_perc: 0
     - spawn_position: [-90, 48, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-90, 52, 0.3, 0, 0, 0]
@@ -91,7 +91,7 @@ carla_traffic_manager:
     - spawn_position: [-70, 41, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-70, 45, 0.3, 0, 0, 0]
-      vehicle_speed_perc: 100
+      vehicle_speed_perc: 0
     - spawn_position: [-70, 48, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-70, 52, 0.3, 0, 0, 0]
@@ -99,7 +99,7 @@ carla_traffic_manager:
     - spawn_position: [-60, 41, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-60, 45, 0.3, 0, 0, 0]
-      vehicle_speed_perc: 100
+      vehicle_speed_perc: 0
     - spawn_position: [-60, 48, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-60, 52, 0.3, 0, 0, 0]
@@ -107,7 +107,7 @@ carla_traffic_manager:
     - spawn_position: [-50, 41, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-50, 45, 0.3, 0, 0, 0]
-      vehicle_speed_perc: 100
+      vehicle_speed_perc: 0
     - spawn_position: [-50, 48, 0.3, 0, 0, 0]
       vehicle_speed_perc: 0
     - spawn_position: [-50, 52, 0.3, 0, 0, 0]
@@ -131,7 +131,7 @@ carla_traffic_manager:
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [9.81, 150, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      spawn_position: [10.5, 140, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
       # spawn_position: [6, 110, 0.3, 0, -92, 0] # going straight
       destination: [122.57, 52.25, 0.3] # end [137, 52] for right turn
       # destination: [6, -90.0, 0.3]
@@ -139,9 +139,9 @@ scenario:
         communication_range: 45
       behavior:
         local_planner:
-          debug_trajectory: true
-          debug: true
+          debug_trajectory: false
+          debug: false
     - name: bicycle
-      spawn_position: [10, 110, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
+      spawn_position: [9.6, 110, 0.3, 0, -92, 0] # start [10 (lane, lateral), 128(dtd, longitude)] for right turn
       # destination: [-12.51, 110.31, 0.3]
       destination: [150, 52.0, 0.3] # end [137, 52] for right turn

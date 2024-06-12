@@ -133,7 +133,7 @@ def run_scenario(opt, scenario_params):
         step = 0
         vlm_ready = False
         idle_vehicle = True
-        use_pygame = False
+        use_pygame = True
 
         # ------------- space key press event -------------
         world = scenario_manager.client.get_world()
@@ -237,7 +237,6 @@ def run_scenario(opt, scenario_params):
                     # print('----------------------------------------------')
                     # print(' ')
 
-                    # temporarly disable, debug without VLM
                     # manual adjustment 
                     if 'green' in vlm_response:
                         vlm_response = 'No traffic light detected, proceed with current plan.'
@@ -249,23 +248,32 @@ def run_scenario(opt, scenario_params):
                     else: 
                         vlm_response = vlm_response
 
-                    # intersection 
                     if single_cav.agent.near_target_intersection:
                         # red 
                         vlm_response = 'Traffic light is red,'+\
-                              ' but turn on red is allowed, ego vehicle should stop on red before proceed.'
+                              ' but turn on red is allowed. Ego vehicle should stop before proceed.'
                         if single_cav.agent.stop_on_red_counter <= 50:
                             next_state = 'STOP'
+                        else:
+                            current_state = 'TURN_RIGHT' if \
+                                            single_cav.agent._ego_speed > 0 else 'STOP'
+                            next_state = 'TURN_RIGHT'
+
+                    # after intersection 
+                    if single_cav.agent._ego_pos.rotation.yaw > -45:
+                        # no more traffic related prompt
+                        vlm_response = 'No traffic light detected, proceed with current plan.'
                         
                     # bike avoidance
                     if 110 <= single_cav.agent._ego_pos.location.y <= 145:
                         # avoid bike
-                        vlm_response = 'There is a cyclist in the current lane, ego vehicle ' + \
-                            'should slow down or plan to go around with caution.'
-                    elif 90 <= single_cav.agent._ego_pos.location.y < 110 and\
+                        vlm_response = 'A cyclist is in front. Consider ' + \
+                            'the minimum 3 ft distance required by law, vehicle should ' + \
+                            'plan to go around it.'
+                    elif 90 <= single_cav.agent._ego_pos.location.y < 110 and \
                             single_cav.agent._ego_pos.location.x < 9.8:
-                        vlm_response = 'There is no obstacle in the current lane, ' +\
-                            'ego vehicle should proceed with current plan.'
+                        vlm_response = 'There are traffic, but no obstacle in the target lane. ' + \
+                            'Vehicle should complete the current plan with caution.'
 
 
                     # construct dict
