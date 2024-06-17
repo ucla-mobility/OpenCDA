@@ -231,6 +231,9 @@ class VehicleManager(object):
         target_speed, target_pos = self.agent.run_step(target_speed)
         control = self.controller.run_step(target_speed, target_pos)
 
+        print( 'role name is: ' + str(self.vehicle.attributes.get('role_name')) \
+            + 'target_speed is: ' + str(target_speed))
+
         # dump data
         if self.data_dumper:
             self.data_dumper.run_step(self.perception_manager,

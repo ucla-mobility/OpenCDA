@@ -9,7 +9,9 @@ import uuid
 import carla
 import rclpy
 import math
+from collections import deque
 
+import numpy as np
 from rclpy.node import Node
 
 from std_msgs.msg import String, Float32
@@ -148,21 +150,25 @@ class ROS2ControlPublisher(Node):
         self.publisher_ = self.create_publisher(CarlaEgoVehicleControl, 
                                                 '/carla/' + vehicle_name + '/vehicle_control_cmd', 
                                                 200)
+        # Create a new queue with a maximum size
+        self.throttle = deque(maxlen=3)
+
 
     def publish_control_command(self, control, speed_reduce=False):
         msg = CarlaEgoVehicleControl()
         if control.throttle:
-            msg.throttle = control.throttle*0.8 if speed_reduce else control.throttle
+            msg.throttle = control.throttle
+            self.throttle.append(control.throttle)
         else:
-            msg.throttle = 0.0
+            msg.throttle = self.throttle[2]
 
         if control.steer:     
-            msg.steer = control.steer  
+            msg.steer = np.clip(control.steer, -1.0, 1.0)  
         else: 
             msg.steer = 0.0
 
         if control.brake:
-            msg.brake = control.brake  
+            msg.brake = np.clip(control.brake, 0.0, 1.0)  
         else:
             msg.brake = 0.0
         self.publisher_.publish(msg)

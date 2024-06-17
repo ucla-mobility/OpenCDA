@@ -502,7 +502,7 @@ class ScenarioManager:
         self.cav_world = CavWorld(self.apply_ml)
         actor_list = self.world.get_actors()
         
-        # populate mainline list
+        # populate mainline list, up to 5 vehicles
         mainline_vehicle_list = []
         for actor in self.world.get_actors():
             if actor.attributes.get('role_name') == 'mainline_ADS_vehicle_1':
@@ -514,6 +514,16 @@ class ScenarioManager:
                 # mainline_vehicle_list.insert(1, actor)
                 mainline_vehicle_list.append(actor)
                 print('add second mainline vehicle ...')
+        for actor in self.world.get_actors():
+            if actor.attributes.get('role_name') == 'mainline_ADS_vehicle_3':
+                # mainline_vehicle_list.insert(1, actor)
+                mainline_vehicle_list.append(actor)
+                print('add third mainline vehicle ...')
+        for actor in self.world.get_actors():
+            if actor.attributes.get('role_name') == 'mainline_ADS_vehicle_4':
+                # mainline_vehicle_list.insert(1, actor)
+                mainline_vehicle_list.append(actor)
+                print('add fourth mainline vehicle ...')
 
         # create platoons
         for i, platoon in enumerate(

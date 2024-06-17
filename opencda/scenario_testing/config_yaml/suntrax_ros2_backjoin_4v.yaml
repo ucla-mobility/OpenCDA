@@ -8,7 +8,7 @@ description: |-
 world:
   sync_mode: true
   client_port: 2000
-  fixed_delta_seconds: &delta 0.005 # &delta 0.007
+  fixed_delta_seconds: &delta 0.005 # &delta 0.008
   seed: 25
   weather:
     sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
@@ -42,8 +42,8 @@ vehicle_base: &vehicle_base
         dropoff_zero_intensity: 0.0
         noise_stddev: 0.0
     localization: &base_localize
-      activate: true # when not activated, ego position will be retrieved from server directly
-      dt: *delta #0.02 # 0.015 # used for kalman filter
+      activate: false # when not activated, ego position will be retrieved from server directly
+      dt: *delta # used for kalman filter
       gnss: # gnss sensor configuration
         noise_alt_stddev: 0.005
         noise_lat_stddev: 2e-6
@@ -93,9 +93,9 @@ vehicle_base: &vehicle_base
         k_d: 0.024
         k_i: 0.032
       dynamic: false # whether use dynamic pid setting
-      dt: *delta #0.02 # 0.015 # *delta # this should be equal to your simulation time-step
+      dt: *delta # this should be equal to your simulation time-step
       max_brake: 1.0
-      max_throttle: 1.0
+      max_throttle: 0.9
       max_steering: 0.25
 
   v2x: &base_v2x # comminuation related
@@ -130,8 +130,25 @@ scenario:
       destination: [-370, -545, 0.3]
       members: # the first one is regarded as leader
         - <<: *vehicle_base
-          spawn_position: [-127, 421, 3, 0, -105, 0] # x, y, z, roll, yaw, pitch
+          spawn_position: [-129, 414, 3, 0, -105, 0]
           vehicle_name: 'mainline_ADS_vehicle_1'
+          platoon: # we need to add platoon specific params
+            <<: *platoon_base
+          # control
+          controller:
+            <<: *base_controller
+            args:
+              <<: *control_args
+              max_throttle: 0.95
+          behavior:
+            <<: *base_behavior
+            local_planner:
+              <<: *base_local_planner
+              debug_trajectory: true
+              debug: false
+        - <<: *vehicle_base
+          spawn_position: [-127, 421, 3, 0, -105, 0] # x, y, z, roll, yaw, pitch
+          vehicle_name: 'mainline_ADS_vehicle_2'
           sensing:
             <<: *base_sensing
             perception:
@@ -147,7 +164,7 @@ scenario:
             <<: *base_controller
             args:
               <<: *control_args
-              max_throttle: 0.9
+              max_throttle: 0.95
           behavior:
             <<: *base_behavior
             local_planner:
@@ -156,7 +173,7 @@ scenario:
               debug: false
         - <<: *vehicle_base
           spawn_position: [-125, 428, 3, 0, -105, 0]
-          vehicle_name: 'mainline_ADS_vehicle_2'
+          vehicle_name: 'mainline_ADS_vehicle_3'
           platoon: # we need to add platoon specific params
             <<: *platoon_base
           # control
@@ -164,7 +181,7 @@ scenario:
             <<: *base_controller
             args:
               <<: *control_args
-              max_throttle: 0.8
+              max_throttle: 0.95
           behavior:
             <<: *base_behavior
             local_planner:

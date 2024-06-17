@@ -49,13 +49,18 @@ def run_scenario(opt, config_yaml):
         # init ROS2
         rclpy.init()
         carla_data_subscriber = CarlaDataSubscriber()
+
         single_cav_subscriber = VehicleInfoSubscriber('single_ADS_vehicle')
         main_cav1_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_1')
         main_cav2_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_2')
+        main_cav3_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_3')
+        main_cav4_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_4')
 
         single_cav_command_pubisher = ROS2ControlPublisher('single_ADS_vehicle')
         main_cav1_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_1')
         main_cav2_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_2')
+        main_cav3_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_3')
+        main_cav4_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_4')
 
         print("ROS init done, Press Enter to continue...")
         input()
@@ -86,6 +91,11 @@ def run_scenario(opt, config_yaml):
         single_cav_config = scenario_params['scenario']['single_cav_list'][0]
         single_cav_role_name = single_cav_config['vehicle_name']
         print('single cav role name is: ' + str(single_cav_role_name))
+
+        eval_manager = \
+            EvaluationManager(scenario_manager.cav_world,
+                              script_name='platoon_joining_suntrax_rear',
+                              current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
         spectator_vehicle = single_cav_list[0].vehicle
@@ -140,7 +150,7 @@ def run_scenario(opt, config_yaml):
                     # print('------------------------')
                     # print("single CAV IMU: " + str(single_cav_IMU))
                     # print('------------------------')
-                    # print("single CAV Speed: " + str(single_cav_speed.data))
+                    # print("single CAV Speed: " + str(single_cav_speed))
                     # print('------------------------')
                     # print("single CAV coordinates: " + str(single_cav_location))
                     # print("==============================")
@@ -164,14 +174,28 @@ def run_scenario(opt, config_yaml):
                      !!! need to update this. after joning, the platoon list order will change!!
                      Try use only the role name to publish control !!!
                     '''
-                    if len(control_list) <= 2:
+                    if len(control_list) <= 4:
                         main_cav1_command_pubisher.publish_control_command(control_list[0])
                         main_cav2_command_pubisher.publish_control_command(control_list[1])
-                    elif len(control_list) > 2:
+                        main_cav3_command_pubisher.publish_control_command(control_list[2])
+                        main_cav4_command_pubisher.publish_control_command(control_list[3])
+                    elif len(control_list) > 4:
                         # adjust leader speed
-                        single_cav_command_pubisher.publish_control_command(control_list[0], speed_reduce=True)
-                        main_cav1_command_pubisher.publish_control_command(control_list[1])
-                        main_cav2_command_pubisher.publish_control_command(control_list[2])
+                        # for i,vehicle_manager in enumerate(platoon.vehicle_manager_list):
+                        #     actor = vehicle_manager.vehicle
+                        #     name = actor.attributes.get('role_name')
+                        #     print('The ' + str(i) + 'th member is: ' + str(name))
+
+                        main_cav1_command_pubisher.publish_control_command(control_list[0])
+                        main_cav2_command_pubisher.publish_control_command(control_list[1])
+                        main_cav3_command_pubisher.publish_control_command(control_list[2])
+                        main_cav4_command_pubisher.publish_control_command(control_list[3])
+                        single_cav_command_pubisher.publish_control_command(control_list[4])
+
+                        # single_cav_command_pubisher.publish_control_command(control_list[0])
+                        # main_cav1_command_pubisher.publish_control_command(control_list[1])
+                        # main_cav2_command_pubisher.publish_control_command(control_list[2])
+
 
 
                 # single CAV
@@ -217,11 +241,12 @@ def run_scenario(opt, config_yaml):
 
         carla_data_subscriber.destroy_node()
         single_cav_subscriber.destroy_node()
+        eval_manager.evaluate()
         rclpy.shutdown()
 
 
     finally:
-        # eval_manager.evaluate()
+        eval_manager.evaluate()
 
         if opt.record:
             scenario_manager.client.stop_recorder()

@@ -53,10 +53,12 @@ def run_scenario(opt, config_yaml):
         single_cav_subscriber = VehicleInfoSubscriber('single_ADS_vehicle')
         main_cav1_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_1')
         main_cav2_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_2')
+        main_cav3_subscriber = VehicleInfoSubscriber('mainline_ADS_vehicle_3')
 
         single_cav_command_pubisher = ROS2ControlPublisher('single_ADS_vehicle')
         main_cav1_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_1')
         main_cav2_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_2')
+        main_cav3_command_pubisher = ROS2ControlPublisher('mainline_ADS_vehicle_3')
 
         print("ROS init done, Press Enter to continue...")
         input()
@@ -88,6 +90,10 @@ def run_scenario(opt, config_yaml):
         single_cav_role_name = single_cav_config['vehicle_name']
         print('single cav role name is: ' + str(single_cav_role_name))
 
+        eval_manager = \
+            EvaluationManager(scenario_manager.cav_world,
+                              script_name='platoon_joining_suntrax_rear',
+                              current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
         spectator_vehicle = single_cav_list[0].vehicle
@@ -175,6 +181,11 @@ def run_scenario(opt, config_yaml):
                         main_cav2_command_pubisher.publish_control_command(control_list[1])
                         single_cav_command_pubisher.publish_control_command(control_list[2])
 
+                        # single_cav_command_pubisher.publish_control_command(control_list[0])
+                        # main_cav1_command_pubisher.publish_control_command(control_list[1])
+                        # main_cav2_command_pubisher.publish_control_command(control_list[2])
+
+
 
                 # single CAV
                 for i, single_cav in enumerate(single_cav_list):
@@ -219,11 +230,12 @@ def run_scenario(opt, config_yaml):
 
         carla_data_subscriber.destroy_node()
         single_cav_subscriber.destroy_node()
+        eval_manager.evaluate()
         rclpy.shutdown()
 
 
     finally:
-        # eval_manager.evaluate()
+        eval_manager.evaluate()
 
         if opt.record:
             scenario_manager.client.stop_recorder()
