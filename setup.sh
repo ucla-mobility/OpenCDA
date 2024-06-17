@@ -34,7 +34,7 @@ SETUP_PY=${PWD}/scripts/setup.py
 cp "$SETUP_PY"  "${CACHE}"/carla-"${CARLA_VERSION}"-py3.7-linux-x86_64/
 
 echo "Successful! Run 'pip install -e ${CACHE}/carla-${CARLA_VERSION}-py3.7-linux-x86_64' to install carla into your python package "
-conda activate opencda
+conda activate opencda-0.9.13
 pip install -e ${CACHE}/carla-"${CARLA_VERSION}"-py3.7-linux-x86_64
 
 echo "Sucessful Setup!"

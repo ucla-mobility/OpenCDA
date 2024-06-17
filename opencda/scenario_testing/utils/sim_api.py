@@ -82,9 +82,45 @@ def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
             blueprint_library.find('vehicle.nissan.patrol'),
             blueprint_library.find('vehicle.nissan.micra')
         ]
+    elif carla_version == '0.9.13':
+        print('CARLA 0913 version is selected')
+        blueprints = [
+            blueprint_library.find('vehicle.audi.a2'),
+            blueprint_library.find('vehicle.audi.tt'),
+            blueprint_library.find('vehicle.ford.ambulance'),
+            blueprint_library.find('vehicle.ford.crown'),
+            blueprint_library.find('vehicle.mini.cooper_s_2021'),
+            blueprint_library.find('vehicle.nissan.micra'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.patrol_2021'),
+            blueprint_library.find('vehicle.tesla.cybertruck'),
+            blueprint_library.find('vehicle.volkswagen.t2'),
+            blueprint_library.find('vehicle.volkswagen.t2_2021'),
+            blueprint_library.find('vehicle.micro.microlino'),
+            blueprint_library.find('vehicle.dodge.charger_police'),
+            blueprint_library.find('vehicle.dodge.charger_police_2020'),
+            blueprint_library.find('vehicle.dodge.charger_2020'),
+            blueprint_library.find('vehicle.jeep.wrangler_rubicon'),
+            blueprint_library.find('vehicle.chevrolet.impala'),
+            blueprint_library.find('vehicle.mini.cooper_s'),
+            blueprint_library.find('vehicle.audi.etron'),
+            blueprint_library.find('vehicle.mercedes.coupe'),
+            blueprint_library.find('vehicle.mercedes.coupe_2020'),
+            blueprint_library.find('vehicle.bmw.grandtourer'),
+            blueprint_library.find('vehicle.toyota.prius'),
+            blueprint_library.find('vehicle.citroen.c3'),
+            blueprint_library.find('vehicle.ford.mustang'),
+            blueprint_library.find('vehicle.tesla.model3'),
+            blueprint_library.find('vehicle.lincoln.mkz_2017'),
+            blueprint_library.find('vehicle.lincoln.mkz_2020'),
+            blueprint_library.find('vehicle.seat.leon'),
+            blueprint_library.find('vehicle.nissan.patrol'),
+            blueprint_library.find('vehicle.nissan.micra')
+        ]
+
     else:
         sys.exit("Since v0.1.4, we do not support version earlier than "
-                 "CARLA v0.9.14. If you want to use early CARLA version including"
+                 "CARLA v0.9.13. If you want to use early CARLA version including"
                  "0.9.11 and 0.9.12, please use OpenCDA v0.1.3.")
 
     return blueprints
