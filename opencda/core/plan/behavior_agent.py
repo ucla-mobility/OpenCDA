@@ -103,8 +103,9 @@ class BehaviorAgent(object):
         self.break_distance = 0
         self.ttc = 1000
         # collision checker
+        self.collision_time_ahead = config_yaml['collision_time_ahead']
         self._collision_check = CollisionChecker(
-            time_ahead=config_yaml['collision_time_ahead'])
+                time_ahead=self.collision_time_ahead)
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
         self.overtake_allowed = config_yaml['overtake_allowed']
         self.overtake_allowed_origin = config_yaml['overtake_allowed']
@@ -182,6 +183,16 @@ class BehaviorAgent(object):
         else:
             # This method also includes stop signs and intersections.
             self.light_state = str(self.vehicle.get_traffic_light_state())
+
+    # new function to reduce following distance, so human can take-over
+    def reduce_collision_time(self):
+        '''
+        This is the function to reduce threshold collision time, so the vehicle  
+        will follow dangerously close to the leading vehicle. This will make the 
+        human user to take over the auto pilot.
+        '''
+        new_collision_time = 0.2*self.collision_time_ahead
+        self._collision_check = CollisionChecker(time_ahead=new_collision_time)
 
     def add_white_list(self, vm):
         """
