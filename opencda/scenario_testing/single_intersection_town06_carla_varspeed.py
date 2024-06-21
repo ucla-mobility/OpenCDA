@@ -25,8 +25,8 @@ from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import add_current_time
 # import vision-language model
-from opencda.core.sensing.perception.vision_language_manager \
-    import VisionLanguageInterpreter
+# from opencda.core.sensing.perception.vision_language_manager \
+#     import VisionLanguageInterpreter
 
 '''
 Helper class for accessing arguments.
@@ -117,16 +117,16 @@ def run_scenario(opt, scenario_params):
                         Do not report green light."
 
 
-        vlm_manager = VisionLanguageInterpreter(model_path)
+        # vlm_manager = VisionLanguageInterpreter(model_path)
 
-        # multi-processing with GPU
-        ctx = get_context('spawn')  # Get the context using 'spawn'
-        input_queue = ctx.Queue(maxsize=8)
-        output_queue = ctx.Queue(maxsize=8)
-        gpu_process = ctx.Process(target=vlm_gpu_task_handler,
-                                          args=(input_queue, 
-                                                output_queue,
-                                                vlm_manager))
+        # # multi-processing with GPU
+        # ctx = get_context('spawn')  # Get the context using 'spawn'
+        # input_queue = ctx.Queue(maxsize=8)
+        # output_queue = ctx.Queue(maxsize=8)
+        # gpu_process = ctx.Process(target=vlm_gpu_task_handler,
+        #                                   args=(input_queue, 
+        #                                         output_queue,
+        #                                         vlm_manager))
         # single_cav_list[0].start_vlm_render()
 
         # Carla spectator
@@ -185,9 +185,9 @@ def run_scenario(opt, scenario_params):
                     running = True
 
             # VLM GPU multi-processing 
-            if not input_queue.empty():
-                if not gpu_process.is_alive(): 
-                    gpu_process.start()
+            # if not input_queue.empty():
+            #     if not gpu_process.is_alive(): 
+            #         gpu_process.start()
 
             for i, single_cav in enumerate(single_cav_list):
                 single_cav.update_info()
@@ -196,22 +196,22 @@ def run_scenario(opt, scenario_params):
                 control, vlm_prompt = single_cav.run_step()
 
                 # off load camera feed
-                if step%20 == 0 and \
-                    single_cav.perception_manager.camera_img_buffer:
-                    vlm_image=[single_cav.perception_manager.camera_img_buffer[-1]]
-                    input_queue.put((vlm_image, vlm_prompt))
+                # if step%20 == 0 and \
+                #     single_cav.perception_manager.camera_img_buffer:
+                #     vlm_image=[single_cav.perception_manager.camera_img_buffer[-1]]
+                #     input_queue.put((vlm_image, vlm_prompt))
                 
-                # VLM GPU process
-                if step%20 == 0 and not output_queue.empty():
-                    # start moving vehicle 
-                    idle_vehicle = False
-                    result = output_queue.get()
-                    # print(f"Received result: {result}")
-                    single_cav.update_vlm_info(result)
+                # # VLM GPU process
+                # if step%20 == 0 and not output_queue.empty():
+                #     # start moving vehicle 
+                #     idle_vehicle = False
+                #     result = output_queue.get()
+                #     # print(f"Received result: {result}")
+                #     single_cav.update_vlm_info(result)
 
-                    # # debug print, vlm response 
-                    # print('*** vlm response from vehicle manager is : ' \
-                    #         + str(single_cav.perception_manager.vlm_response))
+                #     # # debug print, vlm response 
+                #     # print('*** vlm response from vehicle manager is : ' \
+                #     #         + str(single_cav.perception_manager.vlm_response))
 
                 # vehicle control
                 if running == True:
@@ -288,8 +288,8 @@ def run_scenario(opt, scenario_params):
 
     finally:
         # Clean up
-        input_queue.put(None)  # Signal the GPU process to terminate
-        gpu_process.join()
+        # input_queue.put(None)  # Signal the GPU process to terminate
+        # gpu_process.join()
         eval_manager.evaluate()
 
         if opt.record:

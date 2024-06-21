@@ -13,7 +13,7 @@ vehicle_base:
         visualize: 1 # how many camera images need to be visualized. 0 means no visualization for camera
         num: 1 # how many cameras are mounted on the vehicle.
         positions:  # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
-          - [20, 0, 1.4, 0]
+          - [3.5, 0, 1.4, 0]
       lidar: # lidar sensor configuration, check CARLA sensor reference for more details
         visualize: false
         channels: 8
