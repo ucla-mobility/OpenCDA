@@ -651,10 +651,10 @@ class PerceptionManager:
                 # resize to make it fittable to the screen
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
 
-                # # save camera feed 
-                # path = '/home/xuhan/OpenCDA/ADS_regulations/bike_avoidance_feed'
-                # img_name = 'camera_feed_frame' + str(self.count) + '.jpg'
-                # cv2.imwrite(os.path.join(path , img_name), rgb_image)
+                # save camera feed 
+                file_path = r'/home/xuhan/OpenCDA/camera_feed/bike_avoidance'
+                img_name = 'camera_feed_frame' + str(self.count) + '.jpg'
+                cv2.imwrite(os.path.join(file_path , img_name), rgb_image)
 
                 # add VLM text 
                 height, width = rgb_image.shape[:2]
