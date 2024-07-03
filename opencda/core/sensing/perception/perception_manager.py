@@ -651,7 +651,7 @@ class PerceptionManager:
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
 
                 # save camera feed 
-                file_path = r'/home/xuhan/OpenCDA/camera_feed/variable_speed_limit'
+                file_path = r'/home/xuhan/OpenCDA/camera_feed/no_turn_on_red/'
                 img_name = 'camera_feed_frame' + str(self.count) + '.jpg'
                 cv2.imwrite(os.path.join(file_path , img_name), rgb_image)
 

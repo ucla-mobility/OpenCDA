@@ -138,23 +138,23 @@ def run_scenario(opt, scenario_params):
         # ------------- space key press event -------------
         world = scenario_manager.client.get_world()
 
-        print("Press SPACE key to start the vehicle")
-        running = False
+        # print("Press SPACE key to start the vehicle")
+        # running = False
 
-        # Set up the Pygame window and clock
-        pygame.init()
+        # # Set up the Pygame window and clock
+        # pygame.init()
 
-        screen = pygame.display.set_mode((700, 100))
-        # Set the font and text for the message
-        font = pygame.font.SysFont("monospace", 30)
-        text = font.render("Press SPACE to start vehicle movement", \
-                    True, (255, 255, 255))
+        # screen = pygame.display.set_mode((700, 100))
+        # # Set the font and text for the message
+        # font = pygame.font.SysFont("monospace", 30)
+        # text = font.render("Press SPACE to start vehicle movement", \
+        #             True, (255, 255, 255))
 
-        # Draw the message on the screen
-        screen.blit(text, (10, 10))
-        pygame.display.flip()
+        # # Draw the message on the screen
+        # screen.blit(text, (10, 10))
+        # pygame.display.flip()
 
-        clock = pygame.time.Clock()
+        # clock = pygame.time.Clock()
 
         # -------------------------------------------------
         # connect to llm tcp 
@@ -177,12 +177,13 @@ def run_scenario(opt, scenario_params):
             scenario_manager.tick()
 
             # pygame event 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    running = True
+            # for event in pygame.event.get():
+            #     if event.type == pygame.QUIT:
+            #         pygame.quit()
+            #         sys.exit()
+            #     elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            #         running = True
+            running = True
 
             # VLM GPU multi-processing 
             # if not input_queue.empty():
