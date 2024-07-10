@@ -14,28 +14,35 @@ vehicle_base:
         # relative positions (x,y,z,yaw) of the camera. len(positions) should be equal to camera num
         positions: []
   behavior:
-    max_speed: 50 # maximum speed, km/h
+    max_speed: 70 # maximum speed, km/h
+    safety_time: 4 # ttc safety thresholding for decreasing speed
     ignore_traffic_light: true # whether to ignore traffic light
-    collision_time_ahead: 2.0 # used for collision checking
-
+    collision_time_ahead: 1.5 # used for collision checking
+    overtake_allowed: false # whether overtake allowed, typically false for platoon leader
+    
 # define the background traffic control by carla
 carla_traffic_manager:
   random: true # whether to random select vehicles' color and model
-  global_speed_perc: -100
+  global_speed_perc: 0
   ignore_lights_percentage: 100 # whether set the traffic ignore traffic lights
   ignore_signs_percentage: 100 # whether the cars will ignore stop signs
   vehicle_list: ~  # a number or a list
   # Used only when vehicle_list is a number.
   # x_min, x_max, y_min, y_max, x_step, y_step, veh_num
   range:
-    - [ 2, 10, 0, 200, 3.5, 25, 30]
+    - [ 450, 520, -100, -10, 15, 3, 18]
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
 scenario:
   single_cav_list: # this is for merging vehicle or single cav without v2x
     - name: cav1
-      spawn_position: [6.31, 125.03, 0.3, 0, -92, 0]
-      destination: [-12.51, 110.31, 0.3]
+      spawn_position: [531.65, -13.97, 0.30, 0, -180, 0] # town06-24
+      middle_point:
+        - [307.36, -13.56, 0.30]    # town06-300
+        - [51.17, -12.62, 0.30]     # town06-188
+        - [-230.63, -11.64, 0.30]   # town06-313
+        - [-336.12, 234.39, 0.30]   # town06-267
+      destination: [-207.22, 240.12, 0.30] # town06-386
       v2x:
         communication_range: 45
       behavior:

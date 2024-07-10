@@ -142,7 +142,8 @@ class VehicleManager(object):
             start_location,
             end_location,
             clean=False,
-            end_reset=True):
+            end_reset=True,
+            middle_point=None):
         """
         Set global route.
 
@@ -163,9 +164,13 @@ class VehicleManager(object):
         Returns
         -------
         """
-
-        self.agent.set_destination(
-            start_location, end_location, clean, end_reset)
+        if middle_point:
+            self.agent.set_destination(
+                start_location, end_location, clean, 
+                end_reset, middle_point=middle_point)
+        else:
+            self.agent.set_destination(
+                start_location, end_location, clean, end_reset)
 
     def update_info(self):
         """

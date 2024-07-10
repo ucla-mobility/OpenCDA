@@ -36,6 +36,7 @@ class CollisionChecker:
                                 1.0] \
             if circle_offsets is None else circle_offsets
         self._circle_radius = circle_radius
+        self._min_lookahead_dist = 90
 
     def is_in_range(
             self,
@@ -176,6 +177,14 @@ class CollisionChecker:
 
         return rx, ry, ryaw
 
+    def reduce_lookahead_distance(self, reduce_ratio):
+        '''
+        Reduce the look ahead distance and create an aggresive
+        behavior. 
+        '''
+        self._min_lookahead_dist = int(reduce_ratio*self._min_lookahead_dist)
+
+    
     def collision_circle_check(
             self,
             path_x,
@@ -205,9 +214,12 @@ class CollisionChecker:
         collision_free = True
         # detect x second ahead. in case the speed is very slow,
         # there is some minimum threshold for the check distance
-        distance_check = min(max(int(self.time_ahead * speed / 0.1), 90),
-                             len(path_x)) \
-            if not adjacent_check else len(path_x)
+        distance_check = min(max(int(self.time_ahead * speed / 0.1), \
+                         self._min_lookahead_dist), len(path_x)) \
+                         if not adjacent_check else len(path_x)
+
+        # debug stream 
+        print('The current distance check len is: ' + str(distance_check))
 
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
         obstacle_vehicle_yaw = \

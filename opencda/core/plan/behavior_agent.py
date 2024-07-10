@@ -105,7 +105,7 @@ class BehaviorAgent(object):
         # collision checker
         self.collision_time_ahead = config_yaml['collision_time_ahead']
         self._collision_check = CollisionChecker(
-                time_ahead=self.collision_time_ahead)
+            time_ahead=self.collision_time_ahead)
         self.ignore_traffic_light = config_yaml['ignore_traffic_light']
         self.overtake_allowed = config_yaml['overtake_allowed']
         self.overtake_allowed_origin = config_yaml['overtake_allowed']
@@ -147,6 +147,16 @@ class BehaviorAgent(object):
         self.debug = False if 'debug' not in \
                               config_yaml else config_yaml['debug']
 
+        # add delay to stop vehcile closer to stop bar
+        self.red_light_brake_counter = 0
+        # spat info for eco drive
+        self.spat_info = {}
+        self._eco_approach_calculated = False
+        self.eco_approach_speed = 0.0
+
+        # adjust ttc for human take-over
+        self.reduce_ttc = False
+
     def update_information(self, ego_pos, ego_speed, objects):
         """
         Update the perception and localization information
@@ -185,14 +195,17 @@ class BehaviorAgent(object):
             self.light_state = str(self.vehicle.get_traffic_light_state())
 
     # new function to reduce following distance, so human can take-over
-    def reduce_collision_time(self):
+    def reduce_following_dist(self):
         '''
         This is the function to reduce threshold collision time, so the vehicle  
         will follow dangerously close to the leading vehicle. This will make the 
         human user to take over the auto pilot.
         '''
-        new_collision_time = 0.2*self.collision_time_ahead
+        self.reduce_ttc = True
+        # initiate a new collision checker
+        new_collision_time = 0.1*self.collision_time_ahead
         self._collision_check = CollisionChecker(time_ahead=new_collision_time)
+        self._collision_check.reduce_lookahead_distance(0.5)
 
     def add_white_list(self, vm):
         """
@@ -253,7 +266,8 @@ class BehaviorAgent(object):
             end_location,
             clean=False,
             end_reset=True,
-            clean_history=False):
+            clean_history=False,
+            middle_point=None):
         """
         This method creates a list of waypoints from agent's
         position to destination location based on the route returned
@@ -301,7 +315,30 @@ class BehaviorAgent(object):
         if end_reset:
             self.end_waypoint = end_waypoint
 
-        route_trace = self._trace_route(self.start_waypoint, end_waypoint)
+        # check middle point 
+        if middle_point:
+            middle_point_loc_list = []
+            if len(middle_point) == 1:
+                # get location 
+                middle_point_loc = carla.Location(x=middle_point[0][0],
+                                                  y=middle_point[0][1],
+                                                  z=middle_point[0][2])
+                middle_point_loc_list.append(middle_point_loc)
+            else:
+                # get location 
+                for coords in middle_point:
+                    middle_point_loc = carla.Location(x=coords[0],
+                                                      y=coords[1],
+                                                      z=coords[2])
+                    # middle_point_wpt = self._map.get_waypoint(middle_point_loc)
+                    middle_point_loc_list.append(middle_point_loc)
+            
+            # go thru middle point 
+            route_trace = self._trace_route(self.start_waypoint, end_waypoint, 
+                                            middle_point_loc_list=middle_point_loc_list)
+            
+        else:
+            route_trace = self._trace_route(self.start_waypoint, end_waypoint)
 
         self._local_planner.set_global_plan(route_trace, clean)
 
@@ -334,7 +371,7 @@ class BehaviorAgent(object):
 
         self.set_destination(new_start, destination)
 
-    def _trace_route(self, start_waypoint, end_waypoint):
+    def _trace_route(self, start_waypoint, end_waypoint, middle_point_loc_list=None):
         """
         This method sets up a global router and returns the
         optimal route from start_waypoint to end_waypoint.
@@ -357,9 +394,15 @@ class BehaviorAgent(object):
             self._global_planner = grp
 
         # Obtain route plan
-        route = self._global_planner.trace_route(
-            start_waypoint.transform.location,
-            end_waypoint.transform.location)
+        if middle_point_loc_list:
+            route = self._global_planner.trace_route(
+                start_waypoint.transform.location,
+                end_waypoint.transform.location,
+                middle_point_loc_list=middle_point_loc_list)
+        else:
+            route = self._global_planner.trace_route(
+                start_waypoint.transform.location,
+                end_waypoint.transform.location)
 
         return route
 
@@ -379,8 +422,24 @@ class BehaviorAgent(object):
 
         """
 
+        curr_light = self.vehicle.get_traffic_light()
         light_id = self.vehicle.get_traffic_light(
         ).id if self.vehicle.get_traffic_light() is not None else -1
+
+        # printing traffic light ID
+        if light_id != -1:
+            print('Traffic light detection result: ' + str(light_id))
+            # note: VOICES reset traffic life time to 9999 and use J2735 to overwrite state.
+            #       need to use decoder to get traffic light state. 
+
+            # !!! NOTE !!!: add I/O to use spat data here !!!
+
+            # print('[The Red time for the light is]     --> ' + \
+            #                     str(curr_light.get_red_time()))
+            # print('[The Green time for the light is]   --> ' + \
+            #                     str(curr_light.get_green_time()))
+            # print('[The elspsed time for the light is] --> ' + \
+            #                     str(curr_light.get_elapsed_time()))
 
         # this is the case where the vehicle just pass a stop sign, and won't
         # stop at any stop sign in the next 4 seconds.
@@ -408,11 +467,81 @@ class BehaviorAgent(object):
             if not waypoint.is_junction and (
                     self.light_id_to_ignore != light_id or light_id == -1):
                 return 1
-            elif waypoint.is_junction and light_id != -1:
-                self.light_id_to_ignore = light_id
+            # elif waypoint.is_junction and light_id != -1:
+            #     self.light_id_to_ignore = light_id
+            # note: stop the vehicle at intersection
+            elif waypoint.is_junction:
+                return 1
+
         if self.light_id_to_ignore != light_id:
             self.light_id_to_ignore = -1
         return 0
+
+    
+    def set_spat_info(self, spat_info):
+        """
+        Set the spat info for behavior agent 
+        """
+        self.spat_info = spat_info
+
+    def find_eco_speed(self, spat_info, dist_to_bar):
+        """
+        Find seconds left to the next green cycle. 
+        """
+        curr_state = spat_info['light status']
+        if curr_state == 'red':
+            # t1s in red indicate when red will change to green  
+            time_to_traverse = spat_info['t1s'] - spat_info['current Time']
+            # wait red end, need to slow down and use all length
+            target_speed = min(35, (dist_to_bar/time_to_traverse)*3.6)
+            target_speed += 4
+
+        elif curr_state == 'yellow':
+            # 3s in yellow plus 35s for green
+            time_to_traverse = 3 + 35
+            # wait red end, need to slow down and use all length
+            target_speed = min(35, (dist_to_bar/time_to_traverse)*3.6)
+        else:
+            # t1e in green indicate green ends.
+            time_left_in_green = spat_info['t1e'] - spat_info['current Time']
+            
+            # vehicle speed is 30kmh, 8.3 m/s; 
+            time_needed_to_reach_bar = dist_to_bar/7.5
+            if time_left_in_green >= time_needed_to_reach_bar:
+                time_to_traverse = time_left_in_green
+                # normal speed, traverse intersection 
+                target_speed = (self.max_speed - self.speed_lim_dist)
+            
+            # not enough for all vehicles, wait for next cycle
+            else:
+                time_to_traverse = time_left_in_green + 3 + 35
+                # wait cycle end, slow down
+                target_speed = min(35, (dist_to_bar/time_to_traverse)*3.6)
+
+        print('Debug Stream for eco drive...')
+        print('Current state: ' + str(curr_state))
+        print('Current time: ' + str(spat_info['current Time']))
+        print('Time to traverse: ' + str(time_to_traverse))
+
+        return target_speed
+
+    def eco_drive_manager(self, spat_info):
+        """
+        This function calculate proper time for eco approaching. 
+        Note: Specifically design for VOICES, Mcity map. 
+        """
+        # these are harcoded value for VOICES project, mcity map
+        stop_bar_loc = carla.Location(x=106.9463, y=11.1924, z=245.0)
+        stop_bar_wpt = self._map.get_waypoint(stop_bar_loc)
+        cur_loc = self._ego_pos.location
+        cur_yaw = self._ego_pos.rotation.yaw
+        dist_to_bar, angle_to_light = cal_distance_angle(
+                                        stop_bar_loc, cur_loc, cur_yaw)
+
+        # find spat
+        target_speed = self.find_eco_speed(spat_info, dist_to_bar)
+        
+        return target_speed
 
     def collision_manager(self, rx, ry, ryaw, waypoint, adjacent_check=False):
         """
@@ -443,10 +572,12 @@ class BehaviorAgent(object):
         min_distance = 100000
         target_vehicle = None
 
+        
         for vehicle in self.obstacle_vehicles:
             collision_free = self._collision_check.collision_circle_check(
                 rx, ry, ryaw, vehicle, self._ego_speed / 3.6, self._map,
                 adjacent_check=adjacent_check)
+            
             if not collision_free:
                 vehicle_state = True
 
@@ -457,7 +588,7 @@ class BehaviorAgent(object):
                 if distance < min_distance:
                     min_distance = distance
                     target_vehicle = vehicle
-
+        print('Collision manager hazard detect result: ' + str(vehicle_state))
         return vehicle_state, target_vehicle, min_distance
 
     def overtake_management(self, obstacle_vehicle):
@@ -614,6 +745,7 @@ class BehaviorAgent(object):
         delta_v = max(1, (self._ego_speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / \
                                                       np.nextafter(0., 1.)
+
         self.ttc = ttc
         # Under safety time distance, slow down.
         if self.safety_time > ttc > 0.0:
@@ -664,8 +796,8 @@ class BehaviorAgent(object):
             It is True if the current ego vehicle's position is close to destination
 
         """
-        flag = abs(self._ego_pos.location.x - self.end_waypoint.transform.location.x) <= 10 and \
-               abs(self._ego_pos.location.y - self.end_waypoint.transform.location.y) <= 10
+        flag = abs(self._ego_pos.location.x - self.end_waypoint.transform.location.x) <= 3 and \
+               abs(self._ego_pos.location.y - self.end_waypoint.transform.location.y) <= 3
         return flag
 
     def check_lane_change_permission(self, lane_change_allowed, collision_detector_enabled, rk):
@@ -707,8 +839,8 @@ class BehaviorAgent(object):
                not self.destination_push_flag
         if lane_change_enabled_flag:
             lane_change_allowed = lane_change_allowed and self.lane_change_management()
-            if not lane_change_allowed:
-                print("lane change not allowed")
+            # if not lane_change_allowed:
+            #     print("lane change not allowed")
 
         return lane_change_allowed
 
@@ -796,9 +928,15 @@ class BehaviorAgent(object):
         # 0. Simulation ends condition
         if self.is_close_to_destination():
             print('Simulation is Over')
-            sys.exit(0)
+            # sys.exit(0)
+            # VOICES Change: 
+            #  |---> do not exit the simulation, but hold the vehicle there.
+            return 0, None
+            # todo: potentially add function to revert to the beginning of the 
+            #       route (waypoint) list, so the vehicle will keep driving
+            #       in a loop.
 
-        # 1. Traffic light management
+         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
             return 0, None
 
@@ -839,7 +977,7 @@ class BehaviorAgent(object):
 
         if not is_hazard:
             self.hazard_flag = False
-
+ 
         # 4. push case. Push the car to a temporary destination when original lane change action can't be executed
         # The case that the vehicle is doing lane change as planned
         # but found vehicle blocking on the other lane
@@ -889,7 +1027,9 @@ class BehaviorAgent(object):
 
         # 7. Car following behavior
         if car_following_flag:
+            # print('Case 7, car following !!!')
             if distance < max(self.break_distance, 3):
+                print('smaller than break distance, start breaking!!')
                 return 0, None
 
             target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
@@ -898,9 +1038,10 @@ class BehaviorAgent(object):
             return target_speed, target_loc
 
         # 8. Normal behavior
-        target_speed, target_loc = self._local_planner.run_step(
-            rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
-            if not target_speed else target_speed)
-        return target_speed, target_loc
+        if not self._eco_approach_calculated:
+            target_speed, target_loc = self._local_planner.run_step(
+                rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
+                if not target_speed else target_speed)
+            return target_speed, target_loc
 
 

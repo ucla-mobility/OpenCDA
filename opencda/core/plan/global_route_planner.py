@@ -282,7 +282,7 @@ class GlobalRoutePlanner(object):
         l2 = np.array(self._graph.nodes[n2]['vertex'])
         return np.linalg.norm(l1 - l2)
 
-    def _path_search(self, origin, destination):
+    def _path_search(self, origin, destination, middle_point_loc_list=None):
         """
         This function finds the shortest path connecting origin and destination
         using A* search with distance heuristic.
@@ -295,13 +295,78 @@ class GlobalRoutePlanner(object):
             of the graph self._graph
         connecting origin and destination.
         """
+        if middle_point_loc_list:
+            # only one middle point along route
+            if len(middle_point_loc_list) == 1:
+                middle_point = middle_point_loc_list[0]
+                # consider middle point 
+                start, end = self._localize(origin), self._localize(destination)
+                middle_point_edge = self._localize(middle_point)
 
-        start, end = self._localize(origin), self._localize(destination)
+                route_1st = nx.astar_path(
+                    self._graph, source=start[0], target=middle_point_edge[0],
+                    heuristic=self._distance_heuristic, weight='length')
+                route_2nd = nx.astar_path(
+                    self._graph, source=middle_point_edge[0], target=end[0],
+                    heuristic=self._distance_heuristic, weight='length')
+                # merge  two routes
+                route = route_1st + route_2nd[1:]
+                route.append(end[1])
 
-        route = nx.astar_path(
-            self._graph, source=start[0], target=end[0],
-            heuristic=self._distance_heuristic, weight='length')
-        route.append(end[1])
+            # multiple middle points along route 
+            else:  
+                # list start and end wpt
+                print('****** beginning of route debug ********')
+                route = []
+                start, end = self._localize(origin), self._localize(destination)
+                # loop thru middle points to build route
+                for i, mid_point_location in enumerate(middle_point_loc_list):
+                    middle_point_edge = self._localize(mid_point_location)
+                    
+                    # 1st mid point 
+                    if i==0: 
+                        # start to first middle point 
+                        curr_route_0 = nx.astar_path(
+                            self._graph, source=start[0], target=middle_point_edge[0],
+                            heuristic=self._distance_heuristic, weight='length')
+                        # 1st portion of the middle points
+                        nxt_middle_point_edge = self._localize(middle_point_loc_list[i+1])
+                        curr_route_1 = nx.astar_path(
+                            self._graph, source=middle_point_edge[0], target=nxt_middle_point_edge[0],
+                            heuristic=self._distance_heuristic, weight='length')
+                        route += curr_route_0 + curr_route_1[1:]
+                        print('*** i == 0 route: ' + str(curr_route_0 + curr_route_1))
+                    
+                    # last mid point 
+                    elif i==len(middle_point_loc_list)-1:
+                        curr_route = nx.astar_path(
+                            self._graph, source=middle_point_edge[0], target=end[0],
+                            heuristic=self._distance_heuristic, weight='length')
+                        route += curr_route[1:]
+                        print('*** i == -1 route: ' + str(curr_route))
+                    
+                    # mid point in between 
+                    else:
+                        nxt_middle_point_edge = self._localize(middle_point_loc_list[i+1])
+                        curr_route = nx.astar_path(
+                            self._graph, source=middle_point_edge[0], target=nxt_middle_point_edge[0],
+                            heuristic=self._distance_heuristic, weight='length')
+                        route += curr_route[1:]
+                        print('*** i == ' + str(i) + ' route: ' + str(curr_route))
+                route.append(end[1])
+
+                print('****** routing debug stream ********')
+                # print('The overall route is: ' + str(route_list))
+                print('The final route is: ' + str(route))
+
+        else:
+            start, end = self._localize(origin), self._localize(destination)
+
+            route = nx.astar_path(
+                self._graph, source=start[0], target=end[0],
+                heuristic=self._distance_heuristic, weight='length')
+            route.append(end[1])
+
         return route
 
     def _successive_last_intersection_edge(self, index, route):
@@ -370,7 +435,9 @@ class GlobalRoutePlanner(object):
                         if select_edge['type'] == RoadOption.LANEFOLLOW:
                             if neighbor != route[index + 1]:
                                 sv = select_edge['net_vector']
-                                cross_list.append(np.cross(cv, sv)[2])
+                                # note: encounter situation where sv is none.
+                                if sv:
+                                    cross_list.append(np.cross(cv, sv)[2])
                     next_cross = np.cross(cv, nv)[2]
                     deviation = math.acos(np.clip(
                         np.dot(cv, nv) / (np.linalg.norm(cv) *
@@ -430,14 +497,18 @@ class GlobalRoutePlanner(object):
 
         return closest_index
 
-    def trace_route(self, origin, destination):
+    def trace_route(self, origin, destination, middle_point_loc_list=None):
         """
         This method returns list of (carla.Waypoint, RoadOption)
         from origin to destination.
         """
 
         route_trace = []
-        route = self._path_search(origin, destination)
+        if middle_point_loc_list:
+            route = self._path_search(origin, destination, 
+                                      middle_point_loc_list=middle_point_loc_list)
+        else:
+            route = self._path_search(origin, destination)
         current_waypoint = self._dao.get_waypoint(origin)
         destination_waypoint = self._dao.get_waypoint(destination)
         resolution = self._dao.get_resolution()
@@ -490,5 +561,4 @@ class GlobalRoutePlanner(object):
                             destination_waypoint, path)
                         if closest_index > destination_index:
                             break
-
         return route_trace

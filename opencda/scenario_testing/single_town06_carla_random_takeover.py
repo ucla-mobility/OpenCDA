@@ -62,7 +62,11 @@ def run_scenario(opt, scenario_params):
             if tick*sim_dt == human_takeover_sec:
                 print('Reduce collision time, human takeover !!!')
                 # reduce safety distance 
-                single_cav = single_cav_list[0].agent.reduce_collision_time()
+                single_cav = single_cav_list[0].agent.reduce_following_dist()
+                # check collision checker state 
+                new_collision_time = single_cav_list[0].agent._collision_check.time_ahead
+                print('New collision checker is enabled with: ' + \
+                        str(new_collision_time) + 'second ahead time! ')
 
             transform = single_cav_list[0].vehicle.get_transform()
             spectator.set_transform(carla.Transform(

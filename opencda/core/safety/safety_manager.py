@@ -41,9 +41,10 @@ class SafetyManager:
                 if val == True:
                     print_flag = True
                     break
-            if print_flag:
-                print("Safety Warning from the safety manager:")
-                print(status_dict)
+            # Disable safety print for VOICES
+            # if print_flag:
+            #     print("Safety Warning from the safety manager:")
+            #     print(status_dict)
 
 
     def destroy(self):
