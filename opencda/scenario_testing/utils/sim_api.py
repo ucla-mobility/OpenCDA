@@ -348,7 +348,9 @@ class ScenarioManager:
                 spawn_transform = map_helper(self.carla_version,
                                              *cav_config['spawn_special'])
 
+            # set vehicle attrubutes
             cav_vehicle_bp.set_attribute('color', '0, 0, 255')
+            cav_vehicle_bp.set_attribute('role_name', 'UCLA-OPENCDA')
             vehicle = self.world.spawn_actor(cav_vehicle_bp, spawn_transform)
 
             # create vehicle manager for each cav

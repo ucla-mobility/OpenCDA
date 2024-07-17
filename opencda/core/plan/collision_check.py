@@ -219,7 +219,7 @@ class CollisionChecker:
                          if not adjacent_check else len(path_x)
 
         # debug stream 
-        print('The current distance check len is: ' + str(distance_check))
+        print('The current distance check value @collision_check.py is: ' + str(distance_check))
 
         obstacle_vehicle_loc = obstacle_vehicle.get_location()
         obstacle_vehicle_yaw = \
