@@ -55,6 +55,12 @@ class CavWorld(object):
         # this is used only when co-simulation activated.
         self.sumo2carla_ids = {}
 
+    def destroy(self):
+        for vehicle_manager in self._vehicle_manager_dict.values():
+            vehicle_manager.destroy()
+        for rsu_manager in self._rsu_manager_dict.values():
+            rsu_manager.destory()
+
     def update_vehicle_manager(self, vehicle_manager):
         """
         Update created CAV manager to the world.
