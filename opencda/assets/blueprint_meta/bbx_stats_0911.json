@@ -1,0 +1,35 @@
+{
+    "vehicle.audi.a2": {
+        "class": "car"
+    },
+    "vehicle.audi.tt": {
+        "class": "car"
+    },
+    "vehicle.bmw.grandtourer": {
+        "class": "car"
+    },
+    "vehicle.jeep.wrangler_rubicon": {
+        "class": "suv"
+    },
+    "vehicle.nissan.micra": {
+        "class": "car"
+    },
+    "vehicle.lincoln.mkz_2017": {
+        "class": "car"
+    },
+    "vehicle.seat.leon": {
+        "class": "car"
+    },
+    "vehicle.citroen.c3": {
+        "class": "car"
+    },
+    "vehicle.tesla.model3": {
+        "class": "car"
+    },
+    "vehicle.audi.etron": {
+        "class": "suv"
+    },
+    "vehicle.toyota.prius": {
+        "class": "car"
+    }
+}
