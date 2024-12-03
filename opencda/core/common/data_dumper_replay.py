@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Dumping sensor data.
-"""
-
-# Author: Runsheng Xu <rxx3386@ucla.edu>
-# License: TDG-Attribution-NonCommercial-NoDistrib
-
 import os
 
 import cv2
@@ -15,10 +7,9 @@ import numpy as np
 from opencda.core.common.misc import get_speed
 from opencda.core.sensing.perception import sensor_transformation as st
 from opencda.scenario_testing.utils.yaml_utils import save_yaml
-import carla
+from opencda.core.common.data_dumper import DataDumper
 
-
-class DataDumper(object):
+class DataDumperReplay(DataDumper):
 
     def __init__(self,
                  perception_manager,
@@ -26,6 +17,7 @@ class DataDumper(object):
 
         self.rgb_camera = perception_manager.rgb_camera
         self.lidar = perception_manager.lidar
+        self.semantic_lidar = perception_manager.semantic_lidar ###
 
         self.save_parent_folder = save_path
 
@@ -38,36 +30,24 @@ class DataDumper(object):
                  perception_manager,
                  localization_manager,
                  behavior_agent):
-        """
-        Dump data at running time.
-
-        Parameters
-        ----------
-        perception_manager : opencda object
-            OpenCDA perception manager.
-
-        localization_manager : opencda object
-            OpenCDA localization manager.
-
-        behavior_agent : opencda object
-            Open
-        """
-        # self.count += 1 ###
 
         # we ignore the first 60 steps
         if self.count < 60:
             return
+        
         # 10hz
         # if self.count % 2 != 0:
         #     return
 
-        # print('saving', self.count)
-        self.save_rgb_image(self.count)
-        self.save_yaml_file(perception_manager,
+        if self.rgb_camera is not None:
+            self.save_rgb_image(self.count)
+        if self.lidar is not None:
+            self.save_yaml_file(perception_manager,
                             localization_manager,
                             behavior_agent,
                             self.count)
-        self.save_lidar_points(self.count)
+        if self.lidar is not None:
+            self.save_lidar_points(self.count)
 
     def save_rgb_image(self, count):
         """
@@ -84,41 +64,6 @@ class DataDumper(object):
 
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
-            
-            # print('saved', self.perception_manager.id, os.path.join(self.save_parent_folder, image_name))###debug
-            # break # to save front only
-
-    # def reverse_transform(self, points, p, y, r):
-
-    #     tran = carla.Transform(carla.Rotation(pitch=p, yaw=y, roll=r))
-    #     rot = tran.get_matrix()[:3, :3]
-    #     return (rot @ points.T).T
-
-    # def reverse_transform(self, points, trans):
-        
-    #     x, y, z = trans.location.x, trans.location.y, trans.location.z
-    #     p, y, r = trans.rotation.pitch, trans.rotation.yaw, trans.rotation.roll
-    #     trans = carla.Transform(carla.Location(x,y,z), carla.Rotation(0,y,r))
-    #     rot = np.array(trans.get_matrix())
-
-    #     points = np.append(points, np.ones((points.shape[0], 1)), axis=1)
-    #     points = (rot @ points.T).T
-
-    #     return points[:, :-1]
-
-    def reverse_transform(self, points, trans):
-        
-        x, y, z = trans.location.x, trans.location.y, trans.location.z
-        p, y, r = trans.rotation.pitch, trans.rotation.yaw, trans.rotation.roll
-        # trans = carla.Transform(carla.Location(x,y,z), carla.Rotation(p,y,r))
-        trans = carla.Transform(carla.Location(0,0,0), carla.Rotation(p,0,0))
-        rot = np.linalg.inv(trans.get_matrix())
-        # rot = trans.get_matrix()
-
-        points = np.append(points, np.ones((points.shape[0], 1)), axis=1)
-        points = (rot @ points.T).T
-
-        return points[:, :-1]
 
     def save_lidar_points(self, count):
         """
@@ -128,30 +73,12 @@ class DataDumper(object):
         frame = count # self.lidar.frame
 
         point_xyz = point_cloud[:, :-1]
-        # point_xyz[:, 1] = -point_xyz[:, 1] # horizontal flip
         point_intensity = point_cloud[:, -1]
         point_intensity = np.c_[
             point_intensity,
             np.zeros_like(point_intensity),
             np.zeros_like(point_intensity)
         ]
-
-        # x_rot = y_rot = z_rot = 0
-        roll_rot = pitch_rot = yaw_rot = 0
-        if self.lidar.spawn_point.rotation.pitch != 0:
-            # y_rot = np.radians(-self.lidar.spawn_point.rotation.pitch)
-            pitch_rot = -self.lidar.spawn_point.rotation.pitch
-        # if self.lidar.spawn_point.rotation.yaw != 0:
-            # z_rot = np.radians(-self.lidar.spawn_point.rotation.yaw)
-            # yaw_rot = -self.lidar.spawn_point.rotation.yaw
-
-        if roll_rot != 0 or pitch_rot != 0 or yaw_rot != 0:
-            # rot = o3d.geometry.get_rotation_matrix_from_axis_angle([x_rot, y_rot, z_rot])
-            # point_xyz = (rot @ point_xyz.T).T
-            # o3d_pcd.rotate(rot)
-            # point_xyz = self.reverse_transform(point_xyz, pitch_rot, yaw_rot, roll_rot)
-            pass
-            # point_xyz = self.reverse_transform(point_xyz, self.lidar.spawn_point)
 
         o3d_pcd = o3d.geometry.PointCloud()
         o3d_pcd.points = o3d.utility.Vector3dVector(point_xyz)
@@ -163,7 +90,51 @@ class DataDumper(object):
                                               pcd_name),
                                  pointcloud=o3d_pcd,
                                  write_ascii=True)
-        # print('saved', self.perception_manager.id, os.path.join(self.save_parent_folder,pcd_name))###debug
+
+    def save_semantic_lidar_points(self, count):
+
+        LABEL_COLORS = np.array([
+            (255, 255, 255), # None
+            (70, 70, 70),    # Building
+            (100, 40, 40),   # Fences
+            (55, 90, 80),    # Other
+            (220, 20, 60),   # Pedestrian
+            (153, 153, 153), # Pole
+            (157, 234, 50),  # RoadLines
+            (128, 64, 128),  # Road
+            (244, 35, 232),  # Sidewalk
+            (107, 142, 35),  # Vegetation
+            (0, 0, 142),     # Vehicle
+            (102, 102, 156), # Wall
+            (220, 220, 0),   # TrafficSign
+            (70, 130, 180),  # Sky
+            (81, 0, 81),     # Ground
+            (150, 100, 100), # Bridge
+            (230, 150, 140), # RailTrack
+            (180, 165, 180), # GuardRail
+            (250, 170, 30),  # TrafficLight
+            (110, 190, 160), # Static
+            (170, 120, 50),  # Dynamic
+            (45, 60, 150),   # Water
+            (145, 170, 100), # Terrain
+        ]) / 255.0 # normalize each channel [0-1] since is what Open3D uses
+
+        point_cloud = self.semantic_lidar.points
+        frame = count # self.lidar.frame
+
+        point_xyz = point_cloud
+        label_color = LABEL_COLORS[self.semantic_lidar.obj_tag]
+
+        o3d_pcd = o3d.geometry.PointCloud()
+        o3d_pcd.points = o3d.utility.Vector3dVector(point_xyz)
+        o3d_pcd.colors = o3d.utility.Vector3dVector(label_color)
+
+        # write to pcd file
+        pcd_name = '%06d' % frame + '.pcd'
+        o3d.io.write_point_cloud(os.path.join(self.save_parent_folder,
+                                              pcd_name),
+                                 pointcloud=o3d_pcd,
+                                 write_ascii=True)
 
     def save_yaml_file(self,
                        perception_manager,
@@ -193,16 +164,12 @@ class DataDumper(object):
         # dump obstacle vehicles first
         objects = perception_manager.objects
         vehicle_list = objects['vehicles']
-        # print('\nperception_manager vehicles', vehicle_list)
 
         for veh in vehicle_list:
             if perception_manager.id == veh.carla_id:
-                print('perception_manager.id', perception_manager.id)
-                print('veh.carla_id', veh.carla_id)
                 continue ###
                 
             veh_carla_id = veh.carla_id
-            # veh_carla_id = str(veh.attributes['role_name'])
             veh_pos = veh.get_transform()
             veh_bbx = veh.bounding_box
             veh_speed = get_speed(veh)
@@ -227,10 +194,7 @@ class DataDumper(object):
                            veh_bbx.extent.z],
                 "speed": veh_speed
             }})
-
         dump_yml.update({'vehicles': vehicle_dict})
-        # print('perception_manager vehicle_dict', vehicle_dict)
-
         # dump ego pose and speed, if vehicle does not exist, then it is
         # a rsu(road side unit).
         predicted_ego_pos = localization_manager.get_ego_pos()
@@ -264,7 +228,6 @@ class DataDumper(object):
             lidar_transformation.rotation.roll,
             lidar_transformation.rotation.yaw,
             lidar_transformation.rotation.pitch]})
-        # print('dump_yml lidar pose', lidar_transformation);print(dump_yml['lidar_pose'])
         # dump camera sensor coordinates under world coordinate system
         for (i, camera) in enumerate(self.rgb_camera):
             camera_param = {}
@@ -318,7 +281,6 @@ class DataDumper(object):
                                  yml_name)
 
         save_yaml(dump_yml, save_path)
-        # print('saved', self.perception_manager.id, save_path)###debug
 
     @staticmethod
     def matrix2list(matrix):
@@ -339,3 +301,32 @@ class DataDumper(object):
 
         assert len(matrix.shape) == 2
         return matrix.tolist()
+
+class DataDumperReplayPly(DataDumperReplay):
+
+    def __init__(self,
+                 perception_manager,
+                 save_path):
+
+        self.semantic_lidar = perception_manager.semantic_lidar ###
+
+        self.save_parent_folder = save_path
+
+        if not os.path.exists(self.save_parent_folder):
+            os.makedirs(self.save_parent_folder)
+
+        self.count = 0
+
+    def save_semantic_lidar_points_ply(self, count):
+    
+        path = os.path.join(self.save_parent_folder, '%06d' % count + '.ply')
+        self.semantic_lidar.event.save_to_disk(path)
+        print('saved', path)
+    
+    def run_step(self):
+
+        # we ignore the first 60 steps
+        if self.count < 60:
+            return
+        
+        self.save_semantic_lidar_points_ply(self.count)
