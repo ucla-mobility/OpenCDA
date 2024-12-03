@@ -70,6 +70,8 @@ class V2XManager(object):
         # ego position buffer. use deque so we can simulate lagging
         self.ego_pos = deque(maxlen=100)
         self.ego_spd = deque(maxlen=100)
+        # ego position and ego speed recorded for evaluate planning algorithm
+        self.ego_dynamic_trace = deque()
         # used to exclude the cav self during searching
         self.vid = vid
 
@@ -95,6 +97,9 @@ class V2XManager(object):
         """
         self.ego_pos.append(ego_pos)
         self.ego_spd.append(ego_spd)
+        # used for planning
+        self.ego_dynamic_trace.append((ego_pos, ego_spd, self.cav_world.global_clock))
+        # evaluation
         self.search()
 
         # the ego pos in platooning_plugin is used for self-localization,
