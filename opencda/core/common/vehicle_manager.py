@@ -109,7 +109,8 @@ class VehicleManager(object):
                                       carla_map,
                                       map_config)
         # safety manager
-        self.safety_manager = SafetyManager(vehicle=vehicle,
+        self.safety_manager = SafetyManager(cav_world=cav_world,
+                                            vehicle=vehicle,
                                             params=config_yaml['safety_manager'])
         # behavior agent
         self.agent = None
@@ -185,12 +186,15 @@ class VehicleManager(object):
         self.map_manager.update_information(ego_pos)
 
         # this is required by safety manager
-        safety_input = {'ego_pos': ego_pos,
-                        'ego_speed': ego_spd,
-                        'objects': objects,
-                        'carla_map': self.carla_map,
-                        'world': self.vehicle.get_world(),
-                        'static_bev': self.map_manager.static_bev}
+        safety_input = {
+            'ego_pos': ego_pos,
+            'ego_speed': ego_spd,
+            'objects': objects,
+            'carla_map': self.carla_map,
+            'world': self.vehicle.get_world(),
+            'static_bev': self.map_manager.static_bev,
+            'vis_bev': self.map_manager.vis_bev
+        }
         self.safety_manager.update_info(safety_input)
 
         # update ego position and speed to v2x manager,
