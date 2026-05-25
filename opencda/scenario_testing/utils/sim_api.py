@@ -338,6 +338,9 @@ class ScenarioManager:
             destination = carla.Location(x=cav_config['destination'][0],
                                          y=cav_config['destination'][1],
                                          z=cav_config['destination'][2])
+            vehicle_manager.set_route_endpoints(
+                spawn_transform.location, destination)
+            vehicle_manager.set_to_start_location(True)
             vehicle_manager.update_info()
             vehicle_manager.set_destination(
                 vehicle_manager.vehicle.get_location(),
@@ -384,6 +387,9 @@ class ScenarioManager:
         destination = carla.Location(x=cav_config['destination'][0],
                                      y=cav_config['destination'][1],
                                      z=cav_config['destination'][2])
+        vehicle_manager.set_route_endpoints(
+            vehicle_manager.vehicle.get_location(), destination)
+        vehicle_manager.set_to_start_location(True)
         vehicle_manager.update_info()
         vehicle_manager.set_destination(
             vehicle_manager.vehicle.get_location(),
@@ -391,6 +397,85 @@ class ScenarioManager:
             clean=True)
 
         return [vehicle_manager]
+
+    def get_destination_reached_behavior(self):
+        """
+        Return the configured behavior after a CAV reaches its destination.
+        """
+        scenario_config = self.scenario_params.get('scenario', {})
+        return str(
+            scenario_config.get(
+                'destination_reached_behavior',
+                'reset_destination')).lower()
+
+    def get_next_destination(self, vehicle_manager):
+        """
+        Return the next destination when cycling between route endpoints.
+        """
+        if (vehicle_manager.route_start_location is None or
+                vehicle_manager.route_end_location is None):
+            raise ValueError('CAV route endpoints are not configured.')
+
+        if vehicle_manager.get_to_start_location():
+            destination = vehicle_manager.route_start_location
+            vehicle_manager.set_to_start_location(False)
+        else:
+            destination = vehicle_manager.route_end_location
+            vehicle_manager.set_to_start_location(True)
+
+        return destination
+
+    def reset_cav_destination(self, vehicle_manager):
+        """
+        Send a CAV to the opposite endpoint after it reaches destination.
+        """
+        destination = self.get_next_destination(vehicle_manager)
+        vehicle_manager.set_close_to_destination(False)
+        vehicle_manager.set_destination(
+            vehicle_manager.vehicle.get_location(),
+            destination,
+            clean=True)
+
+    def destroy_cav(self, single_cav_list, vehicle_manager):
+        """
+        Destroy a CAV actor and remove its manager from active registries.
+        """
+        if vehicle_manager in single_cav_list:
+            single_cav_list.remove(vehicle_manager)
+        if self.cav_world:
+            self.cav_world.remove_vehicle_manager(vehicle_manager)
+        vehicle_manager.destroy()
+
+    def handle_cav_destination_reached(self, single_cav_list, vehicle_manager):
+        """
+        Apply configured behavior for a CAV that reached destination.
+        """
+        behavior = self.get_destination_reached_behavior()
+
+        if behavior == 'destroy':
+            self.destroy_cav(single_cav_list, vehicle_manager)
+        elif behavior in ('reset_destination', 'reset'):
+            self.reset_cav_destination(vehicle_manager)
+        else:
+            raise ValueError(
+                "scenario.destination_reached_behavior must be 'destroy' "
+                "or 'reset_destination'.")
+
+    def run_cav_step(self, single_cav_list, vehicle_manager):
+        """
+        Run one CAV step and handle destination arrival consistently.
+        """
+        vehicle_manager.update_info()
+        control = vehicle_manager.run_step()
+
+        if control is None:
+            if vehicle_manager.close_to_destination:
+                self.handle_cav_destination_reached(
+                    single_cav_list, vehicle_manager)
+            return None
+
+        vehicle_manager.vehicle.apply_control(control)
+        return control
 
     def create_platoon_manager(self, map_helper=None, data_dump=False):
         """

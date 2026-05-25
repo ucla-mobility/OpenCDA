@@ -9,14 +9,13 @@
 
 import math
 import random
-import sys
 
 import numpy as np
 import carla
 
 from opencda.core.common.misc import get_speed, positive, cal_distance_angle
 from opencda.core.plan.collision_check import CollisionChecker
-from opencda.core.plan.local_planner_behavior import LocalPlanner
+from opencda.core.plan.local_planner_behavior import LocalPlanner, RoadOption
 from opencda.core.plan.global_route_planner import GlobalRoutePlanner
 from opencda.core.plan.global_route_planner_dao import GlobalRoutePlannerDAO
 from opencda.core.plan.planer_debug_helper import PlanDebugHelper
@@ -102,6 +101,18 @@ class BehaviorAgent(object):
         self.emergency_param = config_yaml['emergency_param']
         self.break_distance = 0
         self.ttc = 1000
+        self.car_following_stop_distance = max(
+            0.0, float(config_yaml.get('car_following_stop_distance', 3.0)))
+        self.car_following_emergency_stop_distance = max(
+            0.0,
+            float(config_yaml.get('car_following_emergency_stop_distance', 3.0)))
+        self.car_following_creep_speed = float(
+            config_yaml.get('car_following_creep_speed', 6.0))
+        self.car_following_creep_time = max(
+            0.1, float(config_yaml.get('car_following_creep_time', 1.5)))
+        self.car_following_standstill_speed_thresh = max(
+            0.0,
+            float(config_yaml.get('car_following_standstill_speed_thresh', 0.3)))
         # collision checker
         self._collision_check = CollisionChecker(
             time_ahead=config_yaml['collision_time_ahead'])
@@ -239,6 +250,15 @@ class BehaviorAgent(object):
 
         return new_obstacle_list
 
+    def _get_driving_waypoint(self, location):
+        """
+        Project a location to a driving-lane waypoint.
+        """
+        return self._map.get_waypoint(
+            location,
+            project_to_road=True,
+            lane_type=carla.LaneType.Driving)
+
     def set_destination(
             self,
             start_location,
@@ -275,7 +295,7 @@ class BehaviorAgent(object):
         if clean_history:
             self.get_local_planner().get_history_buffer().clear()
 
-        self.start_waypoint = self._map.get_waypoint(start_location)
+        self.start_waypoint = self._get_driving_waypoint(start_location)
 
         # make sure the start waypoint is behind the vehicle
         if self._ego_pos:
@@ -289,7 +309,7 @@ class BehaviorAgent(object):
                 _, angle = cal_distance_angle(
                     self.start_waypoint.transform.location, cur_loc, cur_yaw)
 
-        end_waypoint = self._map.get_waypoint(end_location)
+        end_waypoint = self._get_driving_waypoint(end_location)
         if end_reset:
             self.end_waypoint = end_waypoint
 
@@ -501,7 +521,8 @@ class BehaviorAgent(object):
             if not vehicle_state:
                 print("left overtake is operated")
                 self.overtake_counter = 100
-                next_wpt_list = left_wpt.next(self._ego_speed / 3.6 * 6)
+                lookahead_dist = max(self._ego_speed / 3.6 * 6.0, 0.5)
+                next_wpt_list = left_wpt.next(lookahead_dist)
                 if len(next_wpt_list) == 0:
                     return True
 
@@ -532,7 +553,8 @@ class BehaviorAgent(object):
             if not vehicle_state:
                 print("right overtake is operated")
                 self.overtake_counter = 100
-                next_wpt_list = right_wpt.next(self._ego_speed / 3.6 * 6)
+                lookahead_dist = max(self._ego_speed / 3.6 * 6.0, 0.5)
+                next_wpt_list = right_wpt.next(lookahead_dist)
                 if len(next_wpt_list) == 0:
                     return True
 
@@ -603,10 +625,19 @@ class BehaviorAgent(object):
         target_loc : carla.Location
             The target location.
         """
-        if not target_speed:
+        if target_speed is None:
             target_speed = self.max_speed - self.speed_lim_dist
 
         vehicle_speed = get_speed(vehicle)
+        if vehicle_speed <= self.car_following_standstill_speed_thresh:
+            gap = distance - self.car_following_stop_distance
+            if gap <= 0.0:
+                return 0.0
+            target_speed = min(
+                target_speed, gap / self.car_following_creep_time * 3.6)
+            if self.car_following_creep_speed > 0.0:
+                target_speed = min(target_speed, self.car_following_creep_speed)
+            return target_speed
 
         delta_v = max(1, (self._ego_speed - vehicle_speed) / 3.6)
         ttc = distance / delta_v if delta_v != 0 else distance / \
@@ -620,9 +651,7 @@ class BehaviorAgent(object):
         # Actual safety distance area, try to follow the speed of the vehicle
         # in front.
         else:
-            target_speed = 0 if vehicle_speed == 0 else \
-                min(vehicle_speed + 1,
-                    target_speed)
+            target_speed = min(vehicle_speed + 1, target_speed)
         return target_speed
 
     def is_intersection(self, objects, waypoint_buffer):
@@ -661,9 +690,12 @@ class BehaviorAgent(object):
             It is True if the current ego vehicle's position is close to destination
 
         """
-        flag = abs(self._ego_pos.location.x - self.end_waypoint.transform.location.x) <= 10 and \
-               abs(self._ego_pos.location.y - self.end_waypoint.transform.location.y) <= 10
-        return flag
+        if self.end_waypoint is None:
+            return False
+
+        ego_loc = self._ego_pos.location
+        dest_loc = self.end_waypoint.transform.location
+        return math.hypot(ego_loc.x - dest_loc.x, ego_loc.y - dest_loc.y) <= 10.0
 
     def check_lane_change_permission(self, lane_change_allowed, collision_detector_enabled, rk):
         """
@@ -709,7 +741,7 @@ class BehaviorAgent(object):
 
         return lane_change_allowed
 
-    def get_push_destination(self, ego_vehicle_wp, is_intersection):
+    def get_push_destination(self, ego_vehicle_wp, is_intersection, return_plan=False):
         """
         Get the destination for push operation.
 
@@ -727,18 +759,29 @@ class BehaviorAgent(object):
             Temporal push destination.
 
         """
-        waypoint_buffer = self.get_local_planner().get_waypoint_buffer()
-        reset_index = len(waypoint_buffer) // 2
+        waypoint_buffer = list(self.get_local_planner().get_waypoint_buffer())
 
-        # when it comes to the intersection, we need to use the future
-        # waypoint to make sure the next waypoint is at the same lane
-        if is_intersection:
-            reset_target = waypoint_buffer[reset_index][0].next(
-                max(self._ego_speed / 3.6, 10.0))[0]
-        else:
-            reset_target = \
-                ego_vehicle_wp.next(max(self._ego_speed / 3.6 * 3,
-                                        10.0))[0]
+        if waypoint_buffer:
+            reset_index = max(0, min(len(waypoint_buffer) - 1,
+                                     len(waypoint_buffer) // 2))
+            reset_plan = waypoint_buffer[:reset_index + 1]
+
+            if is_intersection or not self._has_lane_change(reset_plan):
+                reset_target = reset_plan[-1][0]
+                if return_plan:
+                    return reset_target, reset_plan
+                return reset_target
+
+        reset_plan = self._build_lane_follow_plan(ego_vehicle_wp)
+        if reset_plan:
+            reset_target = reset_plan[-1][0]
+            if return_plan:
+                return reset_target, reset_plan
+            return reset_target
+
+        next_waypoints = ego_vehicle_wp.next(
+            max(self._ego_speed / 3.6 * 3.0, 10.0))
+        reset_target = next_waypoints[0] if next_waypoints else ego_vehicle_wp
         if self.debug:
             print(
                 'Vehicle id: %d :destination pushed forward because of '
@@ -746,7 +789,37 @@ class BehaviorAgent(object):
                 (self.vehicle.id, reset_target.transform.location.x,
                  reset_target.transform.location.y,
                  reset_target.transform.location.z))
+        if return_plan:
+            return reset_target, None
         return reset_target
+
+    @staticmethod
+    def _has_lane_change(plan):
+        """
+        Return True if a waypoint plan already contains a lane-change option.
+        """
+        return any(option in (RoadOption.CHANGELANELEFT,
+                              RoadOption.CHANGELANERIGHT)
+                   for _, option in plan)
+
+    def _build_lane_follow_plan(self, start_waypoint):
+        """
+        Build a short lane-following plan without re-projecting through a map
+        location. This keeps push destinations on the same lane segment.
+        """
+        step_dist = max(self._ego_speed / 3.6, 2.0)
+        plan_dist = max(self._ego_speed / 3.6 * 3.0, 10.0)
+        steps = max(1, int(math.ceil(plan_dist / step_dist)))
+
+        plan = []
+        waypoint = start_waypoint
+        for _ in range(steps):
+            next_waypoints = waypoint.next(step_dist)
+            if not next_waypoints:
+                break
+            waypoint = next_waypoints[0]
+            plan.append((waypoint, RoadOption.LANEFOLLOW))
+        return plan
 
     def run_step(
             self,
@@ -790,10 +863,10 @@ class BehaviorAgent(object):
         # use traffic light to detect intersection
         is_intersection = self.is_intersection(self.objects, waipoint_buffer)
 
-        # 0. Simulation ends condition
+        # 0. Destination reached. Return an empty command target instead of
+        # exiting the whole process so each CAV can be handled independently.
         if self.is_close_to_destination():
-            print('Simulation is Over')
-            sys.exit(0)
+            return None, None
 
         # 1. Traffic light management
         if self.traffic_light_manager(ego_vehicle_wp) != 0:
@@ -823,10 +896,12 @@ class BehaviorAgent(object):
 
         # Path generation based on the global route
         rx, ry, rk, ryaw = self._local_planner.generate_path()
+        if len(rx) == 0:
+            return 0, None
 
         # check whether lane change is allowed
-        self.lane_change_allowed = self.check_lane_change_permission(lane_change_allowed, collision_detector_enabled,
-                                                                     rk)
+        self.lane_change_allowed = self.check_lane_change_permission(
+            lane_change_allowed, collision_detector_enabled, rk)
 
         # 3. Collision check
         is_hazard = False
@@ -842,20 +917,38 @@ class BehaviorAgent(object):
         # The case that the vehicle is doing lane change as planned
         # but found vehicle blocking on the other lane
         if not self.lane_change_allowed and \
-                self.get_local_planner().potential_curved_road \
+                self.get_local_planner().lane_id_change \
                 and not self.destination_push_flag and \
                 self.overtake_counter <= 0:
             self.overtake_allowed = False
-            # get push destination based on intersection flag and current waypoint (rule-based)
-            reset_target = self.get_push_destination(ego_vehicle_wp, is_intersection)
+            reset_target, reset_plan = self.get_push_destination(
+                ego_vehicle_wp, is_intersection, return_plan=True)
             # set the flag, so the push operation is not allowed for the next few frames.
             self.destination_push_flag = 90
-            self.set_destination(
-                ego_vehicle_loc,
-                reset_target.transform.location,
-                clean=True,
-                end_reset=False)
+            if reset_plan is not None:
+                local_planner = self.get_local_planner()
+                local_planner.get_waypoints_queue().clear()
+                local_planner.get_waypoint_buffer().clear()
+                local_planner.get_trajectory().clear()
+                local_planner.set_global_plan(reset_plan, clean=True)
+            else:
+                self.set_destination(
+                    ego_vehicle_loc,
+                    reset_target.transform.location,
+                    clean=True,
+                    end_reset=False)
             rx, ry, rk, ryaw = self._local_planner.generate_path()
+            if len(rx) == 0:
+                self.destination_push_flag = max(self.destination_push_flag, 300)
+                self.set_destination(
+                    ego_vehicle_loc,
+                    self.end_waypoint.transform.location,
+                    clean=True,
+                    end_reset=False,
+                    clean_history=True)
+                rx, ry, rk, ryaw = self._local_planner.generate_path()
+                if len(rx) == 0:
+                    return 0, None
 
         # 5. the case that vehicle is blocking in front and overtake not
         # allowed or it is doing overtaking the second condition is to
@@ -887,7 +980,8 @@ class BehaviorAgent(object):
 
         # 7. Car following behavior
         if car_following_flag:
-            if distance < max(self.break_distance, 3):
+            if distance < max(self.break_distance,
+                              self.car_following_emergency_stop_distance):
                 return 0, None
 
             target_speed = self.car_following_manager(obstacle_vehicle, distance, target_speed)
@@ -898,5 +992,5 @@ class BehaviorAgent(object):
         # 8. Normal behavior
         target_speed, target_loc = self._local_planner.run_step(
             rx, ry, rk, target_speed=self.max_speed - self.speed_lim_dist
-            if not target_speed else target_speed)
+            if target_speed is None else target_speed)
         return target_speed, target_loc

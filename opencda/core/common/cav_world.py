@@ -75,6 +75,18 @@ class CavWorld(object):
         self._vehicle_manager_dict.update(
             {vehicle_manager.vid: vehicle_manager})
 
+    def remove_vehicle_manager(self, vehicle_manager):
+        """
+        Remove a CAV manager from the world.
+
+        Parameters
+        ----------
+        vehicle_manager : opencda object
+            The vehicle manager class.
+        """
+        self.vehicle_id_set.discard(vehicle_manager.vehicle.id)
+        self._vehicle_manager_dict.pop(vehicle_manager.vid, None)
+
     def update_platooning(self, platooning_manger):
         """
         Add created platooning.

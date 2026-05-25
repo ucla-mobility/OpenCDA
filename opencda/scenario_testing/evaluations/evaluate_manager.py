@@ -58,6 +58,10 @@ class EvaluationManager(object):
         Evaluate performance of all modules by plotting and writing the
         statistics into the log file.
         """
+        if not self.cav_world.get_vehicle_managers():
+            print('No CAVs available for evaluation.')
+            return
+
         log_file = os.path.join(self.eval_save_path, 'log.txt')
 
         self.planning_eval(log_file)

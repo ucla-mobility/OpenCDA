@@ -237,8 +237,21 @@ class LocalPlanner(object):
         x = []
         y = []
 
+        # BehaviorAgent calls generate_path() before run_step(); keep the
+        # local buffer populated before filtering and spline generation.
+        if len(self._waypoint_buffer) < self.waypoint_update_freq:
+            for _ in range(self._buffer_size - len(self._waypoint_buffer)):
+                if self.waypoints_queue:
+                    self._waypoint_buffer.append(
+                        self.waypoints_queue.popleft())
+                else:
+                    break
+
         # pop out the waypoints that may damage driving performance
         self.buffer_filter()
+
+        if len(self._waypoint_buffer) == 0:
+            return [], [], [], []
 
         # [m] distance of each interpolated points
         ds = 0.1
@@ -355,6 +368,8 @@ class LocalPlanner(object):
 
         # we only need the interpolation points after current position
         s = np.arange(diff_s, sp.s[-1], ds)
+        if len(s) == 0:
+            return rx, ry, rk, ryaw
 
         self._long_plan_debug = []
         # we only need the interpolation points until next waypoint

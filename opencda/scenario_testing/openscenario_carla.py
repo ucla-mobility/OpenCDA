@@ -74,6 +74,9 @@ def run_scenario(opt, scenario_params):
 
         while True:
             scenario_manager.tick()
+            if not single_cav_list:
+                break
+
             ego_cav = single_cav_list[0].vehicle
 
             # Bird view following
@@ -84,10 +87,8 @@ def run_scenario(opt, scenario_params):
             spectator.set_transform(view_transform)
 
             # Apply the control to the ego vehicle
-            for _, single_cav in enumerate(single_cav_list):
-                single_cav.update_info()
-                control = single_cav.run_step()
-                single_cav.vehicle.apply_control(control)
+            for single_cav in list(single_cav_list):
+                scenario_manager.run_cav_step(single_cav_list, single_cav)
             time.sleep(0.01)
 
     finally:
