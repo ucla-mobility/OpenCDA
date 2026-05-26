@@ -75,13 +75,11 @@ def run_scenario(opt, scenario_params):
                 platoon.update_information()
                 platoon.run_step()
 
-            for i, single_cav in enumerate(single_cav_list):
+            for single_cav in list(single_cav_list):
                 if single_cav.v2x_manager.in_platoon():
-                    single_cav_list.pop(i)
-
-                single_cav.update_info()
-                control = single_cav.run_step()
-                single_cav.vehicle.apply_control(control)
+                    single_cav_list.remove(single_cav)
+                else:
+                    scenario_manager.run_cav_step(single_cav_list, single_cav)
 
     finally:
         eval_manager.evaluate()

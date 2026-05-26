@@ -94,6 +94,8 @@ class VehicleManager(object):
         behavior_config = config_yaml['behavior']
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
+        self.collision_detector_enabled = \
+            behavior_config.get('collision_detector_enabled', True)
 
         # v2x module
         self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
@@ -136,6 +138,11 @@ class VehicleManager(object):
         else:
             self.data_dumper = None
 
+        self.close_to_destination = False
+        self.to_start_location = False
+        self.route_start_location = None
+        self.route_end_location = None
+
         cav_world.update_vehicle_manager(self)
 
     def set_destination(
@@ -167,6 +174,31 @@ class VehicleManager(object):
 
         self.agent.set_destination(
             start_location, end_location, clean, end_reset)
+
+    def set_route_endpoints(self, start_location, end_location):
+        """
+        Save the two endpoints used when cycling a CAV route.
+        """
+        self.route_start_location = start_location
+        self.route_end_location = end_location
+
+    def set_close_to_destination(self, close_to_destination):
+        """
+        Set whether the vehicle has reached its destination.
+        """
+        self.close_to_destination = close_to_destination
+
+    def set_to_start_location(self, to_start_location):
+        """
+        Set whether the next destination is the start location.
+        """
+        self.to_start_location = to_start_location
+
+    def get_to_start_location(self):
+        """
+        Return whether the next destination is the start location.
+        """
+        return self.to_start_location
 
     def update_info(self):
         """
@@ -211,7 +243,14 @@ class VehicleManager(object):
         """
         # visualize the bev map if needed
         self.map_manager.run_step()
-        target_speed, target_pos = self.agent.run_step(target_speed)
+        target_speed, target_pos = self.agent.run_step(
+            target_speed,
+            collision_detector_enabled=self.collision_detector_enabled)
+
+        if target_speed is None and target_pos is None:
+            self.set_close_to_destination(True)
+            return None
+
         control = self.controller.run_step(target_speed, target_pos)
 
         # dump data
