@@ -1,0 +1,41 @@
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
+           testing in high speed in the customized 2lanefree simple version.
+
+# First define the basic parameters of the vehicles
+vehicle_base:
+  behavior:
+    max_speed: 50 # maximum speed, km/h
+    ignore_traffic_light: false # whether to ignore traffic light
+    collision_time_ahead: 2.0 # used for collision checking
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  random: true # whether to random select vehicles' color and model
+  vehicle_list: ~  # a number or a list
+  # Used only when vehicle_list is a number.
+  # x_min, x_max, y_min, y_max, x_step, y_step, veh_num
+  range:
+    - [ 5, 35, -180, 180, 3.5, 25, 40]
+
+# define scenario.
+scenario:
+  traffic_signal:
+    northbound_id: 134
+    eastbound_id: 137
+    southbound_id: 136
+    westbound_id: 135
+    adaptive_cycle: false
+
+  single_cav_list: # this is for merging vehicle or single cav without v2x
+    - name: cav1
+      spawn_position: [35.08, 76.12, 0.3, 0, -89, 0]
+      destination: [38.5, -155, 0.3]
+      v2x:
+        communication_range: 45
+      behavior:
+        local_planner:
+          debug_trajectory: true
+          debug: true
