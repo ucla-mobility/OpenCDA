@@ -20,6 +20,12 @@ from opencda.scenario_testing.utils.yaml_utils import \
 
 
 def run_scenario(opt, scenario_params):
+    scenario_manager = None
+    eval_manager = None
+    single_cav_list = []
+    bg_veh_list = []
+    recorder_started = False
+
     try:
         scenario_params = add_current_time(scenario_params)
         current_path = os.path.dirname(os.path.realpath(__file__))
@@ -39,6 +45,7 @@ def run_scenario(opt, scenario_params):
         if opt.record:
             scenario_manager.client. \
                 start_recorder("single_2lanefree_carla.log", True)
+            recorder_started = True
 
         single_cav_list = \
             scenario_manager.create_vehicle_manager(application=['single'],
@@ -74,12 +81,14 @@ def run_scenario(opt, scenario_params):
                 single_cav.vehicle.apply_control(control)
 
     finally:
-        eval_manager.evaluate()
+        if eval_manager is not None:
+            eval_manager.evaluate()
 
-        if opt.record:
+        if recorder_started:
             scenario_manager.client.stop_recorder()
 
-        scenario_manager.close()
+        if scenario_manager is not None:
+            scenario_manager.close()
 
         for v in single_cav_list:
             v.destroy()
